@@ -8,7 +8,7 @@ Perguntas abertas, cada uma com o lugar onde se resolve. A resposta vira DEC, e 
 
 | ID | Pergunta | Onde se resolve | Recomendação do agente | Resposta |
 |---|---|---|---|---|
-| Q-01 | Ticks por segundo: 30, o padrão do netfox, ou 60, o do estudo? 60 deixa o parry mais preciso e custa CPU e banda (F-005 §3; F-007 §8) | Desenho 3 (TASK-5), medindo | Medir os dois com 2 e com 8 clientes | — |
+| Q-01 | Ticks por segundo: 30, o padrão do netfox, ou 60, o do estudo? 60 deixa o parry mais preciso e custa CPU e banda (F-005 §3; F-007 §8) | Desenho 3 (TASK-5), medindo | Medir os dois com 2 e com 8 clientes. Evidência do Desenho 2: a 30 ticks, a janela de parry de 80 ms vira 67 ms (−17 %); a 60, 83 ms (DEC-0022) | — |
 | Q-02 | O netfox roda no 4.7.2? O bug #659 tem contorno? Release ou main? (F-005 §8) | Desenho 3 (TASK-5) | Main fixada num commit, com a suíte do netfox verde no 4.7.2 (DEC-0003) | — |
 | Q-03 | No plano Free, o GitHub não aplica regra de branch em repositório privado. Fica privado sem proteção, público, ou no GitHub Pro? | TASK-2 | Privado sem proteção; o portão local é a trava | 2026-10-02: privado, sem regra de branch. O pre-push local é a trava, e o CI avisa (F-017 §2; DEC-0006) |
 | Q-04 | Qual o nome do jogo, e qual a licença do código e dos assets? | Desenho 1 (TASK-3) e Desenho 6 (TASK-8) | Nome provisório até o Desenho 1; código fechado por enquanto | 2026-10-02: "Jogo Acrobático" é o nome provisório até o fim da fase 1 (DEC-0018; F-016 §1). O nome definitivo e a licença seguem abertos |

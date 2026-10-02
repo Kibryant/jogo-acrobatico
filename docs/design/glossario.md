@@ -1,6 +1,6 @@
 ---
 revisado_em: 2026-10-02
-fontes: [F-001, F-002, F-005, F-007, F-012, F-013]
+fontes: [F-001, F-002, F-005, F-007, F-012, F-013, F-020, F-021]
 ---
 
 # Glossário
@@ -11,10 +11,20 @@ A linguagem ubíqua do jogo (DEC-0004, regra 5): o mesmo termo na conversa, no d
 
 | Termo | O que é | Unidade | No código |
 |---|---|---|---|
-| Tick | Um passo fixo da simulação | tick | `tick` |
-| Ticks por segundo | Quantos ticks a simulação roda por segundo: 30 ou 60 (Q-01) | tick/s | `tickrate` |
-| Estado | Retrato da simulação num tick, feito de valores planos, sem objeto | — | `state` |
-| Input | O que o jogador apertou num tick | — | `input` |
+| Lutador | O personagem na simulação, controlado por um jogador ou por um bot. No LoL, é o campeão (DEC-0022) | — | `Fighter` |
+| Jogador | A pessoa por trás do lutador; na rede, um peer. No LoL, é o invocador (DEC-0022) | — | `peer_id` |
+| Tick | Uma rodada de atualização do jogo, em ritmo fixo: lê o input, aplica as regras e anota a nova situação. O "servidor de 128 ticks" do Valorant faz 128 por segundo | tick | `tick` |
+| Ticks por segundo | Quantos ticks a simulação roda por segundo: 30 ou 60 (Q-01). A 30, um tick a cada 33 ms | tick/s | `tickrate` |
+| Frame | Um desenho da tela. Varia com o PC (FPS); o tick, não. O frame desenha; o tick decide | frame/s | `frame` |
+| Estado | Retrato da simulação num tick, feito de valores planos (número, vetor, texto curto e ID), nunca referência a outro objeto. Fica em quatro caixas: corpo, regras, input e configuração (DEC-0022) | — | `state` |
+| Estado do lutador | A caixa de regras do lutador: modo, carimbos e pulos usados. O netfox grava campo a campo, por valor | — | `FighterState` |
+| Modo | Em que situação o lutador está: no chão ou no ar e, na fase 1, na parede, no dash ou no gancho. Um por vez, com o tick em que começou | — | `mode`, `mode_since` |
+| Ação | O segundo modo, paralelo ao do movimento: o que o lutador faz com as mãos, como preparar um golpe ou bloquear. Fase 2 | — | `action`, `action_since` |
+| Carimbo de tick | O tick em que algo aconteceu, guardado no estado no lugar de uma contagem regressiva, como o "flash 12:30" no chat do LoL | tick | `*_tick`, como `jump_pressed_tick` |
+| Sanduíche do tick | O tick do lutador em três fatias: o núcleo decide, o motor move e colide, o núcleo confere | — | `before_move`, `move_and_slide`, `after_move` |
+| Fatos do movimento | O que o motor devolve depois de mover: se terminou no chão, a velocidade depois da colisão e, na fase 1, a parede | — | `MoveFacts` |
+| Configuração | Os números de design convertidos na carga para ticks e para a física do tick. Imutável e fora do estado | — | `MovementConfig` |
+| Input | O que o dono do lutador, jogador ou bot, apertou num tick: a direção, para onde olha e os comandos de um toque | — | `input` |
 | Previsão | O cliente aplica o próprio input na hora, sem esperar o servidor | — | `prediction` |
 | Rollback | Voltar ao estado confirmado e re-simular os ticks seguintes | — | `rollback` |
 | Tick novo | Tick simulado pela primeira vez; só nele tocam som e efeito | — | `is_fresh` |
@@ -58,8 +68,8 @@ A linguagem ubíqua do jogo (DEC-0004, regra 5): o mesmo termo na conversa, no d
 | Corrida na parede | Correr pela parede por um tempo limitado | s | `wall_run` |
 | Dash | Arrancada curta, só no chão e sem invulnerabilidade. No v0, separada da esquiva (`movimento.md`) | m, ms | `dash` |
 | Gancho | Puxa o jogador até um ponto a até 25 m | m | `grapple` |
-| No chão | Superestado: parado, correndo, golpes, defesa e troca de arma | — | `Grounded` |
-| No ar | Superestado: pulo, parede, dash e gancho; ninguém se defende | — | `Airborne` |
+| No chão | Superestado do modo: o lutador apoiado no chão, parado, correndo ou no dash (`movimento.md`). É onde a defesa vale | — | `is_grounded(mode)` |
+| No ar | Superestado do modo: pulo e gancho; ninguém se defende. Se a corrida na parede conta como ar no combate é a Q-14 | — | `is_airborne(mode)` |
 | Manobra | O verbo de uma acrobacia como entidade do núcleo: deslocamento, tempo, custo e o que dá para fazer durante ela. É o back-end; a animação só mostra (F-013 §1) | m, ms | `maneuver` |
 | Animação | A apresentação de uma manobra ou de um golpe, no nó. Mostra e nunca decide (DEC-0004) | — | `animation` |
 | Transição | Uma animação deslizando para a próxima sem encurtar nenhuma das duas (blend). É só visual | ms | `blend` |

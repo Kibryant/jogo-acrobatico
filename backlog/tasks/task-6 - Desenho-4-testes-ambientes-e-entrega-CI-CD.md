@@ -4,7 +4,7 @@ title: 'Desenho 4: testes, ambientes e entrega (CI/CD)'
 status: To Refine
 assignee: []
 created_date: '2026-10-02 16:48'
-updated_date: '2026-10-02 21:25'
+updated_date: '2026-10-02 22:40'
 labels:
   - infra
   - desenho
@@ -45,6 +45,7 @@ Quarta conversa da fase de desenho (DEC-0012). A base já tem portão, hooks e u
 - [ ] #2 Quando o Arthur decide o fluxo de branch e as versões, uma DEC registra.
 - [ ] #3 Quando um hook do Claude Code entra, ele foi testado numa sessão real nesta máquina e está no registro da harness.
 - [ ] #4 Quando um `#` dentro de uma string esconde código proibido na mesma linha de `core/`, `tools/check_core_purity.sh` falha, e uma sonda prova o antes e o depois.
+- [ ] #5 Quando um script nosso tem erro de tipo ou acesso inseguro e nenhum teste o carrega, o portão falha; uma sonda prova o antes e o depois.
 <!-- AC:END -->
 
 ## Definition of Done
@@ -70,5 +71,15 @@ created: 2026-10-02 21:25
 Achados do primeiro CI, na sessão 3 (02/10/2026, TASK-2):
 - Ruído no log: o truque `--remote-debug tcp://127.0.0.1:0` do `tools/run_tests.sh` imprime duas linhas `ERROR: ... Remote Debugger` em todo run de teste. Na sonda do critério 3 (PR #1), elas apareceram coladas na falha de verdade e despistam quem lê o log. Nada decidido: só registrado para esta conversa.
 - O runner `ubuntu-latest` passa a ser o Ubuntu 26 a partir de 19/10/2026 (Q-15).
+---
+
+author: Claude
+created: 2026-10-02 22:40
+---
+Furo achado na sessão 3 (02/10/2026, TASK-4), com sondas num clone fora do projeto (F-021; DEC-0022):
+- Um `var count = 5` e um `node.velocity` num `Node`, os dois em `core/`, passaram com o portão verde, mesmo com os avisos configurados como erro. O `--import` não analisa a fundo um script que ninguém carrega.
+- `godot --headless --check-only -s <arquivo>` pega os dois e ignora os addons, mas custa 1,2 s por arquivo e não escala.
+- Carregar todos os nossos scripts numa execução só do Godot (`ResourceLoader.load` mais `can_instantiate`) pegou os dois em 1,3 s no total.
+- O Arthur decidiu consertar aqui, antes de qualquer código de jogo (F-021 §1).
 ---
 <!-- COMMENTS:END -->

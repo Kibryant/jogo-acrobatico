@@ -49,7 +49,7 @@ Explain in Arthur's world (DEC-0021). The first question of every round checks t
 | `docs/pendencias.md` | Open questions (Q-xx). |
 | `.claude/` | Settings, agents, skills and the harness registry. |
 
-Feature folders (`player/`, `arena/`, `net/`, `ui/`...) are created by the first task that needs them (DEC-0005).
+Feature folders (`fighter/`, `arena/`, `match/`, `net/`, `ui/`...) are created by the first task that needs them (DEC-0005, DEC-0022).
 
 ## Reading order
 
@@ -76,11 +76,11 @@ Feature folders (`player/`, `arena/`, `net/`, `ui/`...) are created by the first
 5. DDD only at the strategic level: the glossary is the ubiquitous language, and the boundary that matters is Simulation (ticks, rollback) vs Meta (request/response, persistence). No repositories or aggregates inside the simulation.
 6. Grow by milestones: local 1v1 sword, online, bow and guns, 4v4 with bots, 8v8. Measure CPU with 16 bots before promising 8v8.
 
-The character is a hierarchical state machine counted in ticks (netfox `RewindableStateMachine`). Bots run behavior trees on the server and only produce input. No ECS.
+The character's state machine lives in `core/` as data: a mode and the tick it began, changed by pure functions (DEC-0022). Bots run behavior trees on the server and only produce input. No ECS, and no autoloads of our own (DEC-0022).
 
 ## Code conventions (DEC-0005, DEC-0008)
 
-- Statically typed GDScript: an untyped declaration is an error; `:=` is allowed. No unchecked `as`: use `is` plus `assert`.
+- Statically typed GDScript: an untyped declaration or an unsafe access is an error (DEC-0022); `:=` is allowed. No unchecked `as`: use `is` plus `assert`.
 - English identifiers, comments, tests, scripts and branch names. Files and folders in snake_case; classes and nodes in PascalCase.
 - Tabs, lines up to 100 columns, formatted by gdscript-formatter 0.27.0 (`bash tools/check_format.sh --fix`).
 - Do not edit `project.godot` by hand without saying which setting and why; `test/project_settings_test.gd` guards the decided ones. Jolt must stay explicit there: the engine default is still Godot Physics (F-006 §3).

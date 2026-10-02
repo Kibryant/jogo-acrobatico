@@ -4,6 +4,7 @@ title: 'Desenho 3: a rede'
 status: To Refine
 assignee: []
 created_date: '2026-10-02 16:48'
+updated_date: '2026-10-02 22:40'
 labels:
   - rede
   - desenho
@@ -52,3 +53,17 @@ Terceira conversa da fase de desenho (DEC-0012). A rede é a parte mais cara de 
 - [ ] #3 Diário da sessão escrito e glossário atualizado
 - [ ] #4 Mudanças registradas em docs/mudancas.md
 <!-- DOD:END -->
+
+## Comments
+
+<!-- COMMENTS:BEGIN -->
+author: Claude
+created: 2026-10-02 22:40
+---
+Entrada do Desenho 2 (TASK-4; DEC-0022), para este desenho provar com o netfox rodando no 4.7.2. Leitura feita no código-fonte, main, commit `cf5189d`:
+- Hipótese 1: o caminho aninhado `:state:mode` funciona de ponta a ponta: grava, restaura e vai pela rede. O `snapshot.gd` lê com `get_indexed`, mas a serialização para a rede não foi lida.
+- Hipótese 2: o contorno do transform (estático, transform, cinemático) do `rollback-caveats.md`, que o guia diz valer para o Jolt, deixa um lutador colidir com o outro na posição certa durante a re-simulação.
+- Hipótese 3: guardar `on_floor` no estado substitui o movimento extra de velocidade zero que o guia sugere para o `is_on_floor()`.
+- Evidência para a Q-01: com o arredondamento da DEC-0022, a janela de parry de 80 ms vira 2 ticks (67 ms, −17 %) a 30 ticks, e 5 ticks (83 ms, +4 %) a 60. O buffer de 150 ms vira 167 ms a 30 ticks e fica exato a 60.
+---
+<!-- COMMENTS:END -->

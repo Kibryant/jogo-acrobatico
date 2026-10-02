@@ -1,10 +1,10 @@
 ---
 id: TASK-2
 title: Criar o repositório privado no GitHub e rodar o primeiro CI
-status: In Progress
+status: Done
 assignee: []
 created_date: '2026-10-02 16:48'
-updated_date: '2026-10-02 21:25'
+updated_date: '2026-10-02 22:45'
 labels:
   - infra
 milestone: m-0
@@ -44,7 +44,7 @@ O CI está escrito (`.github/workflows/ci.yml`), mas nunca rodou: o repositório
 <!-- DOD:BEGIN -->
 - [x] #1 Critérios de aceite verificados
 - [x] #2 Teste automatizado para toda regra do núcleo (core/)
-- [ ] #3 Diário da sessão escrito e glossário atualizado
+- [x] #3 Diário da sessão escrito e glossário atualizado
 - [x] #4 Mudanças registradas em docs/mudancas.md
 <!-- DOD:END -->
 
@@ -72,3 +72,16 @@ Sessão 3 (02/10/2026):
 - DoD #2: task de infraestrutura, sem regra de núcleo. DoD #3: fecha com o diário da sessão 3; nenhum termo de domínio novo.
 - Uma segunda sessão do Claude, no mesmo diretório, levou esta edição da task no commit f3170b1. Nada se perdeu.
 <!-- SECTION:NOTES:END -->
+
+## Final Summary
+
+<!-- SECTION:FINAL_SUMMARY:BEGIN -->
+Fechada na sessão 3 (02/10/2026).
+- Repositório privado https://github.com/Kibryant/jogo-acrobatico, sem regra de branch (Q-03; F-017 §2).
+- Checagem prévia sem publicar nada: versões fixadas, gitleaks no histórico, portão num clone limpo e o hook do LFS dentro do lefthook.
+- Primeiro push: o pre-push rodou o portão pela primeira vez, e o LFS subiu 8 objetos.
+- CI verde em 20 s no Ubuntu 24.04 (critérios 1 e 2). Uma sonda num PR em rascunho, fechado sem merge, provou o critério 3.
+- O runner do CI ficou fixo em ubuntu-24.04 (Q-15; F-018 §2).
+- Achado levado para a TASK-6: o ruído do --remote-debug no log de teste.
+- DoD #2: task de infraestrutura, sem regra de núcleo.
+<!-- SECTION:FINAL_SUMMARY:END -->

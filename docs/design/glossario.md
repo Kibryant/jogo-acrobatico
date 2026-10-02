@@ -22,9 +22,10 @@ A linguagem ubíqua do jogo (DEC-0004, regra 5): o mesmo termo na conversa, no d
 | Ação | O segundo modo, paralelo ao do movimento: o que o lutador faz com as mãos, como preparar um golpe ou bloquear. Fase 2 | — | `action`, `action_since` |
 | Carimbo de tick | O tick em que algo aconteceu, guardado no estado no lugar de uma contagem regressiva, como o "flash 12:30" no chat do LoL | tick | `*_tick`, como `jump_pressed_tick` |
 | Sanduíche do tick | O tick do lutador em três fatias: o núcleo decide, o motor move e colide, o núcleo confere | — | `before_move`, `move_and_slide`, `after_move` |
+| Plano do movimento | O que a primeira fatia do sanduíche devolve: o estado novo e a velocidade que o núcleo pede ao motor | — | `MovePlan` |
 | Fatos do movimento | O que o motor devolve depois de mover: se terminou no chão, a velocidade depois da colisão e, na fase 1, a parede | — | `MoveFacts` |
 | Configuração | Os números de design convertidos na carga para ticks e para a física do tick. Imutável e fora do estado | — | `MovementConfig` |
-| Input | O que o dono do lutador, jogador ou bot, apertou num tick: a direção, para onde olha e os comandos de um toque | — | `input` |
+| Input | O que o dono do lutador, jogador ou bot, apertou num tick: a direção, para onde olha e os comandos de um toque. Mora no nó `Input`, com o script `FighterInput` | — | `input`, nó `Input` (`FighterInput`) |
 | Previsão | O cliente aplica o próprio input na hora, sem esperar o servidor | — | `prediction` |
 | Rollback | Voltar ao estado confirmado e re-simular os ticks seguintes | — | `rollback` |
 | Tick novo | Tick simulado pela primeira vez; só nele tocam som e efeito | — | `is_fresh` |

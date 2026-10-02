@@ -31,7 +31,7 @@
 | [DEC-0019](DEC-0019-numeros-em-artefato-visual.md) | 2026-10-02 | Número, medida e cálculo se mostram ao Arthur num artefato visual | aceita |
 | [DEC-0020](DEC-0020-linguagem-gdscript-e-nucleo-trocavel.md) | 2026-10-02 | GDScript no jogo todo; só o núcleo muda de linguagem, se a medição de CPU pedir | aceita; completa a DEC-0001 |
 | [DEC-0021](DEC-0021-explicar-no-mundo-do-arthur.md) | 2026-10-02 | Explicar no mundo do Arthur: pergunta fixa de entendimento, exemplo do que ele conhece e escolha como trade-off | aceita; completa a DEC-0010 |
-| [DEC-0022](DEC-0022-arquitetura-detalhada.md) | 2026-10-02 | Arquitetura detalhada: estado em quatro caixas, máquina de estados no núcleo, tick em sanduíche, cenas, zero autoloads nossos, pastas e acesso inseguro como erro | aceita; substitui só a frase da DEC-0004 sobre a RewindableStateMachine |
+| [DEC-0022](DEC-0022-arquitetura-detalhada.md) | 2026-10-02 | Arquitetura detalhada: estado em quatro caixas, máquina de estados no núcleo, tick em sanduíche, cenas, zero autoloads nossos, pastas e acesso inseguro como erro | aceita; substitui só a frase da DEC-0004 sobre a RewindableStateMachine. As cenas e as pastas foram aprovadas no plano (F-022) |
 
 ## Propostas — ainda não são regra
 

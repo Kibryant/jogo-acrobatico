@@ -1,6 +1,6 @@
 ---
 revisado_em: 2026-10-02
-fontes: [F-002, F-005, F-006, F-007, F-018, F-020, F-021]
+fontes: [F-002, F-005, F-006, F-007, F-018, F-020, F-021, F-022]
 ---
 
 # Visão geral
@@ -65,7 +65,7 @@ Só uma frase da DEC-0004 mudou: a máquina de estados não usa mais a `Rewindab
 
 Um tick é uma rodada de atualização do jogo. Em cada uma, o jogo lê o que cada lutador apertou, aplica as regras e anota a nova situação, sempre no mesmo ritmo. Quando dizem que o Valorant tem servidor de 128 ticks, é isso: 128 rodadas por segundo. No TypeScript, seria um `setInterval(atualizarJogo, 33)`.
 
-- O padrão do netfox é 30 ticks por segundo, ou seja, um a cada 33 ms. A escolha entre 30 e 60 é a Q-01, do Desenho 3.
+- O padrão do netfox é 30 ticks por segundo, ou seja, um a cada 33 ms (`netfox/time/tickrate` em `addons/netfox/netfox.gd`, commit `cf5189d`). A escolha entre 30 e 60 é a Q-01, do Desenho 3.
 - O tick decide; o frame só desenha. Um PC a 144 FPS e outro a 40 pulam igual, porque a regra roda no tick.
 - O netfox guarda 64 ticks de histórico para o rollback, que dão 2,1 s a 30 por segundo, e roda até 8 ticks num frame quando precisa alcançar o relógio (`addons/netfox/netfox.gd`, commit `cf5189d`).
 
@@ -135,12 +135,12 @@ stateDiagram-v2
 - **Fase 1:** WALL_RUN, DASH e GRAPPLE entram no mesmo campo.
 - **Hierarquia como função:** `is_grounded(mode)` e `is_airborne(mode)`.
 - **Combate em paralelo (fase 2):** um segundo modo, `action`, com NONE, WINDUP, ACTIVE, RECOVERY, BLOCK e PARRY. Correr enquanto golpeia não multiplica estados. "No ar ninguém se defende" vira uma regra entre os dois modos, e é ali que a matriz de posição da Q-14 vai morar.
-- **Animação e efeito:** trocam no `NetworkTime.after_tick_loop`, comparando o modo desenhado com o do estado. Assim nunca tocam duas vezes num rollback. Não existe barramento de eventos (F-007 §8).
+- **Animação e efeito:** trocam no `NetworkTime.after_tick_loop`, comparando o modo desenhado com o do estado. Assim nunca tocam duas vezes num rollback. É o mesmo sinal que a `RewindableStateMachine` usa por dentro (`addons/netfox/network-time.gd`; `addons/netfox.extras/state-machine/rewindable-state-machine.gd`, commit `cf5189d`). Não existe barramento de eventos (F-007 §8).
 - **Por que não a `RewindableStateMachine`:** ela é plana, grava só o nome do estado e põe a regra num nó por estado (`addons/netfox.extras/state-machine/rewindable-state-machine.gd`, commit `cf5189d`). A regra presa em nó também não acompanharia o núcleo se ele mudasse de linguagem (DEC-0020).
 
 ## O tempo e a física no estado (DEC-0022)
 
-- **Carimbo, não contagem:** o estado guarda o tick em que algo aconteceu (`jump_pressed_tick = 1040`), como o "flash 12:30" no chat do LoL. A regra calcula `tick - jump_pressed_tick < buffer_ticks`. O netfox só manda o que mudou, e o carimbo muda uma vez.
+- **Carimbo, não contagem:** o estado guarda o tick em que algo aconteceu (`jump_pressed_tick = 1040`), como o "flash 12:30" no chat do LoL. A regra calcula `tick - jump_pressed_tick < buffer_ticks`. O netfox só manda o que mudou, porque o diff de estado vem ligado (`netfox/rollback/enable_diff_states` em `addons/netfox/netfox.gd`, commit `cf5189d`), e o carimbo muda uma vez.
 - **Ms para tick:** o tick mais próximo, e o empate sobe. Um teste falha se o erro passar de meio tick.
 
 | Tempo do design | A 30 ticks | A 60 ticks |
@@ -153,7 +153,7 @@ stateDiagram-v2
 - **Física derivada para o tick:** a configuração calcula velocidade e gravidade já sabendo o tamanho do tick. Com a fórmula contínua, o pulo de 1,2 m chegaria a 1,09 m a 30 ticks e a 1,14 m a 60. Um teste garante 1,2 m, com tolerância de 1 cm, nas duas taxas.
 - **A configuração nasce na carga:** o `Match` carrega o `.tres`, em ms e metros, e cria o `MovementConfig` uma vez, com o tickrate como parâmetro (F-018 §1). O núcleo nunca carrega arquivo.
 
-## As cenas (DEC-0022)
+## As cenas (DEC-0022; aprovadas no plano, F-022)
 
 ```
 Fighter                    o lutador (CharacterBody3D, script fino)
@@ -176,9 +176,9 @@ Os caminhos do netfox, como `Input:jump` e `:state:mode`, seguem a árvore de ce
 
 ## Os autoloads (DEC-0022)
 
-Nenhum nosso; só os que o netfox traz, como o `NetworkTime`. Uma variável global fica fora das caixas e não volta no tempo no rollback. A configuração é passada à mão, como prop drilling no React. Um autoload futuro, como as preferências do jogador, só entra com DEC própria e se nunca for lido dentro do tick.
+Nenhum nosso; só os que o netfox traz, como o `NetworkTime`, registrados pelo plugin dele (`AUTOLOADS` em `addons/netfox/netfox.gd`, commit `cf5189d`). Uma variável global fica fora das caixas e não volta no tempo no rollback. A configuração é passada à mão, como prop drilling no React. Um autoload futuro, como as preferências do jogador, só entra com DEC própria e se nunca for lido dentro do tick.
 
-## As pastas (DEC-0005, nomes da DEC-0022)
+## As pastas (DEC-0005; nomes da DEC-0022, aprovados no plano, F-022)
 
 ```
 core/fighter/   estado, input do tick, fatos, regras e a configuração do lutador

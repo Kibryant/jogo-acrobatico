@@ -1,10 +1,10 @@
 ---
 id: TASK-4
 title: 'Desenho 2: a arquitetura detalhada'
-status: In Progress
+status: Done
 assignee: []
 created_date: '2026-10-02 16:48'
-updated_date: '2026-10-02 21:33'
+updated_date: '2026-10-02 22:49'
 labels:
   - desenho
 milestone: m-0
@@ -46,19 +46,19 @@ A pauta da conversa: cada item sai com resposta, DEC ou pendência.
 
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
-- [ ] #1 Quando a conversa termina, `docs/arquitetura/visao-geral.md` mostra o estado, o input, o `step` e as cenas, com diagrama.
-- [ ] #2 Quando o Arthur aprova a forma do estado e as pastas, uma DEC registra.
-- [ ] #3 Quando a decisão sobre os acessos inseguros sai, o `project.godot` e o teste de configurações acompanham.
-- [ ] #4 Quando um termo novo aparece, ele entra no glossário com o nome no código.
-- [ ] #5 Quando o desenho depende de um comportamento do netfox, o documento cita o arquivo do netfox que o confirma, num commit identificado, e o que só o Desenho 3 pode provar fica marcado como hipótese.
+- [x] #1 Quando a conversa termina, `docs/arquitetura/visao-geral.md` mostra o estado, o input, o `step` e as cenas, com diagrama.
+- [x] #2 Quando o Arthur aprova a forma do estado e as pastas, uma DEC registra.
+- [x] #3 Quando a decisão sobre os acessos inseguros sai, o `project.godot` e o teste de configurações acompanham.
+- [x] #4 Quando um termo novo aparece, ele entra no glossário com o nome no código.
+- [x] #5 Quando o desenho depende de um comportamento do netfox, o documento cita o arquivo do netfox que o confirma, num commit identificado, e o que só o Desenho 3 pode provar fica marcado como hipótese.
 <!-- AC:END -->
 
 ## Definition of Done
 <!-- DOD:BEGIN -->
-- [ ] #1 Critérios de aceite verificados
-- [ ] #2 Teste automatizado para toda regra do núcleo (core/)
-- [ ] #3 Diário da sessão escrito e glossário atualizado
-- [ ] #4 Mudanças registradas em docs/mudancas.md
+- [x] #1 Critérios de aceite verificados
+- [x] #2 Teste automatizado para toda regra do núcleo (core/)
+- [x] #3 Diário da sessão escrito e glossário atualizado
+- [x] #4 Mudanças registradas em docs/mudancas.md
 <!-- DOD:END -->
 
 ## Implementation Plan
@@ -70,3 +70,29 @@ A pauta da conversa: cada item sai com resposta, DEC ou pendência.
 4. Proposta pelo modo de plano; com o ok do Arthur, a DEC e o `visao-geral.md`.
 5. Registro: as palavras do Arthur numa F-xxx, o glossário, `mudancas.md`, `pendencias.md`, e o `project.godot` com o teste, se os avisos mudarem.
 <!-- SECTION:PLAN:END -->
+
+## Implementation Notes
+
+<!-- SECTION:NOTES:BEGIN -->
+Sessão 3 (02/10/2026):
+- Leitura do netfox no código-fonte, main, commit `cf5189d`, sem instalar: snapshot por valor com `get_indexed`, caminho aninhado, ordem de simulação, a RewindableStateMachine plana, os padrões e os cuidados com o CharacterBody3D.
+- Rodada 1, o núcleo, no artefato "O tick por dentro". O Arthur não entendeu o tick; a explicação foi refeita no mundo dele (F-020 §2 a §4; DEC-0021) e ele confirmou as quatro caixas, a máquina de estados no núcleo e os cinco detalhes (F-020 §5).
+- Rodada 2, a casca: cenas, zero autoloads nossos e acesso inseguro como erro (F-021 §1).
+- O plano aprovado no modo de plano (F-022) virou a DEC-0022, a visão geral reescrita, o glossário, o `project.godot` com teste, o AGENTS.md, o critério 5 da TASK-6 e as hipóteses da TASK-5.
+- Sondas: o pulo de 1,2 m chega a 1,09 m a 30 ticks com a fórmula contínua; o portão não compila script que nenhum teste carrega; o teste novo falha se um aviso voltar para 1.
+- O reviewer pediu mudanças: o `MovePlan` no glossário, a aprovação das pastas numa fonte (F-022), o status da DEC-0004 de volta a `aceita` e quatro citações do netfox. Tudo corrigido.
+<!-- SECTION:NOTES:END -->
+
+## Final Summary
+
+<!-- SECTION:FINAL_SUMMARY:BEGIN -->
+Fechada na sessão 3 (02/10/2026), em duas rodadas e um plano aprovado.
+- DEC-0022: o estado em quatro caixas, a máquina de estados no núcleo como dado, o tick em sanduíche, as cenas, zero autoloads nossos, as pastas com nome e o acesso inseguro como erro. Substitui só a frase da DEC-0004 sobre a RewindableStateMachine.
+- `docs/arquitetura/visao-geral.md` reescrita, com 5 diagramas e a tabela do netfox no commit `cf5189d`, com as hipóteses marcadas.
+- Glossário: lutador, jogador, frame, modo, ação, carimbo de tick, sanduíche do tick, plano e fatos do movimento, configuração e estado do lutador.
+- `project.godot`: os quatro avisos `unsafe_*` em 2, guardados pelo `test_unsafe_access_is_an_error`.
+- Processo: a DEC-0021 nasceu do pedido do Arthur por explicação no mundo dele.
+- Artefato, versão 2: https://claude.ai/artifact/EJCYbVj6oCZcim765nDH8B
+- Portão: `gate green in 12s`, com 5 testes.
+- DoD #2: task de desenho, sem regra de núcleo; o teste novo guarda configuração.
+<!-- SECTION:FINAL_SUMMARY:END -->

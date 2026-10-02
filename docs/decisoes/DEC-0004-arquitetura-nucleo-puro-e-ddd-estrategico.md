@@ -2,7 +2,7 @@
 id: DEC-0004
 titulo: Arquitetura — núcleo puro, nós finos e DDD só estratégico
 data: 2026-10-02
-status: aceita; a frase sobre a RewindableStateMachine foi substituída pela DEC-0022
+status: aceita
 decidido_por: Arthur
 fontes: [F-002, F-003, F-005, F-007]
 substitui:

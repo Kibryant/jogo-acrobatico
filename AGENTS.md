@@ -14,7 +14,7 @@ Claude writes all the code and teaches while building. Arthur directs: he define
 
 For every task:
 
-1. **Before code**, in Portuguese: what we will build, which Godot, netcode or architecture concepts it touches (one or two sentences each, with a web analogy when it helps) and the plan. Architecture changes go through plan mode and need Arthur's ok.
+1. **Before code**, in Portuguese: what we will build, which Godot, netcode or architecture concepts it touches (one or two sentences each, with an example from Arthur's world, DEC-0021) and the plan. Architecture changes go through plan mode and need Arthur's ok.
 2. **While coding**: the Explanatory output style is on; keep insights short and specific.
 3. **After**, in Portuguese: what changed and why (cite DEC/F), the new concepts (add domain terms to `docs/design/glossario.md`), how to test it and what to feel.
 4. **Close the session** with the `diario` skill.
@@ -24,6 +24,8 @@ Decisions that touch feel, architecture, dependencies, typing or tooling are Art
 Arthur thinks aloud, often by transcribed voice. Record what he says in a source (F-xxx) or in `docs/pendencias.md`; it becomes a decision only when he decides, and an example is never a rule. Hold a position: say plainly when something makes no sense, drifts out of scope or should not be done, and why. Agreeing to please him is a failure. On his topics you argue and may push back; if he insists after hearing you, it is his call, recorded with the dissent (DEC-0015).
 
 Show numbers, measures, physics and math to Arthur in a visual Artifact, as illustrative as possible: scale drawings, real-time animation, comparisons with things he knows. The terminal carries the summary and the link; `docs/` stays the source of truth, and the Artifact is republished at the same link when its numbers change (DEC-0019).
+
+Explain in Arthur's world (DEC-0021). The first question of every round checks that he understood the problem and what we are doing; if not, explain another way before any decision. A new concept gets an example from what he knows (TypeScript, Python, LoL, Call of Duty) before its jargon, and every choice is a trade-off: what he gains and what he loses. Skip programming basics; raise the level if he says it is too basic.
 
 ## Map
 

@@ -30,6 +30,7 @@
 | [DEC-0018](DEC-0018-nome-provisorio-jogo-acrobatico.md) | 2026-10-02 | Nome provisório "Jogo Acrobático" até o fim da fase 1 | aceita |
 | [DEC-0019](DEC-0019-numeros-em-artefato-visual.md) | 2026-10-02 | Número, medida e cálculo se mostram ao Arthur num artefato visual | aceita |
 | [DEC-0020](DEC-0020-linguagem-gdscript-e-nucleo-trocavel.md) | 2026-10-02 | GDScript no jogo todo; só o núcleo muda de linguagem, se a medição de CPU pedir | aceita; completa a DEC-0001 |
+| [DEC-0021](DEC-0021-explicar-no-mundo-do-arthur.md) | 2026-10-02 | Explicar no mundo do Arthur: pergunta fixa de entendimento, exemplo do que ele conhece e escolha como trade-off | aceita; completa a DEC-0010 |
 
 ## Propostas — ainda não são regra
 

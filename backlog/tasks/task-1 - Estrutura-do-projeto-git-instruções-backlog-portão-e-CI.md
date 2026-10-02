@@ -1,10 +1,10 @@
 ---
 id: TASK-1
 title: 'Estrutura do projeto: git, instruções, backlog, portão e CI'
-status: In Progress
+status: Done
 assignee: []
 created_date: '2026-10-02 16:48'
-updated_date: '2026-10-02 16:49'
+updated_date: '2026-10-02 17:16'
 labels:
   - base
 milestone: m-0
@@ -41,14 +41,14 @@ Primeira sessão do projeto: preparar o terreno antes de qualquer código de jog
 - [x] #3 Quando um arquivo em `core/` usa nó, `Time`, `await` ou sorteio sem semente, `tools/check_core_purity.sh` falha, e comentário não conta.
 - [x] #4 Quando um `.gd` sai do formato, o pre-commit e o portão falham.
 - [x] #5 Quando um teste travado em `.claude/harness/locks/` muda, o portão falha.
-- [ ] #6 Quando um agente abre o projeto, o `CLAUDE.md` carrega o `AGENTS.md`, com o mapa, as regras e o modo de construir e ensinar.
+- [x] #6 Quando um agente abre o projeto, o `CLAUDE.md` carrega o `AGENTS.md`, com o mapa, as regras e o modo de construir e ensinar.
 - [x] #7 Quando o Arthur quer saber de onde veio uma decisão, a DEC cita a fonte F-xxx com as palavras dele.
 <!-- AC:END -->
 
 ## Definition of Done
 <!-- DOD:BEGIN -->
-- [ ] #1 Critérios de aceite verificados
-- [ ] #2 Teste automatizado para toda regra do núcleo (core/)
+- [x] #1 Critérios de aceite verificados
+- [x] #2 Teste automatizado para toda regra do núcleo (core/)
 - [x] #3 Diário da sessão escrito e glossário atualizado
 - [x] #4 Mudanças registradas em docs/mudancas.md
 <!-- DOD:END -->
@@ -77,3 +77,17 @@ Feito em 02/10/2026, a partir de uma sessão do my-brain. O que foi provado e co
 - As fontes F-001, F-003 e F-005 a F-008 foram extraídas das transcrições da sessão, sem redigitar. O estudo bate com o Yabadoo em 14.134 caracteres.
 - Falta conferir: o CLAUDE.md carregando o AGENTS.md numa sessão real (#6), o primeiro commit com o lefthook rodando e o CI no GitHub (TASK-2).
 <!-- SECTION:NOTES:END -->
+
+## Final Summary
+
+<!-- SECTION:FINAL_SUMMARY:BEGIN -->
+Fechada na sessão 2 (02/10/2026).
+
+- #6 provado numa sessão real: o `CLAUDE.md` (`@AGENTS.md`) carregou o AGENTS.md inteiro no contexto do agente.
+- Primeiro commit: `0a37990`, "Base do projeto: estrutura, portão, hooks, CI e documentação", com 597 arquivos. Os 9 PNGs do gdUnit4 foram pelo LFS (`git lfs ls-files`).
+- O lefthook rodou à vista do Arthur. Na primeira tentativa, uma sonda em `core/probe.gd` passou pelo pre-commit, porque o glob `core/**/*.gd` não casava arquivo na raiz de `core/`. Conserto: `glob_matcher: doublestar` (F-011 §1). Com ele, a mesma sonda foi barrada, e o commit da sonda foi refeito com `--amend` antes de qualquer push.
+- Correção das notas de implementação: a sonda da sessão 1 não "ignorou texto entre aspas". Texto entre aspas conta, e um `#` dentro de string esconde o resto da linha. O conserto ficou na TASK-6, critério #4 (F-010 §2).
+- DoD #2: esta task não cria regra de núcleo. O `test/project_settings_test.gd` guarda as configurações decididas.
+- DEC-0012 aceita e Q-08 respondida (F-010 §2).
+- Portão: `gate green in 11s`.
+<!-- SECTION:FINAL_SUMMARY:END -->

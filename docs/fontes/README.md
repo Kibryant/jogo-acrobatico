@@ -21,3 +21,4 @@ O que chegou ao projeto e como chegou. Uma fonte não muda: só mudam `status`, 
 | [F-015](F-015-arthur-numeros-corpos-e-pulo-duplo.md) | 2026-10-02 | O Arthur recusa discutir número no abstrato, fecha a tabela como v0, quer pulo duplo, sem dano de queda, a câmera do GunZ como referência, e pensa em corpos diferentes |
 | [F-016](F-016-arthur-nome-provisorio-e-numeros-em-artefato.md) | 2026-10-02 | O Arthur aceita o nome provisório, pede número e cálculo em artefato visual e autoriza instalar Python e Node.js |
 | [F-017](F-017-arthur-abre-a-sessao-3-e-autoriza-o-github.md) | 2026-10-02 | O Arthur abre a sessão 3 com a TASK-2 e a TASK-4, autoriza publicar no GitHub e fecha a Q-03: privado, sem regra de branch |
+| [F-018](F-018-arthur-deixa-o-desenho-2-ready.md) | 2026-10-02 | O Arthur deixa o Desenho 2 Ready: esqueleto em detalhe, configuração imutável em ticks e o runner do CI fixado no Ubuntu 24.04 (Q-15) |

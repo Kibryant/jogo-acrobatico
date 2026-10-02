@@ -1,0 +1,43 @@
+# CI (DEC-0006): the same gate as pre-push, plus a secret scan over the whole history.
+# Pinned tool versions match Arthur's machine: Godot 4.7.2, gdscript-formatter 0.27.0, gitleaks 8.30.1.
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  gate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+          lfs: true
+
+      - uses: chickensoft-games/setup-godot@v2
+        with:
+          version: 4.7.2
+          use-dotnet: false
+          include-templates: false
+
+      - name: Install pinned tools
+        run: |
+          curl -sSL --fail -o /tmp/fmt.zip https://github.com/GDQuest/GDScript-formatter/releases/download/0.27.0/gdscript-formatter-0.27.0-linux-x86_64.zip
+          unzip -q /tmp/fmt.zip -d /tmp/fmt
+          sudo install -m 755 "$(find /tmp/fmt -type f -name 'gdscript-formatter*' | head -n 1)" /usr/local/bin/gdscript-formatter
+          curl -sSL --fail -o /tmp/gitleaks.tar.gz https://github.com/gitleaks/gitleaks/releases/download/v8.30.1/gitleaks_8.30.1_linux_x64.tar.gz
+          tar -xzf /tmp/gitleaks.tar.gz -C /tmp gitleaks
+          sudo install -m 755 /tmp/gitleaks /usr/local/bin/gitleaks
+
+      - name: Secret scan (gitleaks)
+        run: gitleaks git --redact --verbose
+
+      - name: Gate (tools/gate.sh)
+        run: bash tools/gate.sh

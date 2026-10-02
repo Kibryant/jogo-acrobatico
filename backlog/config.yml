@@ -1,0 +1,20 @@
+project_name: "Jogo Acrobático"
+default_status: "To Refine"
+statuses: ["To Refine", "Ready", "In Progress", "Waiting", "Parked", "Done"]
+labels: ["base", "desenho", "infra", "rede", "jogo"]
+date_format: yyyy-mm-dd
+max_column_width: 20
+auto_open_browser: false
+default_port: 6420
+remote_operations: false
+auto_commit: false
+filesystem_only: false
+bypass_git_hooks: false
+check_active_branches: true
+active_branch_days: 30
+task_prefix: "TASK"
+definition_of_done:
+  - "Critérios de aceite verificados"
+  - "Teste automatizado para toda regra do núcleo (core/)"
+  - "Diário da sessão escrito e glossário atualizado"
+  - "Mudanças registradas em docs/mudancas.md"

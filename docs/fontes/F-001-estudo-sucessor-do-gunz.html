@@ -1,0 +1,712 @@
+<title>Estudo do sucessor do GunZ</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: dossiê de estudo — índice fixo à esquerda em telas largas, coluna de leitura de ~68ch, tabelas como "ficha técnica" de jogo */
+:root {
+  --bg: #F1F2F5;
+  --surface: #FFFFFF;
+  --ink: #15171C;
+  --muted: #5A6070;
+  --line: #D8DBE3;
+  --accent: #2545D0;
+  --accent-soft: #E4E9FB;
+  --warn: #9A5600;
+  --warn-soft: #FBF0DF;
+  --ok: #1D7347;
+  --bad: #B3261E;
+  --font-display: "Chakra Petch", "Bahnschrift", "Segoe UI", system-ui, sans-serif;
+  --font-body: "IBM Plex Sans", "Segoe UI", system-ui, -apple-system, sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+  --step--1: 0.8125rem;
+  --step-0: 1rem;
+  --step-1: 1.1875rem;
+  --step-2: 1.5rem;
+  --step-3: 2.125rem;
+  --step-4: 2.875rem;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0E1016;
+    --surface: #161922;
+    --ink: #E6E8EE;
+    --muted: #9AA0B1;
+    --line: #2A2F3B;
+    --accent: #93A5FF;
+    --accent-soft: #1D2340;
+    --warn: #F0B44C;
+    --warn-soft: #2A2110;
+    --ok: #5BC48C;
+    --bad: #FF7B6E;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0E1016;
+  --surface: #161922;
+  --ink: #E6E8EE;
+  --muted: #9AA0B1;
+  --line: #2A2F3B;
+  --accent: #93A5FF;
+  --accent-soft: #1D2340;
+  --warn: #F0B44C;
+  --warn-soft: #2A2110;
+  --ok: #5BC48C;
+  --bad: #FF7B6E;
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+body {
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--font-body);
+  font-size: var(--step-0);
+  line-height: 1.6;
+  padding-inline: 16px;
+  padding-block: 0 64px;
+}
+a { color: var(--accent); text-underline-offset: 2px; }
+a:focus-visible, summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 2px; }
+
+.shell {
+  max-width: 1120px;
+  margin-inline: auto;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 40px;
+}
+@media (min-width: 1000px) {
+  .shell { grid-template-columns: 210px minmax(0, 1fr); }
+}
+
+/* Índice */
+.toc {
+  font-family: var(--font-display);
+  font-size: var(--step--1);
+  letter-spacing: 0.02em;
+}
+.toc ol { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 6px 14px; }
+.toc a { color: var(--muted); text-decoration: none; }
+.toc a:hover { color: var(--accent); }
+.toc .toc-label { text-transform: uppercase; letter-spacing: 0.12em; color: var(--muted); margin: 0 0 10px; font-weight: 600; }
+@media (min-width: 1000px) {
+  .toc { position: sticky; top: calc(env(safe-area-inset-top, 0px) + 32px); align-self: start; padding-top: 48px; }
+  .toc ol { flex-direction: column; gap: 8px; }
+}
+
+main { min-width: 0; max-width: 760px; }
+
+/* Cabeçalho */
+header.doc-head { padding-block: 48px 8px; display: grid; gap: 14px; }
+.eyebrow {
+  font-family: var(--font-display);
+  font-size: var(--step--1);
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  color: var(--accent);
+  font-weight: 600;
+  margin: 0;
+}
+h1, h2, h3 { font-family: var(--font-display); text-wrap: balance; line-height: 1.15; margin: 0; }
+h1 { font-size: var(--step-4); font-weight: 700; letter-spacing: -0.01em; }
+h2 { font-size: var(--step-3); font-weight: 700; }
+h3 { font-size: var(--step-1); font-weight: 600; margin-top: 8px; }
+.lede { font-size: var(--step-1); color: var(--ink); max-width: 62ch; margin: 0; }
+.byline { color: var(--muted); font-size: var(--step--1); margin: 0; }
+
+/* Ficha técnica */
+.spec {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 1px;
+  background: var(--line);
+  border: 1px solid var(--line);
+  margin-block: 28px 8px;
+}
+.spec div { background: var(--surface); padding: 14px 16px; display: grid; gap: 4px; align-content: start; }
+.spec dt { font-family: var(--font-display); font-size: var(--step--1); text-transform: uppercase; letter-spacing: 0.1em; color: var(--muted); }
+.spec dd { margin: 0; font-family: var(--font-display); font-size: var(--step-2); font-weight: 600; font-variant-numeric: tabular-nums; line-height: 1.1; }
+.spec small { display: block; font-family: var(--font-body); font-size: var(--step--1); color: var(--muted); font-weight: 400; margin-top: 4px; line-height: 1.4; }
+
+/* Seções */
+section { padding-top: 56px; display: grid; gap: 16px; }
+section > p, section > ul, section > ol { max-width: 68ch; margin: 0; }
+section ul, section ol { padding-left: 1.25em; display: grid; gap: 8px; }
+.kicker { font-family: var(--font-display); font-size: var(--step--1); text-transform: uppercase; letter-spacing: 0.14em; color: var(--muted); margin: 0; font-weight: 600; }
+strong { font-weight: 600; }
+
+blockquote.voice {
+  margin: 0;
+  padding: 2px 0 2px 16px;
+  border-left: 3px solid var(--accent);
+  font-style: italic;
+  color: var(--muted);
+  max-width: 64ch;
+}
+
+.callout {
+  background: var(--accent-soft);
+  padding: 16px 18px;
+  display: grid;
+  gap: 8px;
+  max-width: 68ch;
+}
+.callout.warn { background: var(--warn-soft); }
+.callout p { margin: 0; }
+.callout .callout-title { font-family: var(--font-display); font-weight: 600; font-size: var(--step-0); letter-spacing: 0.02em; }
+
+/* Tabelas */
+.table-wrap { overflow-x: auto; border: 1px solid var(--line); background: var(--surface); }
+table { border-collapse: collapse; width: 100%; font-size: 0.9375rem; }
+th, td { text-align: left; vertical-align: top; padding: 10px 12px; border-bottom: 1px solid var(--line); }
+tr:last-child td { border-bottom: 0; }
+th { font-family: var(--font-display); font-size: var(--step--1); text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); font-weight: 600; white-space: nowrap; background: var(--bg); }
+td.num, th.num { font-variant-numeric: tabular-nums; white-space: nowrap; }
+td.mono, .mono { font-family: var(--font-mono); font-size: 0.875rem; }
+.tag { display: inline-block; font-family: var(--font-display); font-size: 0.75rem; letter-spacing: 0.06em; text-transform: uppercase; padding: 2px 8px; border: 1px solid currentColor; white-space: nowrap; font-weight: 600; }
+.tag.ok { color: var(--ok); }
+.tag.warn { color: var(--warn); }
+.tag.bad { color: var(--bad); }
+.tag.info { color: var(--accent); }
+
+/* Linha do tempo */
+.timeline { list-style: none; padding: 0; margin: 0; display: grid; gap: 0; max-width: 68ch; }
+.timeline li { display: grid; grid-template-columns: 7.5rem minmax(0, 1fr); gap: 14px; padding-block: 10px; border-bottom: 1px solid var(--line); }
+.timeline li:last-child { border-bottom: 0; }
+.timeline time { font-family: var(--font-mono); font-size: 0.875rem; color: var(--muted); font-variant-numeric: tabular-nums; }
+@media (max-width: 480px) { .timeline li { grid-template-columns: minmax(0, 1fr); gap: 2px; } }
+
+/* Pode / não pode */
+.two-col { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px; }
+.two-col > div { background: var(--surface); border: 1px solid var(--line); padding: 16px 18px; display: grid; gap: 8px; align-content: start; min-width: 0; }
+.two-col h3 { margin: 0; }
+.two-col ul { margin: 0; }
+
+/* Roteiro */
+.phases { list-style: none; padding: 0; margin: 0; display: grid; gap: 12px; }
+.phases li { background: var(--surface); border: 1px solid var(--line); padding: 14px 16px; display: grid; grid-template-columns: 3rem minmax(0, 1fr); gap: 4px 14px; }
+.phases .ph { font-family: var(--font-display); font-size: var(--step-2); font-weight: 700; color: var(--accent); line-height: 1; grid-row: span 3; }
+.phases .ph-title { font-family: var(--font-display); font-weight: 600; font-size: var(--step-1); }
+.phases .ph-time { font-family: var(--font-mono); font-size: 0.875rem; color: var(--muted); margin-left: 6px; font-weight: 400; }
+.phases p { margin: 0; }
+.phases .gate { color: var(--ink); }
+.phases .gate b { font-family: var(--font-display); font-weight: 600; color: var(--warn); letter-spacing: 0.04em; text-transform: uppercase; font-size: var(--step--1); margin-right: 6px; }
+
+/* Checklist de retomada */
+.steps { counter-reset: s; list-style: none; padding: 0; margin: 0; display: grid; gap: 12px; max-width: 68ch; }
+.steps li { counter-increment: s; display: grid; grid-template-columns: 2rem minmax(0, 1fr); gap: 12px; }
+.steps li::before { content: counter(s); font-family: var(--font-display); font-weight: 700; color: var(--accent); font-size: var(--step-1); line-height: 1.35; }
+.steps p { margin: 0; }
+code, pre { font-family: var(--font-mono); font-size: 0.875rem; }
+pre { background: var(--surface); border: 1px solid var(--line); padding: 12px 14px; overflow-x: auto; margin: 6px 0 0; white-space: pre; }
+:not(pre) > code { background: var(--accent-soft); padding: 1px 5px; }
+
+.sources { columns: 1; }
+.sources li { break-inside: avoid; }
+@media (min-width: 720px) { .sources { columns: 2; column-gap: 32px; } }
+.sources a { word-break: break-word; }
+
+footer { margin-top: 64px; padding-top: 16px; border-top: 1px solid var(--line); color: var(--muted); font-size: var(--step--1); max-width: 68ch; }
+
+@media (prefers-reduced-motion: no-preference) { html { scroll-behavior: smooth; } }
+</style>
+
+<div class="shell">
+  <nav class="toc" aria-label="Índice">
+    <p class="toc-label">Índice</p>
+    <ol>
+      <li><a href="#veredito">Veredito</a></li>
+      <li><a href="#visao">A visão</a></li>
+      <li><a href="#gunz-hoje">O GunZ hoje</a></li>
+      <li><a href="#copiar">O que pode copiar</a></li>
+      <li><a href="#tese">A tese de mercado</a></li>
+      <li><a href="#combate">Desenho do combate</a></li>
+      <li><a href="#engine">Engine e ferramentas</a></li>
+      <li><a href="#rede">Rede, servidor e custo</a></li>
+      <li><a href="#precisa">O que você precisa ter</a></li>
+      <li><a href="#roteiro">Roteiro</a></li>
+      <li><a href="#windows">Próxima sessão no PC</a></li>
+      <li><a href="#confianca">Quão confiável é</a></li>
+      <li><a href="#fontes">Fontes</a></li>
+    </ol>
+  </nav>
+
+  <main>
+    <header class="doc-head">
+      <p class="eyebrow">Estudo · 2 de outubro de 2026</p>
+      <h1>Estudo do sucessor do GunZ</h1>
+      <p class="lede">Dá pra fazer um jogo online e gratuito com espada, arco, arma de fogo e movimentação acrobática, na linha do GunZ: The Duel? O que já existe, o que pode ser copiado, quanto custa e por onde começar.</p>
+      <p class="byline">Visão do jogo: Arthur. Pesquisa: 13 agentes em duas rodadas, com céticos que conferiram 110 afirmações centrais. Síntese: Claude.</p>
+      <dl class="spec">
+        <div><dt>GunZ oficial</dt><dd>Voltou</dd><small>Remastered na Steam desde 13/08/2026, grátis, com PT-BR</small></div>
+        <div><dt>Jogadores simultâneos</dt><dd>~400–475</dd><small>Média do Remastered em setembro de 2026</small></div>
+        <div><dt>Até o 1v1 online</dt><dd>10–18 meses</dd><small>Estimativa a 8–12 horas por semana</small></div>
+        <div><dt>Custo como hobby</dt><dd>R$ 3–7 mil</dd><small>Por ano, estimativa, sem contar seu tempo</small></div>
+      </dl>
+    </header>
+
+    <section id="veredito">
+      <p class="kicker">Veredito</p>
+      <h2>Dá pra fazer, como projeto seu, começando pequeno</h2>
+      <ul>
+        <li><strong>O GunZ não foi cancelado.</strong> A Masangsoft, dona do jogo desde que a MAIET fechou em 2015, relançou o original como <em>GunZ: The Duel Remastered</em>. O que morreu foram as versões antigas e o GunZ 2.</li>
+        <li><strong>O Remastered está fraco.</strong> 43% de avaliações positivas e algumas centenas de jogadores. Com marca, código original e nostalgia, esse é o tamanho real do nicho hoje.</li>
+        <li><strong>Copiar o GunZ não dá; fazer o seu dá.</strong> Mecânica é livre. Nome, arte, mapas, sons e código não são, e o dono derrubou o código vazado do GitHub na véspera do relançamento.</li>
+        <li><strong>A sua visão já é outro jogo,</strong> e isso é a vantagem: acrobacia com espada, arco e arma, ritmo rápido e pensado, tudo liberado, habilidade no lugar de recompensa artificial.</li>
+        <li><strong>É o gênero mais caro pra quem faz sozinho.</strong> O risco maior não é técnico, é ter gente jogando. Por isso o primeiro ano mira um duelo 1v1 que seja bom entre amigos, com testes que confirmam ou matam a ideia cedo.</li>
+      </ul>
+      <div class="callout">
+        <p class="callout-title">A tese "contra a maré", testada</p>
+        <p>Jogo de habilidade com tudo liberado não é contra o mercado: CS2, Rocket League, Deadlock e Street Fighter 6 já funcionam assim. O que mata esse tipo de jogo é o novato esmagado por veterano quando há pouca gente online. O plano tem que resolver isso antes de qualquer outra coisa.</p>
+      </div>
+    </section>
+
+    <section id="visao">
+      <p class="kicker">A visão</p>
+      <h2>O jogo que o Arthur descreveu</h2>
+      <p>Ele nunca jogou o GunZ. Viu uma vez, achou a mistura de movimento, espada e arma muito boa e ficou com a vontade. A visão abaixo saiu da conversa, nas palavras dele, e cada pilar tem uma consequência de design.</p>
+      <blockquote class="voice">"Eu quero muito um jogo que você tem que ter habilidade, você treinar. De você ter que gastar horas vendo o que fazer, pular, testar coisas novas."</blockquote>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Pilar</th><th>O que ele disse</th><th>O que isso exige</th></tr></thead>
+          <tbody>
+            <tr><td><strong>Acrobacia é a identidade</strong></td><td>Andar na parede, pular, "voar". Sempre gostou de jogo acrobático, do Titanfall ao Advanced Warfare.</td><td>O movimento é o que equilibra as armas: é como a espada chega perto de quem atira de longe. Correr na parede precisa dar velocidade, senão ninguém usa.</td></tr>
+            <tr><td><strong>Espada, arco e arma</strong></td><td>"Essa pegada de arcos, armas, espadas, tudo junto em um jogo só."</td><td>Um triângulo de alcance. Espada perto, arco no médio e longo, arma de fogo com munição e recarga como limite.</td></tr>
+            <tr><td><strong>Equipamento livre</strong></td><td>"Cada um faz o que quer, mas cada um tem as suas vantagens e desvantagens."</td><td>Sem classes. O balanceamento entre armas vira o trabalho central de design.</td></tr>
+            <tr><td><strong>Rápido e pensado</strong></td><td>Ritmo parecido com o combate do Naraka: Bladepoint, mas sem battle royale e sem coletar item no mapa.</td><td>Toda ação tem custo: errar o golpe te deixa aberto, cada técnica tem janela e recuperação, o oponente consegue ler o que vem.</td></tr>
+            <tr><td><strong>Habilidade, tudo liberado</strong></td><td>"Tudo desbloqueado já no começo." O progresso é você ficando melhor.</td><td>Sem desbloqueio, o jogo precisa mostrar a melhora: modo treino, replay, estatística, ranking.</td></tr>
+            <tr><td><strong>Contra o jogo dopaminérgico</strong></td><td>Nada de jogo "largado", feito pra acabar uma partida e já querer outra.</td><td>Sem passe de batalha, baú ou missão diária. A recompensa vem de dominar a técnica, não de um baú.</td></tr>
+            <tr><td><strong>Jogar com a galera</strong></td><td>Duelo 1v1 e batalhas de 4v4 e 8v8.</td><td>Salas no estilo GunZ aguentam pouca gente melhor que fila automática. Ordem sugerida: 1v1, depois 4v4, e 8v8 por último.</td></tr>
+            <tr><td><strong>Grátis e online</strong></td><td>"100% gratuito, ser online e outras pessoas conseguirem jogar."</td><td>Servidor em São Paulo. Custo pequeno no começo, que cresce com a população. Sustentação por cosmético ou doação.</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section id="gunz-hoje">
+      <p class="kicker">O GunZ hoje</p>
+      <h2>O original voltou, e está sofrendo</h2>
+      <ol class="timeline">
+        <li><time>2003–2004</time><span>Lançamento na Coreia pela MAIET Entertainment.</span></li>
+        <li><time>07/2006</time><span>Chega ao Brasil como "The Duel", pela Level Up! Games. Vira fenômeno de lan house.</span></li>
+        <li><time>11/2006</time><span>EUA e Europa pelo ijji (NHN USA). A Aeria Games assume em 2012.</span></li>
+        <li><time>09/2011</time><span>Fecha no Brasil: contrato não renovado, hack generalizado, receita em queda.</span></li>
+        <li><time>31/05/2013</time><span>Aeria encerra o GunZ nos EUA e na Europa.</span></li>
+        <li><time>2014</time><span>GunZ 2 chega à Steam sem o K-style. Em 2017 perde quase todos os servidores por "déficit acumulado". Hoje tem 0 a 1 jogador.</span></li>
+        <li><time>09/2015</time><span>A MAIET fecha. Os direitos de GunZ, GunZ 2 e RaiderZ passam à Masangsoft.</span></li>
+        <li><time>12/08/2026</time><span>DMCA da Masangsoft derruba ~26 repositórios com o código vazado (RefinedGunz, open-gunz e outros).</span></li>
+        <li><time>13/08/2026</time><span><strong>GunZ: The Duel Remastered</strong> na Steam: grátis, global, 13 idiomas incluindo português.</span></li>
+      </ol>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Remastered</th><th>Situação em 02/10/2026</th></tr></thead>
+          <tbody>
+            <tr><td>Plataforma</td><td>Só Windows 10/11, com Easy Anti-Cheat em nível de kernel. Não roda no Mac; o anti-cheat costuma bloquear máquina virtual.</td></tr>
+            <tr><td>Avaliações</td><td><span class="tag warn">Mistas</span> 43% positivas na Steam</td></tr>
+            <tr><td>Jogadores simultâneos</td><td class="num">~400–475 de média em setembro; pico de 960 ou 2.216, conforme o rastreador</td></tr>
+            <tr><td>Reclamações</td><td>Lag e registro de acerto, cheat e macro uma semana após o lançamento, arte feita com IA, três moedas e aluguel de item. O "sem pay-to-win" anunciado é contestado.</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <h3>O que fazia o GunZ ser o GunZ</h3>
+      <p>O K-style é um conjunto de cancelamentos de animação que a comunidade descobriu e a MAIET nunca projetou: o bloqueio cancela o golpe, o pulo cancela o bloqueio, trocar de arma cancela a recarga. Daí saem técnicas como butterfly, slash shot e reload shot. Um guia de servidor privado estima de 3 a 5 meses pra aprender o butterfly e cerca de 6 pra usar em duelo. A física do original depende do FPS: a comunidade pede 120 quadros por segundo ou mais e ping abaixo de 80 ms.</p>
+      <h3>O que matou o original e a sequência</h3>
+      <ul>
+        <li>Rede ponto a ponto, com o computador do jogador decidindo se acertou. Isso abriu a porta pra hack de dano, de mira e de recarga.</li>
+        <li>Loja com vantagem paga e itens alugados por 30 dias.</li>
+        <li>Publishers que abandonaram atualização e anti-cheat.</li>
+        <li>O GunZ 2 tirou o K-style pra ficar acessível e perdeu justamente o público que amava a dificuldade.</li>
+      </ul>
+      <div class="callout warn">
+        <p class="callout-title">O tamanho do nicho</p>
+        <p>O dono do GunZ tem marca, código original, nostalgia e 100 mil pessoas na lista de desejos, e segura algumas centenas de jogadores ao mesmo tempo. Um jogo novo e sem marca deve planejar para dezenas de jogadores, não milhares.</p>
+      </div>
+    </section>
+
+    <section id="copiar">
+      <p class="kicker">O que pode copiar</p>
+      <h2>Mecânica é livre, expressão não</h2>
+      <div class="two-col">
+        <div>
+          <h3><span class="tag ok">Pode</span></h3>
+          <ul>
+            <li>A ideia: arma de fogo e espada, correr na parede, dash, cancelamento de animação.</li>
+            <li>Regras de jogo. A Lei 9.610/98, art. 8º, exclui "regras para realizar jogos" da proteção autoral.</li>
+            <li>Nos EUA, o mesmo princípio: Data East v. Epyx (1988) e Tetris v. Xio (2012) separam regra de expressão.</li>
+            <li>Observar o jogo como jogador e reimplementar tudo do zero.</li>
+          </ul>
+        </div>
+        <div>
+          <h3><span class="tag bad">Não pode</span></h3>
+          <ul>
+            <li>O nome "GunZ" ou "The Duel". A marca está registrada e em disputa judicial nos EUA em 2026.</li>
+            <li>Personagens, mapas, modelos, texturas, sons, interface e textos.</li>
+            <li>Qualquer linha do código vazado. A Masangsoft já derrubou repositórios e processou um servidor privado nos EUA.</li>
+            <li>Valores, formatos de arquivo ou protocolo do GunZ.</li>
+          </ul>
+        </div>
+      </div>
+      <h3>Checklist pra um sucessor espiritual sem risco</h3>
+      <ul>
+        <li><strong>Nome próprio,</strong> conferido no INPI e no USPTO. Registrar nas classes 9 e 41 quando o nome estiver decidido.</li>
+        <li><strong>Sala limpa:</strong> ninguém que escreve código do projeto lê o código vazado. Deixar isso escrito no repositório.</li>
+        <li><strong>Assets próprios, CC0 ou comprados,</strong> com recibo. Se usar IA, declarar na Steam e evitar nomes de outras marcas no prompt.</li>
+        <li><strong>Sem loot box.</strong> O ECA Digital (Lei 15.211/2025, em vigor desde 17/03/2026) restringe caixas de recompensa em jogos acessíveis a menores.</li>
+        <li><strong>Antes do primeiro teste aberto:</strong> política de privacidade e termos de uso. Com menores, entra a LGPD art. 14 (consentimento dos pais). Com dinheiro, CNPJ.</li>
+      </ul>
+    </section>
+
+    <section id="tese">
+      <p class="kicker">A tese de mercado</p>
+      <h2>Habilidade sem grind não vai contra a maré; pouca gente online, sim</h2>
+      <p>O Arthur temia que um jogo de habilidade, com tudo liberado e sem recompensa artificial, não fizesse sentido no mercado de hoje. A segunda rodada de pesquisa testou essa tese com dados.</p>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>O que ele pensava</th><th>O que a evidência diz</th><th>Veredito</th></tr></thead>
+          <tbody>
+            <tr><td>"Tudo liberado vai contra o mercado"</td><td>Os maiores jogos competitivos não têm progressão que mude a jogabilidade. Nenhum fracasso recente de shooter de habilidade morreu por falta de desbloqueio.</td><td><span class="tag ok">Errado, no bom sentido</span></td></tr>
+            <tr><td>"Um jogo que exige treino e horas de prática"</td><td>Sobrevive com centenas de jogadores, desde que tenha treino e proteção pro iniciante. Sem isso, só sobra veterano.</td><td><span class="tag warn">Certo, com condição</span></td></tr>
+            <tr><td>"Contra o jogo dopaminérgico"</td><td>Dominar uma técnica também libera dopamina. O problema real é o loop que pune quem para de jogar: passe que expira, sequência diária, moeda com validade.</td><td><span class="tag info">Intuição certa, palavra errada</span></td></tr>
+            <tr><td>"Tudo liberado desde o começo"</td><td>O desbloqueio aos poucos também serve de rampa: menos opções no primeiro dia. Tirar ele exige pôr outra rampa no lugar.</td><td><span class="tag warn">Viável, com dívida</span></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <h3>Quem já vive assim</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Jogo</th><th>Tudo liberado?</th><th class="num">Jogadores simultâneos</th><th>Lição</th></tr></thead>
+          <tbody>
+            <tr><td>Counter-Strike 2</td><td>Sim, só visual pago</td><td class="num">pico 1,86 mi (04/2025)</td><td>Habilidade pura sustenta o maior jogo da Steam</td></tr>
+            <tr><td>Deadlock (Valve)</td><td>Sim, 38 heróis, sem loja nem passe</td><td class="num">recorde 228 mil (29/09/2026)</td><td>Dá pra crescer sem nenhuma monetização, com marca forte</td></tr>
+            <tr><td>Street Fighter 6</td><td>Elenco base liberado</td><td class="num">recorde 73 mil (05/2026)</td><td>Treino como produto; recorde três anos depois do lançamento</td></tr>
+            <tr><td>STRAFTAT</td><td>Sim, gratuito, feito por dois irmãos</td><td class="num">pico ~2,1 mil; centenas hoje</td><td>96% positivo e mesmo assim pequeno. É o espelho mais fiel do projeto</td></tr>
+            <tr><td>GunZ Remastered</td><td>Equipamento cosmético</td><td class="num">~476–533 de média (set/2026)</td><td>O nicho existe e está insatisfeito</td></tr>
+            <tr><td>Titanfall 2</td><td>Desbloqueios rápidos</td><td class="num">~1,3 mil, dez anos depois</td><td>A comunidade de movimento é pequena e fiel</td></tr>
+            <tr><td>Quake Champions</td><td>Virou pago e todo liberado em 09/2026</td><td class="num">pico 591, média ~210</td><td>Arena shooter sem rampa vira só veterano</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>Uma ressalva dos céticos: CS2, Rocket League e Street Fighter 6 têm passe de batalha ou passe cosmético. O que o mercado valida de verdade é <strong>não vender vantagem</strong>. Não ter passe nenhum é a parte realmente diferente, e Deadlock e STRAFTAT mostram que também é possível.</p>
+      <h3>O que a era do jetpack no Call of Duty ensina</h3>
+      <ul>
+        <li><strong>Black Ops III</strong> (2015), o COD com corrida na parede e pulo com propulsor, é o Call of Duty mais vendido da história, com cerca de 43 milhões de cópias.</li>
+        <li>As vendas físicas do <strong>Infinite Warfare</strong> (2016) caíram ~50%, e a própria Activision culpou o cenário espacial, que "não ressoou" com o público. Não culpou o movimento.</li>
+        <li>O <strong>Titanfall 2</strong> foi aclamado e vendeu de 5 a 6 milhões, contra 9 milhões projetados, por ter sido lançado entre o Battlefield 1 e um COD. Dez anos depois ainda tem ~1,3 mil pessoas jogando ao mesmo tempo.</li>
+        <li>A Respawn tentou tirar o <em>tap-strafe</em> do Apex duas vezes e recuou nas duas por causa da reação. A MAIET fez o mesmo com o K-style e também voltou atrás.</li>
+      </ul>
+      <p>Acrobacia afasta quando é enxertada num jogo que era outra coisa. Quando ela é a identidade desde o primeiro dia, nunca foi a causa da morte de um jogo.</p>
+      <h3>Trocar "anti-dopamina" por autonomia</h3>
+      <p>A pesquisa sobre motivação em jogos (Ryan, Rigby e Przybylski, 2006) aponta três necessidades: <strong>competência</strong>, <strong>autonomia</strong> e <strong>relacionamento</strong>. A visão do Arthur já cobre as duas primeiras: dominar a técnica e escolher o que treinar. A que falta é relacionamento, e é justamente a mais barata e a mais forte quando há pouca gente: salas, clãs, mentoria, Discord, torneio semanal.</p>
+      <blockquote class="voice">Uma frase melhor que "anti-dopamina": a recompensa é informação sobre a sua habilidade, e você decide o que treinar.</blockquote>
+      <h3>Progresso sem desbloqueio</h3>
+      <ul>
+        <li><strong>Percursos cronometrados com placar e fantasma</strong> do seu melhor tempo, como o Gauntlet do Titanfall 2. É a forma mais barata e mais fiel à acrobacia.</li>
+        <li><strong>Replay que marca o erro:</strong> onde você levou dano e de qual técnica, como no Tekken 8.</li>
+        <li><strong>Ranking separado por formato,</strong> com classificação curta e sem rebaixamento nas ligas baixas.</li>
+        <li><strong>Estatística de técnica:</strong> "você acertou 61% das flechas em movimento este mês", no lugar de "nível 37".</li>
+        <li><strong>Títulos por feito, não por tempo jogado:</strong> "venceu um 1v1 sem tocar o chão".</li>
+        <li><strong>Desafios de treino com código</strong>, feitos pela comunidade, como os do Rocket League.</li>
+        <li><strong>Física canônica:</strong> técnica descoberta pelos jogadores ganha ferramenta de treino, nunca nerf pra "proteger o iniciante".</li>
+      </ul>
+      <div class="callout warn">
+        <p class="callout-title">A régua de sucesso</p>
+        <p>Pelos jogos comparáveis, o teto realista de um projeto assim é de algumas centenas a poucos milhares de jogadores ao mesmo tempo. Pra um hobby sem folha de pagamento, 100 a 300 jogadores não é fracasso: é o estado normal do STRAFTAT e do Mordhau há anos. Com 200 pessoas online, o 8v8 vira no máximo 12 partidas no mundo inteiro. Por isso ele deve ser evento marcado, não fila.</p>
+      </div>
+    </section>
+
+    <section id="combate">
+      <p class="kicker">Desenho do combate</p>
+      <h2>Pensado é legível: toda ação custa algo e o outro consegue ler</h2>
+      <p>A referência que o Arthur escolheu, o Naraka: Bladepoint, organiza o corpo a corpo num triângulo: o golpe carregado vence o básico, o contra-ataque (parry) vence o carregado, e o básico vence o parry. É o caso de maior sucesso de combate corpo a corpo "rápido e pensado" em multiplayer. A crítica também ensina: o gancho sem limite vira spam, as armas de longe são fracas no duelo e "baratas" em grupo, e o arco foi enfraquecido três vezes por entrar em combo.</p>
+      <h3>Princípios</h3>
+      <ul>
+        <li><strong>O tempo da animação é fixo.</strong> O jogador escolhe o quê e quando, nunca deforma o como. Foi deformar a animação que deixou o Mordhau ilegível e expulsou novatos.</li>
+        <li><strong>Quanto mais dano, mais aviso.</strong> Golpe leve com pouca antecipação, pesado com muita, cada um com silhueta própria.</li>
+        <li><strong>Indicador visual no mundo e som</strong> pro que a animação não dá conta. Pra quem faz tudo sozinho, sai mais barato que animação perfeita.</li>
+        <li><strong>Fingir um golpe (feint) custa stamina</strong> e tem janela limitada. No Naraka é de graça, e o parry vira chute no escuro.</li>
+        <li><strong>Arma de longe paga antes do tiro:</strong> puxada do arco, poucas balas, recarga que não se cancela.</li>
+        <li><strong>No ar, ninguém se defende,</strong> e quem atira de longe precisa de projétil, não de acerto instantâneo. Cada lado paga algo.</li>
+        <li><strong>Troca de arma com tempo fixo e sem cancelamento.</strong> Essa regra sozinha teria evitado o shotgun "semiautomático" do GunZ.</li>
+        <li><strong>Uma barra de stamina pra tudo:</strong> esquiva, carregado, parry, puxada do arco e troca de arma.</li>
+      </ul>
+      <h3>Equipamento livre, com custo declarado</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Espaço</th><th>Opções iniciais</th><th>Vantagem e custo</th></tr></thead>
+          <tbody>
+            <tr><td>Corpo a corpo</td><td>Espada longa (equilibrada), lâminas duplas (rápidas, curtas), lança (alcance, lenta, fraca no ar)</td><td>Cada arma muda a velocidade dos golpes e o custo do carregado</td></tr>
+            <tr><td>Distância</td><td>Arco (silencioso, queda, dano pela puxada), pistola (6 tiros, curta distância), mosquete (1 tiro, não atira no ar)</td><td>Arco pune quem para; pistola pune quem está perto e no chão; mosquete pune quem é previsível</td></tr>
+            <tr><td>Utilitário</td><td>Gancho (recarga de 6 s), fumaça (esconde leitura por 4 s, a sua também), âncora (cancela o próprio pulo)</td><td>Nenhum dá dano; todos mudam leitura ou distância</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>Pra nenhuma combinação dominar: a tabela de atributos de cada arma fica visível dentro do jogo, e desde a alpha se mede taxa de vitória e de escolha por arma. Se uma combinação passa de 55% de vitória no 1v1 ou 40% de escolha no 4v4, ela é ajustada. No ranqueado de equipe, no máximo 2 armas de fogo por time.</p>
+      <h3>Regras de combate v0</h3>
+      <p>Números de partida propostos pela pesquisa pra ajustar em teste, não medidos em nenhum jogo. Tempos em milissegundos. Stamina 100, recupera 25 por segundo após 0,8 s sem gastar; zerou, cambaleia 1,2 s.</p>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Ação</th><th class="num">Antecipação</th><th class="num">Ativo</th><th class="num">Recuperação</th><th class="num">Stamina</th><th>Vence</th><th>Perde para</th></tr></thead>
+          <tbody>
+            <tr><td>Leve</td><td class="num mono">300</td><td class="num mono">100</td><td class="num mono">250</td><td class="num mono">8</td><td>Parry errado</td><td>Carregado, bloqueio</td></tr>
+            <tr><td>Carregado</td><td class="num mono">500–900</td><td class="num mono">120</td><td class="num mono">450</td><td class="num mono">25</td><td>Leve, bloqueio</td><td>Parry, esquiva</td></tr>
+            <tr><td>Bloqueio</td><td class="num mono">100</td><td class="num mono">—</td><td class="num mono">150</td><td class="num mono">10/golpe</td><td>Leve</td><td>Carregado, quebra de guarda</td></tr>
+            <tr><td>Parry</td><td class="num mono">80</td><td class="num mono">200</td><td class="num mono">400 se errar</td><td class="num mono">15</td><td>Carregado, flecha</td><td>Leve</td></tr>
+            <tr><td>Esquiva</td><td class="num mono">60</td><td class="num mono">250 invulnerável</td><td class="num mono">200</td><td class="num mono">20</td><td>Carregado, projétil</td><td>Leve atrasado, quebra de guarda</td></tr>
+            <tr><td>Quebra de guarda</td><td class="num mono">350</td><td class="num mono">100</td><td class="num mono">400</td><td class="num mono">15</td><td>Bloqueio, parry errado</td><td>Leve, esquiva</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <ul>
+        <li><strong>Feint:</strong> cancelar o carregado entre 300 e 450 ms, por 15 de stamina, e nunca duas vezes seguidas.</li>
+        <li><strong>Cancelamento:</strong> só a recuperação do leve, e só pra esquiva, a partir de 150 ms.</li>
+        <li><strong>Arco:</strong> puxada até 1.200 ms, dano de 15 a 45, queda real; no ar, puxada máxima de 400 ms. <strong>Pistola:</strong> 6 tiros, recarga de 2,5 s. <strong>Mosquete:</strong> 1 tiro de 60, recarga de 3,5 s. <strong>Troca de arma:</strong> 700 ms. Flecha pode ser rebatida com parry; bala não.</li>
+        <li><strong>Movimento:</strong> corrida na parede até 2,5 s, gastando stamina. Pulo de parede com 150 ms de invulnerabilidade. Gancho de 25 m com recarga de 6 s; quem está no gancho leva 1,5× de dano do carregado.</li>
+        <li><strong>4v4:</strong> quem é atingido por dois inimigos em 2 s ganha 1,5 s de resistência, e o dano deles cai 30%, com um anel visível no chão. Dano amigo de 50% no corpo a corpo e 100% em projétil.</li>
+      </ul>
+      <h3>Tamanho dos times</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Formato</th><th>O "pensado"</th><th>Custo</th><th>Papel</th></tr></thead>
+          <tbody>
+            <tr><td>1v1</td><td>Preservado por inteiro</td><td>2 clientes, arena pequena</td><td><span class="tag ok">Núcleo, primeiro</span></td></tr>
+            <tr><td>4v4</td><td>Preservado com proteção contra 2 em 1 e mapa que separe duelos</td><td>8 clientes, servidor autoritativo obrigatório</td><td><span class="tag ok">Núcleo, depois</span></td></tr>
+            <tr><td>8v8</td><td>Vira leitura de mapa, não de golpe</td><td>16 clientes: o tráfego vai de 56 para 240 pares por atualização; mapas maiores</td><td><span class="tag warn">Evento casual</span></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>A Respawn achou que acima de 6v6 o Titanfall virava um "mosh pit de 'como eu morri?'". Mas o Titanfall é 6v6 com corrida na parede e funciona, então o argumento mais forte contra o 8v8 é custo de rede e de mapas, não só legibilidade.</p>
+      <div class="callout">
+        <p class="callout-title">Duas decisões que são do Arthur</p>
+        <p><strong>Qual tribo?</strong> A do Mordhau quer profundidade de comando, animação manipulável e teto altíssimo, e tem ~440 jogadores. A do For Honor e do Chivalry 2 quer combate legível e tem de 2 a 4 mil. As regras v0 acima puxam pra segunda, e limitam muito mais os cancelamentos que o GunZ. A profundidade viria do movimento e da combinação entre armas, não de manipular animação.</p>
+        <p><strong>Qual é a técnica própria do jogo?</strong> O equivalente ao K-style, ao <em>tap-strafe</em> ou ao <em>strafe jump</em>, que vale horas de treino. Sem ela, a comunidade de movimento não tem por que vir. Parte dela pode, e deve, ser descoberta pelos jogadores.</p>
+      </div>
+    </section>
+
+    <section id="engine">
+      <p class="kicker">Engine e ferramentas</p>
+      <h2>Godot é a escolha padrão; o PC Windows reabre a conta</h2>
+      <p>Nenhuma engine traz o K-style pronto. O controle do personagem, os cancelamentos e a espada são código seu em qualquer caminho. A engine decide quanto do resto já vem pronto e quão bem o Claude Code trabalha nela.</p>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Opção</th><th>No Mac Air M4</th><th>Rede pra jogo de ação</th><th>Gráfico</th><th>Com Claude Code</th><th>Papel</th></tr></thead>
+          <tbody>
+            <tr><td><strong>Godot 4.7 + netfox</strong></td><td>Leve; gera versão Windows</td><td>netfox (MIT): previsão, correção e compensação de lag</td><td>Médio-alto</td><td>O melhor: tudo é texto, GDScript parece Python</td><td><span class="tag ok">1ª escolha</span></td></tr>
+            <tr><td><strong>Unity 6.3</strong></td><td>OK; Windows só com Mono</td><td>Oficial sem previsão; usar Photon Fusion ou FishNet Pro</td><td>Alto</td><td>Bom (C#)</td><td><span class="tag info">Plano B</span></td></tr>
+            <tr><td><strong>s&amp;box</strong> (Source 2)</td><td>Não roda</td><td>Embutida, com servidor via Steam; previsão não documentada</td><td>Alto</td><td>Bom (C#)</td><td><span class="tag info">Testar no PC</span></td></tr>
+            <tr><td><strong>Unreal 5.8</strong></td><td>10–26 fps no editor; não gera Windows</td><td>A mais madura (Mover ainda experimental)</td><td>Máximo</td><td>C++ sim; Blueprints não</td><td><span class="tag warn">Só com PC forte</span></td></tr>
+            <tr><td><strong>Navegador</strong> (Three.js + Colyseus 0.18)</td><td>Leve</td><td>Colyseus 0.18 trouxe previsão e compensação de lag</td><td>Médio</td><td>O melhor (TypeScript)</td><td><span class="tag info">Se "um link" virar prioridade</span></td></tr>
+            <tr><td><strong>Roblox</strong></td><td>Leve</td><td>Replicação limitada pra corpo a corpo rápido</td><td>Baixo-médio</td><td>Bom (Luau)</td><td><span class="tag warn">Laboratório de design</span></td></tr>
+            <tr><td><strong>UEFN</strong> (Fortnite)</td><td>Não roda</td><td>Movimento e armas pouco customizáveis</td><td>Fixo</td><td>Parcial</td><td><span class="tag bad">Fora</span></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="callout">
+        <p class="callout-title">O que o PC Windows muda</p>
+        <p>O s&amp;box e o Unreal saíram da lista só por causa do Mac. No PC eles voltam, dependendo das peças. O <strong>s&amp;box</strong> é o atalho mais interessante: Source 2, rede e servidores via Steam, exportação como jogo próprio na Steam sem royalty desde março de 2026, e um fundo que paga criadores por hora jogada. O ponto fraco é que a previsão de movimento e a compensação de lag não estão documentadas, e isso é o coração de um jogo de duelo. O <strong>Unreal</strong> só faz sentido com 32 GB de RAM e placa de vídeo dedicada, e exige C++.</p>
+        <p>Regra de decisão: Godot continua o padrão. Se o PC for bom, vale um fim de semana testando o s&amp;box antes de fechar.</p>
+      </div>
+      <h3>Pra arte, som e animação</h3>
+      <ul>
+        <li><strong>Estilo estilizado, não realista.</strong> É o único "gráfico melhor" que cabe num dev sozinho.</li>
+        <li><strong>Modelos:</strong> Synty (pacotes pagos), Kenney e Quaternius (CC0), Fab (assets gratuitos todo mês). IA 3D (Meshy, Tripo) serve pra objeto, raramente pra personagem.</li>
+        <li><strong>Animação:</strong> Mixamo (grátis) pro básico, Synty Sword Combat (US$ 59,99, 105 animações) pra espada, Cascadeur Indie (R$ 41/mês no plano anual) pras acrobacias que não existem em pacote.</li>
+        <li><strong>Som:</strong> Freesound e o pacote gratuito da Sonniss.</li>
+      </ul>
+    </section>
+
+    <section id="rede">
+      <p class="kicker">Rede, servidor e custo</p>
+      <h2>Grátis pra quem joga não é grátis pra você</h2>
+      <ul>
+        <li><strong>Quem decide é o servidor.</strong> O jogador manda só os comandos. Foi o oposto disso que transformou o GunZ em festa de hacker.</li>
+        <li><strong>Cada cliente prevê o próprio movimento</strong> e corrige quando o servidor discorda. Os outros jogadores aparecem ~100 ms no passado, suavizados.</li>
+        <li><strong>Compensação de lag:</strong> o servidor "volta no tempo" pra conferir o acerto. Pra tiro, até ~220 ms, como no Overwatch. Pra espada, menos (~150–200 ms), com o bloqueio validado no tempo de quem defende.</li>
+        <li><strong>60 atualizações por segundo</strong> no servidor. Com 30, os cancelamentos ficam comprometidos.</li>
+        <li><strong>Servidor em São Paulo:</strong> 10–35 ms de ping, contra 110–160 ms pros EUA.</li>
+        <li><strong>Salas antes de fila.</strong> Com menos de ~300 pessoas online, matchmaking esvazia. Steam e Epic oferecem salas de graça.</li>
+        <li><strong>Anti-cheat em camadas:</strong> validação no servidor primeiro; Easy Anti-Cheat (grátis via Epic) quando houver público. No Godot ele não tem plugin oficial.</li>
+        <li><strong>Contas, inventário e ranking no Supabase,</strong> gravados só pelo servidor do jogo. A partida em si não passa por ele.</li>
+      </ul>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th class="num">Jogadores simultâneos</th><th>Custo mensal estimado</th><th>Como</th></tr></thead>
+          <tbody>
+            <tr><td class="num">Dezenas</td><td class="num">R$ 0–100</td><td>Photon Fusion grátis até 100, relay gratuito da Steam, ou uma VPS pequena em SP (Vultr a partir de US$ 6, preço não confirmado)</td></tr>
+            <tr><td class="num">100–300</td><td class="num">até ~US$ 125</td><td>VPS em SP ou Photon (de 101 a 500 jogadores: US$ 125/mês)</td></tr>
+            <tr><td class="num">1.000</td><td class="num">US$ 500–1.500</td><td>8 a 16 servidores em SP com orquestração caseira, ou frota gerenciada</td></tr>
+            <tr><td class="num">10.000</td><td class="num">US$ 8–20 mil</td><td>Frotas, proteção DDoS, matchmaking e uma equipe de infraestrutura</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="callout warn">
+        <p class="callout-title">Fornecedor pode sumir</p>
+        <p>A Hathora desligou em 05/05/2026 após ser comprada e derrubou jogos junto. A Unity Multiplay fechou em 31/03/2026. A Oracle cortou pela metade o servidor gratuito em 15/06/2026, e a Hetzner não tem Brasil. Servidor empacotado em Docker desde o começo, pra trocar de lugar sem reescrever.</p>
+      </div>
+    </section>
+
+    <section id="precisa">
+      <p class="kicker">O que você precisa ter</p>
+      <h2>Tempo é o recurso mais escasso</h2>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Item</th><th>Por quê</th><th>Custo</th></tr></thead>
+          <tbody>
+            <tr><td>PC Windows</td><td>Jogar o Remastered e as referências, testar as versões do seu jogo. Arthur tem acesso a um.</td><td class="num">Já tem</td></tr>
+            <tr><td>8–12 horas por semana</td><td>Os prazos deste estudo partem disso. Com 20 horas caem pela metade; com 5, dobram.</td><td class="num">Seu tempo</td></tr>
+            <tr><td>Fundamentos de jogo</td><td>Loop de jogo com passo fixo, controle de personagem, máquina de estados de animação, rede com previsão.</td><td class="num">R$ 0</td></tr>
+            <tr><td>Animação</td><td>O maior buraco. Espada e acrobacia pedem de 80 a 150 animações só no começo.</td><td class="num">R$ 1–2 mil (barato) · R$ 15–50 mil (freelancer)</td></tr>
+            <tr><td>Arte estilizada</td><td>Pacotes Synty, CC0, Fab.</td><td class="num">US$ 150–400</td></tr>
+            <tr><td>Steam Direct</td><td>Taxa pra publicar um jogo na Steam.</td><td class="num">US$ 100</td></tr>
+            <tr><td>Servidor</td><td>Só quando houver online de verdade.</td><td class="num">R$ 0–100/mês no começo</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Cenário</th><th>Custo direto</th><th>Total realista</th></tr></thead>
+          <tbody>
+            <tr><td>Hobby solo, noites e fins de semana</td><td class="num">R$ 2,6–7,3 mil</td><td class="num">R$ 3–7 mil por ano</td></tr>
+            <tr><td>Solo em tempo integral, 12–18 meses</td><td class="num">R$ 26–94 mil</td><td class="num">R$ 180–450 mil, contando o salário que deixa de ganhar</td></tr>
+            <tr><td>Time de 3 a 5 pessoas, 18–24 meses</td><td class="num">R$ 105–290 mil</td><td class="num">R$ 0,7–2,9 milhões, com salários</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>Estimativas da pesquisa, com câmbio de R$ 5,22 por dólar. O cenário de tempo integral é onde a maioria dos projetos morre: a reserva acaba no protótipo e a população não vem.</p>
+    </section>
+
+    <section id="roteiro">
+      <p class="kicker">Roteiro</p>
+      <h2>Cada fase tem um teste que pode encerrar o projeto sem culpa</h2>
+      <ol class="phases">
+        <li><span class="ph">0</span><p class="ph-title">Reconhecimento<span class="ph-time">2–4 semanas</span></p><p>Jogar o Remastered, o Naraka: Bladepoint, o Titanfall 2 e o Chivalry 2. Anotar o que pega e o que irrita.</p><p class="gate"><b>Teste</b>Eu gosto de jogar isso ou só da ideia?</p></li>
+        <li><span class="ph">1</span><p class="ph-title">Movimento sem rede<span class="ph-time">3–5 meses</span></p><p>Cubos cinza: correr, subir parede, pular, dash, trocar de arma. Uma arena de blocos e um boneco de treino.</p><p class="gate"><b>Teste</b>É divertido sozinho por 15 minutos? Um vídeo de 15 segundos faz alguém reagir?</p></li>
+        <li><span class="ph">2</span><p class="ph-title">Duelo contra bot<span class="ph-time">3–4 meses</span></p><p>Espada, arco e arma seguindo as regras v0. Um personagem animado, rastro de espada, som. Um percurso cronometrado com fantasma do melhor tempo, que é o primeiro pedaço da rampa do novato.</p><p class="gate"><b>Teste</b>Cinco amigos que nunca viram o GunZ entendem cada troca e querem jogar de novo?</p></li>
+        <li><span class="ph">3</span><p class="ph-title">1v1 online<span class="ph-time">6–9 meses</span></p><p>Servidor autoritativo com previsão, um mapa, sala por código. Testes com 30, 60 e 120 ms de lag simulado.</p><p class="gate"><b>Teste</b>Duas pessoas em cidades diferentes acham o duelo de espada justo?</p></li>
+        <li><span class="ph">4</span><p class="ph-title">Alpha fechada<span class="ph-time">6–8 meses</span></p><p>Três mapas, 1v1 e 4v4, salas com filtro de nível, contas Steam, bot de treino, replay que marca o erro, Discord próprio com noite de jogo semanal. Sem a rampa do novato pronta, o jogo abre só pra veterano.</p><p class="gate"><b>Teste</b>Vinte pessoas voltam na segunda semana sem ninguém pedir?</p></li>
+        <li><span class="ph">5</span><p class="ph-title">Lançamento grátis<span class="ph-time">3–5 meses</span></p><p>Steam Next Fest (uma chance só), trailer, Ko-fi ou Patreon, servidor em SP. O 8v8 entra como modo festa depois.</p><p class="gate"><b>Teste</b>Trinta ou mais pessoas jogando no horário de pico uma semana depois?</p></li>
+      </ol>
+      <p>Total estimado: 24 a 36 meses até o lançamento, com três saídas baratas nas fases 1, 2 e 3. A fase 1 já vale por si: mesmo se o projeto parar, sobra o domínio da engine e um protótipo de movimento.</p>
+      <div class="callout">
+        <p class="callout-title">Rota alternativa</p>
+        <p>Fazer primeiro um jogo para jogar sozinho ou em dupla contra o computador, com a mesma movimentação. Ultrakill e Ghostrunner mostram que há público, um dev sozinho entrega em cerca de um ano sem multiplayer, e a audiência construída vira o ponto de partida do multiplayer.</p>
+      </div>
+    </section>
+
+    <section id="windows">
+      <p class="kicker">Próxima sessão</p>
+      <h2>No PC Windows</h2>
+      <p>O Arthur vai continuar a conversa numa sessão do Claude no PC Windows. Este é o roteiro dela.</p>
+      <ol class="steps">
+        <li><p><strong>Levantar a máquina.</strong> Processador, memória, placa de vídeo e VRAM, espaço em disco e versão do Windows. No PowerShell:</p>
+<pre>systeminfo | Select-String "OS Name","OS Version","Total Physical Memory"
+Get-CimInstance Win32_Processor | Select-Object Name, NumberOfCores, NumberOfLogicalProcessors
+Get-CimInstance Win32_VideoController | Select-Object Name, AdapterRAM, DriverVersion
+Get-PSDrive -PSProvider FileSystem | Select-Object Name, Used, Free</pre></li>
+        <li><p><strong>Decidir a engine pelas peças.</strong> Com 32 GB e placa dedicada, s&amp;box e Unreal entram na conversa. Com menos, Godot sem discussão. Godot continua o padrão em qualquer caso.</p></li>
+        <li><p><strong>Jogar.</strong> Instalar a Steam, o GunZ: The Duel Remastered e o Naraka: Bladepoint. Medir o ping até os servidores do Remastered, que ninguém confirmou se ficam na América do Sul.</p></li>
+        <li><p><strong>Primeiro teste técnico.</strong> Instalar o Godot 4.7.2, abrir os exemplos do netfox e rodar dois clientes locais com lag simulado. Conferir se o netfox funciona no 4.7; o último release dele é de 11/2025.</p></li>
+        <li><p><strong>Se o PC for bom, testar o s&amp;box num fim de semana</strong> e conferir se dá pra ter previsão de movimento e compensação de lag.</p></li>
+        <li><p><strong>Começar a fase 1:</strong> uma cápsula que corre, sobe na parede, pula e dá dash numa arena de blocos.</p></li>
+      </ol>
+    </section>
+
+    <section id="confianca">
+      <p class="kicker">Quão confiável é</p>
+      <h2>O que foi verificado e o que foi corrigido</h2>
+      <p>Cada rodada teve pesquisadores e um verificador cético, instruído a tentar derrubar as afirmações que sustentam a conclusão.</p>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Rodada</th><th class="num">Conferidas</th><th class="num">Confirmadas</th><th class="num">Incertas</th><th class="num">Corrigidas</th><th class="num">Não conferidas</th></tr></thead>
+          <tbody>
+            <tr><td>1. Viabilidade (8 agentes)</td><td class="num">70</td><td class="num">56</td><td class="num">10</td><td class="num">4</td><td class="num">88</td></tr>
+            <tr><td>2. Tese e combate (5 agentes)</td><td class="num">40</td><td class="num">34</td><td class="num">3</td><td class="num">3</td><td class="num">39</td></tr>
+            <tr><td><strong>Total</strong></td><td class="num"><strong>110</strong></td><td class="num"><strong>90</strong></td><td class="num"><strong>13</strong></td><td class="num"><strong>7</strong></td><td class="num"><strong>127</strong></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>As não conferidas são afirmações secundárias, fora do que sustenta as recomendações.</p>
+      <h3>Correções feitas pelos céticos</h3>
+      <ul>
+        <li>A versão estável do Godot é a <strong>4.7.2</strong> (18/08/2026), não a 4.6.</li>
+        <li>O <strong>FishNet não é MIT</strong>: a licença é própria, e a compensação de lag só existe na versão Pro.</li>
+        <li>O <strong>Unity Pro</strong> custa US$ 2.310 por ano, não US$ 2.200.</li>
+        <li>O <strong>butterfly</strong> leva de 3 a 5 meses pra aprender e cerca de 6 pra usar em duelo, não 2 a 3.</li>
+        <li>O plano de 200 jogadores do <strong>Photon</strong> por US$ 95 ao ano não aparece mais na página de preços.</li>
+        <li>As armas customizadas do <strong>UEFN</strong> já estão disponíveis desde a v41; não foram adiadas.</li>
+        <li>O pico do <strong>Rivals of Aether II</strong> foi de 6,7 a 11,6 mil, não 2.564, que é só o pico de 2026.</li>
+        <li>O <strong>Quake Champions</strong> teve pico de 591 e média de ~210 em 09/2026. A fonte que falava em 3 a 5 mil foi descartada.</li>
+        <li>O <strong>Awesomenauts</strong> resolveu a fila vazia começando a partida com bots que vão sendo trocados por humanos. Esperar 7 minutos era o exemplo do problema, não a solução.</li>
+        <li>Nos jogos grandes, o que a evidência valida é <strong>"sem vantagem paga"</strong>, não "sem passe": CS2, Rocket League e Street Fighter 6 têm passe.</li>
+      </ul>
+      <h3>O que continua em aberto</h3>
+      <ul>
+        <li>Se a <strong>Edgegap</strong> tem servidor em São Paulo e se o relay dela é grátis até 50 jogadores. Nenhuma das duas coisas foi confirmada.</li>
+        <li>O pico do Remastered: 960 ou 2.216 jogadores, conforme o rastreador.</li>
+        <li>Quanto as caixas de recompensa são proibidas ou só restringidas pelo ECA Digital, e qual órgão fiscaliza.</li>
+        <li>Preços das VPS em São Paulo (Vultr, Magalu), que não foram conferidos.</li>
+        <li>Se o netfox aguenta 4v4 e 8v8 com acrobacia e cancelamentos. Só um protótipo responde.</li>
+        <li>O que fez os <strong>servidores privados do GunZ</strong> durarem mais de 15 anos com centenas de jogadores. É o caso mais parecido com este projeto e ninguém estudou.</li>
+        <li>Como o <strong>STRAFTAT</strong> chegou a ~206 mil donos sem orçamento de marketing.</li>
+        <li>O público brasileiro e latino: horário de pico e latência. Com poucas centenas de jogadores no mundo, é a fila regional que decide se o 1v1 funciona à noite.</li>
+        <li>Se o netfox segura janelas de parry de 80 a 200 ms com 8 clientes. Se não segurar, o 4v4 vira 3v3.</li>
+        <li>O motivo da morte do <strong>Diabotical</strong>: a única causa com autor é "não era viciante o bastante", do próprio estúdio, e mesmo ela vem de fonte secundária. Os "99,6% de abandono" não foram confirmados.</li>
+      </ul>
+    </section>
+
+    <section id="fontes">
+      <p class="kicker">Fontes</p>
+      <h2>Principais fontes</h2>
+      <ul class="sources">
+        <li><a href="https://store.steampowered.com/app/3139440/GunZ_The_Duel/">GunZ: The Duel na Steam</a></li>
+        <li><a href="https://steamcharts.com/app/3139440">Steam Charts do Remastered</a></li>
+        <li><a href="https://cogconnected.com/2026/08/gunz-the-duel-makes-a-legendary-comeback-with-its-worldwide-steam-release/">COGconnected: lançamento global</a></li>
+        <li><a href="https://www.invenglobal.com/articles/24767/masangsoft-launches-global-steam-service-for-gunz-the-duel-remastered">Inven Global: Masangsoft lança o Remastered</a></li>
+        <li><a href="https://80.lv/articles/how-masangsoft-is-keeping-classic-online-games-alive-by-giving-them-a-second-life">80.lv: a estratégia da Masangsoft</a></li>
+        <li><a href="https://pclabs.com.br/gunz-the-duel-volta-ao-steam-20-anos-apos-virar-fenomeno-no-brasil/">PC Labs: o GunZ no Brasil</a></li>
+        <li><a href="https://en.wikipedia.org/wiki/GunZ:_The_Duel">Wikipedia: GunZ: The Duel</a></li>
+        <li><a href="https://en.wikipedia.org/wiki/GunZ_2">Wikipedia: GunZ 2</a></li>
+        <li><a href="https://realgunz.net/guides/gunz-kstyle">RealGunZ: guia de K-style</a></li>
+        <li><a href="https://mmos.com/graveyard/gunz-the-duel">MMOs.com: cemitério do GunZ</a></li>
+        <li><a href="https://en.wikipedia.org/wiki/Naraka:_Bladepoint">Wikipedia: Naraka: Bladepoint</a></li>
+        <li><a href="https://godotengine.org/download/macos/">Godot: download</a></li>
+        <li><a href="https://github.com/foxssake/netfox">netfox no GitHub</a></li>
+        <li><a href="https://colyseus.io/blog/colyseus-018-is-here/">Colyseus 0.18</a></li>
+        <li><a href="https://sbox.game/dev/doc/networking/">s&amp;box: documentação de rede</a></li>
+        <li><a href="https://www.gamingonlinux.com/2026/03/facepunch-signed-a-license-with-valve-to-allow-standalone-releases-from-sandbox/">s&amp;box: jogos independentes na Steam</a></li>
+        <li><a href="https://forums.unrealengine.com/t/mac-air-m4-fps-problem/2707524">Unreal num MacBook Air M4</a></li>
+        <li><a href="https://fish-networking.gitbook.io/docs/overview/readme/pro-projects-and-support">FishNet Pro</a></li>
+        <li><a href="https://www.photonengine.com/fusion/pricing">Preços do Photon Fusion</a></li>
+        <li><a href="https://www.gabrielgambetta.com/client-server-game-architecture.html">Gambetta: arquitetura cliente-servidor</a></li>
+        <li><a href="https://www.gdcvault.com/play/1024001/-Overwatch-Gameplay-Architecture-and">GDC 2017: rede do Overwatch</a></li>
+        <li><a href="https://danieljimenezmorales.github.io/2023-10-29-the-art-of-hit-registration/">A arte do registro de acerto</a></li>
+        <li><a href="https://unity.com/pricing">Preços da Unity</a></li>
+        <li><a href="https://steamdb.info/app/730/charts/">SteamDB: Counter-Strike 2</a></li>
+        <li><a href="https://www.forbes.com/sites/mikestubbs/2026/09/30/deadlock-hits-highest-player-count-ever-following-major-patch/">Forbes: recorde do Deadlock</a></li>
+        <li><a href="https://www.gematsu.com/2026/06/street-fighter-6-sales-top-seven-million">Gematsu: Street Fighter 6 passa de 7 milhões</a></li>
+        <li><a href="https://raijin.gg/app/2386720/STRAFTAT">Raijin: STRAFTAT</a></li>
+        <li><a href="https://raijin.gg/app/3139440/GunZ_The_Duel">Raijin: GunZ Remastered</a></li>
+        <li><a href="https://www.thefpsreview.com/2026/09/25/quake-champions-drops-free-to-play-for-a-flat-9-99-unlocks-everything-and-ends-new-content/">Quake Champions vira pago e liberado</a></li>
+        <li><a href="https://www.thegamer.com/call-of-duty-black-ops-iii-best-selling/">Black Ops III, o COD mais vendido</a></li>
+        <li><a href="https://charlieintel.com/activision-confirms-infinite-warfare-sales-says-space-setting-not-resonate/41830/">Activision sobre o Infinite Warfare</a></li>
+        <li><a href="https://www.gamespot.com/articles/titanfall-2-sales-lower-than-expected-ea-admits/1100-6447455/">EA sobre as vendas do Titanfall 2</a></li>
+        <li><a href="https://www.pcgamer.com/titanfall-dev-explains-why-apex-legends-doesnt-have-titans-or-wall-running-or-double-jumping/">Por que o Apex não tem corrida na parede</a></li>
+        <li><a href="https://www.dexerto.com/apex-legends/apex-legends-devs-quickly-revert-tap-strafing-nerf-amid-wave-of-backlash-3025874/">Apex desfaz o nerf do tap-strafe</a></li>
+        <li><a href="https://www.semanticscholar.org/paper/The-Motivational-Pull-of-Video-Games:-A-Theory-Ryan-Rigby/dca79f12c1923582fe4f71fc79fd4d6a8d1c76ad">Ryan, Rigby e Przybylski (2006)</a></li>
+        <li><a href="https://www.psychologytoday.com/us/blog/motivate/202510/dopamine-myths-what-huberman-gets-wrong-about-motivation">Mitos sobre dopamina e motivação</a></li>
+        <li><a href="https://www.researchgate.net/publication/377536047_Match_experiences_affect_interest_Impacts_of_matchmaking_and_performance_on_churn_in_a_competitive_game">Pareamento e abandono em jogo competitivo</a></li>
+        <li><a href="http://joostdevblog.blogspot.com/2015/09/designing-matchmaking-for-smaller.html">Matchmaking pra jogos pequenos</a></li>
+        <li><a href="https://steamcommunity.com/sharedfiles/filedetails/?id=2855559230">Guia do combate do Naraka</a></li>
+        <li><a href="https://www.pcgamesn.com/naraka-bladepoint/review">PCGamesN: review do Naraka</a></li>
+        <li><a href="https://gdkeys.com/keys-to-combat-design-1-anatomy-of-an-attack/">Anatomia de um ataque</a></li>
+        <li><a href="https://www.criticalhit.net/gaming/titanfalls-6v6-multiplayer-is-by-design/">Por que o Titanfall é 6v6</a></li>
+        <li><a href="https://critpoints.net/2016/04/21/mtm-gunz-legendkiller-2/">O shotgun e o K-style do GunZ</a></li>
+      </ul>
+    </section>
+
+    <footer>
+      <p>Pesquisa feita com o Claude Code em 02/10/2026, em duas rodadas de agentes com verificação cética. Prazos e custos são estimativas; preços e status de serviços mudam rápido. Conferir antes de decidir com base neles.</p>
+    </footer>
+  </main>
+</div>

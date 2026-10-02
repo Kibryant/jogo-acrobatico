@@ -1,0 +1,32 @@
+# Decisões
+
+Índice das decisões do projeto, em formato ADR. Cada arquivo tem Contexto, Opções consideradas, Decisão, Consequências e Revisitar se.
+
+**Como ler:** só vale como regra o que está em "Vigentes". Decisão substituída fica no repositório para contar a história, nunca para ser seguida.
+
+**Como mudar:** decisão aceita não se reescreve. Mudar de ideia gera uma DEC nova, com `substitui`. Na antiga só mudam `status` e `substituida_por`, e ela ganha no topo o aviso "⚠️ Substituída por DEC-XXXX em AAAA-MM-DD — não é a regra atual". Antes de criar, confira o último ID desta pasta. A skill `adr` faz esse passo a passo.
+
+## Vigentes
+
+| ID | Data | Decisão | Status |
+|---|---|---|---|
+| [DEC-0001](DEC-0001-engine-godot-gdscript.md) | 2026-10-02 | Godot 4.7.2 com GDScript | aceita |
+| [DEC-0002](DEC-0002-piso-de-desempenho-renderer-e-fisica.md) | 2026-10-02 | 60 fps em 1080p no PC do Arthur, renderer Compatibility e física Jolt explícita | aceita |
+| [DEC-0003](DEC-0003-rede-com-netfox.md) | 2026-10-02 | netfox, com servidor autoritativo e previsão com rollback, na main fixada num commit | aceita; os ticks por segundo saem do Desenho 3 (Q-01) |
+| [DEC-0004](DEC-0004-arquitetura-nucleo-puro-e-ddd-estrategico.md) | 2026-10-02 | Núcleo puro, nós finos, DDD só estratégico e as seis regras | aceita |
+| [DEC-0005](DEC-0005-codigo-tipado-e-pastas-por-feature.md) | 2026-10-02 | Tipagem obrigatória, pastas por feature e formatador da GDQuest | aceita |
+| [DEC-0006](DEC-0006-testes-e-portao.md) | 2026-10-02 | gdUnit4, cinco camadas de teste e o mesmo portão no pre-push e no CI | aceita; o pipeline se confirma no Desenho 4 |
+| [DEC-0007](DEC-0007-base-markdown-git-backlog-md.md) | 2026-10-02 | Markdown e git, com tasks no Backlog.md, no padrão do SkinHub | aceita |
+| [DEC-0008](DEC-0008-idioma.md) | 2026-10-02 | Inglês no que é interno, português no que o Arthur lê, inclusive as tasks | aceita; as tasks em português foram confirmadas pela Q-08 (F-010 §2) |
+| [DEC-0009](DEC-0009-harness-do-claude-code.md) | 2026-10-02 | A harness do SkinHub, mais leve | aceita |
+| [DEC-0010](DEC-0010-construir-e-ensinar.md) | 2026-10-02 | O Claude constrói e ensina; o Arthur dirige | aceita |
+| [DEC-0011](DEC-0011-direcoes-para-depois.md) | 2026-10-02 | Direções para validação de acerto, hospedagem e replay | aceita, como direção |
+| [DEC-0012](DEC-0012-fase-de-desenho-antes-do-codigo.md) | 2026-10-02 | Fase de desenho com seis conversas e um esqueleto andante | aceita na sessão 2 (F-010 §2) |
+
+## Propostas — ainda não são regra
+
+Nenhuma proposta aberta.
+
+## Histórico
+
+Nenhuma decisão substituída ainda.

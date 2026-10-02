@@ -1,0 +1,23 @@
+# Git hooks (DEC-0006). Install once per clone with `lefthook install`.
+# Never bypass them with --no-verify: if a check is wrong, fix the check with Arthur.
+# doublestar: globs mean what they mean in .gitignore ("**/" is zero or more folders).
+glob_matcher: doublestar
+
+pre-commit:
+  parallel: true
+  commands:
+    secrets:
+      run: gitleaks git --pre-commit --staged --redact --verbose
+    format:
+      glob: "**/*.gd"
+      exclude:
+        - "addons/**"
+      run: gdscript-formatter --check {staged_files}
+    core-purity:
+      glob: "core/**/*.gd"
+      run: bash tools/check_core_purity.sh
+
+pre-push:
+  commands:
+    gate:
+      run: bash tools/gate.sh

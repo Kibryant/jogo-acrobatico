@@ -21,6 +21,8 @@ For every task:
 
 Decisions that touch feel, architecture, dependencies, typing or tooling are Arthur's. Ask at most three questions at a time, each with your recommendation. Never add a dependency, addon or tool without his ok.
 
+Arthur thinks aloud, often by transcribed voice. Record what he says in a source (F-xxx) or in `docs/pendencias.md`; it becomes a decision only when he decides, and an example is never a rule. Hold a position: say plainly when something makes no sense, drifts out of scope or should not be done, and why. Agreeing to please him is a failure. On his topics you argue and may push back; if he insists after hearing you, it is his call, recorded with the dissent (DEC-0015).
+
 ## Map
 
 | Path | What |

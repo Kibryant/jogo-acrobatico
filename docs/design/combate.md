@@ -65,7 +65,13 @@ Os tempos de golpe seguem o formato preparação / ativo / recuperação. No có
 - **8v8:** vira leitura de mapa, e a rede passa de 56 para 240 pares de jogadores por atualização.
 - **Ordem:** 1v1, depois 4v4, e o 8v8 como evento.
 
+## Decidido no Desenho 1
+
+- **Tribo For Honor e Chivalry 2** (Q-06; DEC-0014): tempo fixo e aviso claro. A profundidade vem de ler e escolher, não de manipular a animação.
+- **Cancelamento só desenhado** (DEC-0016): na lista, com preço, com aviso e com janela larga. O que não está na lista não cancela. A lista do v0, como hipótese até a fase 2:
+  - a finta, que corta a preparação por 15 de stamina;
+  - a recuperação do golpe leve, que pode passar para a esquiva, pagando os 20 de stamina da esquiva.
+
 ## Em aberto (F-001)
 
-- **Q-06:** tribo Mordhau, com profundidade de comando e ~440 jogadores, ou For Honor e Chivalry 2, legíveis, com 2 a 4 mil? As regras v0 puxam para a segunda.
 - **Q-07:** qual a técnica própria do jogo, o equivalente ao K-style do GunZ?

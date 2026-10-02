@@ -28,6 +28,6 @@ Estado atual: o estudo tem poucos números de movimento (F-001). O Desenho 1 (TA
 - **Dash:** distância, duração, recarga e custo de stamina; e se é a mesma coisa que a esquiva.
 - **Corrida na parede:** velocidade, queda no fim, como entra e como sai.
 - **Gancho:** velocidade da puxada, se puxa o jogador ou o alvo, e a recarga.
-- **Câmera:** terceira ou primeira pessoa.
+- **Câmera:** terceira pessoa (DEC-0013). Faltam a distância, o ombro e o campo de visão.
 
 O teste da fase 1 é "divertido sozinho por 15 min?" (F-001).

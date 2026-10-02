@@ -1,9 +1,10 @@
 ---
 id: TASK-3
 title: 'Desenho 1: o jogo no papel'
-status: Ready
+status: In Progress
 assignee: []
 created_date: '2026-10-02 16:48'
+updated_date: '2026-10-02 18:43'
 labels:
   - desenho
 milestone: m-0
@@ -15,7 +16,7 @@ ordinal: 3000
 
 <!-- SECTION:DESCRIPTION:BEGIN -->
 ### Por quê
-Primeira conversa da fase de desenho (DEC-0012, proposta). O combate tem os números v0 do estudo, mas o movimento quase não tem números, e nenhum código pode inventá-los (`docs/design/movimento.md`; AGENTS.md). Esta conversa fecha o jogo no papel o suficiente para o esqueleto andante e para a fase 1.
+Primeira conversa da fase de desenho (DEC-0012). O combate tem os números v0 do estudo, mas o movimento quase não tem números, e nenhum código pode inventá-los (`docs/design/movimento.md`; AGENTS.md). Esta conversa fecha o jogo no papel o suficiente para o esqueleto andante e para a fase 1.
 
 ### Perguntas em aberto
 - Pilares e anti-pilares (`docs/design/visao.md`).
@@ -40,7 +41,7 @@ Primeira conversa da fase de desenho (DEC-0012, proposta). O combate tem os núm
 
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
-- [ ] #1 Quando a conversa termina, `docs/design/visao.md` tem os pilares e os anti-pilares fechados.
+- [x] #1 Quando a conversa termina, `docs/design/visao.md` tem os pilares e os anti-pilares fechados.
 - [ ] #2 Quando a conversa termina, `docs/design/movimento.md` tem o kit v0 em números, cada um com a unidade, sem lacuna que o esqueleto andante precise.
 - [ ] #3 Quando o Arthur decide a tribo do combate, a câmera e o nome provisório, uma DEC registra cada decisão.
 - [ ] #4 Quando um termo novo aparece, ele entra no glossário com o nome no código.
@@ -53,3 +54,24 @@ Primeira conversa da fase de desenho (DEC-0012, proposta). O combate tem os núm
 - [ ] #3 Diário da sessão escrito e glossário atualizado
 - [ ] #4 Mudanças registradas em docs/mudancas.md
 <!-- DOD:END -->
+
+## Implementation Plan
+
+<!-- SECTION:PLAN:BEGIN -->
+1. Rodada 1, a alma: pilares e anti-pilares, câmera e tribo do combate (Q-06).
+2. Rodada 2, o corpo: o kit de movimento v0 em números, dash e esquiva, e o espaço para a técnica própria (Q-07).
+3. Rodada 3: o nome provisório (Q-04) e a revisão das DECs.
+4. Registro: as palavras do Arthur numa F-xxx; `visao.md`, `movimento.md` e o glossário; as DECs pela skill `adr`; `mudancas.md` e `pendencias.md`.
+<!-- SECTION:PLAN:END -->
+
+## Implementation Notes
+
+<!-- SECTION:NOTES:BEGIN -->
+Rodada 1 (02/10/2026, sessão 2):
+- Pilares e anti-pilares fechados em `docs/design/visao.md` (F-012; F-013; F-014).
+- Câmera em terceira pessoa (DEC-0013), tribo For Honor e Chivalry 2 (DEC-0014) e cancelamento só desenhado (DEC-0016).
+- Como trabalhamos: o Claude registra o que é pensamento em voz alta, tem posição e diz não (DEC-0015).
+- Registrado como ideia, não como decisão: a pirueta expõe e também tira da linha do tiro (F-012; F-013). Volta como material da matriz de posição.
+- Pendências novas: Q-10 (tranco) e Q-11 (combinações nas duas mãos e lista de armas).
+- Glossário: termos de desenho, de combate e de manobra.
+<!-- SECTION:NOTES:END -->

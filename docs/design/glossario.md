@@ -1,6 +1,6 @@
 ---
 revisado_em: 2026-10-02
-fontes: [F-001, F-002, F-005, F-007]
+fontes: [F-001, F-002, F-005, F-007, F-012, F-013]
 ---
 
 # Glossário
@@ -43,6 +43,13 @@ A linguagem ubíqua do jogo (DEC-0004, regra 5): o mesmo termo na conversa, no d
 | Equipamento | Uma arma corpo a corpo, uma de distância e um utilitário | — | `loadout` |
 | Hitbox | A área que acerta | m | `hitbox` |
 | Hurtbox | A área que pode ser acertada | m | `hurtbox` |
+| Vantagem | Depois de uma troca, quem volta a agir primeiro, e com quantos ms de folga | ms no design, ticks no código | `advantage` |
+| Tranco | O tempo sem agir de quem leva um golpe (hitstun) ou o bloqueia (blockstun). Ainda sem número (Q-10) | ms no design, ticks no código | `hitstun`, `blockstun` |
+| Punir o erro | Acertar quem errou um golpe enquanto ele ainda está na recuperação | — | — |
+| Cancelamento | Cortar uma ação para começar outra. Só existe o desenhado: na lista, com preço, com aviso e com janela larga (DEC-0016) | — | `cancel` |
+| Janela | O intervalo em que uma ação vale, como a do parry | ms no design, ticks no código | `window` |
+| Buffer de input | Guardar um comando apertado antes da hora e executá-lo no primeiro tick livre | ms no design, ticks no código | `input_buffer` |
+| Invulnerabilidade | A janela em que nada acerta o jogador (i-frames). No v0, a esquiva tem 250 ms; se alguma manobra terá, ainda não se decidiu | ms no design, ticks no código | `invulnerable` |
 
 ## Movimento
 
@@ -53,3 +60,19 @@ A linguagem ubíqua do jogo (DEC-0004, regra 5): o mesmo termo na conversa, no d
 | Gancho | Puxa o jogador até um ponto a até 25 m | m | `grapple` |
 | No chão | Superestado: parado, correndo, golpes, defesa e troca de arma | — | `Grounded` |
 | No ar | Superestado: pulo, parede, dash e gancho; ninguém se defende | — | `Airborne` |
+| Manobra | O verbo de uma acrobacia como entidade do núcleo: deslocamento, tempo, custo e o que dá para fazer durante ela. É o back-end; a animação só mostra (F-013 §1) | m, ms | `maneuver` |
+| Animação | A apresentação de uma manobra ou de um golpe, no nó. Mostra e nunca decide (DEC-0004) | — | `animation` |
+| Transição | Uma animação deslizando para a próxima sem encurtar nenhuma das duas (blend). É só visual | ms | `blend` |
+
+## Desenho
+
+| Termo | O que é | Unidade | No código |
+|---|---|---|---|
+| Pilar | Frase sobre a experiência que o jogo precisa entregar. A ordem dos pilares desempata (`visao.md`) | — | — |
+| Anti-pilar | O que o jogo decide não ser | — | — |
+| Verbo | O que o jogador faz: correr, subir na parede, dar dash, puxar o gancho, golpear | — | — |
+| Leitura | O aviso que uma ação dá antes de acontecer: postura, brilho, som (telegraph) | ms no design, ticks no código | `telegraph` |
+| Compromisso | O quanto o jogador fica preso depois de começar uma ação | ms | — |
+| Piso e teto de habilidade | Quanto custa começar e até onde dá para melhorar | — | — |
+| Contrajogo | Toda opção tem resposta; cada posição tem força e fraqueza | — | — |
+| Expressão de habilidade | A habilidade aparecendo na jogada, como o outplay | — | — |

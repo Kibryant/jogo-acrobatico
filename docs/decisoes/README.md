@@ -22,6 +22,10 @@
 | [DEC-0010](DEC-0010-construir-e-ensinar.md) | 2026-10-02 | O Claude constrói e ensina; o Arthur dirige | aceita |
 | [DEC-0011](DEC-0011-direcoes-para-depois.md) | 2026-10-02 | Direções para validação de acerto, hospedagem e replay | aceita, como direção |
 | [DEC-0012](DEC-0012-fase-de-desenho-antes-do-codigo.md) | 2026-10-02 | Fase de desenho com seis conversas e um esqueleto andante | aceita na sessão 2 (F-010 §2) |
+| [DEC-0013](DEC-0013-camera-em-terceira-pessoa.md) | 2026-10-02 | Câmera em terceira pessoa | aceita; os números da câmera saem na rodada 2 do Desenho 1 |
+| [DEC-0014](DEC-0014-tribo-do-combate-for-honor.md) | 2026-10-02 | Tribo do combate For Honor e Chivalry 2: tempo fixo e aviso claro | aceita |
+| [DEC-0015](DEC-0015-registrar-ter-posicao-e-dizer-nao.md) | 2026-10-02 | O Claude registra o que o Arthur pensa em voz alta, tem posição e diz não | aceita; completa a DEC-0010 |
+| [DEC-0016](DEC-0016-cancelamento-so-desenhado.md) | 2026-10-02 | Cancelamento só desenhado: na lista, com preço, com aviso e com janela larga | aceita; a lista do v0 é hipótese até a fase 2 |
 
 ## Propostas — ainda não são regra
 

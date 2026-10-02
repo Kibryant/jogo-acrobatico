@@ -29,6 +29,7 @@
 | [DEC-0017](DEC-0017-numeros-v0-o-claude-fecha-o-arthur-sente.md) | 2026-10-02 | Números v0: o Claude fecha pela melhor experiência do jogador, e o Arthur julga jogando | aceita |
 | [DEC-0018](DEC-0018-nome-provisorio-jogo-acrobatico.md) | 2026-10-02 | Nome provisório "Jogo Acrobático" até o fim da fase 1 | aceita |
 | [DEC-0019](DEC-0019-numeros-em-artefato-visual.md) | 2026-10-02 | Número, medida e cálculo se mostram ao Arthur num artefato visual | aceita |
+| [DEC-0020](DEC-0020-linguagem-gdscript-e-nucleo-trocavel.md) | 2026-10-02 | GDScript no jogo todo; só o núcleo muda de linguagem, se a medição de CPU pedir | aceita; completa a DEC-0001 |
 
 ## Propostas — ainda não são regra
 

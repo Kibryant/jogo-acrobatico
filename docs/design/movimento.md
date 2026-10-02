@@ -9,6 +9,16 @@ Estado atual: o kit v0 fechado no Desenho 1 (TASK-3). O Arthur fechou a primeira
 
 Vitrine visual, em escala e no tempo real: [Kit de movimento v0](https://claude.ai/artifact/DT8QMmuKiBffEjtfUimDWL), privada (DEC-0019). Quando um número daqui mudar, a vitrine é republicada no mesmo link.
 
+## Como os números nasceram
+
+Cada número tem uma origem, e nem todos têm a mesma firmeza; a vitrine mostra a origem número por número. A física não escolhe número: ela deriva gravidade, distâncias e tempos da sensação escolhida.
+
+- **Corpo humano:** a altura e o raio da cápsula; os blocos de 1, 2 e 3 m (bancada, porta e teto).
+- **Outros jogos e motores:** a rampa de 45° (padrão do Godot e do Unity), a régua de 5,5 m/s do Overwatch, perdões entre 50 e 200 ms.
+- **O estudo (F-001):** 2,5 s de parede, o gancho de 25 m e 6 s, os custos de golpe.
+- **Os pilares:** a corrida acima do Overwatch, o prêmio por usar a parede, o compromisso no ar, o dash sem invulnerabilidade.
+- **Chutes assumidos, os primeiros a mexer no protótipo:** controle no ar, queda máxima, descida na parede, recarga e custo do dash, ponto em que o gancho solta, espera e recuperação da stamina, sensibilidade.
+
 ## Princípios
 
 - **Verbo e animação separados.** A manobra é uma entidade do núcleo, o back-end: deslocamento, tempo, custo e o que dá para fazer durante ela. A animação só mostra (F-013 §1; DEC-0004).

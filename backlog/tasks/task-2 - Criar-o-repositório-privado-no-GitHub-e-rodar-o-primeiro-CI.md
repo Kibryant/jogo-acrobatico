@@ -1,9 +1,10 @@
 ---
 id: TASK-2
 title: Criar o repositório privado no GitHub e rodar o primeiro CI
-status: To Refine
+status: In Progress
 assignee: []
 created_date: '2026-10-02 16:48'
+updated_date: '2026-10-02 21:18'
 labels:
   - infra
 milestone: m-0
@@ -46,3 +47,14 @@ O CI está escrito (`.github/workflows/ci.yml`), mas nunca rodou: o repositório
 - [ ] #3 Diário da sessão escrito e glossário atualizado
 - [ ] #4 Mudanças registradas em docs/mudancas.md
 <!-- DOD:END -->
+
+## Implementation Plan
+
+<!-- SECTION:PLAN:BEGIN -->
+1. Checagem prévia, sem publicar: versões fixadas do CI, gitleaks no histórico, portão num clone limpo e hook do LFS dentro do lefthook.
+2. Criar o repositório privado `Kibryant/jogo-acrobatico` e ligar o `origin` (Q-03: privado sem regra de branch).
+3. Primeiro push: o pre-push roda o portão, e o lefthook sobe os PNGs no LFS.
+4. Acompanhar o CI até o verde (critérios 1 e 2).
+5. Sonda do critério 3: branch e PR em rascunho criados no GitHub, com um teste que falha de propósito; conferir o log; fechar o PR e apagar o branch.
+6. Registro: a fonte com as respostas do Arthur, a Q-03, `mudancas.md` e o registro da harness.
+<!-- SECTION:PLAN:END -->

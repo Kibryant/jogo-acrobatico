@@ -23,6 +23,8 @@ Decisions that touch feel, architecture, dependencies, typing or tooling are Art
 
 Arthur thinks aloud, often by transcribed voice. Record what he says in a source (F-xxx) or in `docs/pendencias.md`; it becomes a decision only when he decides, and an example is never a rule. Hold a position: say plainly when something makes no sense, drifts out of scope or should not be done, and why. Agreeing to please him is a failure. On his topics you argue and may push back; if he insists after hearing you, it is his call, recorded with the dissent (DEC-0015).
 
+Show numbers, measures, physics and math to Arthur in a visual Artifact, as illustrative as possible: scale drawings, real-time animation, comparisons with things he knows. The terminal carries the summary and the link; `docs/` stays the source of truth, and the Artifact is republished at the same link when its numbers change (DEC-0019).
+
 ## Map
 
 | Path | What |
@@ -116,4 +118,4 @@ English for everything internal to agents and code: this file, agents, skills, s
 
 ## Machine and tools
 
-Windows 11 with Git Bash; the scripts are bash. On PATH (`~/.local/bin`): `godot` (4.7.2 console), `backlog`, `gdscript-formatter`, `lefthook`, `gitleaks` and `gh`; `git-lfs` comes with Git. The Yabadoo, Arthur's second brain, is an MCP: when a DEC is accepted, the `diario` skill also records a one-line decision there, citing the DEC id.
+Windows 11 with Git Bash; the scripts are bash. On PATH (`~/.local/bin`): `godot` (4.7.2 console), `backlog`, `gdscript-formatter`, `lefthook`, `gitleaks` and `gh`; `git-lfs` comes with Git. `node` 24 (portable, in `~/.local/opt`) and `python` 3.14 (per user) are on the user PATH for helper scripts; the gate uses neither (F-016 §2). The Yabadoo, Arthur's second brain, is an MCP: when a DEC is accepted, the `diario` skill also records a one-line decision there, citing the DEC id.

@@ -7,6 +7,8 @@ fontes: [F-001, F-012, F-013, F-015]
 
 Estado atual: o kit v0 fechado no Desenho 1 (TASK-3). O Arthur fechou a primeira tabela (corpo, chão, pulo, perdão e câmera) como v0, para julgar no protótipo (F-015 §1). O resto foi fechado pelo Claude, pela melhor experiência do jogador (DEC-0017). Nenhum número foi sentido em jogo: o valor certo sai da fase 1. No código, tudo vira tick na carga, e o arredondamento é testado (DEC-0004, regra 3).
 
+Vitrine visual, em escala e no tempo real: [Kit de movimento v0](https://claude.ai/artifact/DT8QMmuKiBffEjtfUimDWL), privada (DEC-0019). Quando um número daqui mudar, a vitrine é republicada no mesmo link.
+
 ## Princípios
 
 - **Verbo e animação separados.** A manobra é uma entidade do núcleo, o back-end: deslocamento, tempo, custo e o que dá para fazer durante ela. A animação só mostra (F-013 §1; DEC-0004).
@@ -72,7 +74,7 @@ Estado atual: o kit v0 fechado no Desenho 1 (TASK-3). O Arthur fechou a primeira
 | Velocidade na parede | 8 | m/s | Quem entra mais rápido conserva a velocidade de entrada |
 | Teto de velocidade na parede | 12 | m/s | |
 | Duração máxima | 2,5 | s | Do estudo (F-001) |
-| Altura | mantida por 1,5 s | s | Depois desce com 25% da gravidade de subida (≈ 4,9 m/s²) até soltar |
+| Altura | mantida por 1,5 s | s | Depois desce com 10% da gravidade de subida (≈ 2 m/s²) e perde ≈ 1 m até soltar |
 | Pulo da parede | 1,2 m de altura e 5 m/s para fora da parede | m, m/s | Mantém a velocidade ao longo da parede |
 | Mesma parede | só vale de novo depois de tocar o chão ou outra parede | — | Impede subir em zigue-zague na mesma parede |
 | Custo | nenhum | — | O limite é o tempo |

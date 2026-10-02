@@ -27,6 +27,8 @@
 | [DEC-0015](DEC-0015-registrar-ter-posicao-e-dizer-nao.md) | 2026-10-02 | O Claude registra o que o Arthur pensa em voz alta, tem posição e diz não | aceita; completa a DEC-0010 |
 | [DEC-0016](DEC-0016-cancelamento-so-desenhado.md) | 2026-10-02 | Cancelamento só desenhado: na lista, com preço, com aviso e com janela larga | aceita; a lista do v0 é hipótese até a fase 2 |
 | [DEC-0017](DEC-0017-numeros-v0-o-claude-fecha-o-arthur-sente.md) | 2026-10-02 | Números v0: o Claude fecha pela melhor experiência do jogador, e o Arthur julga jogando | aceita |
+| [DEC-0018](DEC-0018-nome-provisorio-jogo-acrobatico.md) | 2026-10-02 | Nome provisório "Jogo Acrobático" até o fim da fase 1 | aceita |
+| [DEC-0019](DEC-0019-numeros-em-artefato-visual.md) | 2026-10-02 | Número, medida e cálculo se mostram ao Arthur num artefato visual | aceita |
 
 ## Propostas — ainda não são regra
 

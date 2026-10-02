@@ -5,7 +5,7 @@ fontes: [F-001, F-012, F-013, F-014]
 
 # Visão
 
-Estado atual: pilares e anti-pilares fechados no Desenho 1 (TASK-3), com a voz do Arthur (F-012; F-013; F-014). A técnica própria do jogo (Q-07) e o nome (Q-04) seguem em aberto.
+Estado atual: pilares e anti-pilares fechados no Desenho 1 (TASK-3), com a voz do Arthur (F-012; F-013; F-014). O nome é provisório (DEC-0018), e a técnica própria do jogo (Q-07) segue em aberto.
 
 ## O jogo em uma frase
 
@@ -71,4 +71,4 @@ A mecânica é livre. Nome, personagens, mapas, sons, interface e código do Gun
 ## Em aberto
 
 - A técnica própria do jogo (Q-07). Ela não pode nascer de cancelamento por brecha (DEC-0016).
-- O nome do jogo (Q-04), na rodada 3 do Desenho 1.
+- O nome definitivo (Q-04). Até o fim da fase 1, o jogo se chama "Jogo Acrobático" (DEC-0018).

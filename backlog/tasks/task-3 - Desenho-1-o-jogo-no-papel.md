@@ -1,10 +1,10 @@
 ---
 id: TASK-3
 title: 'Desenho 1: o jogo no papel'
-status: In Progress
+status: Done
 assignee: []
 created_date: '2026-10-02 16:48'
-updated_date: '2026-10-02 19:13'
+updated_date: '2026-10-02 21:06'
 labels:
   - desenho
 milestone: m-0
@@ -43,16 +43,16 @@ Primeira conversa da fase de desenho (DEC-0012). O combate tem os números v0 do
 <!-- AC:BEGIN -->
 - [x] #1 Quando a conversa termina, `docs/design/visao.md` tem os pilares e os anti-pilares fechados.
 - [x] #2 Quando a conversa termina, `docs/design/movimento.md` tem o kit v0 em números, cada um com a unidade, sem lacuna que o esqueleto andante precise.
-- [ ] #3 Quando o Arthur decide a tribo do combate, a câmera e o nome provisório, uma DEC registra cada decisão.
-- [ ] #4 Quando um termo novo aparece, ele entra no glossário com o nome no código.
+- [x] #3 Quando o Arthur decide a tribo do combate, a câmera e o nome provisório, uma DEC registra cada decisão.
+- [x] #4 Quando um termo novo aparece, ele entra no glossário com o nome no código.
 <!-- AC:END -->
 
 ## Definition of Done
 <!-- DOD:BEGIN -->
-- [ ] #1 Critérios de aceite verificados
-- [ ] #2 Teste automatizado para toda regra do núcleo (core/)
-- [ ] #3 Diário da sessão escrito e glossário atualizado
-- [ ] #4 Mudanças registradas em docs/mudancas.md
+- [x] #1 Critérios de aceite verificados
+- [x] #2 Teste automatizado para toda regra do núcleo (core/)
+- [x] #3 Diário da sessão escrito e glossário atualizado
+- [x] #4 Mudanças registradas em docs/mudancas.md
 <!-- DOD:END -->
 
 ## Implementation Plan
@@ -80,3 +80,18 @@ Rodada 2 (02/10/2026, sessão 2):
 - Dash e esquiva ficaram separados no papel; o protótipo pode unir os dois.
 - Pendências novas: Q-12 (corpos diferentes), Q-13 (a explicação no mundo para a acrobacia) e Q-14 (matriz de posição e regra das mãos).
 <!-- SECTION:NOTES:END -->
+
+## Final Summary
+
+<!-- SECTION:FINAL_SUMMARY:BEGIN -->
+Fechada na sessão 2 (02/10/2026), em três rodadas.
+
+- Pilares e anti-pilares em `docs/design/visao.md` (F-012 a F-014).
+- Câmera em terceira pessoa (DEC-0013), tribo For Honor e Chivalry 2 (DEC-0014), cancelamento só desenhado (DEC-0016) e nome provisório (DEC-0018).
+- Kit de movimento v0 em `docs/design/movimento.md`: unidade em cada número e o que o esqueleto andante usa (F-015; DEC-0017).
+- Vitrine visual do kit, privada: https://claude.ai/artifact/DT8QMmuKiBffEjtfUimDWL (DEC-0019).
+- Glossário com os termos de desenho, de combate e de manobra.
+- Processo: DEC-0015, DEC-0017 e DEC-0019 nasceram de pedidos do Arthur durante a task.
+- DoD #2: task de desenho, sem regra de núcleo.
+- Portão: `gate green in 11s`.
+<!-- SECTION:FINAL_SUMMARY:END -->

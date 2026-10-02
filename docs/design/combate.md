@@ -71,7 +71,9 @@ Os tempos de golpe seguem o formato preparação / ativo / recuperação. No có
 - **Cancelamento só desenhado** (DEC-0016): na lista, com preço, com aviso e com janela larga. O que não está na lista não cancela. A lista do v0, como hipótese até a fase 2:
   - a finta, que corta a preparação por 15 de stamina;
   - a recuperação do golpe leve, que pode passar para a esquiva, pagando os 20 de stamina da esquiva.
+- **A barra de stamina** (máximo e recuperação) está em `movimento.md`, porque o pulo duplo e o dash também gastam dela (DEC-0017).
 
 ## Em aberto (F-001)
 
 - **Q-07:** qual a técnica própria do jogo, o equivalente ao K-style do GunZ?
+- **Leituras do v0 que fecham na fase 2:** o parry "80 / 200 (400 se errar)" admite duas leituras, uma janela de 80 ms com 200 ms de recuperação ou uma preparação de 80 ms com 200 ms de janela. A esquiva "60, com 250 invulnerável" foi lida como 60 ms de preparação e 250 ms invulnerável, e a recuperação dela ainda não tem número.

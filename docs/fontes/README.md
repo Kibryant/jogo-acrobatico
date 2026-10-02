@@ -18,3 +18,4 @@ O que chegou ao projeto e como chegou. Uma fonte não muda: só mudam `status`, 
 | [F-012](F-012-arthur-visao-do-jogo-desenho-1.md) | 2026-10-02 | O Arthur descreve a visão do jogo em sentimentos (Desenho 1, rodada 1) e decide a câmera em terceira pessoa |
 | [F-013](F-013-arthur-registrar-ter-posicao-e-cancelamento.md) | 2026-10-02 | O Arthur aprova os pilares e a tribo For Honor, pede que o Claude registre e tenha posição, e pergunta se cancelar animação faz sentido |
 | [F-014](F-014-arthur-aceita-o-cancelamento-desenhado.md) | 2026-10-02 | O Arthur aceita a regra do cancelamento desenhado e a redação final do pilar 1 e do anti-pilar 5 |
+| [F-015](F-015-arthur-numeros-corpos-e-pulo-duplo.md) | 2026-10-02 | O Arthur recusa discutir número no abstrato, fecha a tabela como v0, quer pulo duplo, sem dano de queda, a câmera do GunZ como referência, e pensa em corpos diferentes |

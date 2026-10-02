@@ -56,13 +56,20 @@ A linguagem ubíqua do jogo (DEC-0004, regra 5): o mesmo termo na conversa, no d
 | Termo | O que é | Unidade | No código |
 |---|---|---|---|
 | Corrida na parede | Correr pela parede por um tempo limitado | s | `wall_run` |
-| Dash | Arrancada curta; se é a mesma coisa que a esquiva, o Desenho 1 decide | m, ms | `dash` |
+| Dash | Arrancada curta, só no chão e sem invulnerabilidade. No v0, separada da esquiva (`movimento.md`) | m, ms | `dash` |
 | Gancho | Puxa o jogador até um ponto a até 25 m | m | `grapple` |
 | No chão | Superestado: parado, correndo, golpes, defesa e troca de arma | — | `Grounded` |
 | No ar | Superestado: pulo, parede, dash e gancho; ninguém se defende | — | `Airborne` |
 | Manobra | O verbo de uma acrobacia como entidade do núcleo: deslocamento, tempo, custo e o que dá para fazer durante ela. É o back-end; a animação só mostra (F-013 §1) | m, ms | `maneuver` |
 | Animação | A apresentação de uma manobra ou de um golpe, no nó. Mostra e nunca decide (DEC-0004) | — | `animation` |
 | Transição | Uma animação deslizando para a próxima sem encurtar nenhuma das duas (blend). É só visual | ms | `blend` |
+| Cápsula | O corpo de colisão do personagem: 1,8 m de altura e 0,35 m de raio no v0 | m | `capsule` |
+| Pulo duplo | O segundo pulo no ar, um por voo, renovado no chão ou ao começar uma corrida na parede | m | `double_jump` |
+| Pulo da parede | O pulo que sai da corrida na parede, jogando o jogador para fora dela | m, m/s | `wall_jump` |
+| Controle no ar | Quanto o jogador muda a direção no ar, em % da aceleração do chão | % | `air_control` |
+| Coyote time | O tempo em que ainda dá para pular depois de sair da beirada | ms no design, ticks no código | `coyote_time` |
+| Conservação de velocidade | A velocidade que passa de uma manobra para a outra | m/s | `momentum` |
+| Recarga | O tempo até uma manobra poder ser usada de novo | ms no design, ticks no código | `cooldown` |
 
 ## Desenho
 
@@ -76,3 +83,4 @@ A linguagem ubíqua do jogo (DEC-0004, regra 5): o mesmo termo na conversa, no d
 | Piso e teto de habilidade | Quanto custa começar e até onde dá para melhorar | — | — |
 | Contrajogo | Toda opção tem resposta; cada posição tem força e fraqueza | — | — |
 | Expressão de habilidade | A habilidade aparecendo na jogada, como o outplay | — | — |
+| Métricas de nível | As medidas da arena que saem do movimento: vão, altura de bloco, comprimento de parede | m | — |

@@ -26,6 +26,7 @@
 | [DEC-0014](DEC-0014-tribo-do-combate-for-honor.md) | 2026-10-02 | Tribo do combate For Honor e Chivalry 2: tempo fixo e aviso claro | aceita |
 | [DEC-0015](DEC-0015-registrar-ter-posicao-e-dizer-nao.md) | 2026-10-02 | O Claude registra o que o Arthur pensa em voz alta, tem posição e diz não | aceita; completa a DEC-0010 |
 | [DEC-0016](DEC-0016-cancelamento-so-desenhado.md) | 2026-10-02 | Cancelamento só desenhado: na lista, com preço, com aviso e com janela larga | aceita; a lista do v0 é hipótese até a fase 2 |
+| [DEC-0017](DEC-0017-numeros-v0-o-claude-fecha-o-arthur-sente.md) | 2026-10-02 | Números v0: o Claude fecha pela melhor experiência do jogador, e o Arthur julga jogando | aceita |
 
 ## Propostas — ainda não são regra
 

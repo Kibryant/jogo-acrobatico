@@ -4,7 +4,7 @@ title: 'Desenho 1: o jogo no papel'
 status: In Progress
 assignee: []
 created_date: '2026-10-02 16:48'
-updated_date: '2026-10-02 18:43'
+updated_date: '2026-10-02 19:13'
 labels:
   - desenho
 milestone: m-0
@@ -42,7 +42,7 @@ Primeira conversa da fase de desenho (DEC-0012). O combate tem os números v0 do
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
 - [x] #1 Quando a conversa termina, `docs/design/visao.md` tem os pilares e os anti-pilares fechados.
-- [ ] #2 Quando a conversa termina, `docs/design/movimento.md` tem o kit v0 em números, cada um com a unidade, sem lacuna que o esqueleto andante precise.
+- [x] #2 Quando a conversa termina, `docs/design/movimento.md` tem o kit v0 em números, cada um com a unidade, sem lacuna que o esqueleto andante precise.
 - [ ] #3 Quando o Arthur decide a tribo do combate, a câmera e o nome provisório, uma DEC registra cada decisão.
 - [ ] #4 Quando um termo novo aparece, ele entra no glossário com o nome no código.
 <!-- AC:END -->
@@ -71,7 +71,12 @@ Rodada 1 (02/10/2026, sessão 2):
 - Pilares e anti-pilares fechados em `docs/design/visao.md` (F-012; F-013; F-014).
 - Câmera em terceira pessoa (DEC-0013), tribo For Honor e Chivalry 2 (DEC-0014) e cancelamento só desenhado (DEC-0016).
 - Como trabalhamos: o Claude registra o que é pensamento em voz alta, tem posição e diz não (DEC-0015).
-- Registrado como ideia, não como decisão: a pirueta expõe e também tira da linha do tiro (F-012; F-013). Volta como material da matriz de posição.
-- Pendências novas: Q-10 (tranco) e Q-11 (combinações nas duas mãos e lista de armas).
-- Glossário: termos de desenho, de combate e de manobra.
+- Registrado como ideia, não como decisão: a pirueta expõe e também tira da linha do tiro (F-012; F-013).
+- Pendências novas: Q-10 (tranco) e Q-11 (combinações de armas).
+
+Rodada 2 (02/10/2026, sessão 2):
+- Kit de movimento v0 fechado em `docs/design/movimento.md`: a primeira tabela pelo Arthur (F-015), o resto pelo Claude (DEC-0017).
+- Decisões do Arthur: pulo duplo, sem dano de queda, o corpo olha para onde a câmera olha e a câmera do GunZ como referência (F-015).
+- Dash e esquiva ficaram separados no papel; o protótipo pode unir os dois.
+- Pendências novas: Q-12 (corpos diferentes), Q-13 (a explicação no mundo para a acrobacia) e Q-14 (matriz de posição e regra das mãos).
 <!-- SECTION:NOTES:END -->

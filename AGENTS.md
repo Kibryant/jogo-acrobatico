@@ -58,7 +58,7 @@ Feature folders (`player/`, `arena/`, `net/`, `ui/`...) are created by the first
 
 - Only DECs with `status: aceita` are rules. `proposta` is not a rule yet.
 - Every claim in docs and tasks cites its origin in parentheses: (F-001), (DEC-0004), (F-003 §2).
-- **Never invent a game parameter.** Numbers (ms, meters, damage, stamina) come from `docs/design/`. If one is missing, ask Arthur; the implementer returns NEEDS_CONTEXT.
+- **Never invent a game parameter.** Numbers (ms, meters, damage, stamina) come from `docs/design/`. If one is missing, the implementer returns NEEDS_CONTEXT. In design conversations, Claude closes v0 numbers for the player's best experience and explains the feel they create, comparing with games Arthur knows; never ask him to approve raw tables. Ask him only what changes the game's identity; he judges numbers by playing (DEC-0017).
 - Nothing is deleted, it is superseded. A source changes only `status`, `substituida_por` and a warning line at the top; a correction is a new source. An accepted DEC changes only `status` and `substituida_por` and gets the warning "⚠️ Substituída por DEC-XXXX em AAAA-MM-DD — não é a regra atual"; changing your mind means a new DEC with `substitui`.
 - Check the last existing ID before creating an F, DEC or Q.
 - New information that contradicts the current state goes to `docs/mudancas.md`, and you ask Arthur before changing `docs/design/` or `docs/arquitetura/`.

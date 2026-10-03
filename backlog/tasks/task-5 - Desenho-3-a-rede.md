@@ -1,10 +1,10 @@
 ---
 id: TASK-5
 title: 'Desenho 3: a rede'
-status: To Refine
+status: Ready
 assignee: []
 created_date: '2026-10-02 16:48'
-updated_date: '2026-10-02 22:40'
+updated_date: '2026-10-03 14:40'
 labels:
   - rede
   - desenho
@@ -18,32 +18,58 @@ ordinal: 5000
 
 <!-- SECTION:DESCRIPTION:BEGIN -->
 ### Por quê
-Terceira conversa da fase de desenho (DEC-0012). A rede é a parte mais cara de mudar depois. O netfox resolve previsão e rollback, mas a compensação de lag para espada e tiro não vem pronta, e há um bug aberto no 4.7.2 (F-005; DEC-0003).
+Terceira conversa da fase de desenho (DEC-0012). A rede é a parte mais cara de mudar depois. O netfox resolve previsão e rollback, mas a compensação de lag para espada e tiro não vem pronta (F-005 §4), e ele nunca rodou no 4.7.2 (Q-02). O Desenho 2 deixou três hipóteses para provar com ele rodando (DEC-0022), e a Q-01, 30 ou 60 ticks, espera a medição, já com a evidência do parry: 80 ms viram 67 a 30 ticks e 83 a 60 (DEC-0022).
+
+Vitrine da rede, privada (DEC-0019): https://claude.ai/artifact/Sb4Q5e4M16UymdoaR9UAzp
 
 ### Perguntas em aberto
-- Q-01: 30 ou 60 ticks por segundo.
-- Q-02: o netfox no 4.7.2, o bug #659, release ou main.
-- O input: o que vai nele, o buffer dos comandos de um tick e o `input_delay`.
-- A previsão dos jogadores remotos e o efeito dela no parry (F-007 §6).
-- A compensação de lag a favor de quem ataca, até ~220 ms, com o bloqueio julgado no tempo de quem defende (DEC-0011).
-- A detecção do golpe de espada dentro do rollback (ShapeCast3D).
-- Se a fase 1 já nasce no tick do netfox.
+A pauta da conversa: cada item sai com resposta, DEC ou pendência.
 
-### Escolhas a confirmar
-- netfox na main fixada num commit (DEC-0003). Padrão sugerido: esse, se a suíte dele passar no 4.7.2.
+Rodada 1, o netfox de verdade:
+- Q-02: a suíte do netfox no 4.7.2, o #659 e o commit. Conferido em 03/10: a main segue no `cf5189d`, e o #659 segue aberto.
+- Hipótese 1 (DEC-0022): o caminho aninhado `:state:mode` grava, restaura e vai pela rede. Lido em 03/10: o RollbackSynchronizer guarda o nó e o caminho `state:mode` e relê o objeto a cada vez (`property-pool.gd`, `property-entry.gd`); o serializador manda os valores em ordem, nó por nó (`dense-snapshot-serializer.gd`).
+- Hipótese 2: o contorno do transform (estático, transform, cinemático) faz um lutador colidir com o outro na posição certa ao refazer um tick. O lugar dele é o `after_prepare_tick` (`network-rollback.md`).
+- Hipótese 3, em risco: `on_floor` no estado substitui o movimento extra de velocidade zero. Lido em 03/10: o `move_and_slide()` do Godot 4.7.2 guarda o próprio "estava no chão" (`character_body_3d.cpp:95`) e o usa no snap (linhas 394 e 495); depois de um rollback, esse valor é do presente. A sonda testa em rampa de 45°, beirada e pouso.
+- Q-01: 30 ou 60 ticks, medindo e jogando.
+
+Rodada 2, o desenho:
+- O input: o que vai nele, o comando de um toque e o `input_delay`.
+- O oponente no passado: interpolação ou previsão de input (a da main tem bug aberto, o #613), e o efeito no parry (F-007 §6).
+- A compensação de lag: o golpe a favor de quem ataca, até ~220 ms, e o bloqueio no tempo de quem defende (DEC-0011), com um teto contra o lag switch (F-005 §4).
+- A detecção do golpe de espada dentro do rollback: ShapeCast3D ou forma analítica no núcleo (F-007 §8).
+- Se a fase 1 já nasce no tick do netfox (`roteiro.md`).
+- A `Main`: como o mesmo projeto sobe como servidor dedicado ou como cliente (DEC-0022 §5).
+
+### Escolhas confirmadas
+Confirmadas pelo Arthur em 03/10, com 8 clientes já (F-023 §2 e §3):
+- O netfox na main fixada no `cf5189d`, com core e extras (DEC-0003). Se a suíte falhar só nos 4 testes de float16, ele entra assim mesmo, sem usar float16. Se falhar em rollback, tempo ou sincronização, a sonda testa o release v1.35.3, e a escolha volta para o Arthur.
+- O contorno do #659: os autoloads do netfox com `res://` no `project.godot`, guardados por um teste, em vez de remendar o código do netfox.
+- As sondas moram fora do repositório, em `../netfox-sonda`. O `rede.md` guarda o commit, a montagem e os números; a prova permanente nasce como teste na TASK-9 (DEC-0004, regra 4).
+- A medição roda com um servidor dedicado sem tela e com 2 e com 8 clientes, a ping 0, 100 e 220, a 30 e a 60 ticks. Com 2 clientes, o simulador do netfox; com 8, o clumsy 0.3, porque o simulador trava com 4 ou mais (#554). O clumsy é ferramenta nova, aprovada pelo Arthur (F-023 §2); usa o driver WinDivert e pede administrador.
+- A compensação de lag e a detecção do golpe ficam no papel, com a viabilidade conferida no código do netfox. O código delas nasce com a espada: local na fase 2, em rede na fase 3.
 
 ### Fora do escopo
 - Hospedagem (Desenho 6, TASK-8).
+- Código de jogo: a cápsula em rede é a TASK-9. As sondas são descartáveis e ficam fora do repositório.
+- O código da compensação de lag e da detecção do golpe (fases 2 e 3).
+- Jitter e 16 lutadores: seguem com a Q-09 e com a regra 6 da DEC-0004.
+- noray e NAT: com servidor dedicado, não são necessários (F-005 §9).
 
 ### O que você vai aprender
-- Previsão, reconciliação, rollback e compensação de lag funcionando de verdade, nos exemplos do netfox, com um servidor, dois clientes e lag simulado.
+- Previsão, reconciliação, rollback e interpolação funcionando de verdade, com um servidor, 2 e 8 clientes e lag simulado, e você jogando a 30 e a 60 ticks.
+- Por que o oponente está sempre no passado, e o que isso faz com o parry.
+- Compensação de lag: quem o servidor favorece, e por que o killcam do CoD mostra você na mira atrás da parede.
 <!-- SECTION:DESCRIPTION:END -->
 
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
-- [ ] #1 Quando a conversa termina, `docs/arquitetura/rede.md` existe, com o tick, o input, o rollback, a interpolação e a compensação de lag.
-- [ ] #2 Quando a suíte do netfox roda no 4.7.2, o resultado fica registrado, e o netfox entra fixado num commit em `addons/` com uma DEC, ou a DEC registra o contorno.
-- [ ] #3 Quando os exemplos do netfox rodam com um servidor, dois clientes e lag simulado, a medição de 30 e de 60 ticks fica registrada (Q-01).
+- [ ] #1 Quando a suíte do netfox roda no Godot 4.7.2, sem tela, no commit `cf5189d`, o resultado fica registrado numa fonte, com o total de testes, os que falham e o motivo de cada falha (Q-02).
+- [ ] #2 Quando a suíte não falha em rollback, tempo nem sincronização, o netfox (core e extras) entra em `addons/` fixado no commit, com uma DEC, e o portão fica verde num clone limpo, com import do zero; quando falha, ele não entra, e a DEC registra o contorno ou o release v1.35.3, decidido com o Arthur.
+- [ ] #3 Quando um autoload do netfox aparece com `uid://` no `project.godot`, o teste de configurações falha (#659).
+- [ ] #4 Quando a sonda roda com um servidor dedicado, dois clientes e lag simulado, cada hipótese da DEC-0022 fica provada ou derrubada no `rede.md`, com o que foi medido; uma hipótese derrubada vira uma DEC que substitui o trecho da DEC-0022, e a `visao-geral.md` acompanha.
+- [ ] #5 Quando a sonda roda a 30 e a 60 ticks, com 2 e com 8 clientes e ping 0, 100 e 220, o `rede.md` e a vitrine da rede registram a CPU por tick do servidor e dos clientes, a banda por cliente e o atraso de ponta a ponta; se o servidor não acompanhar os 8, isso fica registrado na Q-09.
+- [ ] #6 Quando o Arthur joga os dois tickrates e escolhe, uma DEC registra o tickrate, a Q-01 fecha, e o `project.godot` e o teste de configurações guardam o valor.
+- [ ] #7 Quando a conversa termina, `docs/arquitetura/rede.md` existe, com o tick, o input, o rollback, o oponente no passado, a compensação de lag, a detecção do golpe, a fase 1 no tick e a `Main`, e cada comportamento do netfox citado pelo arquivo e pelo commit.
 <!-- AC:END -->
 
 ## Definition of Done
@@ -53,6 +79,21 @@ Terceira conversa da fase de desenho (DEC-0012). A rede é a parte mais cara de 
 - [ ] #3 Diário da sessão escrito e glossário atualizado
 - [ ] #4 Mudanças registradas em docs/mudancas.md
 <!-- DOD:END -->
+
+## Implementation Plan
+
+<!-- SECTION:PLAN:BEGIN -->
+1. Rodada 1, o netfox de verdade:
+   - Clone do netfox em `../netfox-sonda`, no `cf5189d`; a suíte (`sh/test.sh`) no Godot 4.7.2, sem tela.
+   - A sonda: dois lutadores com o `FighterState` aninhado, rampa de 45°, beirada e pouso, Jolt explícito e servidor dedicado sem tela; o contorno do transform no `after_prepare_tick`.
+   - A medição: 2 clientes no simulador do netfox e 8 no clumsy, com um cenário rodado nas duas ferramentas para conferir que dão o mesmo. Com 8, sete clientes rodam sem tela, com input roteirizado, e o Arthur joga o oitavo. A CPU da máquina inteira entra no registro, porque os 9 processos dividem os 4 núcleos do 3200G.
+   - Os números: os monitores do `NetworkPerformance` (duração do loop de rollback, ticks refeitos), os bytes do ENet e o atraso de ponta a ponta.
+   - O Arthur joga a 30 e a 60 ticks, com um parry de brinquedo (o golpe leve e a janela de 80 ms do v0).
+   - A vitrine republicada com os números; perguntas da Q-01 e do que cair das hipóteses.
+2. Rodada 2, o desenho: o input, o oponente no passado, a compensação, a detecção do golpe, a fase 1 no tick e a `Main`, com a vitrine e as perguntas.
+3. O plano no modo de plano; com o ok, uma fonte com o plano, as DECs (o netfox no 4.7.2, o tickrate e a rede), o netfox em `addons/` com o teste do `res://` (implementer) e o `rede.md`.
+4. Registro: fontes, glossário, `mudancas.md`, `pendencias.md` (Q-01, Q-02, Q-09), `roteiro.md`, o clumsy no `AGENTS.md` e a `visao-geral.md` se uma hipótese cair; depois o reviewer e o portão.
+<!-- SECTION:PLAN:END -->
 
 ## Comments
 

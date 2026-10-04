@@ -1,6 +1,6 @@
 ---
-revisado_em: 2026-10-02
-fontes: [F-001]
+revisado_em: 2026-10-04
+fontes: [F-001, F-028, F-032]
 ---
 
 # Combate
@@ -72,6 +72,22 @@ Os tempos de golpe seguem o formato preparação / ativo / recuperação. No có
   - a finta, que corta a preparação por 15 de stamina;
   - a recuperação do golpe leve, que pode passar para a esquiva, pagando os 20 de stamina da esquiva.
 - **A barra de stamina** (máximo e recuperação) está em `movimento.md`, porque o pulo duplo e o dash também gastam dela (DEC-0017).
+
+## A rede no combate (Desenho 3; DEC-0026)
+
+Com ping, o golpe do outro chega atrasado na tela de quem defende. No relógio do servidor, ninguém defende por reação com ping de 100 ms ou mais (F-028 §3). O jogo julga cada um pela própria tela, até um teto. O detalhe está em `docs/arquitetura/rede.md` §6.
+
+| Número ou regra | Valor | Unidade | Nota |
+|---|---|---|---|
+| Teto de compensação | 200 | ms | 12 ticks a 60. Número v0, fechado pelo Claude (DEC-0017). O estudo propõe de 150 a 200 para a espada (F-001). Acima dele, quem tem o atraso paga o excesso |
+| Quem tem razão sobre a posição | a tela de quem ataca | — | A espada pega o que quem ataca via, e o contato nunca é desfeito. Escolha do Arthur (F-032 §2) |
+| Quem tem razão sobre a defesa por tempo | a tela de quem defende | — | Parry, bloqueio e esquiva valem como quem defende viu. Direção da DEC-0011 |
+
+**O que se sente:**
+
+- Até o teto, quem defende tem a preparação inteira para reagir, como sem lag: o mesmo parry do ping 0.
+- Quem ataca descobre o resultado depois do contato: uns 240 ms com ping 100.
+- Quem só correu para sair do alcance leva o golpe se, na tela de quem ataca, ainda estava nele. A esquiva, o parry e o bloqueio salvam, porque valem no tempo de quem defende.
 
 ## Em aberto (F-001)
 

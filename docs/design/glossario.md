@@ -1,6 +1,6 @@
 ---
 revisado_em: 2026-10-04
-fontes: [F-001, F-002, F-005, F-007, F-012, F-013, F-020, F-021, F-025, F-026, F-028, F-030]
+fontes: [F-001, F-002, F-005, F-007, F-012, F-013, F-020, F-021, F-025, F-026, F-028, F-030, F-032]
 ---
 
 # Glossário
@@ -14,7 +14,7 @@ A linguagem ubíqua do jogo (DEC-0004, regra 5): o mesmo termo na conversa, no d
 | Lutador | O personagem na simulação, controlado por um jogador ou por um bot. No LoL, é o campeão (DEC-0022) | — | `Fighter` |
 | Jogador | A pessoa por trás do lutador; na rede, um peer. No LoL, é o invocador (DEC-0022) | — | `peer_id` |
 | Tick | Uma rodada de atualização do jogo, em ritmo fixo: lê o input, aplica as regras e anota a nova situação. O "servidor de 128 ticks" do Valorant faz 128 por segundo | tick | `tick` |
-| Ticks por segundo | Quantos ticks a simulação roda por segundo: 30 ou 60 (Q-01). A 30, um tick a cada 33 ms; a 60, a cada 16,7 ms. O Arthur escolheu 60, e a DEC sai no fim do Desenho 3 (F-030) | tick/s | `tickrate` |
+| Ticks por segundo | Quantos ticks a simulação roda por segundo. O jogo roda a 60, um tick a cada 16,7 ms; o padrão do netfox é 30 (DEC-0024) | tick/s | `tickrate` |
 | Frame | Um desenho da tela. Varia com o PC (FPS); o tick, não. O frame desenha; o tick decide | frame/s | `frame` |
 | Estado | Retrato da simulação num tick, feito de valores planos (número, vetor, texto curto e ID), nunca referência a outro objeto. Fica em quatro caixas: corpo, regras, input e configuração (DEC-0022) | — | `state` |
 | Estado do lutador | A caixa de regras do lutador: modo, carimbos e pulos usados. O netfox grava campo a campo, por valor | — | `FighterState` |
@@ -25,18 +25,30 @@ A linguagem ubíqua do jogo (DEC-0004, regra 5): o mesmo termo na conversa, no d
 | Plano do movimento | O que a primeira fatia do sanduíche devolve: o estado novo e a velocidade que o núcleo pede ao motor | — | `MovePlan` |
 | Fatos do movimento | O que o motor devolve depois de mover: se terminou no chão, a velocidade depois da colisão e, na fase 1, a parede | — | `MoveFacts` |
 | Configuração | Os números de design convertidos na carga para ticks e para a física do tick. Imutável e fora do estado | — | `MovementConfig` |
-| Input | O que o dono do lutador, jogador ou bot, apertou num tick: a direção, para onde olha e os comandos de um toque. Mora no nó `Input`, com o script `FighterInput` | — | `input`, nó `Input` (`FighterInput`) |
-| Previsão | O cliente aplica o próprio input na hora, sem esperar o servidor | — | `prediction` |
+| Input | O que o dono do lutador, jogador ou bot, apertou num tick: a direção, para onde olha e os comandos de um toque. É o pedido, nunca o resultado. Mora no nó `Input`, com o script `FighterInput` (DEC-0026) | — | `input`, nó `Input` (`FighterInput`) |
+| Comando de um toque | Um aperto que vale uma vez, como o pulo: fica guardado entre os frames e vale no máximo um tick, o seguinte (DEC-0026) | — | `jump`, `dash`, `parry`... |
+| Redundância de input | Cada pacote de input repete os 3 últimos ticks, para um pacote perdido não perder o aperto | ticks | `input_redundancy` |
+| Previsão | O cliente aplica o próprio input na hora, sem esperar o servidor. A previsão do input dos outros fica desligada (DEC-0026) | — | `prediction` |
 | Rollback | Voltar ao estado confirmado e re-simular os ticks seguintes | — | `rollback` |
 | Tick novo | Tick simulado pela primeira vez; só nele tocam som e efeito | — | `is_fresh` |
 | Interpolação | Mostrar os outros jogadores suavizados entre dois estados recebidos | — | `interpolation` |
-| Compensação de lag | O servidor volta no tempo para julgar um acerto do ponto de vista de quem atacou | ms | `lag_compensation` |
+| Oponente no passado | O oponente aparece na tela no último estado confirmado que chegou, atrasado pelo atraso de ponta a ponta, e nunca adivinhado (DEC-0026) | ms | — |
+| Atraso de visão | Quão velho estava o oponente na tela quando o jogador apertou: o tick atual menos o tick do último estado recebido dele. Vai no input, como um carimbo, a partir da fase 3 | ticks | `view_lag` |
+| Compensação de lag | O servidor julga cada ação pela tela de quem a fez: o contato, pela de quem ataca; a defesa por tempo, pela de quem defende; até o teto (DEC-0026) | ms | `lag_compensation` |
+| Teto de compensação | Até quanto atraso de visão o servidor aceita: 200 ms, 12 ticks a 60. Acima dele, quem tem o atraso paga o excesso (`combate.md`) | ms no design, ticks no código | `compensation_cap` |
+| Contato | A lâmina encostou no corpo do outro, na pose que quem ataca via. Fica no estado de quem ataca, como carimbo, e nunca é desfeito; a defesa decide o resultado depois (DEC-0026) | tick | `contact_tick` |
+| Histórico de poses | As poses dos lutadores dos últimos 12 ticks, guardadas no servidor para testar o contato contra a pose que quem ataca via | ticks | — |
+| Lag switch | Trapaça: cortar a própria conexão de propósito, para os inputs chegarem atrasados e valerem no passado (Q-17) | — | — |
 | Servidor autoritativo | O servidor decide o que aconteceu; o cliente só manda input | — | `server` |
 | Ping | O tempo de um pacote ir até o servidor e voltar, o número no canto da tela do LoL. A ida é a metade | ms | `rtt` |
-| Atraso de ponta a ponta | Do aperto de um jogador até o estado do lutador dele mudar na tela do outro: as duas idas mais as esperas de tick. A 30 ticks e ping 100, uns 140 ms (F-026) | ms | — |
+| Atraso de ponta a ponta | Do aperto de um jogador até o estado do lutador dele mudar na tela do outro: as duas idas mais as esperas de tick. A 60 ticks e ping 100, uns 126 ms; a 30, uns 140 (F-026) | ms | — |
 | Relógio do servidor | O jeito que o netfox julga sozinho: cada input vale no tick em que foi apertado, no relógio comum. Quem defende paga o atraso de ponta a ponta (F-028) | — | — |
 | Estado escondido | Algo que a regra ou o motor usa e o rollback não restaura, e por isso o tick refeito sai diferente do original. Exemplo: o "estava no chão" do `move_and_slide()` (F-025) | — | — |
 | SyncTest | O teste que força rollbacks e compara cada tick refeito com o original, como no GGPO. Acusa estado escondido (F-025; DEC-0004, regra 4) | — | — |
+| Contorno do transform | Antes de cada tick refeito, empurrar a posição restaurada de cada lutador para a física (estático, transform, cinemático), para um colidir com o outro na posição daquele tick (DEC-0025) | — | `after_prepare_tick` |
+| Contorno D | No começo de cada rollback, um micro-movimento de sonda que alinha o "estava no chão" guardado pelo `move_and_slide()` com o `on_floor` do estado (DEC-0025) | — | — |
+| Par offline | O modo em que o jogo é o próprio servidor, sem rede: o `OfflineMultiplayerPeer` do Godot. É o modo "Sozinho" da `Main` | — | `OfflineMultiplayerPeer` |
+| Servidor dedicado | O servidor sem tela e sem lutador próprio, que só simula e decide. Sobe com `--server` ou como build exportado para servidor (DEC-0026) | — | `--server`, `dedicated_server` |
 | Ticks refeitos | Os ticks que o rollback simula de novo, por segundo. Crescem com o ping e com o quadrado do tickrate (F-026) | tick/s | `rollback_ticks` |
 | Sonda | Código descartável, fora do repositório, feito para provar ou derrubar uma hipótese. O jogo não usa | — | — |
 | Simulação | O contexto que roda a cada tick: movimento e combate | — | `core/` |
@@ -61,6 +73,7 @@ A linguagem ubíqua do jogo (DEC-0004, regra 5): o mesmo termo na conversa, no d
 | Equipamento | Uma arma corpo a corpo, uma de distância e um utilitário | — | `loadout` |
 | Hitbox | A área que acerta | m | `hitbox` |
 | Hurtbox | A área que pode ser acertada | m | `hurtbox` |
+| Fatia varrida | A área que a lâmina percorre do começo ao fim de um tick. O teste do golpe usa a fatia, para a lâmina não pular o corpo entre dois ticks (DEC-0026) | m | `sweep` |
 | Vantagem | Depois de uma troca, quem volta a agir primeiro, e com quantos ms de folga | ms no design, ticks no código | `advantage` |
 | Tranco | O tempo sem agir de quem leva um golpe (hitstun) ou o bloqueia (blockstun). Ainda sem número (Q-10) | ms no design, ticks no código | `hitstun`, `blockstun` |
 | Punir o erro | Acertar quem errou um golpe enquanto ele ainda está na recuperação | — | — |

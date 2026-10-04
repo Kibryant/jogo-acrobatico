@@ -6,7 +6,7 @@ Canonical instructions for every agent in this repository; `CLAUDE.md` only impo
 
 A free, online 3D action game, built as a hobby by Arthur (~10 h/week) with Claude Code. Acrobatic movement is the identity (wall-run, dash, grappling hook); sword, bow and firearms with a free loadout; 1v1 duels first, then 4v4 and 8v8. A spiritual successor of GunZ in mechanics only: no GunZ name, art, maps, sounds or code (F-001). "Jogo Acrobático" is a working title.
 
-Stack: Godot 4.7.2, statically typed GDScript, netfox (server-authoritative, client prediction with rollback), Compatibility renderer, Jolt physics, gdUnit4 (DEC-0001 to DEC-0006). Minimum spec is Arthur's PC (Ryzen 3 PRO 3200G, Radeon RX 550 4 GB) at 60 fps in 1080p (DEC-0002).
+Stack: Godot 4.7.2, statically typed GDScript, netfox at 60 ticks (server-authoritative, client prediction with rollback), Compatibility renderer, Jolt physics, gdUnit4 (DEC-0001 to DEC-0006, DEC-0023, DEC-0024). Minimum spec is Arthur's PC (Ryzen 3 PRO 3200G, Radeon RX 550 4 GB) at 60 fps in 1080p (DEC-0002).
 
 ## How we work: build and teach (DEC-0010)
 
@@ -35,7 +35,7 @@ Explain in Arthur's world (DEC-0021). The first question of every round checks t
 | `common/` | Code shared by features. |
 | `data/` | Resources (.tres) with design data. Immutable at runtime. |
 | `assets/` | Art and audio. Every third-party asset is listed in `assets/CREDITS.md`. |
-| `addons/` | Third-party Godot addons, vendored and pinned (gdUnit4 6.2.1). |
+| `addons/` | Third-party Godot addons, vendored and pinned (gdUnit4 6.2.1; netfox main `cf5189d`, DEC-0023). |
 | `test/` | gdUnit4 suites, mirroring the code paths. |
 | `tools/` | Bash scripts: `gate.sh` and its checks. |
 | `backlog/` | Backlog.md tasks and milestones. CLI only. |
@@ -70,7 +70,7 @@ Feature folders (`fighter/`, `arena/`, `match/`, `net/`, `ui/`...) are created b
 ## Architecture rules (DEC-0004)
 
 1. One pure core in `core/`: `step(state, input, tick)`, flat state (int, float, Vector3, StringName, IDs), everything in integer ticks. No nodes, engine singletons, wall clock, `Timer`, `await` or unseeded randomness; `tools/check_core_purity.sh` enforces it.
-2. Nodes are thin adapters. Inside netfox's `_rollback_tick` they only call the core and mirror state. Sound and VFX play only on fresh ticks (`is_fresh`), never on resimulation.
+2. Nodes are thin adapters. Inside netfox's `_rollback_tick` they only call the core and mirror state. Sound and VFX play only on fresh ticks (`is_fresh`), never on resimulation. The rollback contours and the network rules live in `docs/arquitetura/rede.md` (DEC-0025, DEC-0026).
 3. Data lives in Resources, treated as immutable config and referenced by ID in the state. Design numbers are in ms; code converts them to ticks at load time, and a test covers the rounding.
 4. Test the rules, not the engine: the combat spec and a SyncTest-style rollback test run in CI from day one.
 5. DDD only at the strategic level: the glossary is the ubiquitous language, and the boundary that matters is Simulation (ticks, rollback) vs Meta (request/response, persistence). No repositories or aggregates inside the simulation.
@@ -120,4 +120,4 @@ English for everything internal to agents and code: this file, agents, skills, s
 
 ## Machine and tools
 
-Windows 11 with Git Bash; the scripts are bash. On PATH (`~/.local/bin`): `godot` (4.7.2 console), `backlog`, `gdscript-formatter`, `lefthook`, `gitleaks` and `gh`; `git-lfs` comes with Git. `node` 24 (portable, in `~/.local/opt`) and `python` 3.14 (per user) are on the user PATH for helper scripts; the gate uses neither (F-016 §2). The Yabadoo, Arthur's second brain, is an MCP: when a DEC is accepted, the `diario` skill also records a one-line decision there, citing the DEC id.
+Windows 11 with Git Bash; the scripts are bash. On PATH (`~/.local/bin`): `godot` (4.7.2 console), `backlog`, `gdscript-formatter`, `lefthook`, `gitleaks` and `gh`; `git-lfs` comes with Git. clumsy 0.3 (`~/.local/opt/clumsy-0.3`, WinDivert, run as admin) simulates lag for 4+ clients (F-023 §2). `node` 24 (portable, in `~/.local/opt`) and `python` 3.14 (per user) are on the user PATH for helper scripts; the gate uses neither (F-016 §2). The Yabadoo, Arthur's second brain, is an MCP: when a DEC is accepted, the `diario` skill also records a one-line decision there, citing the DEC id.

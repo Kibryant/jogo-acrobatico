@@ -1,11 +1,11 @@
 ---
-revisado_em: 2026-10-02
-fontes: [F-002, F-005, F-006, F-007, F-018, F-020, F-021, F-022]
+revisado_em: 2026-10-04
+fontes: [F-002, F-005, F-006, F-007, F-018, F-020, F-021, F-022, F-024, F-025, F-026, F-030, F-032, F-033]
 ---
 
 # Visão geral
 
-Estado atual: as DECs aceitas até 02/10/2026, com o Desenho 2 (TASK-4) detalhado na DEC-0022. Nenhum código de jogo existe ainda: o primeiro é o esqueleto andante (TASK-9). A versão visual e interativa deste documento é o artefato [O tick por dentro](https://claude.ai/artifact/EJCYbVj6oCZcim765nDH8B), privado (DEC-0019).
+Estado atual: as DECs aceitas até 04/10/2026. O Desenho 2 (TASK-4) está detalhado na DEC-0022, e o Desenho 3 (TASK-5) nas DEC-0023 a DEC-0026, com o detalhe da rede no [`rede.md`](rede.md). Nenhum código de jogo existe ainda: o primeiro é o esqueleto andante (TASK-9). A versão visual e interativa deste documento é o artefato [O tick por dentro](https://claude.ai/artifact/EJCYbVj6oCZcim765nDH8B), privado (DEC-0019); a da rede é a vitrine [A rede por dentro](https://claude.ai/artifact/Sb4Q5e4M16UymdoaR9UAzp).
 
 ## As camadas
 
@@ -65,9 +65,9 @@ Só uma frase da DEC-0004 mudou: a máquina de estados não usa mais a `Rewindab
 
 Um tick é uma rodada de atualização do jogo. Em cada uma, o jogo lê o que cada lutador apertou, aplica as regras e anota a nova situação, sempre no mesmo ritmo. Quando dizem que o Valorant tem servidor de 128 ticks, é isso: 128 rodadas por segundo. No TypeScript, seria um `setInterval(atualizarJogo, 33)`.
 
-- O padrão do netfox é 30 ticks por segundo, ou seja, um a cada 33 ms (`netfox/time/tickrate` em `addons/netfox/netfox.gd`, commit `cf5189d`). A escolha entre 30 e 60 é a Q-01, do Desenho 3.
+- O jogo roda a 60 ticks por segundo, um a cada 16,7 ms (DEC-0024). O padrão do netfox é 30 (`netfox/time/tickrate` em `addons/netfox/netfox.gd`, commit `cf5189d`); o `project.godot` guarda o 60, e o teste de configurações vigia.
 - O tick decide; o frame só desenha. Um PC a 144 FPS e outro a 40 pulam igual, porque a regra roda no tick.
-- O netfox guarda 64 ticks de histórico para o rollback, que dão 2,1 s a 30 por segundo, e roda até 8 ticks num frame quando precisa alcançar o relógio (`addons/netfox/netfox.gd`, commit `cf5189d`).
+- O netfox guarda 64 ticks de histórico para o rollback, que dão 1,07 s a 60 por segundo, e roda até 8 ticks num frame quando precisa alcançar o relógio (`addons/netfox/netfox.gd`, commit `cf5189d`). A ordem do loop está no `rede.md`.
 
 ## O estado em quatro caixas (DEC-0022)
 
@@ -98,15 +98,22 @@ flowchart LR
 - **Fase 1, esboçado:** `stamina`, `stamina_spent_tick`, `dash_ready_tick`, `grapple_ready_tick`, `grapple_point`, `wall_normal` e a última parede; os modos WALL_RUN, DASH e GRAPPLE; no input, `dash` e `grapple`.
 - **Fase 2, só o nome:** `action`, `action_since` e o golpe por ID, nunca o Resource (F-007 §5).
 
-## O tick por dentro: o sanduíche (DEC-0022)
+## O tick por dentro: o sanduíche (DEC-0022; contornos da DEC-0025)
 
 ```mermaid
 flowchart LR
-  r["1. netfox restaura<br/>o estado do tick e o input"] --> b["2. núcleo decide<br/>before_move()"]
-  b --> m["3. motor move<br/>move_and_slide()"]
-  m --> a["4. núcleo confere<br/>after_move()"]
-  a --> g["5. netfox grava<br/>no histórico"]
+  r["1. netfox restaura<br/>o estado do tick e o input"] --> t["2. contorno do transform<br/>(todo tick refeito)"]
+  t --> d["3. contorno D<br/>(primeiro tick do rollback)"]
+  d --> b["4. núcleo decide<br/>before_move()"]
+  b --> m["5. motor move<br/>move_and_slide()"]
+  m --> a["6. núcleo confere<br/>after_move()"]
+  a --> g["7. netfox grava<br/>no histórico"]
 ```
+
+Os dois contornos são código do nó, porque tocam o motor, e foram provados pela SyncTest do Desenho 3 (F-025; DEC-0025):
+
+- **O contorno do transform** empurra a posição restaurada de cada lutador para a física (estático, transform, cinemático). Sem ele, o Jolt colide com o outro lutador onde ele estava no presente.
+- **O contorno D** alinha o "estava no chão" que o `move_and_slide()` guarda sozinho, com um micro-movimento de sonda no primeiro tick de cada rollback. Sem ele, o pouso e a rampa saem diferentes ao refazer.
 
 ```
 before_move(state, velocity, input, config, tick) -> MovePlan    # puro: decide
@@ -166,7 +173,7 @@ Fighter                    o lutador (CharacterBody3D, script fino)
 
 ```mermaid
 flowchart TB
-  main["Main<br/>a entrada: servidor ou cliente (Desenho 3)"] --> match["Match<br/>carrega a configuração e cria tudo"]
+  main["Main<br/>a entrada: servidor dedicado, cliente ou sozinho (DEC-0026)"] --> match["Match<br/>carrega a configuração e cria tudo"]
   match --> arena["Arena<br/>blocos de 1, 2 e 3 m; pontos de nascimento"]
   match --> fighters["Fighter × N<br/>2 no 1v1, 16 no 8v8"]
   match --> cam["CameraRig<br/>só para o lutador de quem joga"]
@@ -176,7 +183,7 @@ Os caminhos do netfox, como `Input:jump` e `:state:mode`, seguem a árvore de ce
 
 ## Os autoloads (DEC-0022)
 
-Nenhum nosso; só os que o netfox traz, como o `NetworkTime`, registrados pelo plugin dele (`AUTOLOADS` em `addons/netfox/netfox.gd`, commit `cf5189d`). Uma variável global fica fora das caixas e não volta no tempo no rollback. A configuração é passada à mão, como prop drilling no React. Um autoload futuro, como as preferências do jogador, só entra com DEC própria e se nunca for lido dentro do tick.
+Nenhum nosso; só os 14 que o netfox traz, como o `NetworkTime` (`AUTOLOADS` em `addons/netfox/netfox.gd` e em `addons/netfox.extras/netfox-extras.gd`, commit `cf5189d`). Eles ficam listados à mão no `project.godot`, com caminho `res://`, porque o plugin os registraria com `uid://` e quebraria o primeiro import (#659). O teste de configurações guarda o mapa exato, e falha também se aparecer um autoload nosso (DEC-0023). Uma variável global fica fora das caixas e não volta no tempo no rollback. A configuração é passada à mão, como prop drilling no React. Um autoload futuro, como as preferências do jogador, só entra com DEC própria e se nunca for lido dentro do tick.
 
 ## As pastas (DEC-0005; nomes da DEC-0022, aprovados no plano, F-022)
 
@@ -186,7 +193,7 @@ core/time/      ms para tick
 common/         código compartilhado
 data/           os .tres e as classes deles (movement_data.gd e movement_v0.tres)
 assets/         arte e áudio, no LFS, com CREDITS.md
-addons/         gdUnit4, e o netfox quando entrar
+addons/         gdUnit4 e o netfox (core, extras e internals; DEC-0023)
 fighter/        a cena do lutador, o FighterInput e o CameraRig
 arena/          a arena e os blocos
 match/          a partida
@@ -202,9 +209,9 @@ O **jogador** é a pessoa; o **lutador** é o boneco, que também pode ser de um
 - Declaração sem tipo e acesso inseguro são erro no projeto todo. É o `strict` do TypeScript. Os addons ficam de fora pelo `directory_rules`.
 - **Furo conhecido:** o portão só pega esses erros num script que algum teste carrega. Compilar todos os nossos scripts numa execução só do Godot levou 1,3 s numa sonda. O conserto é da TASK-6, que vem antes de qualquer código de jogo.
 
-## O que o Desenho 3 prova (TASK-5)
+## O que o Desenho 3 provou (TASK-5)
 
-O netfox foi lido no código-fonte, na `main`, commit `cf5189d` (26/09/2026), sem instalar.
+O Desenho 2 leu o netfox no código-fonte, na `main`, commit `cf5189d` (26/09/2026), sem instalar. O Desenho 3 o rodou no 4.7.2 e o pôs em `addons/` (DEC-0023).
 
 | O que se apoia no netfox | Arquivo que confirma (commit `cf5189d`) | Situação |
 |---|---|---|
@@ -215,8 +222,10 @@ O netfox foi lido no código-fonte, na `main`, commit `cf5189d` (26/09/2026), se
 | O input é capturado uma vez por loop de ticks; o toque vale um tick | `docs/netfox/tutorials/input-gathering-tips-and-tricks.md` | Confirmado na documentação |
 | A `RewindableStateMachine` é plana e grava só o nome | `addons/netfox.extras/state-machine/rewindable-state-machine.gd` | Confirmado no código |
 
-**Hipóteses**, que só o netfox rodando no 4.7.2 prova:
+**As três hipóteses do Desenho 2, testadas com o netfox rodando no 4.7.2.** O método, os números e o que sobrou estão no `rede.md` §4.
 
-1. O caminho aninhado `:state:mode` funciona de ponta a ponta: grava, restaura e vai pela rede.
-2. O contorno do transform (estático, transform, cinemático), que o guia diz valer para o Jolt, deixa um lutador colidir com o outro na posição certa durante a re-simulação (`docs/netfox/tutorials/rollback-caveats.md`).
-3. Guardar `on_floor` no estado substitui o movimento extra de velocidade zero que o guia sugere para o `is_on_floor()`.
+| Hipótese | Resultado |
+|---|---|
+| 1. O caminho aninhado `:state:mode` grava, restaura e vai pela rede | **Provada:** 0 divergências na SyncTest com os campos envenenados, e 349 de 349 pulos pela rede (F-025 §2; F-026 §3) |
+| 2. O contorno do transform deixa um lutador colidir com o outro na posição certa ao refazer | **Provada, com o contorno:** de 786 para 6 divergências a 30 ticks, e de 1.897 para 32 a 60. As que sobram são de um lutador em pé na cabeça do outro (F-025 §3; Q-16) |
+| 3. Guardar `on_floor` no estado substitui o movimento extra de velocidade zero | **Derrubada:** o `move_and_slide()` guarda o próprio "estava no chão". O contorno D zera as divergências e substitui essa hipótese (F-025 §4; DEC-0025) |

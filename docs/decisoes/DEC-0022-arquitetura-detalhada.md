@@ -6,8 +6,10 @@ status: aceita
 decidido_por: Arthur
 fontes: [F-005, F-007, F-018, F-020, F-021]
 substitui: DEC-0004, só a frase sobre a RewindableStateMachine
-substituida_por:
+substituida_por: DEC-0025, só a hipótese 3 (o on_floor no estado no lugar do movimento extra de velocidade zero)
 ---
+
+> ⚠️ Em parte substituída por DEC-0025 em 2026-10-04: a hipótese 3, o `on_floor` no estado no lugar do movimento extra de velocidade zero, não é a regra atual. O `on_floor` continua no estado, com o contorno D. O resto desta DEC continua valendo.
 
 # DEC-0022 — Arquitetura detalhada: o estado em quatro caixas, a máquina de estados no núcleo, o tick em sanduíche, as cenas, zero autoloads nossos, as pastas e o acesso inseguro como erro
 

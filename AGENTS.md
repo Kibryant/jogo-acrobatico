@@ -89,7 +89,7 @@ The character's state machine lives in `core/` as data: a mode and the tick it b
 ## Tests and the gate (DEC-0006)
 
 - gdUnit4. Test names describe behavior (`test_parry_beats_charged_attack`). Test through public interfaces only: never read source files in a test, never mock private functions.
-- `bash tools/gate.sh` runs format, lint, core purity, locked tests, import and all tests. Pre-push and CI run the same script. Run it before saying a task is done, and paste its last lines.
+- `bash tools/gate.sh` runs format, lint, core purity, locked tests, import, compile and all tests. Pre-push and CI run the same script. Run it before saying a task is done, and paste its last lines.
 - Git hooks (lefthook): pre-commit under 15 s (gitleaks, format, core purity); pre-push under 90 s (the gate).
 - Never use `--no-verify`, never weaken a check, never edit a locked test. If a check is wrong, stop and tell Arthur.
 

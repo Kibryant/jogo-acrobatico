@@ -19,7 +19,9 @@ resolve_godot() {
 	exit 1
 }
 
-# Lists the project's own GDScript files, tracked or new, without third-party addons.
+# Lists the project's own GDScript files, tracked or new, without third-party addons and without
+# the gate's canaries, which are broken on purpose and checked by the gate itself (TASK-6).
 own_gd_files() {
-	git ls-files --cached --others --exclude-standard -- '*.gd' ':!:addons/**'
+	git ls-files --cached --others --exclude-standard -- \
+		'*.gd' ':!:addons/**' ':!:tools/canaries/**'
 }

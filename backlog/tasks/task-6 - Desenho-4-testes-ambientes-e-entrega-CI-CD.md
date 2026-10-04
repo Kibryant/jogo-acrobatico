@@ -1,10 +1,10 @@
 ---
 id: TASK-6
 title: 'Desenho 4: testes, ambientes e entrega (CI/CD)'
-status: Ready
+status: In Progress
 assignee: []
 created_date: '2026-10-02 16:48'
-updated_date: '2026-10-04 18:48'
+updated_date: '2026-10-04 20:00'
 labels:
   - infra
   - desenho
@@ -73,10 +73,10 @@ Confirmadas pelo Arthur em 04/10 (F-038 §2 a §4):
 <!-- AC:BEGIN -->
 - [ ] #1 Quando a conversa termina, `docs/arquitetura/testes-e-entrega.md` mostra as camadas de teste (o que cada uma pega, onde roda, quando nasce e quanto do portão gasta), os ambientes, o que o CI roda, as builds com a conta da cota do plano Free, as versões, o fluxo de branch e o replay por inputs, com a fonte de cada número.
 - [ ] #2 Quando o Arthur decide as camadas, o fluxo de branch e as versões, DECs registram, e a DEC-0006 é confirmada ou substituída no que mudou.
-- [ ] #3 Quando um `#` dentro de uma string, de aspas simples, duplas ou triplas, esconde código proibido em `core/`, `tools/check_core_purity.sh` falha; quando o `#` abre um comentário de verdade, o texto depois dele segue ignorado; uma sonda prova o antes e o depois.
-- [ ] #4 Quando um script nosso tem erro de tipo ou acesso inseguro e nenhum teste o carrega, o portão falha; quando todos compilam, o passo fica verde e o tempo dele fica registrado; uma sonda prova o antes e o depois.
-- [ ] #5 Quando um ou vários testes falham, o portão mostra todas as falhas da rodada; quando todos passam, o log do portão não tem linha `ERROR:`.
-- [ ] #6 Quando uma checagem do portão deixa de barrar o erro que barrava, o autoteste das checagens falha.
+- [x] #3 Quando um `#` dentro de uma string, de aspas simples, duplas ou triplas, esconde código proibido em `core/`, `tools/check_core_purity.sh` falha; quando o `#` abre um comentário de verdade, o texto depois dele segue ignorado; uma sonda prova o antes e o depois.
+- [x] #4 Quando um script nosso tem erro de tipo ou acesso inseguro e nenhum teste o carrega, o portão falha; quando todos compilam, o passo fica verde e o tempo dele fica registrado; uma sonda prova o antes e o depois.
+- [x] #5 Quando um ou vários testes falham, o portão mostra todas as falhas da rodada; quando todos passam, o log do portão não tem linha `ERROR:`.
+- [x] #6 Quando uma checagem do portão deixa de barrar o erro que barrava, o autoteste das checagens falha.
 - [ ] #7 Quando um hook do Claude Code entra, ele foi testado numa sessão real nesta máquina: a edição de um teste travado é negada pelo Edit e pelo Write, na conversa principal e num subagente; um `.gd` salvo fora do formato sai formatado; e o resultado está no registro da harness.
 - [ ] #8 Quando os dois presets exportam, neste PC e numa branch de sonda no CI, saem o cliente Windows e o servidor Linux sem tela, sem `test/` nem o gdUnit4 dentro, com tamanho e tempo registrados; quando o Godot cai ao sair depois do export (#123712), a sonda registra, e o `testes-e-entrega.md` traz o contorno.
 <!-- AC:END -->
@@ -109,6 +109,20 @@ Confirmadas pelo Arthur em 04/10 (F-038 §2 a §4):
 4. O plano no modo de plano, revisado antes por um agente de planejamento (registro da TASK-5). Com o ok: uma fonte com o plano, as DECs, o `docs/arquitetura/testes-e-entrega.md`, o `export_presets.cfg` com guarda no teste de configurações e o resto pelo implementer; o `AGENTS.md` acompanha o que mudar.
 5. Registro: fontes, glossário, `mudancas.md`, `pendencias.md` e o registro da harness; depois o reviewer e o portão num clone limpo.
 <!-- SECTION:PLAN:END -->
+
+## Implementation Notes
+
+<!-- SECTION:NOTES:BEGIN -->
+Rodada 1 (04/10, sessão 6), o portão e a harness:
+- Antes, num clone fora do projeto (`../esteira-sonda`): `var label := "#%d" % randi()` em `core/` passou na pureza (saída 0). `var count = 5` e `body.velocity.length()` em `core/`, num script que nenhum teste carrega, deixaram o portão inteiro verde (41 s). O formatador quebra `a; b` em duas linhas, então o furo real da pureza é numa instrução só.
+- Sem o `-d`, o gdUnit4 não trava num erro de sintaxe (saída 105 em 7 s) e relata falhas (saída 100) e erros de execução como antes; as duas linhas `ERROR:` do truque somem. Um `push_error` num teste verde passava nos dois jeitos.
+- O implementer achou, com sondas, dois fatos do Godot 4.7.2: um script quebrado carrega como um Script que não instancia, em vez de `null`, e strings de aspas simples ou duplas também podem ocupar várias linhas. A checagem pergunta `can_instantiate() or is_abstract()`, e o lexer da pureza leva toda string aberta para a linha seguinte.
+- Depois: a pureza barra o `#` dentro de string, inclusive nas de várias linhas e de três aspas (critério 3). O passo "compilar tudo" derruba o portão com arquivo e linha, em 3,4 a 4,6 s (critério 4). O `-c` mostra todas as falhas, e testes verdes com `ERROR:` no log reprovam (critério 5). São 9 canários da pureza e 3 da compilação em `tools/canaries/`; cada checagem estragada de propósito fez um canário gritar (critério 6).
+- Hooks (critério 7): a trava negou o Edit e o Write num teste travado nesta sessão, sem reiniciar, e o Edit de um subagente. O formatador formatou um `.gd` torto. Custo: 0,2 a 0,8 s por edição. Falta a prova numa sessão nova.
+- Portão: 28,3 s antes, 31,3 s depois (import 15,7 s; compilar 3,9 s; testes 9,7 s).
+- O Arthur deixou a escrita pelo Bash sem guarda por enquanto e manteve o log limpo como regra (F-039 §2).
+- Riscos anotados: o awk novo roda no CI pela primeira vez, e o do Ubuntu pode ser o mawk (se ele ler diferente, os canários derrubam o CI); formato, lint, travas, import e o log limpo ainda não têm canário.
+<!-- SECTION:NOTES:END -->
 
 ## Comments
 

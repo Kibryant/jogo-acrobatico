@@ -12,6 +12,7 @@ pre-commit:
       glob: "**/*.gd"
       exclude:
         - "addons/**"
+        - "tools/canaries/**"
       run: gdscript-formatter --check {staged_files}
     core-purity:
       glob: "core/**/*.gd"

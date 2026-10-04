@@ -29,6 +29,9 @@ if grep -E "SCRIPT ERROR|Parse Error|ERROR:" <<<"$import_log"; then
 fi
 echo "import ok"
 
+step "Compile every script (DEC-0005; DEC-0022)"
+bash tools/check_scripts.sh
+
 step "Tests (gdUnit4)"
 bash tools/run_tests.sh
 

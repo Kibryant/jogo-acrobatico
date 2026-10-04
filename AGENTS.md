@@ -15,7 +15,7 @@ Claude writes all the code and teaches while building. Arthur directs: he define
 For every task:
 
 1. **Before code**, in Portuguese: what we will build, which Godot, netcode or architecture concepts it touches (one or two sentences each, with an example from Arthur's world, DEC-0021) and the plan. Architecture changes go through plan mode and need Arthur's ok.
-2. **While coding**: the Explanatory output style is on; keep insights short and specific.
+2. **While coding**: the Explanatory output style is on; keep insights short and specific. In long reads, plans or waits, post a one-line status every few minutes (F-037).
 3. **After**, in Portuguese: what changed and why (cite DEC/F), the new concepts (add domain terms to `docs/design/glossario.md`), how to test it and what to feel.
 4. **Close the session** with the `diario` skill.
 

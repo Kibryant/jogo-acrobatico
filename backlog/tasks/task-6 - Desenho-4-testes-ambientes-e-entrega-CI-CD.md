@@ -4,7 +4,7 @@ title: 'Desenho 4: testes, ambientes e entrega (CI/CD)'
 status: In Progress
 assignee: []
 created_date: '2026-10-02 16:48'
-updated_date: '2026-10-04 20:00'
+updated_date: '2026-10-04 20:18'
 labels:
   - infra
   - desenho
@@ -77,7 +77,7 @@ Confirmadas pelo Arthur em 04/10 (F-038 §2 a §4):
 - [x] #4 Quando um script nosso tem erro de tipo ou acesso inseguro e nenhum teste o carrega, o portão falha; quando todos compilam, o passo fica verde e o tempo dele fica registrado; uma sonda prova o antes e o depois.
 - [x] #5 Quando um ou vários testes falham, o portão mostra todas as falhas da rodada; quando todos passam, o log do portão não tem linha `ERROR:`.
 - [x] #6 Quando uma checagem do portão deixa de barrar o erro que barrava, o autoteste das checagens falha.
-- [ ] #7 Quando um hook do Claude Code entra, ele foi testado numa sessão real nesta máquina: a edição de um teste travado é negada pelo Edit e pelo Write, na conversa principal e num subagente; um `.gd` salvo fora do formato sai formatado; e o resultado está no registro da harness.
+- [x] #7 Quando um hook do Claude Code entra, ele foi testado numa sessão real nesta máquina: a edição de um teste travado é negada pelo Edit e pelo Write, na conversa principal e num subagente; um `.gd` salvo fora do formato sai formatado; e o resultado está no registro da harness.
 - [ ] #8 Quando os dois presets exportam, neste PC e numa branch de sonda no CI, saem o cliente Windows e o servidor Linux sem tela, sem `test/` nem o gdUnit4 dentro, com tamanho e tempo registrados; quando o Godot cai ao sair depois do export (#123712), a sonda registra, e o `testes-e-entrega.md` traz o contorno.
 <!-- AC:END -->
 
@@ -122,6 +122,8 @@ Rodada 1 (04/10, sessão 6), o portão e a harness:
 - Portão: 28,3 s antes, 31,3 s depois (import 15,7 s; compilar 3,9 s; testes 9,7 s).
 - O Arthur deixou a escrita pelo Bash sem guarda por enquanto e manteve o log limpo como regra (F-039 §2).
 - Riscos anotados: o awk novo roda no CI pela primeira vez, e o do Ubuntu pode ser o mawk (se ele ler diferente, os canários derrubam o CI); formato, lint, travas, import e o log limpo ainda não têm canário.
+
+- Prova numa sessão nova, no modo sem permissões (F-040): o `/hooks` mostrou os dois hooks; a trava negou o Edit e o Write na conversa principal e o Edit de um subagente; o formatador formatou um `.gd` torto; a limpeza deixou o `git status` vazio. O resultado está no registro da harness (sessão 6), o que fecha o critério 7.
 <!-- SECTION:NOTES:END -->
 
 ## Comments

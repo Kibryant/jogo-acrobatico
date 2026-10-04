@@ -1,6 +1,6 @@
 ---
 revisado_em: 2026-10-04
-fontes: [F-001, F-002, F-005, F-007, F-012, F-013, F-020, F-021, F-025, F-026, F-028, F-030, F-032]
+fontes: [F-001, F-002, F-005, F-007, F-012, F-013, F-020, F-021, F-025, F-026, F-028, F-030, F-032, F-038, F-039]
 ---
 
 # Glossário
@@ -115,3 +115,16 @@ A linguagem ubíqua do jogo (DEC-0004, regra 5): o mesmo termo na conversa, no d
 | Contrajogo | Toda opção tem resposta; cada posição tem força e fraqueza | — | — |
 | Expressão de habilidade | A habilidade aparecendo na jogada, como o outplay | — | — |
 | Métricas de nível | As medidas da arena que saem do movimento: vão, altura de bloco, comprimento de parede | m | — |
+
+## Testes e entrega
+
+| Termo | O que é | Unidade | No código |
+|---|---|---|---|
+| Esteira | O caminho de uma mudança até o jogo na mão do jogador, com uma checagem em cada estação: o hook do Claude, o commit, o push, o CI e a build (pipeline) | — | — |
+| Portão | As checagens que todo push precisa passar, no pre-push e no CI: formato, lint, pureza, travas, import, compilar tudo e testes (DEC-0006) | s | `tools/gate.sh` |
+| Compilar tudo | O passo do portão que carrega todos os nossos scripts numa execução só do Godot, como o `tsc --noEmit` | s | `tools/check_scripts.sh` |
+| Canário | Um arquivo com erro de propósito que uma checagem precisa barrar a cada rodada; se ele passar, a checagem perdeu uma regra | — | `tools/canaries/` |
+| Log limpo | Um portão verde não tem linha `ERROR:` no log; testes que passam com erro no log reprovam (F-039) | — | `tools/run_tests.sh` |
+| Trava do teste de aceite | O sha256 de um teste de aceite, guardado enquanto a task está aberta. Só o Arthur destrava (DEC-0009) | — | `.claude/harness/locks/` |
+| Hook do Claude Code | Um comando que o Claude Code roda antes ou depois de cada ferramenta do agente, como um middleware. Aqui, ele nega a edição de teste travado e formata o `.gd` | — | `.claude/hooks/` |
+| Replay por inputs | A partida guardada como o input de cada tick e tocada de novo no servidor. Só reproduz na mesma build: a mesma tecla com outra regra dá outra partida (DEC-0011) | — | — |

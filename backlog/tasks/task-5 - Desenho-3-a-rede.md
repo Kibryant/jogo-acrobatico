@@ -1,10 +1,10 @@
 ---
 id: TASK-5
 title: 'Desenho 3: a rede'
-status: Ready
+status: In Progress
 assignee: []
 created_date: '2026-10-02 16:48'
-updated_date: '2026-10-03 14:40'
+updated_date: '2026-10-04 15:39'
 labels:
   - rede
   - desenho
@@ -63,7 +63,7 @@ Confirmadas pelo Arthur em 03/10, com 8 clientes já (F-023 §2 e §3):
 
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
-- [ ] #1 Quando a suíte do netfox roda no Godot 4.7.2, sem tela, no commit `cf5189d`, o resultado fica registrado numa fonte, com o total de testes, os que falham e o motivo de cada falha (Q-02).
+- [x] #1 Quando a suíte do netfox roda no Godot 4.7.2, sem tela, no commit `cf5189d`, o resultado fica registrado numa fonte, com o total de testes, os que falham e o motivo de cada falha (Q-02).
 - [ ] #2 Quando a suíte não falha em rollback, tempo nem sincronização, o netfox (core e extras) entra em `addons/` fixado no commit, com uma DEC, e o portão fica verde num clone limpo, com import do zero; quando falha, ele não entra, e a DEC registra o contorno ou o release v1.35.3, decidido com o Arthur.
 - [ ] #3 Quando um autoload do netfox aparece com `uid://` no `project.godot`, o teste de configurações falha (#659).
 - [ ] #4 Quando a sonda roda com um servidor dedicado, dois clientes e lag simulado, cada hipótese da DEC-0022 fica provada ou derrubada no `rede.md`, com o que foi medido; uma hipótese derrubada vira uma DEC que substitui o trecho da DEC-0022, e a `visao-geral.md` acompanha.
@@ -94,6 +94,25 @@ Confirmadas pelo Arthur em 03/10, com 8 clientes já (F-023 §2 e §3):
 3. O plano no modo de plano; com o ok, uma fonte com o plano, as DECs (o netfox no 4.7.2, o tickrate e a rede), o netfox em `addons/` com o teste do `res://` (implementer) e o `rede.md`.
 4. Registro: fontes, glossário, `mudancas.md`, `pendencias.md` (Q-01, Q-02, Q-09), `roteiro.md`, o clumsy no `AGENTS.md` e a `visao-geral.md` se uma hipótese cair; depois o reviewer e o portão.
 <!-- SECTION:PLAN:END -->
+
+## Implementation Notes
+
+<!-- SECTION:NOTES:BEGIN -->
+Sessão 4 (03 e 04/10/2026), rodada 1, o netfox de verdade, concluída:
+- Q-02: a suíte do netfox no 4.7.2, no `cf5189d`, passou em 297 de 301 testes; os 4 que falham são de float16. O #659 foi reproduzido: o import do zero com `uid://` dá 30 erros e sai com código 0 (F-024). Critério 1 cumprido.
+- Sonda fora do repositório (`C:\Users\arthu\Projects\netfox-sonda\sonda`), com SyncTest por rollback forçado (F-025):
+  - hipótese 1 provada: gravação, restauração e rede, com 349 de 349 pulos e depois 747 e 764 de 764;
+  - hipótese 2 provada com o contorno do transform; sobra o caso de ficar em pé na cabeça do outro (Q-16);
+  - hipótese 3 derrubada; o contorno D zera as divergências.
+- Medição com 2 clientes, a 30 e 60 ticks, ping 0, 100 e 220 (F-026), e com 8 clientes pelo clumsy (F-029). Com 8 lutadores, 30 ticks deixa o servidor deste PC no limite com lag, e 60 não cabe.
+- O parry de brinquedo:
+  - o Arthur jogou seis partidas (F-027), depois de o brinquedo ser refeito com prints da tela;
+  - o bot de reação fixa (F-028) mostrou que, pela regra do netfox, não se defende por reação com ping de 100 ms ou mais;
+  - o bot com reação de gente, sem lag, deu 50% a 30 ticks e 72% a 60 (F-029).
+- Decisões do Arthur (F-030): 60 ticks por segundo (Q-01) e o contorno D. As DECs saem no plano do fim do Desenho 3.
+- No caminho, o Smart App Control do Windows passou a barrar o `backlog.exe`; o Arthur o desligou (F-031).
+- Falta: a rodada 2 (o desenho), o plano, as DECs, o netfox em `addons/` com o teste do `res://`, o `rede.md`, o reviewer e o portão.
+<!-- SECTION:NOTES:END -->
 
 ## Comments
 

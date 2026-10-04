@@ -1,6 +1,6 @@
 ---
-revisado_em: 2026-10-02
-fontes: [F-001, F-002, F-005, F-007, F-012, F-013, F-020, F-021]
+revisado_em: 2026-10-04
+fontes: [F-001, F-002, F-005, F-007, F-012, F-013, F-020, F-021, F-025, F-026, F-028, F-030]
 ---
 
 # Glossário
@@ -14,7 +14,7 @@ A linguagem ubíqua do jogo (DEC-0004, regra 5): o mesmo termo na conversa, no d
 | Lutador | O personagem na simulação, controlado por um jogador ou por um bot. No LoL, é o campeão (DEC-0022) | — | `Fighter` |
 | Jogador | A pessoa por trás do lutador; na rede, um peer. No LoL, é o invocador (DEC-0022) | — | `peer_id` |
 | Tick | Uma rodada de atualização do jogo, em ritmo fixo: lê o input, aplica as regras e anota a nova situação. O "servidor de 128 ticks" do Valorant faz 128 por segundo | tick | `tick` |
-| Ticks por segundo | Quantos ticks a simulação roda por segundo: 30 ou 60 (Q-01). A 30, um tick a cada 33 ms | tick/s | `tickrate` |
+| Ticks por segundo | Quantos ticks a simulação roda por segundo: 30 ou 60 (Q-01). A 30, um tick a cada 33 ms; a 60, a cada 16,7 ms. O Arthur escolheu 60, e a DEC sai no fim do Desenho 3 (F-030) | tick/s | `tickrate` |
 | Frame | Um desenho da tela. Varia com o PC (FPS); o tick, não. O frame desenha; o tick decide | frame/s | `frame` |
 | Estado | Retrato da simulação num tick, feito de valores planos (número, vetor, texto curto e ID), nunca referência a outro objeto. Fica em quatro caixas: corpo, regras, input e configuração (DEC-0022) | — | `state` |
 | Estado do lutador | A caixa de regras do lutador: modo, carimbos e pulos usados. O netfox grava campo a campo, por valor | — | `FighterState` |
@@ -32,6 +32,13 @@ A linguagem ubíqua do jogo (DEC-0004, regra 5): o mesmo termo na conversa, no d
 | Interpolação | Mostrar os outros jogadores suavizados entre dois estados recebidos | — | `interpolation` |
 | Compensação de lag | O servidor volta no tempo para julgar um acerto do ponto de vista de quem atacou | ms | `lag_compensation` |
 | Servidor autoritativo | O servidor decide o que aconteceu; o cliente só manda input | — | `server` |
+| Ping | O tempo de um pacote ir até o servidor e voltar, o número no canto da tela do LoL. A ida é a metade | ms | `rtt` |
+| Atraso de ponta a ponta | Do aperto de um jogador até o estado do lutador dele mudar na tela do outro: as duas idas mais as esperas de tick. A 30 ticks e ping 100, uns 140 ms (F-026) | ms | — |
+| Relógio do servidor | O jeito que o netfox julga sozinho: cada input vale no tick em que foi apertado, no relógio comum. Quem defende paga o atraso de ponta a ponta (F-028) | — | — |
+| Estado escondido | Algo que a regra ou o motor usa e o rollback não restaura, e por isso o tick refeito sai diferente do original. Exemplo: o "estava no chão" do `move_and_slide()` (F-025) | — | — |
+| SyncTest | O teste que força rollbacks e compara cada tick refeito com o original, como no GGPO. Acusa estado escondido (F-025; DEC-0004, regra 4) | — | — |
+| Ticks refeitos | Os ticks que o rollback simula de novo, por segundo. Crescem com o ping e com o quadrado do tickrate (F-026) | tick/s | `rollback_ticks` |
+| Sonda | Código descartável, fora do repositório, feito para provar ou derrubar uma hipótese. O jogo não usa | — | — |
 | Simulação | O contexto que roda a cada tick: movimento e combate | — | `core/` |
 | Meta | O contexto que roda fora do tick: salas, contas e ranking | — | — |
 

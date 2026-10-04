@@ -1,10 +1,10 @@
 ---
 id: TASK-5
 title: 'Desenho 3: a rede'
-status: In Progress
+status: Done
 assignee: []
 created_date: '2026-10-02 16:48'
-updated_date: '2026-10-04 15:39'
+updated_date: '2026-10-04 18:00'
 labels:
   - rede
   - desenho
@@ -64,20 +64,20 @@ Confirmadas pelo Arthur em 03/10, com 8 clientes já (F-023 §2 e §3):
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
 - [x] #1 Quando a suíte do netfox roda no Godot 4.7.2, sem tela, no commit `cf5189d`, o resultado fica registrado numa fonte, com o total de testes, os que falham e o motivo de cada falha (Q-02).
-- [ ] #2 Quando a suíte não falha em rollback, tempo nem sincronização, o netfox (core e extras) entra em `addons/` fixado no commit, com uma DEC, e o portão fica verde num clone limpo, com import do zero; quando falha, ele não entra, e a DEC registra o contorno ou o release v1.35.3, decidido com o Arthur.
-- [ ] #3 Quando um autoload do netfox aparece com `uid://` no `project.godot`, o teste de configurações falha (#659).
-- [ ] #4 Quando a sonda roda com um servidor dedicado, dois clientes e lag simulado, cada hipótese da DEC-0022 fica provada ou derrubada no `rede.md`, com o que foi medido; uma hipótese derrubada vira uma DEC que substitui o trecho da DEC-0022, e a `visao-geral.md` acompanha.
-- [ ] #5 Quando a sonda roda a 30 e a 60 ticks, com 2 e com 8 clientes e ping 0, 100 e 220, o `rede.md` e a vitrine da rede registram a CPU por tick do servidor e dos clientes, a banda por cliente e o atraso de ponta a ponta; se o servidor não acompanhar os 8, isso fica registrado na Q-09.
-- [ ] #6 Quando o Arthur joga os dois tickrates e escolhe, uma DEC registra o tickrate, a Q-01 fecha, e o `project.godot` e o teste de configurações guardam o valor.
-- [ ] #7 Quando a conversa termina, `docs/arquitetura/rede.md` existe, com o tick, o input, o rollback, o oponente no passado, a compensação de lag, a detecção do golpe, a fase 1 no tick e a `Main`, e cada comportamento do netfox citado pelo arquivo e pelo commit.
+- [x] #2 Quando a suíte não falha em rollback, tempo nem sincronização, o netfox (core e extras) entra em `addons/` fixado no commit, com uma DEC, e o portão fica verde num clone limpo, com import do zero; quando falha, ele não entra, e a DEC registra o contorno ou o release v1.35.3, decidido com o Arthur.
+- [x] #3 Quando um autoload do netfox aparece com `uid://` no `project.godot`, o teste de configurações falha (#659).
+- [x] #4 Quando a sonda roda com um servidor dedicado, dois clientes e lag simulado, cada hipótese da DEC-0022 fica provada ou derrubada no `rede.md`, com o que foi medido; uma hipótese derrubada vira uma DEC que substitui o trecho da DEC-0022, e a `visao-geral.md` acompanha.
+- [x] #5 Quando a sonda roda a 30 e a 60 ticks, com 2 e com 8 clientes e ping 0, 100 e 220, o `rede.md` e a vitrine da rede registram a CPU por tick do servidor e dos clientes, a banda por cliente e o atraso de ponta a ponta; se o servidor não acompanhar os 8, isso fica registrado na Q-09.
+- [x] #6 Quando o Arthur joga os dois tickrates e escolhe, uma DEC registra o tickrate, a Q-01 fecha, e o `project.godot` e o teste de configurações guardam o valor.
+- [x] #7 Quando a conversa termina, `docs/arquitetura/rede.md` existe, com o tick, o input, o rollback, o oponente no passado, a compensação de lag, a detecção do golpe, a fase 1 no tick e a `Main`, e cada comportamento do netfox citado pelo arquivo e pelo commit.
 <!-- AC:END -->
 
 ## Definition of Done
 <!-- DOD:BEGIN -->
-- [ ] #1 Critérios de aceite verificados
-- [ ] #2 Teste automatizado para toda regra do núcleo (core/)
-- [ ] #3 Diário da sessão escrito e glossário atualizado
-- [ ] #4 Mudanças registradas em docs/mudancas.md
+- [x] #1 Critérios de aceite verificados
+- [x] #2 Teste automatizado para toda regra do núcleo (core/)
+- [x] #3 Diário da sessão escrito e glossário atualizado
+- [x] #4 Mudanças registradas em docs/mudancas.md
 <!-- DOD:END -->
 
 ## Implementation Plan
@@ -112,6 +112,37 @@ Sessão 4 (03 e 04/10/2026), rodada 1, o netfox de verdade, concluída:
 - Decisões do Arthur (F-030): 60 ticks por segundo (Q-01) e o contorno D. As DECs saem no plano do fim do Desenho 3.
 - No caminho, o Smart App Control do Windows passou a barrar o `backlog.exe`; o Arthur o desligou (F-031).
 - Falta: a rodada 2 (o desenho), o plano, as DECs, o netfox em `addons/` com o teste do `res://`, o `rede.md`, o reviewer e o portão.
+Sessão 5 (04/10/2026), rodada 2 e fechamento:
+- Rodada 2, o desenho (F-032). O Arthur:
+  - entendeu quem paga o atraso;
+  - escolheu a posição na espada pela tela de quem ataca;
+  - fechou com os padrões o input, o oponente no passado, a detecção no núcleo, a fase 1 no tick, a Main e o teto de 200 ms.
+  - As perguntas saíram da vitrine na versão 8.
+- O plano:
+  - foi revisado antes por um agente de planejamento: 8 pontos, 3 graves, todos absorvidos;
+  - foi aprovado no modo de plano (F-033);
+  - registra que o critério 4 vale com a SyncTest para as hipóteses 2 e 3.
+- As DECs:
+  - DEC-0023, o netfox no 4.7.2;
+  - DEC-0024, 60 ticks;
+  - DEC-0025, os contornos do rollback, que substitui a hipótese 3 da DEC-0022;
+  - DEC-0026, a rede.
+- O implementer:
+  - copiou o netfox para addons/ com git archive do cf5189d: 177 arquivos, e só os 9 .svg.import diferem do upstream (F-036 §2);
+  - o project.godot ganhou os 14 autoloads em res://, os 3 plugins, tickrate 60 e as duas linhas de [physics] na ordem em que o Godot grava;
+  - o test/project_settings_test.gd ganhou 12 testes, 17 no total.
+- As sondas: autoload em uid://, tickrate 30, autoload fora de ordem, autoconnect ligado e plugin desligado fazem falhar o teste certo. Abrir e fechar o editor não muda nenhum arquivo.
+- A base:
+  - o rede.md cobre o tick, o input, o rollback e as hipóteses, o oponente no passado, a compensação, a detecção, a fase 1, a Main e as medições (critérios 4, 5 e 7);
+  - a F-034 traz a CPU por tick dos clientes e a banda de subida, dos mesmos logs;
+  - a F-036 traz o GitHub em 04/10, os .import e o modelo do parry.
+- A vitrine está na versão 9 (https://claude.ai/artifact/Sb4Q5e4M16UymdoaR9UAzp). A tabela do critério 5 fica na seção "30 ou 60 ticks", em "O que a sonda mediu: servidor dedicado, com 2 e com 8 clientes".
+- O reviewer pediu mudanças: 4 citações sem apoio na fonte e um teste que a DEC prometia. Depois do conserto, aprovou.
+- O portão:
+  - verde aqui, com 17 testes em 17 s;
+  - verde num clone limpo do commit 640040b, sem .godot e com import do zero, em 24 s, com o git status vazio depois.
+- DoD #2: task de desenho, sem regra de núcleo; os testes novos guardam configuração.
+- O Arthur perguntou sobre o desenho do jogo e sobre hacks (F-035). A proteção contra hack virou a Q-19.
 <!-- SECTION:NOTES:END -->
 
 ## Comments
@@ -127,3 +158,9 @@ Entrada do Desenho 2 (TASK-4; DEC-0022), para este desenho provar com o netfox r
 - Evidência para a Q-01: com o arredondamento da DEC-0022, a janela de parry de 80 ms vira 2 ticks (67 ms, −17 %) a 30 ticks, e 5 ticks (83 ms, +4 %) a 60. O buffer de 150 ms vira 167 ms a 30 ticks e fica exato a 60.
 ---
 <!-- COMMENTS:END -->
+
+## Final Summary
+
+<!-- SECTION:FINAL_SUMMARY:BEGIN -->
+Desenho 3 fechado. O netfox entra em addons/ fixado no cf5189d, com os autoloads em res:// e o tickrate de 60 guardados por teste (DEC-0023, DEC-0024). A SyncTest provou as hipóteses 1 e 2 e derrubou a 3, que o contorno D substitui (DEC-0025). A rodada 2 desenhou a rede (DEC-0026): o input; o oponente no passado, sem previsão; a compensação, com a defesa na tela de quem defende e o contato na de quem ataca, até 200 ms; a detecção por forma no núcleo, em fatias varridas; a fase 1 no tick; e a Main com três modos. O detalhe e as medições estão em docs/arquitetura/rede.md. Ficam abertas a Q-09 (8 lutadores a 60 ticks), a Q-16, a Q-17, a Q-18 e a Q-19.
+<!-- SECTION:FINAL_SUMMARY:END -->

@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# The deterministic gate (DEC-0006): what pre-push and CI run. Any failure stops it.
+# The deterministic gate (DEC-0027): what pre-push and CI run. Any failure stops it.
 set -euo pipefail
 cd "$(dirname "$0")/.."
 source tools/lib.sh

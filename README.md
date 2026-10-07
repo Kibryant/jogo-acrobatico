@@ -6,7 +6,7 @@ O Arthur faz o jogo com o Claude Code. O Claude escreve o código e ensina enqua
 
 ## Stack
 
-Godot 4.7.2, GDScript com tipagem obrigatória e netfox, com servidor autoritativo e previsão com rollback. O renderer é o Compatibility, a física é o Jolt e os testes rodam no gdUnit4 (DEC-0001 a DEC-0006). O piso de desempenho é 60 fps em 1080p no PC do Arthur (DEC-0002).
+Godot 4.7.2, GDScript com tipagem obrigatória e netfox, com servidor autoritativo e previsão com rollback. O renderer é o Compatibility, a física é o Jolt e os testes rodam no gdUnit4 (DEC-0001 a DEC-0005 e DEC-0027). O piso de desempenho é 60 fps em 1080p no PC do Arthur (DEC-0002).
 
 ## Como rodar
 

@@ -4,7 +4,7 @@ title: 'Esqueleto andante: a cápsula em rede de ponta a ponta'
 status: To Refine
 assignee: []
 created_date: '2026-10-02 16:48'
-updated_date: '2026-10-07 17:52'
+updated_date: '2026-10-07 19:24'
 labels:
   - jogo
   - rede
@@ -83,5 +83,16 @@ Entrada do Desenho 4, rodada 2 (TASK-6; F-042; F-044), para o esqueleto andante:
 - A referência (camada 4) nasce aqui: um percurso de bot gravado como replay por inputs, com o hash do caminho conferido no portão (Windows) e no CI (Linux). Ela usa uma cópia congelada dos números do movimento, só do teste; regravar é um comando, e o commit diz por quê. A sonda de referência está em `../replay-sonda` (main.gd, fighter.gd, arena.gd).
 - A checagem dos dados nasce com o primeiro `.tres` de design.
 - O que proteger desde já para o replay: o input que vale é o que o servidor aplicou; todo sorteio tem semente e mora no estado; o núcleo não lê relógio; a build carrega a versão.
+---
+
+created: 2026-10-07 19:24
+---
+Entrada do Desenho 4, rodada 3 e fechamento (TASK-6; DEC-0027; DEC-0028), para o esqueleto andante:
+- O job de build no CI: nos PRs (artefato por 3 dias) e nas tags `v0.y.z` (release); o push na main não gera build. O critério 3 desta task, que pedia a build a cada push na main, é refeito quando ela ficar Ready (DEC-0028 §2).
+- Os presets já estão no `export_presets.cfg`, com guarda em `test/export_presets_test.gd`. O CI roda o import antes do export, o que evita o #1324 do gdUnit4. Se o #123712 aparecer (o Godot cai ao sair depois do export), o job confere o artefato e o teste de fumaça, e não só o código de saída (DEC-0028, Consequências).
+- O teste de fumaça: o servidor exportado sobe sem tela e fecha com código 0, como a sonda provou (F-045 §3).
+- A versão: o 0.1.0 entra no commit que fecha esta task, com a tag `v0.1.0`; o CI carimba o commit em `application/config/commit` no export (DEC-0028 §3).
+- O aperto de mão na Main: o cliente manda versão e commit, e o servidor recusa os diferentes (DEC-0028 §3).
+- Esta é a primeira task no fluxo de branch e PR: nasce numa branch `task-9-...` no In Progress e fecha num PR em português, com o Arthur no merge (DEC-0028 §4).
 ---
 <!-- COMMENTS:END -->

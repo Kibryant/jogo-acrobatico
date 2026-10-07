@@ -1,6 +1,6 @@
 ---
-revisado_em: 2026-10-04
-fontes: [F-001, F-007, F-032]
+revisado_em: 2026-10-07
+fontes: [F-001, F-007, F-032, F-044]
 ---
 
 # Roteiro
@@ -21,6 +21,6 @@ As fases do estudo, cada uma com o teste que pode encerrar o projeto sem culpa (
 O detalhe de cada mudança está em `mudancas.md`.
 
 - **Fase 0:** virou base do repositório, fase de desenho e esqueleto andante (DEC-0012).
-- **Fase 1:** no estudo, era "movimento sem rede". O rollback exige que o movimento rode dentro do tick desde o começo (F-007 §2). O Desenho 3 decidiu: a fase 1 nasce no tick do netfox e é jogada sozinha, no modo "Sozinho" da `Main`, sem rede. A SyncTest no CI cobre cada manobra nova (DEC-0026).
+- **Fase 1:** no estudo, era "movimento sem rede". O rollback exige que o movimento rode dentro do tick desde o começo (F-007 §2). O Desenho 3 decidiu: a fase 1 nasce no tick do netfox e é jogada sozinha, no modo "Sozinho" da `Main`, sem rede. A SyncTest no portão cobre cada manobra nova (DEC-0026; DEC-0027). A gravação do replay por inputs também começa na fase 1, para reproduzir sem tela os bugs de movimento; o replay para o jogador segue na fase 4 (F-044 §1; DEC-0027).
 
 A rota alternativa do estudo continua de pé: primeiro um jogo para jogar sozinho ou em dupla contra o computador, com a mesma movimentação, para formar público (F-001).

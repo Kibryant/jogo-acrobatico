@@ -4,7 +4,7 @@ title: 'Desenho 4: testes, ambientes e entrega (CI/CD)'
 status: In Progress
 assignee: []
 created_date: '2026-10-02 16:48'
-updated_date: '2026-10-07 18:53'
+updated_date: '2026-10-07 19:31'
 labels:
   - infra
   - desenho
@@ -138,6 +138,15 @@ Rodada 3 (07/10, sessão 7), build, versões e fluxo:
 - No CI, em dois runs numa branch de sonda apagada depois: 83 s com o cache frio e 57 s com o quente (o `setup-godot` com os templates: 51 s e 30 s). Os exports saíram com código 0, e o #123712 não apareceu. O servidor exportado subiu no Linux com `dedicated_server=true` e fechou com código 0. O artefato com as duas builds tem 68,4 MB. O .exe feito no Linux rodou neste PC com o commit carimbado.
 - O pre-push barrou o primeiro push da sonda por uma linha de 102 colunas, e o editor reordenou as chaves novas do `project.godot`.
 - Decidido (F-046): a build sai no PR (3 dias) e na tag (release); SemVer 0.y.z, o commit carimbado, a release na tag e o aperto de mão; a task Ready na main, uma branch por task do In Progress ao Done, o PR em português com o Arthur no merge (merge commit) e um worktree por sessão paralela.
+
+- Tempos do portão em 04/10, depois da rodada 1, medidos pelo Claude neste PC (duas rodadas, passo a passo): formato e lint 0,58 a 0,65 s; pureza 0,39 a 0,45 s; travas 0,15 a 0,23 s; import 15,66 a 15,76 s; compilar tudo 3,86 a 4,61 s; testes 8,13 a 9,69 s; o portão inteiro, 31,3 s. Em outras rodadas, o import variou de 9,7 a 17,7 s.
+
+Fechamento (07/10, sessão 7), a prova do export a partir deste repositório, com o `export_presets.cfg` que entrou (critério 8):
+- `--export-pack "Cliente Windows"`: código 0, 8,8 s, 230.836 bytes. `--export-pack "Servidor Linux"`: código 0, 8,8 s, 229.280 bytes. `--export-release "Servidor Linux"`: código 0, 8,7 s, 73.748.704 bytes. Os logs não têm linha de erro nem de aviso.
+- Cada pacote tem 159 arquivos (147 do netfox, 11 do cache `.godot` e o `project.binary`), lidos pelo `list_pck.py` da sonda: nada de `test/`, gdUnit4, `tools/`, `reports/` nem dos canários. São 4 a menos que na sonda, que levava a cena de sonda.
+- Sem a Main, a build ainda não roda nada (TASK-9). No servidor, o "strip visuals" trocou os 9 ícones do netfox por marcadores de 295 bytes.
+- As guardas novas (a versão com três números; os dois presets, em `test/export_presets_test.gd`) falharam cada uma na sua sonda: versão `0.1.0-alpha`, cliente sem `tools/*`, servidor com `dedicated_server=false`. O portão ficou verde em 17 s, com 24 testes.
+- Ressalvas do implementer: numa rodada vermelha, o gdUnit4 6.2.1 ainda escreve PASSED na linha de estatística da suíte (a linha do teste diz FAILED, e a saída é 100); e salvar algo em Projeto > Exportar no editor deve reescrever o `export_presets.cfg` com todas as opções (inferência).
 <!-- SECTION:NOTES:END -->
 
 ## Comments

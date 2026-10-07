@@ -1,4 +1,4 @@
-# CI (DEC-0006): the same gate as pre-push, plus a secret scan over the whole history.
+# CI (DEC-0027): the same gate as pre-push, plus a secret scan over the whole history.
 # Pinned tool versions match Arthur's machine: Godot 4.7.2, gdscript-formatter 0.27.0, gitleaks 8.30.1.
 # The runner image is pinned too (Q-15): moving to a new Ubuntu is a decision, not a surprise.
 name: ci

@@ -2,12 +2,14 @@
 id: DEC-0006
 titulo: Testes e portão — gdUnit4, cinco camadas, hooks rápidos e o mesmo portão no pre-push e no CI
 data: 2026-10-02
-status: aceita
+status: substituída
 decidido_por: Arthur
 fontes: [F-002, F-003, F-006, F-007, F-009]
 substitui:
-substituida_por:
+substituida_por: DEC-0027
 ---
+
+> ⚠️ Substituída por DEC-0027 em 2026-10-07 — não é a regra atual.
 
 # DEC-0006 — Testes e portão: gdUnit4, cinco camadas, hooks rápidos e o mesmo portão no pre-push e no CI
 

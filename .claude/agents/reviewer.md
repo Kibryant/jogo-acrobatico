@@ -15,7 +15,8 @@ Also check, citing `path:line`:
 - No `Timer`, `await` or wall clock in the simulation; sound and VFX only on fresh ticks.
 - Resources are not mutated at runtime, and every ms-to-ticks conversion has a test.
 - Every game number traces to `docs/design/`; none was invented.
-- Tests go through public interfaces: no reading source files, no mocking private functions.
+- Tests go through public interfaces: no reading source files, no mocking private functions. Two written exceptions (DEC-0027): the SyncTest may drive netfox's tick through its internal functions, and a test may read a configuration file that has no runtime API, such as `export_presets.cfg`.
+- Every citation backs its claim: open each (F-xxx §n) or (DEC-xxxx) a changed doc or task cites and check that the claim is really there. A number that lives only in the vitrine or in a task description has no source.
 - Locked tests are unchanged (`bash tools/check_test_locks.sh`).
 - No secrets, no new dependency without a DEC.
 

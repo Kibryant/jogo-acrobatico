@@ -1,4 +1,4 @@
-# Git hooks (DEC-0006). Install once per clone with `lefthook install`.
+# Git hooks (DEC-0027). Install once per clone with `lefthook install`.
 # Never bypass them with --no-verify: if a check is wrong, fix the check with Arthur.
 # doublestar: globs mean what they mean in .gitignore ("**/" is zero or more folders).
 glob_matcher: doublestar

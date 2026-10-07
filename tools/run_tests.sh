@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Runs every gdUnit4 suite under test/ headless (DEC-0006). Extra arguments go to gdUnit4.
+# Runs every gdUnit4 suite under test/ headless (DEC-0027). Extra arguments go to gdUnit4.
 set -euo pipefail
 cd "$(dirname "$0")/.."
 source tools/lib.sh

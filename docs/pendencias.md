@@ -1,5 +1,5 @@
 ---
-revisado_em: 2026-10-04
+revisado_em: 2026-10-07
 ---
 
 # Pendências
@@ -27,3 +27,4 @@ Perguntas abertas, cada uma com o lugar onde se resolve. A resposta vira DEC, e 
 | Q-17 | Contra trapaça na compensação de lag (DEC-0026): o servidor confere o `view_lag` de cada input com o ping que ele mede? E qual a regra contra o lag switch de quem ataca, que esconde a preparação do golpe segurando os próprios pacotes? A ideia de partida é que golpe cuja preparação não apareceu na tela de quem defende não pega | Fase 3, com a espada em rede | Começar pela regra da preparação visível, que faz pagar quem tem a conexão ruim, e conferir o `view_lag` com o ping do ENet. Se o histórico de 64 ticks (1,07 s) ainda deixar folga ao lag switch, encurtá-lo | — |
 | Q-18 | No 4v4, cada atacante aparece com um atraso diferente na tela de quem defende. O input leva um `view_lag` por oponente, ou o servidor calcula pelo que mandou a cada cliente (DEC-0026)? | Fase 4, no 4v4 | Decidir com o 4v4 jogável. A ideia de partida é o servidor calcular, sem pôr um número por oponente no input | — |
 | Q-19 | Onde e quando se desenha a proteção contra hack (F-035)? O servidor autoritativo já barra a trapaça de mexer na memória do próprio PC: vida, velocidade, teleporte e dano (DEC-0003). O teto e a Q-17 cuidam da compensação de lag (DEC-0026). Não há plugin oficial de Easy Anti-Cheat para o Godot (DEC-0001). Sobram o aimbot, o wallhack, a macro e o lag switch, e não há um desenho próprio para eles | Antes do alpha (fase 4), quando gente de fora começa a jogar | Uma conversa de desenho própria antes da fase 4, com o 1v1 online da fase 3 rodando: filtro de visibilidade contra wallhack (o netfox tem; F-005 §4), estatística no servidor, replay por inputs para revisar denúncia (DEC-0011), denúncia e banimento com conta (Desenho 6). Antes disso, ninguém de fora joga | — |
+| Q-20 | Quem testar as builds de fora pode esbarrar no Smart App Control, que já barrou o `backlog.exe` neste PC (F-031). Um `.exe` sem assinatura costuma cair também no SmartScreen do Windows (inferência do agente). Assinar custa dinheiro. Como os amigos vão rodar a build? | Desenho 6 (TASK-8), ou antes de amigos testarem, na fase 2 | Antes da fase 2, testar a build num PC de outra pessoa e escrever o passo a passo; pensar na assinatura antes do alpha | — |

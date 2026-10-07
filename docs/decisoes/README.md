@@ -15,12 +15,11 @@
 | [DEC-0003](DEC-0003-rede-com-netfox.md) | 2026-10-02 | netfox, com servidor autoritativo e previsão com rollback, na main fixada num commit | aceita; completada pela DEC-0023 (o commit, os módulos e o contorno do #659) e pela DEC-0024 (60 ticks) |
 | [DEC-0004](DEC-0004-arquitetura-nucleo-puro-e-ddd-estrategico.md) | 2026-10-02 | Núcleo puro, nós finos, DDD só estratégico e as seis regras | aceita; a frase sobre a RewindableStateMachine foi substituída pela DEC-0022 |
 | [DEC-0005](DEC-0005-codigo-tipado-e-pastas-por-feature.md) | 2026-10-02 | Tipagem obrigatória, pastas por feature e formatador da GDQuest | aceita; completada pela DEC-0022, que torna o acesso inseguro um erro e dá nome às pastas |
-| [DEC-0006](DEC-0006-testes-e-portao.md) | 2026-10-02 | gdUnit4, cinco camadas de teste e o mesmo portão no pre-push e no CI | aceita; o pipeline se confirma no Desenho 4. O CI rodou verde no primeiro push, num repositório privado sem regra de branch (Q-03; F-017 §2) |
 | [DEC-0007](DEC-0007-base-markdown-git-backlog-md.md) | 2026-10-02 | Markdown e git, com tasks no Backlog.md, no padrão do SkinHub | aceita |
 | [DEC-0008](DEC-0008-idioma.md) | 2026-10-02 | Inglês no que é interno, português no que o Arthur lê, inclusive as tasks | aceita; as tasks em português foram confirmadas pela Q-08 (F-010 §2) |
-| [DEC-0009](DEC-0009-harness-do-claude-code.md) | 2026-10-02 | A harness do SkinHub, mais leve | aceita |
+| [DEC-0009](DEC-0009-harness-do-claude-code.md) | 2026-10-02 | A harness do SkinHub, mais leve | aceita; completada pela DEC-0027 nos hooks do Claude Code |
 | [DEC-0010](DEC-0010-construir-e-ensinar.md) | 2026-10-02 | O Claude constrói e ensina; o Arthur dirige | aceita |
-| [DEC-0011](DEC-0011-direcoes-para-depois.md) | 2026-10-02 | Direções para validação de acerto, hospedagem e replay | aceita, como direção; a validação de acerto da espada foi detalhada pela DEC-0026 |
+| [DEC-0011](DEC-0011-direcoes-para-depois.md) | 2026-10-02 | Direções para validação de acerto, hospedagem e replay | aceita, como direção; a validação de acerto da espada foi detalhada pela DEC-0026, e o replay pela DEC-0027 |
 | [DEC-0012](DEC-0012-fase-de-desenho-antes-do-codigo.md) | 2026-10-02 | Fase de desenho com seis conversas e um esqueleto andante | aceita na sessão 2 (F-010 §2) |
 | [DEC-0013](DEC-0013-camera-em-terceira-pessoa.md) | 2026-10-02 | Câmera em terceira pessoa | aceita; os números da câmera saem na rodada 2 do Desenho 1 |
 | [DEC-0014](DEC-0014-tribo-do-combate-for-honor.md) | 2026-10-02 | Tribo do combate For Honor e Chivalry 2: tempo fixo e aviso claro | aceita |
@@ -36,6 +35,8 @@
 | [DEC-0024](DEC-0024-sessenta-ticks-por-segundo.md) | 2026-10-04 | 60 ticks por segundo | aceita; fecha a Q-01 |
 | [DEC-0025](DEC-0025-contornos-do-rollback-no-jolt.md) | 2026-10-04 | Os contornos do rollback no Jolt: o do transform em todo tick refeito e o contorno D no começo de cada rollback | aceita; substitui só a hipótese 3 da DEC-0022 |
 | [DEC-0026](DEC-0026-a-rede.md) | 2026-10-04 | A rede: o input, o oponente no passado, a compensação de lag, a detecção do golpe, a fase 1 no tick e a Main | aceita; completa a DEC-0011 na validação de acerto da espada |
+| [DEC-0027](DEC-0027-testes-e-entrega.md) | 2026-10-07 | Testes e entrega: o portão com canários e log limpo, as cinco camadas com quando nascem, a SyncTest à mão, o replay por inputs e os hooks do Claude Code | aceita; substitui a DEC-0006 e completa a DEC-0009 e a DEC-0011 |
+| [DEC-0028](DEC-0028-builds-versoes-e-fluxo-de-branch.md) | 2026-10-07 | Builds, versões e fluxo de branch: dois presets, build no PR e na tag, SemVer 0.y.z com o commit carimbado, uma branch por task com PR e um worktree por sessão paralela | aceita |
 
 ## Propostas — ainda não são regra
 
@@ -47,3 +48,4 @@ Nenhuma proposta aberta.
 |---|---|---|---|
 | [DEC-0004](DEC-0004-arquitetura-nucleo-puro-e-ddd-estrategico.md) | Só a frase "feita com a RewindableStateMachine do netfox". As seis regras continuam valendo | [DEC-0022](DEC-0022-arquitetura-detalhada.md) | 2026-10-02 |
 | [DEC-0022](DEC-0022-arquitetura-detalhada.md) | Só a hipótese 3: o `on_floor` no estado no lugar do movimento extra de velocidade zero. O `on_floor` continua no estado, com o contorno D; o resto continua valendo | [DEC-0025](DEC-0025-contornos-do-rollback-no-jolt.md) | 2026-10-04 |
+| [DEC-0006](DEC-0006-testes-e-portao.md) | Toda a DEC. A DEC-0027 repete o que dela continua: o gdUnit4 6.2.1, o pre-commit abaixo de 15 s, o pre-push abaixo de 90 s, o LFS e o nunca `--no-verify` | [DEC-0027](DEC-0027-testes-e-entrega.md) | 2026-10-07 |

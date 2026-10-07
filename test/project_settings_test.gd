@@ -1,5 +1,6 @@
-# Guards the project settings decided in DEC-0002, DEC-0005, DEC-0022, DEC-0023, DEC-0024 and
-# DEC-0026. A failure here means project.godot changed: read the DEC before "fixing" the test.
+# Guards the project settings decided in DEC-0002, DEC-0005, DEC-0022, DEC-0023, DEC-0024,
+# DEC-0026 and DEC-0028 (the version). A failure here means project.godot changed: read the DEC
+# before "fixing" the test.
 extends GdUnitTestSuite
 
 const UNSAFE_ACCESS_WARNINGS: Array[String] = [
@@ -184,6 +185,15 @@ func test_warnings_stay_on_in_our_folders() -> void:
 		var message := "warnings must stay on in %s (DEC-0005, DEC-0022)" % folder
 		var rule := _warning_rule(rules, folder)
 		assert_int(rule).override_failure_message(message).is_equal(WARNINGS_INCLUDED)
+
+
+# Anything but digits and periods makes the .exe metadata fall back to 1.0.0.0 (F-047 §1.5).
+func test_version_is_three_numbers_of_digits_only() -> void:
+	var version: String = ProjectSettings.get_setting("application/config/version", "")
+	var three_numbers := RegEx.create_from_string("^[0-9]+\\.[0-9]+\\.[0-9]+$")
+	var message := 'version must be three numbers like "0.1.0", found "%s" (DEC-0028)' % version
+	var is_three_numbers := three_numbers.search(version) != null
+	assert_bool(is_three_numbers).override_failure_message(message).is_true()
 
 
 # Every autoload in ProjectSettings, by name, with its path as written in project.godot.

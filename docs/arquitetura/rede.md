@@ -1,6 +1,6 @@
 ---
-revisado_em: 2026-10-04
-fontes: [F-001, F-005, F-007, F-023, F-024, F-025, F-026, F-027, F-028, F-029, F-030, F-032, F-033, F-034, F-036]
+revisado_em: 2026-10-07
+fontes: [F-001, F-005, F-007, F-023, F-024, F-025, F-026, F-027, F-028, F-029, F-030, F-032, F-033, F-034, F-036, F-042, F-044, F-046]
 ---
 
 # Rede
@@ -142,7 +142,7 @@ O teste é mais duro que a rede: ele força o rollback a cada tick. As mediçõe
 
 **O float:** com o frame sem limite, o contorno D deu erro máximo de 0,000000 m. O resíduo do `physics_factor` fica abaixo de 1 µm nesta máquina (F-025 §5).
 
-**A prova permanente:** a SyncTest vira teste no CI, no esqueleto andante (TASK-9; DEC-0004, regra 4).
+**A prova permanente:** a SyncTest vira teste no portão, no esqueleto andante (TASK-9; DEC-0004, regra 4). Ela avança os ticks à mão, como a suíte do netfox (`test/network-mocks.gd`): pelo relógio do netfox, cada cenário custaria o tempo de jogo dele (F-042 §1; DEC-0027 §3).
 
 ## 5. O oponente no passado (DEC-0026 §2)
 
@@ -281,6 +281,7 @@ A cena de entrada olha como o jogo foi aberto, como um `main.ts` que lê o `proc
   - soltar a partida;
   - só então sair.
 - A sonda caía com falha de segmentação ao fechar (F-026 §4); o esqueleto andante confere que o servidor sai com código 0.
+- **O aperto de mão:** ao conectar, o cliente manda a versão e o commit da build, e o servidor recusa os diferentes, pedindo para atualizar. No rollback, os dois precisam rodar a mesma regra (F-046 §2; DEC-0028 §3).
 - **Zero autoloads nossos** (DEC-0022): a `Main` é a cena principal. O `netfox/autoconnect/enabled` fica desligado, porque quem conecta é a `Main` (DEC-0023).
 - A porta e o endereço vêm dos argumentos. A hospedagem é do Desenho 6 (TASK-8).
 
@@ -360,6 +361,7 @@ A cena de entrada olha como o jogo foi aberto, como um `main.ts` que lê o `proc
   - os modos da `Main`;
   - o input com o comando de um toque;
   - o oponente sem previsão;
-  - a SyncTest dos dois contornos no CI;
+  - a SyncTest dos dois contornos no portão, com os ticks à mão (DEC-0027);
+  - o aperto de mão de versão na `Main` (DEC-0028);
   - o fechamento limpo.
 - **Fases 2 e 3:** as regras do golpe com `view_lag` zero; depois o `view_lag`, o histórico de poses e os testes com rede.

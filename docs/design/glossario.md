@@ -1,6 +1,6 @@
 ---
-revisado_em: 2026-10-04
-fontes: [F-001, F-002, F-005, F-007, F-012, F-013, F-020, F-021, F-025, F-026, F-028, F-030, F-032, F-038, F-039]
+revisado_em: 2026-10-07
+fontes: [F-001, F-002, F-005, F-007, F-012, F-013, F-020, F-021, F-025, F-026, F-028, F-030, F-032, F-038, F-039, F-044, F-045, F-046]
 ---
 
 # Glossário
@@ -121,10 +121,26 @@ A linguagem ubíqua do jogo (DEC-0004, regra 5): o mesmo termo na conversa, no d
 | Termo | O que é | Unidade | No código |
 |---|---|---|---|
 | Esteira | O caminho de uma mudança até o jogo na mão do jogador, com uma checagem em cada estação: o hook do Claude, o commit, o push, o CI e a build (pipeline) | — | — |
-| Portão | As checagens que todo push precisa passar, no pre-push e no CI: formato, lint, pureza, travas, import, compilar tudo e testes (DEC-0006) | s | `tools/gate.sh` |
+| Portão | As checagens que todo push precisa passar, no pre-push e no CI: formato, lint, pureza, travas, import, compilar tudo e testes (DEC-0027) | s | `tools/gate.sh` |
 | Compilar tudo | O passo do portão que carrega todos os nossos scripts numa execução só do Godot, como o `tsc --noEmit` | s | `tools/check_scripts.sh` |
 | Canário | Um arquivo com erro de propósito que uma checagem precisa barrar a cada rodada; se ele passar, a checagem perdeu uma regra | — | `tools/canaries/` |
 | Log limpo | Um portão verde não tem linha `ERROR:` no log; testes que passam com erro no log reprovam (F-039) | — | `tools/run_tests.sh` |
 | Trava do teste de aceite | O sha256 de um teste de aceite, guardado enquanto a task está aberta. Só o Arthur destrava (DEC-0009) | — | `.claude/harness/locks/` |
 | Hook do Claude Code | Um comando que o Claude Code roda antes ou depois de cada ferramenta do agente, como um middleware. Aqui, ele nega a edição de teste travado e formata o `.gd` | — | `.claude/hooks/` |
-| Replay por inputs | A partida guardada como o input de cada tick e tocada de novo no servidor. Só reproduz na mesma build: a mesma tecla com outra regra dá outra partida (DEC-0011) | — | — |
+| Replay por inputs | A partida guardada como o input de cada tick e tocada de novo no servidor. Só reproduz na mesma build: a mesma tecla com outra regra dá outra partida (DEC-0011; DEC-0027) | — | — |
+| Referência | Um replay gravado de um percurso, com o caminho guardado; o teste refaz e compara, como o snapshot do Jest. Mudou de propósito? Regrava, e o commit diz por quê (golden master; DEC-0027) | — | — |
+| Números congelados | A cópia dos números do movimento que só a referência usa: o ajuste fino do jogo não a quebra, só uma mudança de código (DEC-0027) | — | — |
+| Build | O jogo empacotado para rodar fora do editor: o template mais o pacote do jogo, num arquivo só (DEC-0028) | MB | `build/` |
+| Template de export | O motor compilado sem o editor, por plataforma. É o Chromium do Electron (DEC-0028) | MB | — |
+| Pacote (`.pck`) | As cenas, os scripts e os dados do jogo, empacotados. É o `.asar` do Electron (DEC-0028) | kB | — |
+| Preset de export | A receita de uma build: plataforma, o que entra e o que fica de fora. Há dois: o cliente Windows e o servidor Linux (DEC-0028) | — | `export_presets.cfg` |
+| Feature tag | Uma marca na build que o código consulta, como o `NODE_ENV`. A do servidor é `dedicated_server` (DEC-0028) | — | `OS.has_feature` |
+| Artefato | O arquivo que o CI guarda depois de rodar, como as builds de um PR, por alguns dias (DEC-0028) | MB | — |
+| Release | Uma versão publicada no GitHub, a partir de uma tag, com as builds e as notas (DEC-0028) | — | `v0.y.z` |
+| Versão | O número da build, em SemVer `0.y.z`: o `y` sobe a cada marco do roteiro, o `z` a cada build que sai (DEC-0028) | — | `application/config/version` |
+| Carimbo do commit | Os 7 primeiros caracteres do commit, escritos pelo CI na build: dizem exatamente qual código rodou (DEC-0028) | — | `application/config/commit` |
+| Aperto de mão | Na conexão, o cliente manda a versão e o commit, e o servidor recusa os diferentes (DEC-0028) | — | — |
+| Branch da task | A linha de trabalho de uma task, do In Progress ao Done, que volta para a main num PR (DEC-0028) | — | `task-N-nome` |
+| PR | O pedido para juntar uma branch na main: o lugar onde o Arthur revisa o diff e joga a build (DEC-0028) | — | — |
+| Merge commit | O commit que junta a branch na main sem apagar os commits dela; desfazer a task inteira é um revert só (DEC-0028) | — | — |
+| Worktree | Uma segunda pasta do mesmo repositório, noutra branch: duas sessões ao mesmo tempo nunca dividem a mesma pasta (DEC-0028) | — | `git worktree` |

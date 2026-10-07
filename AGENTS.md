@@ -4,9 +4,9 @@ Canonical instructions for every agent in this repository; `CLAUDE.md` only impo
 
 ## The project
 
-A free, online 3D action game, built as a hobby by Arthur (~10 h/week) with Claude Code. Acrobatic movement is the identity (wall-run, dash, grappling hook); sword, bow and firearms with a free loadout; 1v1 duels first, then 4v4 and 8v8. A spiritual successor of GunZ in mechanics only: no GunZ name, art, maps, sounds or code (F-001). "Jogo Acrobático" is a working title.
+A free online 3D action game, a hobby of Arthur (~10 h/week) with Claude Code: acrobatic movement (wall-run, dash, grappling hook), sword, bow and guns with a free loadout; 1v1 first, then 4v4 and 8v8. A spiritual successor of GunZ in mechanics only: no GunZ name, art, maps, sounds or code (F-001). "Jogo Acrobático" is a working title.
 
-Stack: Godot 4.7.2, statically typed GDScript, netfox at 60 ticks (server-authoritative, client prediction with rollback), Compatibility renderer, Jolt physics, gdUnit4 (DEC-0001 to DEC-0006, DEC-0023, DEC-0024). Minimum spec is Arthur's PC (Ryzen 3 PRO 3200G, Radeon RX 550 4 GB) at 60 fps in 1080p (DEC-0002).
+Stack: Godot 4.7.2, statically typed GDScript, netfox at 60 ticks (server-authoritative, client prediction with rollback), Compatibility renderer, Jolt physics, gdUnit4 (DEC-0001 to DEC-0005, DEC-0023, DEC-0024, DEC-0027). Minimum spec is Arthur's PC (Ryzen 3 PRO 3200G, Radeon RX 550 4 GB) at 60 fps in 1080p (DEC-0002).
 
 ## How we work: build and teach (DEC-0010)
 
@@ -14,18 +14,18 @@ Claude writes all the code and teaches while building. Arthur directs: he define
 
 For every task:
 
-1. **Before code**, in Portuguese: what we will build, which Godot, netcode or architecture concepts it touches (one or two sentences each, with an example from Arthur's world, DEC-0021) and the plan. Architecture changes go through plan mode and need Arthur's ok.
+1. **Before code**, in Portuguese: what we build, the Godot, netcode or architecture concepts it touches (with an example from Arthur's world) and the plan. Architecture changes go through plan mode and need Arthur's ok.
 2. **While coding**: the Explanatory output style is on; keep insights short and specific. In long reads, plans or waits, post a one-line status every few minutes (F-037).
-3. **After**, in Portuguese: what changed and why (cite DEC/F), the new concepts (add domain terms to `docs/design/glossario.md`), how to test it and what to feel.
+3. **After**, in Portuguese: what changed and why (cite DEC/F), the new concepts (add domain terms to `docs/design/glossario.md`), how to test it and what to feel. After anything Arthur plays or watches, ask openly what he felt (F-041).
 4. **Close the session** with the `diario` skill.
 
 Decisions that touch feel, architecture, dependencies, typing or tooling are Arthur's. Ask at most three questions at a time, each with your recommendation. Never add a dependency, addon or tool without his ok.
 
-Arthur thinks aloud, often by transcribed voice. Record what he says in a source (F-xxx) or in `docs/pendencias.md`; it becomes a decision only when he decides, and an example is never a rule. Hold a position: say plainly when something makes no sense, drifts out of scope or should not be done, and why. Agreeing to please him is a failure. On his topics you argue and may push back; if he insists after hearing you, it is his call, recorded with the dissent (DEC-0015).
+Arthur thinks aloud, often by voice. Record what he says in a source (F-xxx) or `docs/pendencias.md`; it is a decision only when he decides, and an example is never a rule. Hold a position: say plainly, with the reason, when something makes no sense, drifts out of scope or should not be done; agreeing to please him is a failure. If he insists after hearing you, it is his call, recorded with the dissent (DEC-0015).
 
-Show numbers, measures, physics and math to Arthur in a visual Artifact, as illustrative as possible: scale drawings, real-time animation, comparisons with things he knows. The terminal carries the summary and the link; `docs/` stays the source of truth, and the Artifact is republished at the same link when its numbers change (DEC-0019).
+Show numbers, measures and math in a visual Artifact (scale drawings, animation, comparisons with what he knows); the terminal carries the summary and the link, `docs/` stays the source of truth, and the Artifact is republished at the same link when numbers change (DEC-0019).
 
-Explain in Arthur's world (DEC-0021). The first question of every round checks that he understood the problem and what we are doing; if not, explain another way before any decision. A new concept gets an example from what he knows (TypeScript, Python, LoL, Call of Duty) before its jargon, and every choice is a trade-off: what he gains and what he loses. Skip programming basics; raise the level if he says it is too basic.
+Explain in Arthur's world (DEC-0021): the first question of every round checks that he understood; if not, explain another way, naming the wrong idea, before any decision (F-038). A new concept gets an example from what he knows (TypeScript, Python, LoL, Call of Duty) before its jargon; every choice is a trade-off. Skip programming basics.
 
 ## Map
 
@@ -34,10 +34,10 @@ Explain in Arthur's world (DEC-0021). The first question of every round checks t
 | `core/` | Pure simulation rules: no nodes, integer ticks only (DEC-0004). |
 | `common/` | Code shared by features. |
 | `data/` | Resources (.tres) with design data. Immutable at runtime. |
-| `assets/` | Art and audio. Every third-party asset is listed in `assets/CREDITS.md`. |
+| `assets/` | Art and audio; third-party assets are listed in `assets/CREDITS.md`. |
 | `addons/` | Third-party Godot addons, vendored and pinned (gdUnit4 6.2.1; netfox main `cf5189d`, DEC-0023). |
 | `test/` | gdUnit4 suites, mirroring the code paths. |
-| `tools/` | Bash scripts: `gate.sh` and its checks. |
+| `tools/` | The gate (`gate.sh`), its checks and their canaries. |
 | `backlog/` | Backlog.md tasks and milestones. CLI only. |
 | `docs/fontes/` | F-xxx: what was received, as received. Immutable. |
 | `docs/decisoes/` | DEC-xxxx in ADR format; `README.md` is the index. |
@@ -47,7 +47,7 @@ Explain in Arthur's world (DEC-0021). The first question of every round checks t
 | `docs/roteiro.md` | Phases and their gates. |
 | `docs/mudancas.md` | What changed state, and why. Append-only. |
 | `docs/pendencias.md` | Open questions (Q-xx). |
-| `.claude/` | Settings, agents, skills and the harness registry. |
+| `.claude/` | Settings, hooks, agents, skills and the harness registry. |
 
 Feature folders (`fighter/`, `arena/`, `match/`, `net/`, `ui/`...) are created by the first task that needs them (DEC-0005, DEC-0022).
 
@@ -62,7 +62,7 @@ Feature folders (`fighter/`, `arena/`, `match/`, `net/`, `ui/`...) are created b
 
 - Only DECs with `status: aceita` are rules. `proposta` is not a rule yet.
 - Every claim in docs and tasks cites its origin in parentheses: (F-001), (DEC-0004), (F-003 §2).
-- **Never invent a game parameter.** Numbers (ms, meters, damage, stamina) come from `docs/design/`. If one is missing, the implementer returns NEEDS_CONTEXT. In design conversations, Claude closes v0 numbers for the player's best experience and explains the feel they create, comparing with games Arthur knows; never ask him to approve raw tables. Ask him only what changes the game's identity; he judges numbers by playing (DEC-0017).
+- **Never invent a game parameter.** Numbers (ms, meters, damage, stamina) come from `docs/design/`; if one is missing, the implementer returns NEEDS_CONTEXT. In design talks, Claude closes v0 numbers for the best experience and explains their feel; never ask Arthur to approve raw tables, only what changes the game's identity. He judges numbers by playing (DEC-0017).
 - Nothing is deleted, it is superseded. A source changes only `status`, `substituida_por` and a warning line at the top; a correction is a new source. An accepted DEC changes only `status` and `substituida_por` and gets the warning "⚠️ Substituída por DEC-XXXX em AAAA-MM-DD — não é a regra atual"; changing your mind means a new DEC with `substitui`.
 - Check the last existing ID before creating an F, DEC or Q.
 - New information that contradicts the current state goes to `docs/mudancas.md`, and you ask Arthur before changing `docs/design/` or `docs/arquitetura/`.
@@ -81,15 +81,15 @@ The character's state machine lives in `core/` as data: a mode and the tick it b
 ## Code conventions (DEC-0005, DEC-0008)
 
 - Statically typed GDScript: an untyped declaration or an unsafe access is an error (DEC-0022); `:=` is allowed. No unchecked `as`: use `is` plus `assert`.
-- English identifiers, comments, tests, scripts and branch names. Files and folders in snake_case; classes and nodes in PascalCase.
+- Files and folders in snake_case; classes and nodes in PascalCase.
 - Tabs, lines up to 100 columns, formatted by gdscript-formatter 0.27.0 (`bash tools/check_format.sh --fix`).
-- Do not edit `project.godot` by hand without saying which setting and why; `test/project_settings_test.gd` guards the decided ones. Jolt must stay explicit there: the engine default is still Godot Physics (F-006 §3).
+- Do not edit `project.godot` by hand without saying which setting and why; `test/project_settings_test.gd` guards the decided ones, Jolt included (F-006 §3).
 - Binaries (art, audio, fonts, video) go through Git LFS (`.gitattributes`).
 
-## Tests and the gate (DEC-0006)
+## Tests and the gate (DEC-0027)
 
-- gdUnit4. Test names describe behavior (`test_parry_beats_charged_attack`). Test through public interfaces only: never read source files in a test, never mock private functions.
-- `bash tools/gate.sh` runs format, lint, core purity, locked tests, import, compile and all tests. Pre-push and CI run the same script. Run it before saying a task is done, and paste its last lines.
+- gdUnit4. Test names describe behavior (`test_parry_beats_charged_attack`). Test through public interfaces only: never read source files in a test, never mock private functions. Exceptions (DEC-0027): the SyncTest drives netfox's tick by hand, and a test may read a config file with no runtime API.
+- `bash tools/gate.sh` runs format, lint, core purity, locked tests, import, compile and all tests; purity and compile carry canaries, and a green run logs no `ERROR:`. Pre-push and CI run the same script. Run it before saying a task is done, and paste its last lines.
 - Git hooks (lefthook): pre-commit under 15 s (gitleaks, format, core purity); pre-push under 90 s (the gate).
 - Never use `--no-verify`, never weaken a check, never edit a locked test. If a check is wrong, stop and tell Arthur.
 
@@ -104,6 +104,12 @@ The character's state machine lives in `core/` as data: a mode and the tick it b
 - Models: explorer, test-writer and reviewer on Fable; implementer on the session model, switching to Fable from the 4th round.
 - Registry: every task adds one row to `.claude/harness/registro.md`. Something that repeats twice is proposed as a script, hook, gate step or reviewer check. The harness only tightens; loosening anything is Arthur's call.
 - Push, merge, repository creation and anything outward-facing stop for Arthur's permission.
+- Claude Code hooks (`.claude/hooks/`, DEC-0027) deny edits to locked tests and format edited `.gd` files; Bash writes slip past, so the gate's sha256 is the real lock.
+
+## Branches and versions (DEC-0028)
+
+- Tasks are made Ready on main; from In Progress to Done each lives on a branch `task-N-slug` and closes in a PR in Portuguese. Arthur merges (merge commit), or Claude with his ok. Sessions without a task commit to main; parallel sessions use one git worktree each, never a shared folder.
+- Version: `application/config/version`, SemVer `0.y.z`, digits only.
 
 ## Backlog.md (DEC-0007)
 
@@ -120,4 +126,4 @@ English for everything internal to agents and code: this file, agents, skills, s
 
 ## Machine and tools
 
-Windows 11 with Git Bash; the scripts are bash. On PATH (`~/.local/bin`): `godot` (4.7.2 console), `backlog`, `gdscript-formatter`, `lefthook`, `gitleaks` and `gh`; `git-lfs` comes with Git. clumsy 0.3 (`~/.local/opt/clumsy-0.3`, WinDivert, run as admin) simulates lag for 4+ clients (F-023 §2). `node` 24 (portable, in `~/.local/opt`) and `python` 3.14 (per user) are on the user PATH for helper scripts; the gate uses neither (F-016 §2). The Yabadoo, Arthur's second brain, is an MCP: when a DEC is accepted, the `diario` skill also records a one-line decision there, citing the DEC id.
+Windows 11 with Git Bash; the scripts are bash. On PATH (`~/.local/bin`): `godot` (4.7.2 console), `backlog`, `gdscript-formatter`, `lefthook`, `gitleaks` and `gh`; `git-lfs` comes with Git. clumsy 0.3 (`~/.local/opt/clumsy-0.3`, run as admin) simulates lag for 4+ clients (F-023 §2). `node` 24 and `python` 3.14 serve helper scripts and hooks, never the gate (F-016 §2); call `python`, never `python3`, a Store stub here. The Yabadoo (Arthur's second brain) is an MCP; the `diario` skill records accepted DECs there.

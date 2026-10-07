@@ -1,6 +1,6 @@
 ---
-revisado_em: 2026-10-04
-fontes: [F-002, F-005, F-006, F-007, F-018, F-020, F-021, F-022, F-024, F-025, F-026, F-030, F-032, F-033]
+revisado_em: 2026-10-07
+fontes: [F-002, F-005, F-006, F-007, F-018, F-020, F-021, F-022, F-024, F-025, F-026, F-030, F-032, F-033, F-039, F-049]
 ---
 
 # Visão geral
@@ -207,7 +207,7 @@ O **jogador** é a pessoa; o **lutador** é o boneco, que também pode ser de um
 ## A tipagem (DEC-0005, DEC-0022)
 
 - Declaração sem tipo e acesso inseguro são erro no projeto todo. É o `strict` do TypeScript. Os addons ficam de fora pelo `directory_rules`.
-- **Furo conhecido:** o portão só pega esses erros num script que algum teste carrega. Compilar todos os nossos scripts numa execução só do Godot levou 1,3 s numa sonda. O conserto é da TASK-6, que vem antes de qualquer código de jogo.
+- **O furo do portão fechou:** antes, ele só pegava esses erros num script que algum teste carregasse. Desde a TASK-6, o passo "compilar tudo" carrega todos os nossos scripts numa execução só do Godot, em uns 4 s (F-049 §5), e os canários provam a cada rodada que ele ainda barra (F-039; DEC-0027).
 
 ## O que o Desenho 3 provou (TASK-5)
 

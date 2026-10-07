@@ -18,7 +18,7 @@ O caminho de uma mudança até o jogo na mão de quem joga, com uma checagem em 
 
 | Estação | O que confere | Tempo |
 |---|---|---|
-| O Claude edita | Os hooks: a trava do teste de aceite e o formatador (§9) | 0,2 a 0,8 s por edição (F-049 §6) |
+| O Claude edita | Os hooks: a trava do teste de aceite e o formatador (§9) | 0,2 a 0,8 s por hook; um `.gd` passa pelos dois (F-049 §6) |
 | `git commit` | O pre-commit: gitleaks, formato e pureza | de 0,8 a 2,9 s nos commits, quase tudo o gitleaks (F-049 §2), de um teto de 15 (DEC-0027) |
 | `git push` | O pre-push: o portão inteiro (§2) | 31 s, de um teto de 90 (F-049 §5) |
 | O CI no GitHub | O gitleaks no histórico e o mesmo portão; no PR e na tag, as duas builds | 21 a 29 s só com o portão, antes da rodada 1 (F-038, contexto); o job de export, de 57 a 83 s (F-045 §3) |

@@ -1,10 +1,10 @@
 ---
 id: TASK-6
 title: 'Desenho 4: testes, ambientes e entrega (CI/CD)'
-status: In Progress
+status: Done
 assignee: []
 created_date: '2026-10-02 16:48'
-updated_date: '2026-10-07 19:31'
+updated_date: '2026-10-07 19:54'
 labels:
   - infra
   - desenho
@@ -71,22 +71,22 @@ Confirmadas pelo Arthur em 04/10 (F-038 §2 a §4):
 
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
-- [ ] #1 Quando a conversa termina, `docs/arquitetura/testes-e-entrega.md` mostra as camadas de teste (o que cada uma pega, onde roda, quando nasce e quanto do portão gasta), os ambientes, o que o CI roda, as builds com a conta da cota do plano Free, as versões, o fluxo de branch e o replay por inputs, com a fonte de cada número.
-- [ ] #2 Quando o Arthur decide as camadas, o fluxo de branch e as versões, DECs registram, e a DEC-0006 é confirmada ou substituída no que mudou.
+- [x] #1 Quando a conversa termina, `docs/arquitetura/testes-e-entrega.md` mostra as camadas de teste (o que cada uma pega, onde roda, quando nasce e quanto do portão gasta), os ambientes, o que o CI roda, as builds com a conta da cota do plano Free, as versões, o fluxo de branch e o replay por inputs, com a fonte de cada número.
+- [x] #2 Quando o Arthur decide as camadas, o fluxo de branch e as versões, DECs registram, e a DEC-0006 é confirmada ou substituída no que mudou.
 - [x] #3 Quando um `#` dentro de uma string, de aspas simples, duplas ou triplas, esconde código proibido em `core/`, `tools/check_core_purity.sh` falha; quando o `#` abre um comentário de verdade, o texto depois dele segue ignorado; uma sonda prova o antes e o depois.
 - [x] #4 Quando um script nosso tem erro de tipo ou acesso inseguro e nenhum teste o carrega, o portão falha; quando todos compilam, o passo fica verde e o tempo dele fica registrado; uma sonda prova o antes e o depois.
 - [x] #5 Quando um ou vários testes falham, o portão mostra todas as falhas da rodada; quando todos passam, o log do portão não tem linha `ERROR:`.
 - [x] #6 Quando uma checagem do portão deixa de barrar o erro que barrava, o autoteste das checagens falha.
 - [x] #7 Quando um hook do Claude Code entra, ele foi testado numa sessão real nesta máquina: a edição de um teste travado é negada pelo Edit e pelo Write, na conversa principal e num subagente; um `.gd` salvo fora do formato sai formatado; e o resultado está no registro da harness.
-- [ ] #8 Quando os dois presets exportam, neste PC e numa branch de sonda no CI, saem o cliente Windows e o servidor Linux sem tela, sem `test/` nem o gdUnit4 dentro, com tamanho e tempo registrados; quando o Godot cai ao sair depois do export (#123712), a sonda registra, e o `testes-e-entrega.md` traz o contorno.
+- [x] #8 Quando os dois presets exportam, neste PC e numa branch de sonda no CI, saem o cliente Windows e o servidor Linux sem tela, sem `test/` nem o gdUnit4 dentro, com tamanho e tempo registrados; quando o Godot cai ao sair depois do export (#123712), a sonda registra, e o `testes-e-entrega.md` traz o contorno.
 <!-- AC:END -->
 
 ## Definition of Done
 <!-- DOD:BEGIN -->
-- [ ] #1 Critérios de aceite verificados
-- [ ] #2 Teste automatizado para toda regra do núcleo (core/)
-- [ ] #3 Diário da sessão escrito e glossário atualizado
-- [ ] #4 Mudanças registradas em docs/mudancas.md
+- [x] #1 Critérios de aceite verificados
+- [x] #2 Teste automatizado para toda regra do núcleo (core/)
+- [x] #3 Diário da sessão escrito e glossário atualizado
+- [x] #4 Mudanças registradas em docs/mudancas.md
 <!-- DOD:END -->
 
 ## Implementation Plan
@@ -147,6 +147,13 @@ Fechamento (07/10, sessão 7), a prova do export a partir deste repositório, co
 - Sem a Main, a build ainda não roda nada (TASK-9). No servidor, o "strip visuals" trocou os 9 ícones do netfox por marcadores de 295 bytes.
 - As guardas novas (a versão com três números; os dois presets, em `test/export_presets_test.gd`) falharam cada uma na sua sonda: versão `0.1.0-alpha`, cliente sem `tools/*`, servidor com `dedicated_server=false`. O portão ficou verde em 17 s, com 24 testes.
 - Ressalvas do implementer: numa rodada vermelha, o gdUnit4 6.2.1 ainda escreve PASSED na linha de estatística da suíte (a linha do teste diz FAILED, e a saída é 100); e salvar algo em Projeto > Exportar no editor deve reescrever o `export_presets.cfg` com todas as opções (inferência).
+
+Fechamento, a revisão (07/10, sessão 7):
+- Primeira revisão, de contexto limpo: CHANGES_REQUESTED só no critério 1. Os tempos da rodada 1 (os passos do portão, os hooks e o pre-commit) estavam só nestas notas e na vitrine, e a `visao-geral.md` citava a F-039 para um número que ela não tem; três frases diziam mais do que a fonte (o "YabaBuss" na DEC-0028, os "poucos segundos" na DEC-0027 e o carimbo "no Linux"). Os critérios 2 a 8 passaram, com sondas do próprio reviewer quebrando cada guarda e cada checagem.
+- O conserto: a F-049, com as medições da rodada 1, cada número conferido contra o registro bruto da sessão 6; as citações trocadas; as duas exceções de teste da DEC-0027 no `AGENTS.md`, que ficou com 12.317 caracteres.
+- O commit `152f770` passou o pre-commit em 0,9 s. Num clone limpo dele, o portão ficou verde em 25,9 s, com o import do zero, 24 testes e nenhuma linha de erro no log.
+- Segunda revisão: APPROVE. O reviewer conferiu 20 números da F-049 no registro bruto e rodou o portão no `152f770` (verde em 18 s). A observação dele, "por hook" em vez de "por edição" no custo dos hooks, entrou no `testes-e-entrega.md`.
+- Definição de pronto: o item 2 (teste para toda regra do núcleo) não se aplica, porque `core/` ainda não tem código; o reviewer conferiu.
 <!-- SECTION:NOTES:END -->
 
 ## Comments

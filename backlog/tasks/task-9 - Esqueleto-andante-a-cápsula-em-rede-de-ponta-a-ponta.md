@@ -4,7 +4,7 @@ title: 'Esqueleto andante: a cápsula em rede de ponta a ponta'
 status: To Refine
 assignee: []
 created_date: '2026-10-02 16:48'
-updated_date: '2026-10-04 17:55'
+updated_date: '2026-10-07 17:52'
 labels:
   - jogo
   - rede
@@ -74,5 +74,14 @@ author: Claude
 created: 2026-10-04 17:55
 ---
 Correção do comentário anterior: como o yaw e o pitch entram no tick fica para a TASK-9 decidir. Pode ser a última amostra ou uma média que respeite a volta de 360°; a média simples de ângulo erra (DEC-0026 §1; rede.md §3). O move segue o padrão do netfox para entrada contínua: a média das amostras dos frames do tick.
+---
+
+created: 2026-10-07 17:52
+---
+Entrada do Desenho 4, rodada 2 (TASK-6; F-042; F-044), para o esqueleto andante:
+- A SyncTest permanente avança os ticks à mão, como a suíte do netfox (`test/network-mocks.gd`: `NetworkTime._before_tick_loop()`, os sinais do tick e `_after_tick_loop()`), rodando o rollback de verdade dele. Pelo relógio, cada cenário custa o tempo de jogo (5 s de rampa, 6,3 s de portão), e os quatro somariam uns 25 s. Meta: poucos segundos para os quatro.
+- A referência (camada 4) nasce aqui: um percurso de bot gravado como replay por inputs, com o hash do caminho conferido no portão (Windows) e no CI (Linux). Ela usa uma cópia congelada dos números do movimento, só do teste; regravar é um comando, e o commit diz por quê. A sonda de referência está em `../replay-sonda` (main.gd, fighter.gd, arena.gd).
+- A checagem dos dados nasce com o primeiro `.tres` de design.
+- O que proteger desde já para o replay: o input que vale é o que o servidor aplicou; todo sorteio tem semente e mora no estado; o núcleo não lê relógio; a build carrega a versão.
 ---
 <!-- COMMENTS:END -->

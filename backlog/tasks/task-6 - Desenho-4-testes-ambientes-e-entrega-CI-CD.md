@@ -4,7 +4,7 @@ title: 'Desenho 4: testes, ambientes e entrega (CI/CD)'
 status: In Progress
 assignee: []
 created_date: '2026-10-02 16:48'
-updated_date: '2026-10-04 20:18'
+updated_date: '2026-10-07 17:52'
 labels:
   - infra
   - desenho
@@ -124,6 +124,13 @@ Rodada 1 (04/10, sessão 6), o portão e a harness:
 - Riscos anotados: o awk novo roda no CI pela primeira vez, e o do Ubuntu pode ser o mawk (se ele ler diferente, os canários derrubam o CI); formato, lint, travas, import e o log limpo ainda não têm canário.
 
 - Prova numa sessão nova, no modo sem permissões (F-040): o `/hooks` mostrou os dois hooks; a trava negou o Edit e o Write na conversa principal e o Edit de um subagente; o formatador formatou um `.gd` torto; a limpeza deixou o `git status` vazio. O resultado está no registro da harness (sessão 6), o que fecha o critério 7.
+
+Rodada 2 (07/10, sessão 7), as camadas e o replay:
+- A SyncTest pelo relógio do netfox custa o tempo real: 5 s de rampa, 6,3 s de portão; o `--fixed-fps` não acelera, porque o relógio do netfox segue o tempo de verdade (F-042 §1). A suíte do netfox avança os ticks à mão (`test/network-mocks.gd`).
+- A sonda do replay (`../replay-sonda`, fora do repositório): o Arthur jogou duas vezes, 20 s cada (5,1 e 5,5 kB de teclas). Com as mesmas regras, o replay refez os 1.200 ticks idênticos; com o pulo de 0,6 m, separou exatamente no primeiro pulo e chegou a 15 m. Com 0,9 m, a cápsula redonda ainda subia o bloco de 1 m (F-042 §2 a §4).
+- Determinismo: com e sem janela, um tick por quadro ou num laço, em processos diferentes, o caminho bateu byte a byte; 20 s de jogo em ~12 ms. Num runner Ubuntu, numa branch de sonda apagada depois, os seis replays deram o mesmo sha256 do Windows (F-042 §5).
+- O Arthur contou o que sentiu (F-043) e pediu que o Claude sempre pergunte isso depois de teste de jogo (F-041). O fantasma azul afundava no chão por um bug da sonda, consertado.
+- Decidido (F-044): a gravação do replay começa na fase 1; a SyncTest da TASK-9 avança os ticks à mão; a referência nasce na TASK-9, com números congelados e o hash conferido no Windows e no Linux; o portão continua um só, abaixo de 90 s; e o que proteger desde já para o replay.
 <!-- SECTION:NOTES:END -->
 
 ## Comments

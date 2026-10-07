@@ -4,6 +4,7 @@ title: 'Fase 1: movimento que diverte sozinho'
 status: To Refine
 assignee: []
 created_date: '2026-10-02 16:48'
+updated_date: '2026-10-07 17:52'
 labels:
   - jogo
 milestone: m-1
@@ -44,3 +45,12 @@ Fase 1 do roteiro (`docs/roteiro.md`): correr, subir na parede, pular, dar dash 
 - [ ] #3 Diário da sessão escrito e glossário atualizado
 - [ ] #4 Mudanças registradas em docs/mudancas.md
 <!-- DOD:END -->
+
+## Comments
+
+<!-- COMMENTS:BEGIN -->
+created: 2026-10-07 17:52
+---
+Entrada do Desenho 4, rodada 2 (TASK-6; F-044 §1): a gravação do replay por inputs começa nesta fase. Quando o Arthur achar um bug jogando o movimento, o arquivo de teclas vai junto, e o Claude refaz sem tela, em milissegundos (F-042 §3). É um gravador pequeno, no formato que o testes-e-entrega.md definir. O mesmo arquivo serve para o fantasma do percurso cronometrado (visao.md, onboarding).
+---
+<!-- COMMENTS:END -->

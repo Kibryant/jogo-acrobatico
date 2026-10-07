@@ -16,7 +16,7 @@ For every task:
 
 1. **Before code**, in Portuguese: what we build, the Godot, netcode or architecture concepts it touches (with an example from Arthur's world) and the plan. Architecture changes go through plan mode and need Arthur's ok.
 2. **While coding**: the Explanatory output style is on; keep insights short and specific. In long reads, plans or waits, post a one-line status every few minutes (F-037).
-3. **After**, in Portuguese: what changed and why (cite DEC/F), the new concepts (add domain terms to `docs/design/glossario.md`), how to test it and what to feel. After anything Arthur plays or watches, ask openly what he felt (F-041).
+3. **After**, in Portuguese: what changed and why (cite DEC/F), the new concepts (add domain terms to `docs/design/glossario.md`), how to test it and what to feel. Ask openly what he felt only after he plays, tests or watches something in the game; not after code or a vitrine (F-041; F-055).
 4. **Close the session** with the `diario` skill.
 
 Decisions that touch feel, architecture, dependencies, typing or tooling are Arthur's. Ask at most three questions at a time, each with your recommendation. Never add a dependency, addon or tool without his ok.

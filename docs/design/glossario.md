@@ -1,6 +1,6 @@
 ---
 revisado_em: 2026-10-07
-fontes: [F-001, F-002, F-005, F-007, F-012, F-013, F-020, F-021, F-025, F-026, F-028, F-030, F-032, F-038, F-039, F-044, F-045, F-046]
+fontes: [F-001, F-002, F-005, F-007, F-012, F-013, F-020, F-021, F-025, F-026, F-028, F-030, F-032, F-038, F-039, F-044, F-045, F-046, F-050, F-051, F-052, F-053]
 ---
 
 # Glossário
@@ -144,3 +144,20 @@ A linguagem ubíqua do jogo (DEC-0004, regra 5): o mesmo termo na conversa, no d
 | PR | O pedido para juntar uma branch na main: o lugar onde o Arthur revisa o diff e joga a build (DEC-0028) | — | — |
 | Merge commit | O commit que junta a branch na main sem apagar os commits dela; desfazer a task inteira é um revert só (DEC-0028) | — | — |
 | Worktree | Uma segunda pasta do mesmo repositório, noutra branch: duas sessões ao mesmo tempo nunca dividem a mesma pasta (DEC-0028) | — | `git worktree` |
+
+## Visual e áudio
+
+| Termo | O que é | Unidade | No código |
+|---|---|---|---|
+| Token de leitura | O sinal que um estado do combate emite para quem olha: uma cor, uma pose e um som, sempre os três juntos. Vive como dado num Resource, é lido do estado e só toca no tick novo (TASK-7; F-053) | — | `telegraph_token` |
+| Reagível | Golpe que dá para ver começar e responder a tempo, sem adivinhar. Uma pessoa mediana reage em 213 a 273 ms; o leve de 300 ms não é reagível para bloquear, o carregado de 500 a 900 é (F-053 §2) | ms | — |
+| CC0 | Licença em que o autor abre mão de todos os direitos: uso comercial, modificação e redistribuição livres, sem crédito. Uma lib MIT sem nem o aviso (F-050) | — | — |
+| CC BY | Licença que permite tudo com crédito ao autor, na forma que a licença pede (F-050) | — | — |
+| EULA | O contrato próprio de uma loja de assets: compra-se o direito de usar no jogo, não o arquivo. Costuma proibir passar o arquivo-fonte para fora do time, o que tranca o repositório como privado (F-050) | — | — |
+| Rig | Os ossos dentro do modelo 3D; a animação mexe nos ossos, e a malha acompanha (F-052) | — | `Skeleton3D` |
+| Retarget | Tocar num rig uma animação feita para outro, casando os nomes e as poses de repouso dos ossos (F-051 §1.5) | — | `BoneMap`, `SkeletonProfileHumanoid` |
+| Clipe | Uma animação com nome, como "golpe leve". Entra in place, com marcas de início e fim do ativo, e tem o tempo reajustado pelo estado, fase a fase (F-052 §6) | ms no design, ticks no código | `Animation` |
+| Root motion | O clipe carrega o deslocamento do corpo. Aqui nunca move o lutador: o deslocamento vem do núcleo, e o clipe entra in place (F-007; F-052 §6.3) | — | `root_motion_track` |
+| Casco invertido | O contorno feito com uma segunda casca da malha, um pouco maior e só com as faces de trás. Funciona no Compatibility (F-051 §2.5) | — | `grow`, `next_pass` |
+| Theme | A folha de estilo da interface do Godot: os tipos de tema são os seletores, os itens são as propriedades, as variações são as classes e o override local é o style inline (F-051 §3.1) | — | `Theme` |
+| Bus de som | Um canal de mixagem com volume e efeitos próprios, como um canal de uma mesa de som. O bus "leitura" abaixa os outros para o aviso do golpe nunca ser mascarado (F-051 §5.2; F-053 §4) | dB | `AudioServer` |

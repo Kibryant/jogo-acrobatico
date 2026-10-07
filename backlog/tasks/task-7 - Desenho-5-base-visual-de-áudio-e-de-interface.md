@@ -1,10 +1,10 @@
 ---
 id: TASK-7
 title: 'Desenho 5: base visual, de áudio e de interface'
-status: Ready
+status: In Progress
 assignee: []
 created_date: '2026-10-02 16:48'
-updated_date: '2026-10-07 22:12'
+updated_date: '2026-10-07 23:13'
 labels:
   - desenho
 milestone: m-0
@@ -96,3 +96,24 @@ Confirmadas pelo Arthur em 07/10 (F-054 §2 a §4):
 3. O plano no modo de plano, revisado antes por um agente de planejamento (registro da TASK-5). Com o ok: uma fonte com o plano, as DECs (a política e as fontes de assets; o caminho da animação; os tokens e a base da interface), o `docs/design/visual-e-audio.md`, o `CREDITS.md` com a política, a checagem e o canário no portão, o `.gitattributes`, o `project.godot` com guarda, e o `AGENTS.md` acompanha o que mudar.
 4. Registro: fontes, glossário, `mudancas.md`, `pendencias.md` (Q-21 e Q-22) e o registro da harness; depois o reviewer e o portão num clone limpo.
 <!-- SECTION:PLAN:END -->
+
+## Implementation Notes
+
+<!-- SECTION:NOTES:BEGIN -->
+Rodada 1 (07/10, sessão 8), os assets e o pipeline:
+- A demonstração do git num repositório de sonda (`../git-sonda`): o pack apagado num commit novo voltou inteiro num clone, com um comando, e o objeto do LFS veio junto (F-056 §1).
+- O UAL2 Standard (CC0, OpenGameArt, zip com sha256 `ec0e40d6…`) entrou no Godot 4.7.2 em 5,8 s. O import tirou o `_Loop` do nome dos clipes e marcou o laço, e cortou cada clipe de 195 para 57 trilhas. Com `root_scale = 0,98414`, o manequim saiu com 1,800 m, a altura da cápsula (F-056 §2 e §3).
+- A espada de blocos ficou na mão pela linha dos nós dos dedos. Oito quadros do `Sword_Regular_A` mostraram o ativo de 46% a 69% do clipe, e o clipe não traz essa marca. O golpe leve do desenho toca a preparação 1,5 vez mais devagar que o clipe e a recuperação 4,4 vezes mais rápido (F-056 §4).
+- Os fps em 1080p, em duas rodadas: 16 manequins de 8.546 vértices a 127 a 129 fps, com os 1% piores em 105; com MSAA 4x, 107 a 108. Um manequim de 25.636 vértices derruba os 16 para 37 fps; o que pesa é o número de vértices (F-056 §5 e §6). A Q-22 ganhou a resposta medida.
+- A vitrine ganhou a seção da rodada 1 (versão 3).
+- Um tropeço da sonda: um argumento mal lido deixou o modo de assistir aberto em tela cheia até o limite de 300 s, numa das medições do feminino; a rodada foi refeita.
+
+Decidido na rodada 1 (07/10), sob a delegação do Arthur (F-058):
+- O jogo é aberto: repositório público, contribuições por PR e o Arthur como mantenedor principal, sem lucro. O repositório abre no Desenho 6 (TASK-8), junto com a licença do código (Q-04); até lá, segue privado.
+- A política de assets fica só com licença que deixa redistribuir e modificar: CC0 primeiro; CC BY com crédito; OFL para fontes; MIT, Apache e ISC para ícones e código. A EULA e o "não redistribua" saem de vez, pagos ou grátis (Synty, Sonniss, Mixamo, Fab Standard); NC, ND, Editorial, só-Unreal, uso pessoal e RemArc seguem fora; BY-SA, só com o ok do Arthur. Nada se compra. Muda a escolha 3 do Ready (F-054 §4).
+- O pipeline da sonda vira o padrão: glTF (`.glb`); a escala de import que leva o lutador à cápsula de 1,8 m; o `.import` no git; `_Loop` no nome para o laço; clipes in place; a marca do ativo à mão em cada clipe de golpe; a pose como função do estado; um rig só, o do UAL2.
+- O orçamento v0 de vértices: 10 mil por lutador no detalhe máximo, com a arma, e LOD para quem está longe. Com 10 mil, os 16 ficam em uns 9,4 ms na RX 550, pela conta de dois pontos (F-056 §6). Número v0 fechado pelo Claude (DEC-0017).
+- No v0, o MSAA fica em 2x (cerca de 0,8 ms com 16 lutadores), e a sombra e o contorno ficam ligados: a sombra mostra a altura de quem está no ar, e o contorno, a silhueta (pilar 1). Cortar o contorno a distância e o LOD são a primeira saída se o quadro apertar (Q-22). O MSAA entra no `project.godot`, com guarda, no fechamento.
+- A sonda fica para o Arthur assistir quando quiser (`godot --path ../assets-sonda`); o que ele sentir entra numa fonte (F-041; F-055).
+- A conferência da licença ficou sem resposta. A política já não depende dela, porque nada com EULA entra.
+<!-- SECTION:NOTES:END -->

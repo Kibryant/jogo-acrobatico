@@ -102,7 +102,7 @@ The character's state machine lives in `core/` as data: a mode and the tick it b
   4. The gate, run by the orchestrator. The lock file is removed when the task closes.
 - `explorer` only reads. Trivial work stays with the orchestrator; adapters and scenes without core rules skip the test-writer.
 - Models: explorer, test-writer and reviewer on Fable; implementer on the session model, switching to Fable from the 4th round.
-- Registry: every task adds one row to `.claude/harness/registro.md`. Something that repeats twice is proposed as a script, hook, gate step or reviewer check. The harness only tightens; loosening anything is Arthur's call.
+- Registry: every task adds one row to `.claude/harness/registro.md`. Something that repeats twice is proposed as a script, hook, gate step or reviewer check; an MCP only when such a script needs state between calls within one round, or Arthur wants a client without a shell (F-057). The harness only tightens; loosening anything is Arthur's call.
 - Push, merge, repository creation and anything outward-facing stop for Arthur's permission.
 - Claude Code hooks (`.claude/hooks/`, DEC-0027) deny edits to locked tests and format edited `.gd` files; Bash writes slip past, so the gate's sha256 is the real lock.
 

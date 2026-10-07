@@ -4,7 +4,7 @@ title: 'Desenho 5: base visual, de áudio e de interface'
 status: In Progress
 assignee: []
 created_date: '2026-10-02 16:48'
-updated_date: '2026-10-07 23:13'
+updated_date: '2026-10-07 23:21'
 labels:
   - desenho
 milestone: m-0
@@ -116,4 +116,5 @@ Decidido na rodada 1 (07/10), sob a delegação do Arthur (F-058):
 - No v0, o MSAA fica em 2x (cerca de 0,8 ms com 16 lutadores), e a sombra e o contorno ficam ligados: a sombra mostra a altura de quem está no ar, e o contorno, a silhueta (pilar 1). Cortar o contorno a distância e o LOD são a primeira saída se o quadro apertar (Q-22). O MSAA entra no `project.godot`, com guarda, no fechamento.
 - A sonda fica para o Arthur assistir quando quiser (`godot --path ../assets-sonda`); o que ele sentir entra numa fonte (F-041; F-055).
 - A conferência da licença ficou sem resposta. A política já não depende dela, porque nada com EULA entra.
+- O Arthur assistiu à sonda: achou o movimento liso, e o contorno o surpreendeu; sem ele, "pareceu outro jogo" (F-059). O contorno entra na DEC do fechamento como parte da cara do jogo: se o quadro apertar, a saída é cortá-lo de quem está longe, não desligá-lo.
 <!-- SECTION:NOTES:END -->

@@ -4,7 +4,7 @@ title: 'Desenho 4: testes, ambientes e entrega (CI/CD)'
 status: In Progress
 assignee: []
 created_date: '2026-10-02 16:48'
-updated_date: '2026-10-07 17:52'
+updated_date: '2026-10-07 18:53'
 labels:
   - infra
   - desenho
@@ -131,6 +131,13 @@ Rodada 2 (07/10, sessão 7), as camadas e o replay:
 - Determinismo: com e sem janela, um tick por quadro ou num laço, em processos diferentes, o caminho bateu byte a byte; 20 s de jogo em ~12 ms. Num runner Ubuntu, numa branch de sonda apagada depois, os seis replays deram o mesmo sha256 do Windows (F-042 §5).
 - O Arthur contou o que sentiu (F-043) e pediu que o Claude sempre pergunte isso depois de teste de jogo (F-041). O fantasma azul afundava no chão por um bug da sonda, consertado.
 - Decidido (F-044): a gravação do replay começa na fase 1; a SyncTest da TASK-9 avança os ticks à mão; a referência nasce na TASK-9, com números congelados e o hash conferido no Windows e no Linux; o portão continua um só, abaixo de 90 s; e o que proteger desde já para o replay.
+
+Rodada 3 (07/10, sessão 7), build, versões e fluxo:
+- O Arthur baixou pelo editor só os templates de Windows e Linux: 344 MB no disco (F-045 §1).
+- No clone `../export-sonda`, os dois presets exportaram com código 0, o cliente em 10,9 s e o servidor em 8,2 s. O pacote leva 163 arquivos (~216 kB): o netfox e a cena de sonda, sem `test/`, gdUnit4, `tools/` ou canários. O .exe tem 0.1.0.0 nas propriedades e roda sem tela com código 0.
+- No CI, em dois runs numa branch de sonda apagada depois: 83 s com o cache frio e 57 s com o quente (o `setup-godot` com os templates: 51 s e 30 s). Os exports saíram com código 0, e o #123712 não apareceu. O servidor exportado subiu no Linux com `dedicated_server=true` e fechou com código 0. O artefato com as duas builds tem 68,4 MB. O .exe feito no Linux rodou neste PC com o commit carimbado.
+- O pre-push barrou o primeiro push da sonda por uma linha de 102 colunas, e o editor reordenou as chaves novas do `project.godot`.
+- Decidido (F-046): a build sai no PR (3 dias) e na tag (release); SemVer 0.y.z, o commit carimbado, a release na tag e o aperto de mão; a task Ready na main, uma branch por task do In Progress ao Done, o PR em português com o Arthur no merge (merge commit) e um worktree por sessão paralela.
 <!-- SECTION:NOTES:END -->
 
 ## Comments

@@ -4,7 +4,7 @@ title: 'Desenho 5: base visual, de áudio e de interface'
 status: In Progress
 assignee: []
 created_date: '2026-10-02 16:48'
-updated_date: '2026-10-08 10:40'
+updated_date: '2026-10-08 10:53'
 labels:
   - desenho
 milestone: m-0
@@ -129,4 +129,6 @@ Rodada 2 (noite de 07 para 08/10, sessão 9), a leitura do combate e a interface
 - A vitrine ganhou a seção da rodada 2 (versão 4).
 
 - Correção: a vitrine da rodada 2 é a versão 5 do artefato, não a 4.
+
+- Re-teste na mesma noite, a ping 0 e 100, com fone (F-063): o mesmo padrão sem lag. Nenhum parry no carregado em 21 (a carga sorteada), a quebra respondida com F mesmo com a mão vermelha (esquiva a tempo 2 de 22), 3 parries no leve com margem de 0 a 17 ms ("senti que ia sair e apertei"), a finta mordida 7 de 20. O lag está descartado; a quebra vira a Q-25 (reação de escolha em 350 ms); a Q-21 ganha a prova a ping 0. A sonda não muda de novo; o fechamento pode seguir.
 <!-- SECTION:NOTES:END -->

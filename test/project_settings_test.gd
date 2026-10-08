@@ -1,6 +1,6 @@
 # Guards the project settings decided in DEC-0002, DEC-0005, DEC-0022, DEC-0023, DEC-0024,
-# DEC-0026 and DEC-0028 (the version). A failure here means project.godot changed: read the DEC
-# before "fixing" the test.
+# DEC-0026, DEC-0028 (the version), DEC-0030 (MSAA) and DEC-0031 (the interface base). A failure
+# here means project.godot changed: read the DEC before "fixing" the test.
 extends GdUnitTestSuite
 
 const UNSAFE_ACCESS_WARNINGS: Array[String] = [
@@ -194,6 +194,36 @@ func test_version_is_three_numbers_of_digits_only() -> void:
 	var message := 'version must be three numbers like "0.1.0", found "%s" (DEC-0028)' % version
 	var is_three_numbers := three_numbers.search(version) != null
 	assert_bool(is_three_numbers).override_failure_message(message).is_true()
+
+
+# DEC-0031: the interface is drawn for 1920 x 1080 and stretched from there with canvas_items
+# and expand. Godot's own default is 1152 x 648.
+func test_interface_base_is_1920_by_1080() -> void:
+	var width: int = ProjectSettings.get_setting("display/window/size/viewport_width")
+	var height: int = ProjectSettings.get_setting("display/window/size/viewport_height")
+	var base := Vector2i(width, height)
+	var message := "the interface base must be 1920 x 1080, found %s (DEC-0031)" % base
+	assert_vector(base).override_failure_message(message).is_equal(Vector2i(1920, 1080))
+
+
+func test_stretch_mode_is_canvas_items() -> void:
+	var mode: String = ProjectSettings.get_setting("display/window/stretch/mode")
+	var message := 'stretch mode must be "canvas_items", found "%s" (DEC-0031)' % mode
+	assert_str(mode).override_failure_message(message).is_equal("canvas_items")
+
+
+func test_stretch_aspect_is_expand() -> void:
+	var aspect: String = ProjectSettings.get_setting("display/window/stretch/aspect")
+	var message := 'stretch aspect must be "expand", found "%s" (DEC-0031)' % aspect
+	assert_str(aspect).override_failure_message(message).is_equal("expand")
+
+
+# DEC-0030: MSAA 2x is value 1 of msaa_3d (0 off, 1 2x, 2 4x, 3 8x), about 0.8 ms with 16
+# fighters on the RX 550 (F-056 §5 and §6).
+func test_msaa_3d_is_2x() -> void:
+	var msaa: int = ProjectSettings.get_setting("rendering/anti_aliasing/quality/msaa_3d")
+	var message := "MSAA 3D must be 2x (1), found %d (DEC-0030)" % msaa
+	assert_int(msaa).override_failure_message(message).is_equal(1)
 
 
 # Every autoload in ProjectSettings, by name, with its path as written in project.godot.

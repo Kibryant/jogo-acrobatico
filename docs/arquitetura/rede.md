@@ -1,5 +1,5 @@
 ---
-revisado_em: 2026-10-07
+revisado_em: 2026-10-08
 fontes: [F-001, F-005, F-007, F-023, F-024, F-025, F-026, F-027, F-028, F-029, F-030, F-032, F-033, F-034, F-036, F-042, F-044, F-046]
 ---
 
@@ -49,7 +49,7 @@ O loop de ticks, a cada frame (`addons/netfox/network-time.gd`, `_loop`):
 **Outras regras do tick:**
 
 - O histórico guarda 64 ticks, 1,07 s a 60 ticks (`addons/netfox/rollback/network-rollback.gd`, `history_limit`).
-- Som e efeito só tocam em tick novo (`is_fresh`).
+- Som e efeito tocam uma vez por evento, pela chave, quando o evento aparece pela primeira vez no estado exibido, nunca de novo na re-simulação; o `is_fresh` cobre só o nó que o peer simula (DEC-0031 §6; F-061 §2).
 - A animação troca no `after_tick_loop`, comparando o modo desenhado com o do estado (DEC-0022).
 
 ## 3. O input (DEC-0026 §1)
@@ -152,7 +152,7 @@ O teste é mais duro que a rede: ele força o rollback a cada tick. As mediçõe
   - ela mostraria um palpite no lugar do passado real que a compensação usa;
   - golpe não se prevê, então a preparação apareceria atrasada e aos saltos.
 - **O que a tela mostra:** o oponente no último estado autoritativo que chegou. Depois de cada rollback, o netfox restaura o tick de exibição com o estado mais recente que tem de cada lutador (`network-rollback.gd`, fim do `_rollback`; `network-history-server.gd`, `_restore_latest`). O `TickInterpolator` suaviza o desenho entre dois ticks.
-- **O atraso de visão:** o tick atual menos o tick do último estado recebido do oponente (`rollback-synchronizer.gd`, `get_last_known_state`).
+- **O atraso de visão:** o tick atual menos o tick que o estado do oponente carrega (`sim_tick`). O `get_last_known_state()` do `rollback-synchronizer.gd` devolve zero para o oponente espelhado, porque o histórico regrava o estado dele a cada tick (DEC-0031 §7; F-061 §2).
 - **Quanto é, a 60 ticks** (F-026 §2):
 
 | Ping | Atraso de ver o outro, mediana / p90 |
@@ -194,7 +194,7 @@ Com ping, o golpe do outro chega atrasado na tela de quem defende, e o atraso n�
 ### Por que funciona no netfox
 
 1. **O servidor espera o input de quem defende antes de julgar a defesa.** Sem previsão, ele só simula o tick de quem defende quando o input daquele tick chega (`rollback-simulation-server.gd`, `_get_nodes_to_simulate`). Quando julga, já sabe tudo o que quem defende fez até ali, e nada precisa ser desfeito depois.
-2. **Quem defende vê o mesmo passado que a regra usa.** No cliente dele, o oponente na tela é o estado mais recente que chegou (§5), e o `view_lag` vem do `get_last_known_state()`. A previsão do próprio lutador bate com o julgamento do servidor.
+2. **Quem defende vê o mesmo passado que a regra usa.** No cliente dele, o oponente na tela é o estado mais recente que chegou (§5), e o `view_lag` vem do tick que o estado do oponente carrega (DEC-0031 §7). A previsão do próprio lutador bate com o julgamento do servidor.
 3. **Quem ataca também.** No cliente dele, quem defende está na tela no passado que o teste do contato usa. O contato previsto é o contato que o servidor confirma.
 4. **O servidor guarda um histórico de poses** dos lutadores dos últimos 12 ticks: posição, direção, ação e o carimbo dela. Ele é gravado no `NetworkRollback.on_record_tick`, que roda de novo em cada tick refeito e por isso acompanha o rollback (`network-rollback.gd`, `_rollback`). É dele que sai a pose passada para o teste do contato.
 

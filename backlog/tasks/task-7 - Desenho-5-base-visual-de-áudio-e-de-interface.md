@@ -4,7 +4,7 @@ title: 'Desenho 5: base visual, de áudio e de interface'
 status: In Progress
 assignee: []
 created_date: '2026-10-02 16:48'
-updated_date: '2026-10-08 10:53'
+updated_date: '2026-10-08 11:38'
 labels:
   - desenho
 milestone: m-0
@@ -131,4 +131,13 @@ Rodada 2 (noite de 07 para 08/10, sessão 9), a leitura do combate e a interface
 - Correção: a vitrine da rodada 2 é a versão 5 do artefato, não a 4.
 
 - Re-teste na mesma noite, a ping 0 e 100, com fone (F-063): o mesmo padrão sem lag. Nenhum parry no carregado em 21 (a carga sorteada), a quebra respondida com F mesmo com a mão vermelha (esquiva a tempo 2 de 22), 3 parries no leve com margem de 0 a 17 ms ("senti que ia sair e apertei"), a finta mordida 7 de 20. O lag está descartado; a quebra vira a Q-25 (reação de escolha em 350 ms); a Q-21 ganha a prova a ping 0. A sonda não muda de novo; o fechamento pode seguir.
+
+Fechamento (08/10, sessão 9), sob o plano aprovado (F-065):
+- A sonda do "antes" do critério 3: um pack falso em `assets/third_party/sonda/pack/modelo.txt`, sem linha no `CREDITS.md` e sem licença, passou pelo portão de hoje: `bash tools/gate.sh` terminou em "gate green in 18s", com saída 0. O buraco existia.
+- A pergunta fixa da chave do evento foi acertada: "o is_fresh só existe para o nó que este PC simula".
+
+- O implementer (um round): `tools/check_assets.sh` com os canários (`bad_no_line`, `bad_no_license`, `bad_stray_file`, `good_pack`; o orquestrador acrescentou `bad_name` para a regra do snake_case, que só a sonda provava), o passo "Assets and LFS (DEC-0029)" no portão, o `.gitattributes` com dez formatos novos (nenhum arquivo rastreado tinha essas extensões), o `project.godot` gravado por `ProjectSettings.save()` sem tela (a regravação deixou o arquivo idêntico, `cmp`), e quatro testes com cinco guardas no `project_settings_test.gd`, cada uma derrubada por sonda (1152, 648, "disabled", "ignore", 0).
+- A sonda do "depois" do critério 3: o pack `assets/third_party/sonda/pack/modelo.txt` sem licença e sem linha derruba o portão com duas linhas nomeando o pack; com `LICENSE.txt`, cai só pela linha; o canário `good_pack` prova o caso que passa. Um arquivo solto e uma pasta `sonda-x` caem pelos dois motivos.
+- A prova do LFS (critério 7): `git check-attr` em 28 formatos diz `lfs` e em 6 de texto diz `unspecified`; um `modelo.gltf` e um `fonte.woff2` de 52 bytes num pack temporário apareceram em `git lfs ls-files` (`f7d16005b0` e `3b68579668`) e o `cat-file` mostrou o ponteiro; um arquivo vazio não vira ponteiro (provado num repositório de sonda), por isso os canários usam `modelo.txt`. O pack temporário saiu antes do commit.
+- Ressalvas do implementer: a largura e a altura ficaram num teste só, com uma asserção de `Vector2i` (as cinco guardas caem); o `grep -F -w` evita que a linha de `pack_v2` valha pela de `pack`.
 <!-- SECTION:NOTES:END -->

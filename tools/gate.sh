@@ -14,6 +14,9 @@ bash tools/check_format.sh
 step "Core purity (DEC-0004 rule 1)"
 bash tools/check_core_purity.sh
 
+step "Assets and LFS (DEC-0029)"
+bash tools/check_assets.sh
+
 step "Locked acceptance tests (DEC-0009)"
 bash tools/check_test_locks.sh
 

@@ -1,0 +1,1 @@
+Canary stray file (tools/check_assets.sh): a file directly inside assets/third_party/, outside any pack, must be flagged (DEC-0029).

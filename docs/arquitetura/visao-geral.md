@@ -1,5 +1,5 @@
 ---
-revisado_em: 2026-10-07
+revisado_em: 2026-10-08
 fontes: [F-002, F-005, F-006, F-007, F-018, F-020, F-021, F-022, F-024, F-025, F-026, F-030, F-032, F-033, F-039, F-049]
 ---
 
@@ -53,13 +53,13 @@ A fronteira que importa é Simulação (tick e rollback) contra Meta (request, r
 ## As seis regras (DEC-0004)
 
 1. Um único núcleo puro em `core/`, em ticks inteiros.
-2. Os nós são adaptadores finos, e o efeito só toca em tick novo.
+2. Os nós são adaptadores finos, e som e efeito tocam uma vez por evento, pela chave (DEC-0031).
 3. Os dados ficam em Resources imutáveis, referenciados por ID, com a conversão de ms para ticks testada.
 4. Testar a regra, não a engine.
 5. DDD só estratégico.
 6. Crescer por marcos e medir a CPU com 16 bots antes de prometer o 8v8.
 
-Só uma frase da DEC-0004 mudou: a máquina de estados não usa mais a `RewindableStateMachine` do netfox (DEC-0022; veja abaixo).
+Duas frases da DEC-0004 mudaram: a máquina de estados não usa mais a `RewindableStateMachine` do netfox (DEC-0022; veja abaixo), e som e efeito tocam pela chave do evento, não pelo tick novo (DEC-0031).
 
 ## O tick
 

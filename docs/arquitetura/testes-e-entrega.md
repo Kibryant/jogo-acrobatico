@@ -1,5 +1,5 @@
 ---
-revisado_em: 2026-10-07
+revisado_em: 2026-10-08
 fontes: [F-007, F-009, F-010, F-021, F-038, F-039, F-040, F-041, F-042, F-043, F-044, F-045, F-046, F-047, F-048, F-049]
 ---
 
@@ -33,6 +33,7 @@ O `tools/gate.sh` é o mesmo no pre-push e no CI. Ele para na primeira falha.
 |---|---|---|
 | Formato e lint | Código fora do formato do `gdscript-formatter` 0.27.0 | 0,6 s |
 | Pureza do núcleo | Nó, relógio, timer ou sorteio sem semente em `core/`; o `#` dentro de string não esconde mais nada | 0,4 s |
+| Assets e LFS | Um pack de terceiros sem linha no `CREDITS.md` ou sem o arquivo de licença, um arquivo solto, ou um formato da lista fora do LFS, provado pelo `git check-attr` (DEC-0029) | menos de 1 s (08/10) |
 | Travas | Um teste de aceite travado que mudou | 0,2 s |
 | Import | Um erro ao importar o projeto | 15,7 s (em outras rodadas, de 9,7 a 17,7 s; F-049 §1 e §5) |
 | Compilar tudo | Um erro de tipo num script que nenhum teste carrega | 3,9 s |
@@ -40,7 +41,7 @@ O `tools/gate.sh` é o mesmo no pre-push e no CI. Ele para na primeira falha.
 
 Os tempos são os da rodada B depois dos consertos (F-049 §5). O total foi 31,3 s; antes da rodada 1, era 28,3 s (F-049 §1).
 
-- **Os canários** (`tools/canaries/`) são arquivos com erro de propósito: 9 para a pureza e 3 para a compilação. Se uma checagem perder uma regra, o canário dela falha. A prova: estragadas de propósito, as duas checagens fizeram os canários gritarem (F-039, contexto; F-049 §5).
+- **Os canários** (`tools/canaries/`) são arquivos com erro de propósito: 9 para a pureza, 5 para os assets e 3 para a compilação. Se uma checagem perder uma regra, o canário dela falha. A prova: estragadas de propósito, as duas checagens fizeram os canários gritarem (F-039, contexto; F-049 §5).
 - **O log limpo:** testes verdes com uma linha `ERROR:` reprovam. O bug #659 do netfox se escondeu assim no Desenho 3: saída 0, erro só no log (F-039 §2).
 - **O `-c`:** o gdUnit4 mostra todas as falhas de uma vez, e não só a primeira (F-047 §1.8).
 - **Sem o `--remote-debug`:** sem o `-d`, o Godot não tem depurador para travar num erro de sintaxe. A sonda mostrou a saída 105 em 7,1 s e as falhas relatadas como antes (F-049 §4).
@@ -185,3 +186,13 @@ O plano Free não impõe nada disso: o pre-push continua sendo a trava, e o CI n
 - **Q-20:** a assinatura do `.exe`, antes de alguém de fora testar.
 - **Canários** para o formato, o lint, as travas, o import e o log limpo, se um furo aparecer ali.
 - **Um job do CI fora do pre-push,** quando uma camada não couber nos 90 s.
+
+## 12. A máquina e as ferramentas
+
+O inventário que o `AGENTS.md` resumia (veio para cá no fechamento do Desenho 5, F-065):
+
+- Windows 11 com o Git Bash; os scripts são bash.
+- No PATH (`~/.local/bin`): `godot` (o console do 4.7.2), `backlog`, `gdscript-formatter` 0.27.0, `lefthook`, `gitleaks` e `gh`; o `git-lfs` vem com o Git.
+- O clumsy 0.3 (`~/.local/opt/clumsy-0.3`, como administrador) simula lag para 4 clientes ou mais (F-023 §2).
+- O `node` 24 e o `python` 3.14 servem scripts de apoio e os hooks, nunca o portão (F-016 §2); `python`, nunca `python3`, que aqui é um atalho da Store.
+- As sondas ficam fora do repositório, em pastas ao lado dele (`../netfox-sonda`, `../assets-sonda`, `../git-sonda`).

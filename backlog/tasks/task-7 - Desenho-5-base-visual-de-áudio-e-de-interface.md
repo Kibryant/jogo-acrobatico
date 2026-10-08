@@ -1,10 +1,10 @@
 ---
 id: TASK-7
 title: 'Desenho 5: base visual, de áudio e de interface'
-status: In Progress
+status: Done
 assignee: []
 created_date: '2026-10-02 16:48'
-updated_date: '2026-10-08 11:52'
+updated_date: '2026-10-08 12:50'
 labels:
   - desenho
 milestone: m-0
@@ -64,21 +64,21 @@ Confirmadas pelo Arthur em 07/10 (F-054 §2 a §4):
 
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
-- [ ] #1 Quando a conversa termina, `docs/design/visual-e-audio.md` tem a política de assets (as licenças aceitas e recusadas, a linha do `CREDITS.md` por tipo, o arquivo de licença ao lado do pack, a regra do repositório privado para EULA e a conta da cota do LFS), o pipeline de import (formato, escala, nomes, animação, texturas e o que vai para o git), o caminho da animação (fontes, rig, a pose como função do estado e os buracos) e os tokens do combate (os três canais por estado, onde o sinal mora, a paleta e o som com prioridade), com a fonte de cada número.
-- [ ] #2 Quando o Arthur decide a fonte de assets e a de animação, DECs registram cada uma com a licença conferida na origem: o nome, a versão ou a data, o link, a frase que permite o uso e o que ela proíbe (repositório público, redistribuição).
-- [ ] #3 Quando um asset de terceiros entra no repositório sem linha no `assets/CREDITS.md` ou sem o arquivo de licença ao lado, o portão falha; quando a linha e o arquivo existem, o passo fica verde; uma sonda prova o antes e o depois, e um canário vigia a checagem.
-- [ ] #4 Quando um personagem CC0 com animações de espada é importado no Godot 4.7.2 numa sonda fora do repositório, no renderer Compatibility neste PC, ele sai com 1,8 m, com material estilizado e contorno, e uma fonte registra a altura e os fps em 1080p com 1, 2 e 16 lutadores animados, com o MSAA desligado e ligado; quando ficar abaixo de 60 fps com 16, a Q-22 registra o que foi tentado (DEC-0002; DEC-0004, regra 6).
-- [ ] #5 Quando o Arthur assiste à sonda dos tokens (cor, pose e som a 60 ticks, com lag simulado, com e sem a simulação de daltonismo), ele diz o que leu e o que não leu, e uma fonte registra (F-041); quando um token não se lê, ele muda antes da DEC; quando o rollback refaz o tick de um golpe, o som não toca de novo.
-- [ ] #6 Quando a conversa termina, o Theme e a acessibilidade mínima estão desenhados: um Theme só, a base de 1920 × 1080 e a escala ajustável, as teclas remapeáveis guardando a posição física, nenhuma informação só por cor e as chaves de tradução por ID; o que muda o `project.godot` entra com guarda no teste de configurações.
-- [ ] #7 Quando um arquivo de um formato que a política aceita entra (`.glb`, `.gltf`, `.bin`, `.obj`, `.wav`, `.ogg`, `.ttf`, `.woff2` e os demais da lista), o `.gitattributes` o manda para o LFS, e um teste prova com um arquivo de sonda; quando um formato está fora da lista, o `visual-e-audio.md` diz por quê.
+- [x] #1 Quando a conversa termina, `docs/design/visual-e-audio.md` tem a política de assets (as licenças aceitas e recusadas, a linha do `CREDITS.md` por tipo, o arquivo de licença ao lado do pack, a regra do repositório privado para EULA e a conta da cota do LFS), o pipeline de import (formato, escala, nomes, animação, texturas e o que vai para o git), o caminho da animação (fontes, rig, a pose como função do estado e os buracos) e os tokens do combate (os três canais por estado, onde o sinal mora, a paleta e o som com prioridade), com a fonte de cada número.
+- [x] #2 Quando o Arthur decide a fonte de assets e a de animação, DECs registram cada uma com a licença conferida na origem: o nome, a versão ou a data, o link, a frase que permite o uso e o que ela proíbe (repositório público, redistribuição).
+- [x] #3 Quando um asset de terceiros entra no repositório sem linha no `assets/CREDITS.md` ou sem o arquivo de licença ao lado, o portão falha; quando a linha e o arquivo existem, o passo fica verde; uma sonda prova o antes e o depois, e um canário vigia a checagem.
+- [x] #4 Quando um personagem CC0 com animações de espada é importado no Godot 4.7.2 numa sonda fora do repositório, no renderer Compatibility neste PC, ele sai com 1,8 m, com material estilizado e contorno, e uma fonte registra a altura e os fps em 1080p com 1, 2 e 16 lutadores animados, com o MSAA desligado e ligado; quando ficar abaixo de 60 fps com 16, a Q-22 registra o que foi tentado (DEC-0002; DEC-0004, regra 6).
+- [x] #5 Quando o Arthur assiste à sonda dos tokens (cor, pose e som a 60 ticks, com lag simulado, com e sem a simulação de daltonismo), ele diz o que leu e o que não leu, e uma fonte registra (F-041); quando um token não se lê, ele muda antes da DEC; quando o rollback refaz o tick de um golpe, o som não toca de novo.
+- [x] #6 Quando a conversa termina, o Theme e a acessibilidade mínima estão desenhados: um Theme só, a base de 1920 × 1080 e a escala ajustável, as teclas remapeáveis guardando a posição física, nenhuma informação só por cor e as chaves de tradução por ID; o que muda o `project.godot` entra com guarda no teste de configurações.
+- [x] #7 Quando um arquivo de um formato que a política aceita entra (`.glb`, `.gltf`, `.bin`, `.obj`, `.wav`, `.ogg`, `.ttf`, `.woff2` e os demais da lista), o `.gitattributes` o manda para o LFS, e um teste prova com um arquivo de sonda; quando um formato está fora da lista, o `visual-e-audio.md` diz por quê.
 <!-- AC:END -->
 
 ## Definition of Done
 <!-- DOD:BEGIN -->
-- [ ] #1 Critérios de aceite verificados
+- [x] #1 Critérios de aceite verificados
 - [ ] #2 Teste automatizado para toda regra do núcleo (core/)
-- [ ] #3 Diário da sessão escrito e glossário atualizado
-- [ ] #4 Mudanças registradas em docs/mudancas.md
+- [x] #3 Diário da sessão escrito e glossário atualizado
+- [x] #4 Mudanças registradas em docs/mudancas.md
 <!-- DOD:END -->
 
 ## Implementation Plan
@@ -145,4 +145,6 @@ Fechamento (08/10, sessão 9), sob o plano aprovado (F-065):
 - A vitrine ganhou a seção "O fechamento" (versão 7).
 
 - O reviewer (primeira conferência): CHANGES_REQUESTED só por texto: as citações da F-050 misturavam as subseções 1.x com as seções 2 a 6 ("§1.3" valia para o KayKit e para as fontes); duas faixas de números não batiam com a F-061 §2 (18 a 24 e 98 a 113); o exemplo da cota do LFS estava sem rótulo; o `AGENTS.md` ficou 77 caracteres acima da meta de 12.300. Corrigido: as seções da F-050 como §2 a §6, as subseções como §1.x, os veredictos pelo id; os números; o exemplo rotulado; o `AGENTS.md` abaixo de 12.300.
+
+- O DoD 2 (teste automatizado para toda regra do núcleo) não se aplica: a TASK-7 não tem código em `core/`, como a TASK-6. A segunda conferência do reviewer: APPROVE depois de um ponteiro (`F-050 §6`).
 <!-- SECTION:NOTES:END -->

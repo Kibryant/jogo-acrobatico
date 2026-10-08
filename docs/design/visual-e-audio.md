@@ -23,7 +23,7 @@ Fica fora, pago ou grátis: NC, ND, Editorial, só-Unreal, uso pessoal, RemArc, 
 
 ### A linha do `CREDITS.md` por tipo
 
-Toda linha: pack e caminho, autor, licença com versão e link, URL de origem, data do download, modificado (o quê), onde é usado, arquivo de licença (F-050 §1.6).
+Toda linha: pack e caminho, autor, licença com versão e link, URL de origem, data do download, modificado (o quê), onde é usado, arquivo de licença (F-050 §6).
 
 | Tipo | A mais |
 |---|---|

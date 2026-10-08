@@ -14,12 +14,12 @@ Estado atual: a base decidida no Desenho 5 (TASK-7; DEC-0029, DEC-0030 e DEC-003
 | Entra | Com o quê | Fonte |
 |---|---|---|
 | CC0 1.0, primeiro | Nada; registra-se a origem mesmo assim | F-050 §1.1 a §1.4 |
-| CC BY 3.0 e 4.0 | O crédito com autor, copyright, licença com link, isenção de garantia, link do material e "modificado" | F-050 §1.6 |
-| OFL 1.1, para fontes | O copyright e a licença em cada cópia; sem vender a fonte sozinha; sem o Reserved Font Name em versão modificada ou subset | F-050 §1.3 |
-| MIT, Apache 2.0 e ISC, para ícones e código | O aviso e a licença; o NOTICE na Apache | F-050 §1.2 |
-| CC BY-SA | Só com o ok do Arthur | F-050 §1.6 |
+| CC BY 3.0 e 4.0 | O crédito com autor, copyright, licença com link, isenção de garantia, link do material e "modificado" | F-050 §6 |
+| OFL 1.1, para fontes | O copyright e a licença em cada cópia; sem vender a fonte sozinha; sem o Reserved Font Name em versão modificada ou subset | F-050 §3 |
+| MIT, Apache 2.0 e ISC, para ícones e código | O aviso e a licença; o NOTICE na Apache | F-050 §2 |
+| CC BY-SA | Só com o ok do Arthur | F-050 §6 |
 
-Fica fora, pago ou grátis: NC, ND, Editorial, só-Unreal, uso pessoal, RemArc, EULA e "não redistribua" (Synty, Mixamo, Sonniss GDC, Fab Standard, ZapSplat), e qualquer coisa com "GunZ" ou "MAIET" (F-050 §1.6; F-001). Nada se compra (F-058).
+Fica fora, pago ou grátis: NC, ND, Editorial, só-Unreal, uso pessoal, RemArc, EULA e "não redistribua" (Synty, Mixamo, Sonniss GDC, Fab Standard, ZapSplat), e qualquer coisa com "GunZ" ou "MAIET" (F-050 §6; F-001). Nada se compra (F-058).
 
 ### A linha do `CREDITS.md` por tipo
 
@@ -38,20 +38,20 @@ Toda linha: pack e caminho, autor, licença com versão e link, URL de origem, d
 
 ### A regra do repositório privado para EULA
 
-Um asset com EULA ou "não redistribua" obrigaria o repositório a ficar privado para sempre, ou o histórico a ser reescrito antes de abrir, porque o git guarda cada commit e cada objeto do LFS: na sonda, um pack apagado dois commits antes voltou inteiro num clone (F-056 §1; F-050 §1.6). O repositório abre no Desenho 6 (F-058; Q-04). Por isso nenhum asset assim entra, nem em privado (DEC-0029 §1).
+Um asset com EULA ou "não redistribua" obrigaria o repositório a ficar privado para sempre, ou o histórico a ser reescrito antes de abrir, porque o git guarda cada commit e cada objeto do LFS: na sonda, um pack apagado dois commits antes voltou inteiro num clone (F-056 §1; F-050 §6). O repositório abre no Desenho 6 (F-058; Q-04). Por isso nenhum asset assim entra, nem em privado (DEC-0029 §1).
 
 ### A conta da cota do LFS
 
 | Número | Valor | Fonte |
 |---|---|---|
-| Armazenamento | 10 GiB por conta | F-050 §1.5; §3 C10 |
-| Banda | 10 GiB por mês; o CI gasta ao baixar | F-050 §1.5 |
-| Arquivo | Até 2 GB | F-050 §3 C11 |
-| Orçamento sem cartão | Zero: estourou, o LFS trava até o mês seguinte | F-050 §3 C12 |
-| Excedente, se houver cartão | US$ 0,07 por GiB-mês guardado e US$ 0,0875 por GiB baixado | F-050 §3 C12 |
-| Cada versão enviada | Conta o arquivo inteiro | F-050 §1.5 |
+| Armazenamento | 10 GiB por conta | F-050 §5; veredicto C10 |
+| Banda | 10 GiB por mês; o CI gasta ao baixar | F-050 §5 |
+| Arquivo | Até 2 GB | F-050, veredicto C11 |
+| Orçamento sem cartão | Zero: estourou, o LFS trava até o mês seguinte | F-050, veredicto C12 |
+| Excedente, se houver cartão | US$ 0,07 por GiB-mês guardado e US$ 0,0875 por GiB baixado | F-050, veredicto C12 |
+| Cada versão enviada | Conta o arquivo inteiro | F-050 §5 |
 
-A conta: 300 MB de assets com 3 versões por mês somam 0,9 GiB guardados por mês; 20 rodadas do CI que baixam os assets somam 6 GiB de banda. Baixar os assets em toda rodada não cabe por muito tempo; o CI faz checkout com LFS hoje (`.github/workflows/ci.yml`), e a conta volta quando o primeiro pack entrar.
+Um exemplo, com os valores de partida da calculadora da vitrine (F-054, contexto), não uma medida: 300 MB de assets com 3 versões por mês somam 0,9 GiB guardados por mês; 20 rodadas do CI que baixam os assets somam 6 GiB de banda. Baixar os assets em toda rodada não cabe por muito tempo; o CI faz checkout com LFS hoje (`.github/workflows/ci.yml`), e a conta volta quando o primeiro pack entrar.
 
 ### A lista de formatos do LFS, e o que fica fora
 
@@ -148,7 +148,7 @@ Som e efeito tocam uma vez por evento, pela chave (nó, tipo, id), quando o even
 | Medida | Valor | Fonte |
 |---|---|---|
 | SyncTest com rollback forçado: eventos apresentados, `is_fresh`, ingênuos | 42, 42, 168, com zero divergência em 10.752 conferências | F-061 §2 |
-| Cliente a ping 120, 36 s: apresentados, `is_fresh`, ingênuos | 42 a 56, 16 a 24, 88 a 113 | F-061 §2 |
+| Cliente a ping 120, 36 s: apresentados, `is_fresh`, ingênuos | 42 a 56, 18 a 24, 98 a 113 | F-061 §2 |
 | O bot leitor de 200 ms a ping 120: carregado, quebra, finta, leve | 8 de 8, 13 de 16, 12 de 12, 5 de 12 | F-061 §3 |
 | O Arthur, 4 jogos: a cor do carregado | Lida: F em meio segundo, 29 de 29 no primeiro par de jogos | F-062 §3 |
 | O tempo do parry no carregado de carga sorteada | 1 em 29, depois 0 em 21: o F de 200 a 770 ms cedo | F-062 §3; F-063 §2 |

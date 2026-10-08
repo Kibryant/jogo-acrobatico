@@ -4,7 +4,7 @@ title: 'Desenho 5: base visual, de áudio e de interface'
 status: In Progress
 assignee: []
 created_date: '2026-10-02 16:48'
-updated_date: '2026-10-08 11:38'
+updated_date: '2026-10-08 11:52'
 labels:
   - desenho
 milestone: m-0
@@ -140,4 +140,9 @@ Fechamento (08/10, sessão 9), sob o plano aprovado (F-065):
 - A sonda do "depois" do critério 3: o pack `assets/third_party/sonda/pack/modelo.txt` sem licença e sem linha derruba o portão com duas linhas nomeando o pack; com `LICENSE.txt`, cai só pela linha; o canário `good_pack` prova o caso que passa. Um arquivo solto e uma pasta `sonda-x` caem pelos dois motivos.
 - A prova do LFS (critério 7): `git check-attr` em 28 formatos diz `lfs` e em 6 de texto diz `unspecified`; um `modelo.gltf` e um `fonte.woff2` de 52 bytes num pack temporário apareceram em `git lfs ls-files` (`f7d16005b0` e `3b68579668`) e o `cat-file` mostrou o ponteiro; um arquivo vazio não vira ponteiro (provado num repositório de sonda), por isso os canários usam `modelo.txt`. O pack temporário saiu antes do commit.
 - Ressalvas do implementer: a largura e a altura ficaram num teste só, com uma asserção de `Vector2i` (as cinco guardas caem); o `grep -F -w` evita que a linha de `pack_v2` valha pela de `pack`.
+
+- O portão num clone limpo (`git clone file:///C:/... --branch task-7-desenho-5` numa pasta temporária): verde em 32 s, 28 testes, 9 arquivos no LFS, o passo "Assets and LFS" dizendo `lfs ok: 28 formats tracked, 6 text formats free` e `assets ok: no packs yet (canaries ok: 4 bad flagged, 1 good clean)`. Commit `b4f7139`.
+- A vitrine ganhou a seção "O fechamento" (versão 7).
+
+- O reviewer (primeira conferência): CHANGES_REQUESTED só por texto: as citações da F-050 misturavam as subseções 1.x com as seções 2 a 6 ("§1.3" valia para o KayKit e para as fontes); duas faixas de números não batiam com a F-061 §2 (18 a 24 e 98 a 113); o exemplo da cota do LFS estava sem rótulo; o `AGENTS.md` ficou 77 caracteres acima da meta de 12.300. Corrigido: as seções da F-050 como §2 a §6, as subseções como §1.x, os veredictos pelo id; os números; o exemplo rotulado; o `AGENTS.md` abaixo de 12.300.
 <!-- SECTION:NOTES:END -->

@@ -19,13 +19,13 @@ For every task:
 3. **After**, in Portuguese: what changed and why (cite DEC/F), the new concepts (add domain terms to `docs/design/glossario.md`), how to test it and what to feel. Ask openly what he felt only after he plays, tests or watches something in the game; not after code or a vitrine (F-041; F-055).
 4. **Close the session** with the `diario` skill.
 
-Decisions that touch feel, architecture, dependencies, typing or tooling are Arthur's. Ask at most three questions at a time, each with your recommendation. Never add a dependency, addon or tool without his ok.
+Decisions that touch feel, architecture, dependencies, typing or tooling are Arthur's. Ask at most three questions at a time, each with your recommendation. No new dependency, addon or tool without his ok.
 
 Arthur thinks aloud, often by voice. Record what he says in a source (F-xxx) or `docs/pendencias.md`; it is a decision only when he decides, and an example is never a rule. Hold a position: say plainly, with the reason, when something makes no sense, drifts out of scope or should not be done; agreeing to please him is a failure. If he insists after hearing you, it is his call, recorded with the dissent (DEC-0015).
 
 Show numbers, measures and math in a visual Artifact (scale drawings, animation, comparisons with what he knows); the terminal carries the summary and the link, `docs/` stays the truth, and the Artifact is republished at the same link when numbers change (DEC-0019).
 
-Explain in Arthur's world (DEC-0021): the first question of every round checks that he understood; if not, explain another way, naming the wrong idea, before any decision (F-038). A new concept gets an example from what he knows (TypeScript, Python, LoL, Call of Duty) before its jargon; every choice is a trade-off. Skip programming basics.
+Explain in Arthur's world (DEC-0021): the first question of every round checks that he understood; if not, explain another way, naming the wrong idea, before any decision (F-038). A new concept gets an example from what he knows (TypeScript, Python, LoL, CoD) before its jargon; every choice is a trade-off. Skip programming basics.
 
 ## Map
 
@@ -49,7 +49,7 @@ Explain in Arthur's world (DEC-0021): the first question of every round checks t
 | `docs/pendencias.md` | Open questions (Q-xx). |
 | `.claude/` | Settings, hooks, agents, skills and the harness registry. |
 
-Feature folders (`fighter/`, `arena/`, `net/`, `ui/`...) appear with the first task that needs them (DEC-0005, DEC-0022).
+Feature folders (`fighter/`, `arena/`, `ui/`...) appear with the first task that needs them (DEC-0005, DEC-0022).
 
 ## Reading order
 
@@ -73,11 +73,11 @@ This file; the board (`backlog task list --plain`); the task (`backlog task view
 5. DDD only at the strategic level: the glossary is the ubiquitous language, and the boundary that matters is Simulation (ticks, rollback) vs Meta (request/response, persistence). No repositories or aggregates inside the simulation.
 6. Grow by milestones: local 1v1 sword, online, bow and guns, 4v4 with bots, 8v8. Measure CPU with 16 bots before promising 8v8.
 
-The character's state machine lives in `core/` as data: a mode and the tick it began, changed by pure functions (DEC-0022). Bots run behavior trees on the server and only produce input. No ECS, and no autoloads of our own (DEC-0022).
+The character's state machine lives in `core/` as data: a mode and the tick it began, changed by pure functions (DEC-0022). Bots run behavior trees on the server and only produce input. No ECS, no autoloads of our own (DEC-0022).
 
 ## Code conventions (DEC-0005, DEC-0008)
 
-- Statically typed GDScript: an untyped declaration or an unsafe access is an error (DEC-0022); `:=` is allowed. No unchecked `as`: use `is` plus `assert`.
+- Statically typed GDScript: an untyped declaration or an unsafe access is an error (DEC-0022); `:=` is allowed. No unchecked `as`: `is` plus `assert`.
 - Files and folders in snake_case; classes and nodes in PascalCase.
 - Tabs, lines up to 100 columns, formatted by gdscript-formatter 0.27.0 (`bash tools/check_format.sh --fix`).
 - Do not edit `project.godot` by hand without saying which setting and why; `test/project_settings_test.gd` guards the decided ones (F-006 §3).
@@ -85,22 +85,22 @@ The character's state machine lives in `core/` as data: a mode and the tick it b
 
 ## Tests and the gate (DEC-0027)
 
-- gdUnit4. Test names describe behavior (`test_parry_beats_charged_attack`). Test through public interfaces only: never read source files in a test, never mock private functions. Exceptions (DEC-0027): the SyncTest drives netfox's tick by hand, and a test may read a config file with no runtime API.
+- gdUnit4. Test names describe behavior (`test_parry_beats_charged_attack`). Test through public interfaces only: never read source files in a test, never mock private functions. Exceptions (DEC-0027): the SyncTest drives netfox's tick by hand; a test may read a config file with no runtime API.
 - `bash tools/gate.sh` runs format, lint, core purity, assets and LFS, locked tests, import, compile and all tests; purity, assets and compile carry canaries, and a green run logs no `ERROR:`. Pre-push and CI run the same script. Run it before saying a task is done, and paste its last lines.
 - Git hooks (lefthook): pre-commit under 15 s (gitleaks, format, core purity); pre-push under 90 s (the gate).
 - Never use `--no-verify`, never weaken a check, never edit a locked test. If a check is wrong, stop and tell Arthur.
 
 ## Harness (DEC-0009)
 
-- The main conversation orchestrates. It restates the task to Arthur ("Entendi assim: ...") and then dispatches, in series:
+- The main conversation orchestrates: it restates the task to Arthur ("Entendi assim: ...") and dispatches, in series:
   1. `test-writer`: acceptance tests for core rules, written from the criteria and `docs/design/`, blind to the implementation. The orchestrator then locks them: `sha256sum <files> > .claude/harness/locks/TASK-N.sha256`.
   2. `implementer`: makes the gate green without touching locked tests; returns DONE, DONE_WITH_CONCERNS, NEEDS_CONTEXT or BLOCKED.
   3. `reviewer`: clean context, judges every criterion with proof, starts from "no".
-  4. The gate, run by the orchestrator. The lock file is removed when the task closes.
+  4. The gate, run by the orchestrator; the lock file goes when the task closes.
 - `explorer` only reads. Trivial work stays with the orchestrator; adapters and scenes without core rules skip the test-writer.
-- Models: explorer, test-writer and reviewer on Fable; the implementer on the session model, Fable from the 4th round.
+- Models: explorer, test-writer and reviewer on Fable; the implementer on the session model, Fable from round 4.
 - Registry: every task adds one row to `.claude/harness/registro.md`. What repeats twice becomes a script, hook, gate step or reviewer check; an MCP only when a script needs state between calls in one round, or Arthur wants a client without a shell (F-057). The harness only tightens; loosening is Arthur's call.
-- Push, merge, repository creation and anything outward-facing stop for Arthur's permission.
+- Push, merge, repository creation and anything outward-facing wait for Arthur's ok.
 - Claude Code hooks (`.claude/hooks/`, DEC-0027) deny edits to locked tests and format edited `.gd` files; Bash writes slip past, so the gate's sha256 is the lock.
 
 ## Branches and versions (DEC-0028)
@@ -110,12 +110,12 @@ The character's state machine lives in `core/` as data: a mode and the tick it b
 
 ## Backlog.md (DEC-0007)
 
-- Create and edit tasks only through the CLI (`backlog task create`, `backlog task edit`), never by hand. Prefix `TASK`. Statuses: To Refine · Ready · In Progress · Waiting · Parked · Done.
+- Create and edit tasks only through the CLI (`backlog task create|edit`), never by hand. Prefix `TASK`. Statuses: To Refine · Ready · In Progress · Waiting · Parked · Done.
 - Tasks are in Portuguese, title and content (DEC-0008). Description sections: `### Por quê`, `### Perguntas em aberto`, `### Escolhas a confirmar` (each with a suggested default), `### Fora do escopo`, `### O que você vai aprender`.
 - Acceptance criteria: "Quando <situação>, <o jogo ou o projeto> <faz>", covering none, one, many, limit and failure where it applies.
 - Waiting: the first line says on whom and since when (`Esperando:`). Parked: the trigger that brings it back (`Gatilho para voltar:`).
 - Ready means criteria written, no open question, dependencies done and choices confirmed by Arthur. With nothing Ready, the work is to make a task Ready by asking.
-- Knowledge lives in `docs/`; do not use `backlog decision` or `backlog doc`.
+- Knowledge lives in `docs/`; never `backlog decision` or `backlog doc`.
 
 ## Language (DEC-0008)
 

@@ -4,7 +4,7 @@ title: 'Desenho 5: base visual, de áudio e de interface'
 status: In Progress
 assignee: []
 created_date: '2026-10-02 16:48'
-updated_date: '2026-10-08 10:36'
+updated_date: '2026-10-08 10:40'
 labels:
   - desenho
 milestone: m-0
@@ -127,4 +127,6 @@ Rodada 2 (noite de 07 para 08/10, sessão 9), a leitura do combate e a interface
 - O que muda antes da DEC (critério 5): a quebra ganha cor, a mão em vermelhão desde o tick 0, com o pulso e o pisão mantidos (trocado na sonda); o carregado de carga variável vai para a Q-21; o próximo teste roda a ping 0 e 100, com fone, antes do fechamento.
 - Sob deuteranopia o par vermelho × verde vira dois tons de oliva; os tokens seguem separados pelo brilho; o roxo "de longe" chega perto do cinza do leve (ponto para o arco).
 - A vitrine ganhou a seção da rodada 2 (versão 4).
+
+- Correção: a vitrine da rodada 2 é a versão 5 do artefato, não a 4.
 <!-- SECTION:NOTES:END -->

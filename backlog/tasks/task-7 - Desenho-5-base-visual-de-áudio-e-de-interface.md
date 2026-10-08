@@ -4,7 +4,7 @@ title: 'Desenho 5: base visual, de áudio e de interface'
 status: In Progress
 assignee: []
 created_date: '2026-10-02 16:48'
-updated_date: '2026-10-07 23:21'
+updated_date: '2026-10-08 10:36'
 labels:
   - desenho
 milestone: m-0
@@ -117,4 +117,14 @@ Decidido na rodada 1 (07/10), sob a delegação do Arthur (F-058):
 - A sonda fica para o Arthur assistir quando quiser (`godot --path ../assets-sonda`); o que ele sentir entra numa fonte (F-041; F-055).
 - A conferência da licença ficou sem resposta. A política já não depende dela, porque nada com EULA entra.
 - O Arthur assistiu à sonda: achou o movimento liso, e o contorno o surpreendeu; sem ele, "pareceu outro jogo" (F-059). O contorno entra na DEC do fechamento como parte da cara do jogo: se o quadro apertar, a saída é cortá-lo de quem está longe, não desligá-lo.
+
+Rodada 2 (noite de 07 para 08/10, sessão 9), a leitura do combate e a interface:
+- A sonda (`../netfox-sonda/sonda`, F-061): o parry de brinquedo ganhou os quatro golpes (leve, carregado com carga sorteada, quebra de guarda, finta), as três defesas, os tokens como dado num Resource, o som sintetizado no bus "leitura" com ducking do ambiente, o filtro de daltonismo de tela cheia com as matrizes da vitrine, o Theme único com a base de 1920 × 1080 e a escala pelas teclas, as teclas por posição física com o rótulo do layout, as cadeias por ID em pt-BR e en, e a versão de brinquedo do julgamento na tela de quem defende (DEC-0026 §3).
+- Achado de arquitetura (F-061 §2; `mudancas.md`): "som só no tick novo" cobre um caso só. O oponente espelhado nunca tem tick novo, e o veredito do contato nasce sempre num tick refeito. A regra que cobre os três casos é a chave do evento: cada cue apresentada uma vez, quando aparece no estado exibido. No cliente a ping 120, o `is_fresh` veria de um terço a metade dos eventos (SyncTest: 42 apresentados, 42 `is_fresh`, 168 ingênuos, zero divergência em 10.752 conferências). A redação da DEC-0004 (regra 2) e do `rede.md` muda no fechamento, com o ok do Arthur.
+- O atraso de visão vem do próprio estado (`sim_tick`): o `get_last_known_state()` do netfox devolve zero para o oponente no cliente.
+- O bot leitor de 200 ± 40 ms a ping 120: carregado aparado 8 de 8 com 50 ms de margem (contra zero no relógio do servidor no Desenho 3), quebra esquivada 13 de 16 (as 3 perdidas chegaram 14 a 25 ticks atrasadas: jitter, Q-09), finta sem morder 12 de 12, leve bloqueado 5 de 12 (a moeda da F-053 §2.4).
+- O Arthur jogou dois jogos, visão comum e deuteranopia (F-062): achou complicado e pouco claro, foi "no susto", desconfia do ping, não formou opinião sobre o som (sem fone) e pediu para testar mais. Os logs: a cor do carregado se leu (F em meio segundo, 29 de 29), o tempo do parry não (1 em 29, com a carga sorteada; 3 parries de 0 a 33 ms no leve, de preparação fixa); a forma da quebra não se leu (F em vez de esquiva, 1 esquiva em 27); a finta mordida 8 de 27; o leve "não tinha nem como reagir" (300 ms, F-053 §2.4).
+- O que muda antes da DEC (critério 5): a quebra ganha cor, a mão em vermelhão desde o tick 0, com o pulso e o pisão mantidos (trocado na sonda); o carregado de carga variável vai para a Q-21; o próximo teste roda a ping 0 e 100, com fone, antes do fechamento.
+- Sob deuteranopia o par vermelho × verde vira dois tons de oliva; os tokens seguem separados pelo brilho; o roxo "de longe" chega perto do cinza do leve (ponto para o arco).
+- A vitrine ganhou a seção da rodada 2 (versão 4).
 <!-- SECTION:NOTES:END -->

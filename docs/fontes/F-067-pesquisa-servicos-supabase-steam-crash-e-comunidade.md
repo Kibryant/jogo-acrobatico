@@ -1,0 +1,165 @@
+---
+id: F-067
+titulo: "Pesquisa: os serviços — o Supabase grátis e o Pro, a Steam (Direct, Next Fest, o SDK num repositório aberto, o GodotSteam), o relatório de crash (o log do Godot e o Sentry) e a comunidade (Discord, GitHub Discussions e itch.io); veredictos do verificador (09/10/2026)"
+recebido_em: 2026-10-09
+como: Relatório final de um agente de pesquisa (Sonnet 5.5, esforço médio), um dos quatro pesquisadores que rodaram em paralelo ao deixar a TASK-8 Ready (sessão 10, 09/10/2026), com o modelo e o esforço da tabela que o Arthur aprovou (F-071 §2). Os §1 a §6 respondem às seis perguntas e estão como chegaram, só com os títulos trocados para "§n —". O §7 é o resumo, o §8 o que o agente não confirmou e o §9 as afirmações importantes. O §10 traz o veredicto do verificador adversarial (Fable 5.1, esforço xhigh), que abriu a fonte de cada afirmação e citou a frase.
+status: vigente
+substituida_por:
+---
+
+> Contexto, escrito pelo agente: o pedido ao pesquisador trazia seis perguntas: o Supabase para contas e ranking, gravados só pelo servidor; a Steam; o SDK da Steam num repositório público; o GodotSteam na 4.7.2; o relatório de crash; e a comunidade. "Não confirmado" quer dizer que o agente não abriu a fonte primária. Fatos, inferências e recomendações estão marcados pelo próprio agente. O que vira regra sai da conversa da TASK-8, não daqui. Cite como F-067 §1 a §10; não há numeração aninhada.
+
+Todas as páginas abaixo foram abertas em 09/10/2026. Onde a página não mostra data, vale "acessado em 09/10/2026".
+
+## §1 — Supabase (contas, inventário, ranking)
+
+- Fato: o plano Free tem 2 projetos ativos. O limite vale somando todas as organizações em que a pessoa é Owner ou Administrator. Projetos pausados não contam. Fonte: https://supabase.com/docs/guides/platform/billing-on-supabase (acessado em 09/10/2026).
+- Fato: o Free pausa projetos por baixa atividade em janela de 7 dias, e a restauração é feita pelo painel. O Pro garante que o projeto não é pausado. Fonte: https://supabase.com/docs/guides/deployment/going-into-prod (acessado em 09/10/2026).
+- Fato: cotas do Free, segundo a página de preços:
+  - Banco: 500 MB por projeto.
+  - Auth: 50.000 MAU.
+  - Egress: 5 GB, mais 5 GB em cache.
+  - Edge Functions: 500.000 invocações.
+  - Realtime: 200 conexões simultâneas de pico, 2 milhões de mensagens por mês, mensagem de até 256 KB.
+  - Storage: 1 GB.
+  - Fontes: https://supabase.com/pricing e a página de billing acima (acessado em 09/10/2026).
+- Fato: o Pro custa a partir de US$ 25 por mês. Inclui 100.000 MAU, 8 GB de disco por projeto e US$ 10 por mês em créditos de computação. Fonte: https://supabase.com/pricing (acessado em 09/10/2026).
+- Fato: a região São Paulo (`sa-east-1`) está listada e pode ser escolhida. A página não menciona restrição para o Free. Fonte: https://supabase.com/docs/guides/platform/regions (acessado em 09/10/2026). Não confirmado se o Free realmente permite criar projeto lá, porque a página não diz.
+- Fato: a chave `sb_secret_...` substitui a `service_role` legada e ignora todo o RLS. A documentação diz: "Never put one in a browser, a shipped application, or source control." A chave publishable é "Safe to expose online: web page, mobile or desktop app, GitHub actions, CLIs, source code." Ela roda como `anon` ou `authenticated`, então o RLS a limita. Fonte: https://supabase.com/docs/guides/api/api-keys (acessado em 09/10/2026).
+- Recomendação: o servidor dedicado Linux guarda a secret key só como variável de ambiente na máquina dele, nunca no repositório nem no cliente. As tabelas de ranking ficam com RLS ligado e uma política de `SELECT` para `anon`, sem política de `INSERT`/`UPDATE` para o cliente. Assim o cliente open source lê o ranking com a chave publishable e só o servidor grava, com a secret key, que ignora o RLS.
+- Fato: provedores nativos de login: Apple, Azure, Bitbucket, Discord, Facebook, Figma, GitHub, GitLab, Google, Kakao, Keycloak, LinkedIn, Notion, Slack, Spotify, Twitter, Twitch, WorkOS, Zoom (e e-mail). Steam não está na lista. A página diz que dá para adicionar "any OAuth2 or OIDC-compatible provider" por provedor customizado. Fonte: https://supabase.com/docs/guides/auth/social-login (acessado em 09/10/2026).
+- Inferência: a Steam usa OpenID 2.0, não OAuth2/OIDC. Um login Steam exigiria um fluxo próprio, por exemplo uma Edge Function que valida o ticket Steam e emite uma sessão. Não confirmei esse caminho em documentação.
+- Inferência: o Free serve para as fases 0 a 2. A pausa de 7 dias sem uso é incompatível com um jogo ao vivo, porque o ranking sumiria até alguém restaurar o projeto. O Pro é o custo provável da fase 4 (US$ 25 por mês, cerca de R$ 150 por mês pela cotação que o Arthur usar). Isso consome sozinho boa parte do teto de R$ 3–7 mil por ano.
+
+## §2 — Steam (publicação)
+
+- Fato: a Steam Direct custa US$ 100 por app, não é reembolsável e é recuperada quando o produto chega a US$ 1.000 de receita bruta ajustada. A página diz: "The Steam Direct Fee is not refundable." Fontes: https://partner.steamgames.com/doc/gettingstarted/appfee e https://partner.steamgames.com/steamdirect (acessado em 09/10/2026).
+- Fato: a taxa se paga com método suportado diferente do Steam Wallet. O titular da conta bancária deve coincidir com o documento de identidade, e um questionário fiscal define a retenção. Fonte: https://partner.steamgames.com/steamdirect (acessado em 09/10/2026).
+- Fato: espera de 30 dias entre pagar a taxa e lançar o primeiro título. A página "Coming Soon" pública precisa ficar no ar por pelo menos 2 semanas. A revisão da loja e do build leva "about 1 to 5 days". Fonte: https://partner.steamgames.com/steamdirect (acessado em 09/10/2026).
+- Fato: a página de lançamento diz que a revisão da loja "typically takes 3-5 business days". Recomenda enviar com pelo menos 7 dias de antecedência. O lançamento só acontece quando o desenvolvedor clica "Release App". Fonte: https://partner.steamgames.com/doc/store/releasing (acessado em 09/10/2026). Essa página não dá prazo de revisão do build.
+- Fato: o Next Fest de fevereiro de 2027 vai de 22/02 a 01/03 (10h PST). A inscrição fecha em 10/01/2027, às 23h59 PST. A loja precisa estar pública e há de ter uma demo jogável pública quando o evento abrir. Demo não pode ser prólogo nem capítulo 1 de conteúdo já à venda. Um jogo só participa de um Next Fest. Fonte: https://partner.steamgames.com/doc/marketing/upcoming_events/nextfest/feb_2027 (acessado em 09/10/2026).
+- Fato: os próximos Next Fests listados são outubro de 2026, fevereiro de 2027 e junho de 2027. Fonte: https://partner.steamgames.com/doc/store/application/nextfest (acessado em 09/10/2026).
+- Fato: a página do Next Fest de fevereiro diz que o jogo deve ser "Released any time after the conclusion of the fest on March 1, 2027". Ela também diz que jogos futuros podem participar "regardless" da data, o que é inconsistente. Fonte: a mesma página de fevereiro de 2027.
+- Fato: jogos gratuitos são suportados. Marca-se "This is a free product". Microtransações não são obrigatórias. Jogos F2P não são elegíveis para Daily Deal e similares. Fonte: https://partner.steamgames.com/doc/store/freetoplay (acessado em 09/10/2026). Não confirmado: se a página do Next Fest aceita F2P (não menciona).
+- Fato: a Steam gera classificações etárias regionais a partir do Content Survey. As seções Geral, Conteúdo Maduro e IA Generativa são obrigatórias antes da revisão. A página não menciona o Brasil. Fonte: https://partner.steamgames.com/doc/gettingstarted/contentsurvey (acessado em 09/10/2026). Não confirmado: qualquer exigência da Steam específica para a classificação indicativa brasileira.
+- Fato: jogos de código aberto estão na Steam, por exemplo OpenTTD (listagem do AlternativeTo) e Mindustry (relato em fórum, licença não confirmada). O SuperTuxKart (GPL) foi aprovado no Greenlight em 2017. O blog do projeto citava obstáculos de papelada, de integração do Steamworks com a GPL e de ter de abrir uma empresa por causa da responsabilidade civil. Não confirmei lançamento posterior. Fonte: https://blog.supertuxkart.net/2017/03/weare-greenlit.html (acessado em 09/10/2026).
+- Inferência: o prazo mínimo realista do primeiro lançamento é de 30 dias após pagar, e a loja pública entra 2 semanas antes. Como a regra do projeto é "nada pago antes da fase 3", a taxa de US$ 100 cabe na fase 5 sem problema. O ponto a decidir é o Next Fest: se o alvo for fevereiro de 2027, o prazo já passou para o jogo, que só chega à fase 5 em anos. Os ciclos de 2028 não estavam publicados.
+
+## §3 — Steamworks SDK e código aberto
+
+- Fato: o Steamworks SDK Access Agreement permite "use and locally reproduce the SDK in source code form, solely to develop the Licensee Software". Só autoriza distribuir a parte da pasta `redistributable_bin`, junto do software em código objeto. Fonte: https://partner.steamgames.com/documentation/sdk_access_agreement (acessado em 09/10/2026).
+- Inferência: os cabeçalhos e as bibliotecas do SDK (fora de `redistributable_bin`) não podem ser comitados num repositório público. A `steam_api64.dll` pode ser distribuída junto do jogo em release, mas colocá-la num repositório público é uma interpretação não confirmada. Recomendação: não comitar nada do SDK.
+- Fato: sobre licenças, a Valve diz que o SDK é incompatível com algumas licenças abertas. MIT, BSD, Apache 2.0 e WTFPL são em geral aceitáveis. Licenças com copyleft, como a GPL, costumam ser problemáticas. Fonte: https://partner.steamgames.com/doc/sdk/uploading/distributing_opensource (acessado em 09/10/2026).
+- Fato: o projeto GodotSteam (MIT) mantém o código no Codeberg e o README orienta trocar a `steam_api64.dll` por uma versão compatível. Fonte: https://codeberg.org/godotsteam/godotsteam (acessado em 09/10/2026).
+- Recomendação: o repositório fica sem SDK nem DLL. Um passo opcional do CI, com o SDK baixado de um secret ou de um artefato privado, produz o build "Steam". O build padrão (GitHub Releases/itch.io) segue sem Steam. A flag de build opcional fica a cargo do Arthur; precisa de ok dele (nova dependência).
+- Fato: o Steam Datagram Relay funciona com servidor dedicado ("The peer-to-peer APIs work just fine even when one 'peer' is a dedicated server!"). Jogadores sem Steam não entram na Steam, e a Valve "cannot promise that this service will always be available to non-Steam players". O custo não aparece na página. Fonte: https://partner.steamgames.com/doc/features/multiplayer/steamdatagramrelay (acessado em 09/10/2026).
+- Fato: a versão aberta GameNetworkingSockets "does not support accessing the relay network". Fonte: a mesma página.
+- Inferência: o projeto usa ENet sobre UDP, então o SDR não é necessário. Adotá-lo mudaria a camada de rede (Arthur decide) e prenderia o jogo ao Steam para quem for relay. Não confirmado: custo do SDR e se o cliente precisa do Steam aberto em todos os cenários (a página trata só de outras lojas).
+
+## §4 — GodotSteam
+
+- Fato: o GodotSteam está no Codeberg. Releases: v4.23.1 (GDExtension, 07/10/2026, Godot 4.4+, Steamworks 1.65), v4.23 (05/10/2026, "Godot 4.7.2 and 4.5.2"), v4.22.1 (04/09/2026, mesmas versões de Godot). Fonte: https://codeberg.org/godotsteam/godotsteam/releases (acessado em 09/10/2026).
+- Fato: licença MIT (`license.md`). Fonte: https://codeberg.org/godotsteam/godotsteam (acessado em 09/10/2026).
+- Fato: as builds "-gde" são GDExtension (Godot 4.4+); as outras são módulos para versões específicas, incluindo a 4.7.2. Para o projeto, o v4.22.1 citado no estudo está superado: o atual é o v4.23 (módulo para 4.7.2) ou o v4.23.1 (GDExtension). A página não diz se o v4.23.1 foi testado na 4.7.2, só "4.4+".
+- Fato: o tutorial diz: "Typically, if you do not already have an app ID, you can use app ID 480 which is Valve's SpaceWar example game." Há código de status 2 para "the client probably isn't running". Fonte: https://godotsteam.com/tutorials/initializing/ (acessado em 09/10/2026). Então o cliente Steam precisa estar rodando no teste, e o 480 dispensa pagar a taxa Direct.
+- Fato: um guia de terceiros diz que o 480 serve para testes básicos e que é preciso app ID próprio para qualquer coisa significativa. Fonte: https://kb.heathen.group/toolkit-for-steamworks/godot/quick-start (resultado de busca). Uma postagem de fórum afirma que lobbies não funcionam no 480, mas é afirmação não verificada (vinha de ChatGPT).
+
+## §5 — Crash reports e telemetria
+
+- Fato: o sentry-godot está na versão 2.3.0 (29/09, ano não exibido na página). Fonte: https://github.com/getsentry/sentry-godot/releases (acessado em 09/10/2026).
+- Fato: as versões 1.x e 2.x exigem Godot 4.5 ou superior. Plataformas: Windows e Linux (x86_64, x86_32, arm64), macOS, Android, iOS e Web. Licença MIT. É uma GDExtension C++ sobre sentry-native. Fonte: https://github.com/getsentry/sentry-godot (acessado em 09/10/2026). Não confirmado: compatibilidade explícita com a 4.7.2 (nenhuma página cita a 4.7).
+- Fato: captura crashes nativos (minidumps no Windows e Linux), erros de runtime e de script/shader com stack trace GDScript, logs estruturados, `print()` opcional, anexos de log, hardware, release health e filtragem em `before_send`. Fonte: https://docs.sentry.io/platforms/godot/ (acessado em 09/10/2026).
+- Fato: por padrão o SDK "doesn't send any information about users, such as email address, user ID, or username." Com `send_default_pii` ligado, "Sentry backend services will infer the user's IP address based on the incoming request." Ele anexa por padrão o arquivo de log do Godot, desligável em `attach_log` nas Project Settings. Fonte: https://docs.sentry.io/platforms/godot/data-management/data-collected/ (acessado em 09/10/2026).
+- Recomendação: manter `send_default_pii` desligado, desligar `attach_log` se o log puder trazer dados de jogador (menores no público) e usar `before_send`. O DSN no cliente público é aceitável (é chave só de envio), mas pode receber spam.
+- Fato: plano Developer (grátis): 5 mil erros por mês, 1 usuário, 30 dias de retenção. Team: US$ 26 por mês (cobrança anual). Fonte: https://sentry.io/pricing/ (acessado em 09/10/2026).
+- Fato: o programa Sentry for Open Source exige projeto de código aberto com licença permissiva e formulário com link para o repositório. Oferece 5M de erros, 10 GB de anexos e recursos Business sem prazo. Fonte: https://sentry.io/for/open-source/ (acessado em 09/10/2026). Não confirmado: critérios de aprovação além do formulário.
+- Fato: o Bugsink é compatível com os SDKs do Sentry (troca-se o DSN). Self-hosted é grátis, com volume limitado pelo hardware. Hospedado: grátis com 15 mil eventos por mês, €16 por 75 mil. Fonte: https://www.bugsink.com/ (acessado em 09/10/2026). Licença do Bugsink não confirmada na página.
+- Fato: o GlitchTip hospedado tem plano grátis de 1.000 eventos por mês e planos pagos a partir de US$ 15. Descontos para open source "starting at $5/mo". Self-hosted: "Run on your own server", sem preço. Compatibilidade com o SDK do Sentry não aparece na página (conhecimento geral, não verificado aqui). Fonte: https://glitchtip.com/pricing (acessado em 09/10/2026).
+- Fato: o Godot grava `user://logs/godot.log` por padrão em desktop, mantém 5 arquivos, e o backtrace de crash vai para o mesmo arquivo ("Program crashed with signal"). Frames C++ exigem símbolos que os binários oficiais não trazem. Backtraces de GDScript ficam desligados em release até ativar "Always Track Call Stacks". `print()` só é descarregado ao sair ou travar, salvo `flush_stdout_on_print`. Fonte: https://docs.godotengine.org/en/stable/tutorials/scripting/logging.html (acessado em 09/10/2026).
+- Recomendação: primeiro passo gratuito é o log do Godot com "Always Track Call Stacks" e `flush_stdout_on_print` no servidor. Sentry fica para a fase 3 em diante, com o pedido ao programa Open Source quando o repositório for público.
+
+## §6 — Comunidade: Discord, GitHub e itch.io
+
+- Fato: o Discord é grátis. Os Termos dizem que o usuário confirma ter "at least 13 years old and meet the minimum age required by the laws in your country". Fonte: https://discord.com/terms (acessado em 09/10/2026). Não confirmado: idade mínima específica para o Brasil, porque a lista por país não foi aberta.
+- Fato: a ECA Digital (Lei 15.211/2025) entrou em vigor em 17/03/2026. O Discord iniciou verificação de idade no Brasil em 9 de março, via k-ID, com estimativa facial ou documento. Fonte: https://support.discord.com/hc/articles/38860612202775 (HTTP 403 ao abrir; dado vindo de resultado de busca, não confirmado na fonte primária).
+- Fato: em 15/06/2026 o Ministério da Justiça manteve a classificação do Discord em "não recomendado para menores de 18 anos". Fonte: https://olhardigital.com.br/2026/06/15/internet-e-redes-sociais/discord-ministerio-da-justica-mantem-classificacao-de-18-anos/ (acessado em 09/10/2026).
+- Fato: a AGU processou o Discord em 26/08/2026, pedindo cerca de R$ 500 milhões. Fonte: https://www.jurist.org/news/2026/08/brazil-sues-discord-over-alleged-shortcomings-in-youth-safety-policies-and-enforcement/ (acessado em 09/10/2026).
+- Fato: a ANPD suspendeu o Go Live (transmissões ao vivo) no Brasil em 12/08. Em 24/09 a Superintendência manteve a suspensão. O recurso está no Conselho Diretor, e o resto da plataforma segue no ar. Fonte: https://www.tnh1.com.br/noticia/nid/discord-anpd-nega-volta-das-lives-no-brasil-e-cobra-provas-de-bloqueio/ (resultado de busca, não aberta). O Jurist descreve a suspensão de forma mais ampla, e o escopo ficou em conflito entre fontes.
+- Inferência: com público brasileiro de adolescentes, o Discord como hub único tem risco regulatório e de reputação. Recomendação: tratar o Discord como canal opcional, nunca como única via de suporte ou de anúncios, e manter GitHub Discussions e a página do projeto como base.
+- Fato: o GitHub Discussions pode ser ligado em repositórios públicos e privados, com categorias, enquetes, fixar, travar e marcar resposta. Fonte: https://docs.github.com/en/discussions/quickstart (acessado em 09/10/2026). Preço não consta nessa página.
+- Fato: o itch.io é gratuito para publicar, sem anúncios, permite preço mínimo 0 e "open revenue sharing" (percentual escolhido pelo criador). O butler é CLI MIT para enviar builds por canal. Fontes: https://itch.io/docs/creators/faq e https://itch.io/docs/butler/ (acessado em 09/10/2026). Não confirmado: se 0% de participação é permitido, e o limite de banda.
+- Não confirmado: recursos do servidor de comunidade do Discord (canais de fórum, onboarding, AutoMod). Não abri a documentação do Discord sobre isso.
+- Recomendação: GitHub Releases para builds oficiais, por já estar no CI. Itch.io com butler só se o Arthur quiser descoberta entre amigos sem exigir conta GitHub.
+
+## §7 — Resumo
+
+- A Steam Direct continua em US$ 100, com 30 dias de espera, loja pública 2 semanas antes e revisões de 1 a 5 dias. Isso cabe na fase 5.
+- A regra "nada pago antes da fase 3" é viável. O Supabase Free pausa projeto após 7 dias de baixa atividade, e o Pro custa US$ 25 por mês.
+- A secret key do Supabase ignora o RLS e nunca vai ao cliente. O desenho "servidor grava, cliente lê" é suportado.
+- O Supabase não tem Steam nativo. Login Steam exige fluxo próprio (OpenID não é OAuth/OIDC, inferência).
+- O GodotSteam correto é o v4.23 (módulo 4.7.2) ou o v4.23.1 (GDExtension), MIT, no Codeberg. O v4.22.1 do estudo está desatualizado. O app 480 serve para teste básico com o cliente Steam aberto.
+- Não comitar SDK nem cabeçalhos da Steam no repositório público. Só `redistributable_bin` pode ser distribuído com o jogo.
+- Para o fest de fevereiro de 2027 o prazo é 10/01/2027 e exige demo pública. Nenhum prazo da fase 5 cabe nele; a decisão é só acompanhar a data dos próximos.
+- O Sentry 2.3.0 exige Godot 4.5+ (4.7.2 não confirmada). Por padrão não envia ID de usuário nem IP, mas anexa o log do Godot; vale desligar `attach_log`.
+- O programa Sentry for Open Source dá 5M de erros a projetos com licença permissiva. O Bugsink (self-hosted grátis) é compatível com o SDK.
+- O Discord no Brasil está sob processo e restrição parcial (Go Live suspenso, ação de R$ 500 milhões). Não usar como único canal.
+
+## §8 — Não confirmado
+
+- Compatibilidade do sentry-godot 2.3.0 com a Godot 4.7.2.
+- Fluxo Steam para o login do Supabase (nenhuma documentação oficial lida).
+- Se o plano Free do Supabase permite criar projeto na região `sa-east-1`.
+- Se o Steamworks SDK Access Agreement proíbe comitar `steam_api64.dll` num repositório público (o texto só trata de `redistributable_bin`).
+- Custo do Steam Datagram Relay e se o cliente precisa do Steam aberto em todos os cenários.
+- A página do Discord sobre verificação de idade no Brasil deu HTTP 403. O estado da suspensão em outubro de 2026 não foi achado.
+- Idade mínima do Discord especificamente no Brasil, e recursos do servidor de comunidade (fórum, onboarding, AutoMod).
+- Exigência da Steam para classificação indicativa brasileira.
+- Se o Next Fest aceita jogos F2P e quais são as regras de ciclos futuros (2028).
+- Se o itch.io permite 0% de participação e como cobra banda.
+- Licença do Bugsink e compatibilidade do GlitchTip com o SDK do Sentry (não constam nas páginas abertas).
+- Se o GodotSteam v4.23.1 (GDExtension) foi testado na 4.7.2.
+
+## §9 — Afirmações importantes
+
+S-01 | O plano Free do Supabase pausa projetos com baixa atividade em janela de 7 dias | https://supabase.com/docs/guides/deployment/going-into-prod | "We may pause applications on the Free Plan that exhibit low activity in a 7-day period to save on server resources."
+S-02 | A secret key do Supabase nunca deve ir num app distribuído | https://supabase.com/docs/guides/api/api-keys | "Never put one in a browser, a shipped application, or source control."
+S-03 | A chave publishable é segura para apps desktop e código-fonte | https://supabase.com/docs/guides/api/api-keys | "Safe to expose online: web page, mobile or desktop app, GitHub actions, CLIs, source code."
+S-04 | Steam não é provedor nativo do Supabase, só OAuth2/OIDC customizado | https://supabase.com/docs/guides/auth/social-login | "any OAuth2 or OIDC-compatible provider"
+S-05 | A taxa Steam Direct não é reembolsável | https://partner.steamgames.com/doc/gettingstarted/appfee | "The Steam Direct Fee is not refundable"
+S-06 | A espera de 30 dias e a loja pública de 2 semanas | https://partner.steamgames.com/steamdirect | "30-day waiting period"
+S-07 | A revisão da loja leva de 3 a 5 dias úteis | https://partner.steamgames.com/doc/store/releasing | "typically takes 3-5 business days to complete"
+S-08 | A inscrição no Next Fest de fevereiro de 2027 termina em 10/01 | https://partner.steamgames.com/doc/marketing/upcoming_events/nextfest/feb_2027 | "Registration Deadline"
+S-09 | O SDK só pode ser redistribuído a partir de `redistributable_bin` | https://partner.steamgames.com/documentation/sdk_access_agreement | "reproduce and distribute the part of the SDK provided inside the folder named redistributable_bin"
+S-10 | A Valve avisa que o SDK é incompatível com algumas licenças abertas | https://partner.steamgames.com/doc/sdk/uploading/distributing_opensource | "YOU MUST NOT DISTRIBUTE YOUR APPLICATION VIA STEAM."
+S-11 | O app 480 pode ser usado no GodotSteam sem app ID próprio | https://godotsteam.com/tutorials/initializing/ | "Typically, if you do not already have an app ID, you can use app ID 480 which is Valve's SpaceWar example game."
+S-12 | Jogadores sem Steam não têm garantia de acesso ao SDR | https://partner.steamgames.com/doc/features/multiplayer/steamdatagramrelay | "cannot promise that this service will always be available to non-Steam players"
+S-13 | O Sentry Godot não envia usuário por padrão e infere IP se `send_default_pii` estiver ligado | https://docs.sentry.io/platforms/godot/data-management/data-collected/ | "Sentry backend services will infer the user's IP address based on the incoming request."
+S-14 | Backtraces de GDScript ficam desligados em release por padrão | https://docs.godotengine.org/en/stable/tutorials/scripting/logging.html | "In projects that are exported in release mode, standard output is only flushed when the project exits or crashes"
+S-15 | O Ministério da Justiça manteve o Discord em classificação 18+ | https://olhardigital.com.br/2026/06/15/internet-e-redes-sociais/discord-ministerio-da-justica-mantem-classificacao-de-18-anos/ | "não recomendado para menores de 18 anos"
+
+Observação para o verificador: S-14 e S-04 foram obtidas por resumo de ferramenta de fetch, não por leitura integral da página. A frase de S-14 é do resumo, não confirmada literalmente. S-04 e S-15 podem divergir em maiúsculas. S-08 e S-06 são termos curtos extraídos da página, não frases completas.
+
+## §10 — O veredicto do verificador
+
+Como chegou, do verificador adversarial (Fable 5.1, esforço xhigh), em 09/10/2026. Ele abriu a fonte de cada afirmação marcada como importante nas quatro pesquisas (F-066 a F-069) e de 12 dúvidas do orquestrador (X-01 a X-12), e citou a frase que achou. Das 72, 61 saíram confirmadas, 10 confirmadas com ressalva e 1 refutada (X-12, o preço da Vultr em São Paulo); nenhuma ficou sem verificar. Cada linha traz o ID, o veredicto, a frase achada, a URL usada e a nota do verificador. O resumo inteiro do verificador, que cobre as quatro pesquisas, está na F-066 §12. As dúvidas do orquestrador desta pesquisa são X-05, X-06, X-07, X-08, X-09.
+
+- S-01 | CONFIRMADO | "We may pause applications on the Free Plan that exhibit low activity in a 7-day period to save on server resources." | https://supabase.com/docs/guides/deployment/going-into-prod | Seção "Availability".
+- S-02 | CONFIRMADO | "Never put one in a browser, a shipped application, or source control." | https://supabase.com/docs/guides/api/api-keys | Callout de perigo em "Secret keys and elevated access".
+- S-03 | CONFIRMADO | "Safe to expose online: web page, mobile or desktop app, GitHub actions, CLIs, source code." | https://supabase.com/docs/guides/api/api-keys | Tabela "Key types", linha Publishable key.
+- S-04 | CONFIRMADO | "Note: Need to integrate with a provider not listed here? You can add any OAuth2 or OIDC-compatible provider using Custom OAuth/OIDC Providers." | https://supabase.com/docs/guides/auth/social-login | Steam não está entre os 19 provedores listados. Nota do verificador, não conferida na página: o login da Steam é OpenID 2.0, não OAuth2/OIDC, então o "provedor customizado" pode não cobrir a Steam diretamente.
+- S-05 | CONFIRMADO | "The Steam Direct Fee is not refundable, but will be recoupable in the payment made after your product has at least $1,000.00 Adjusted Gross Revenue for Steam Store or in-app purchases." | https://partner.steamgames.com/doc/gettingstarted/appfee | Taxa: "$100 USD (or equivalent) fee for each new app".
+- S-06 | CONFIRMADO | "A 30-day waiting period between when you paid the app fee and when you can release your game." / "You'll need to prepare your store page and put up a publicly-visible 'coming soon' page for at least two weeks." | https://partner.steamgames.com/steamdirect | As duas frases completas estão na página.
+- S-07 | CONFIRMADO | "Our review of your store presence typically takes 3-5 business days to complete, but you'll want to submit your page for review at least 7 days before you want it live" | https://partner.steamgames.com/doc/store/releasing | Vale para a página da loja; a página não dá prazo para a revisão do build.
+- S-08 | CONFIRMADO | "January 10, 11:59pm PST - Registration Deadline" | https://partner.steamgames.com/doc/marketing/upcoming_events/nextfest/feb_2027 | Evento: "February 22 at 10:00 AM PST (UTC-8) to March 1 at 10:00 AM PST (UTC-8)".
+- S-09 | CONFIRMADO | "(b) reproduce and distribute the part of the SDK provided inside the folder named redistributable_bin" | https://partner.steamgames.com/documentation/sdk_access_agreement | Cláusula 1.1(b).
+- S-10 | CONFIRMADO | "If your application contains third party open source code that is incompatible with the Steamworks SDK, then YOU MUST NOT DISTRIBUTE YOUR APPLICATION VIA STEAM." | https://partner.steamgames.com/doc/sdk/uploading/distributing_opensource | Abre com "The Steamworks SDK is incompatible with some open source licenses".
+- S-11 | CONFIRMADO | "Typically, if you do not already have an app ID, you can use app ID 480 which is Valve's SpaceWar example game." | https://godotsteam.com/tutorials/initializing/ | Literal.
+- S-12 | CONFIRMADO | "Understand that, unfortunately, we cannot promise that this service will always be available to non-Steam players." | https://partner.steamgames.com/doc/features/multiplayer/steamdatagramrelay | Seção "Requirements for using SDR on other platforms and stores"; exige "Have a version of your game shipping on Steam."
+- S-13 | CONFIRMADO | "By default, the Sentry SDK doesn't send any information about users, such as email address, user ID, or username. However, if the send_default_pii option is enabled, Sentry backend services will infer the user's IP address based on the incoming request." | https://docs.sentry.io/platforms/godot/data-management/data-collected/ | Seção "User Information".
+- S-14 | CONFIRMADO COM RESSALVA | "In projects exported in release mode, backtraces are disabled by default for performance reasons. You can enable them by checking Debug > Settings > GDScript > Always Track Call Stacks in the Project Settings." | https://docs.godotengine.org/en/stable/tutorials/scripting/logging.html | A frase citada pelo pesquisador (sobre flush do stdout) existe, mas não sustenta a afirmação; esta sim, na seção "Script backtraces".
+- S-15 | CONFIRMADO | "O Ministério da Justiça e Segurança Pública (MJSP) reafirmou a classificação indicativa do aplicativo Discord como "não recomendado para menores de 18 anos"." | https://olhardigital.com.br/2026/06/15/internet-e-redes-sociais/discord-ministerio-da-justica-mantem-classificacao-de-18-anos/ | Matéria de 15/06/2026.
+- X-05 | CONFIRMADO | "Generally, any license that has a so-called "copyleft" element will be problematic when combining code with the Steamworks SDK. The best-known example is GPL." / "Common permissive and acceptable licenses includes MIT License, BSD 3-clause and 4-clause, Apache 2.0 and WTFPL." | https://partner.steamgames.com/doc/sdk/uploading/distributing_opensource | Contexto da frase em maiúsculas: "Keep in mind that according to the Steam Distribution Agreement you warrant and represent that you have all necessary rights to distribute the game via Steam. If your application contains third party open source code that is incompatible with the Steamworks SDK, then YOU MUST NOT DISTRIBUTE YOUR APPLICATION VIA STEAM." A página admite GPL na loja "if the author of the code that is GPL-licensed has given the permission to do so".
+- X-06 | CONFIRMADO COM RESSALVA | "Psst. make sure it's released under a friendly license like Apache or MIT." | https://sentry.io/for/open-source/ | Não há frase formal de elegibilidade nem exigência de projeto não comercial; só essa dica e o campo "Please link directly to your license". "Exige licença permissiva" é mais forte do que a página diz.
+- X-07 | CONFIRMADO COM RESSALVA | "Brazil's federal government on Wednesday filed a lawsuit against Discord, Inc." / "The Brazilian attorney general's office, the Advocacia-Geral da Union (AGU), brought the lawsuit in the federal court, seeking roughly R$500 million ($97 million) in damages." | https://www.jurist.org/news/2026/08/brazil-sues-discord-over-alleged-shortcomings-in-youth-safety-policies-and-enforcement/ | A matéria é de sexta 28/08/2026 e diz "on Wednesday": 26/08 é inferência, não data literal. Valor: "roughly R$500 million".
+- X-08 | CONFIRMADO COM RESSALVA | "A Superintendência de Fiscalização da Agência Nacional de Proteção de Dados (ANPD) negou o pedido do Discord para retomar as transmissões ao vivo no Brasil e manteve a suspensão dos recursos de vídeo da plataforma." / "A decisão, comunicada à plataforma nesta quinta-feira (24), ainda não é definitiva." / "A ANPD determinou a suspensão em 12 de agosto" | https://www.tnh1.com.br/noticia/nid/discord-anpd-nega-volta-das-lives-no-brasil-e-cobra-provas-de-bloqueio/ (25/09/2026); confirmada por https://www.hardware.com.br/noticias/anpd-nega-recurso-discord-lives-suspensas-brasil/ (26/09/2026) | Não achei fonte primária em gov.br/anpd (a página de notícias carrega por JavaScript e a busca com filtro de domínio não retornou nada). Cronologia pela imprensa: ordem em 12/08, Discord desligou em 17/08, recorreu em 24/08, Superintendência manteve em 24/09; o recurso segue ao Conselho Diretor, então não é definitivo.
+- X-09 | CONFIRMADO | "Godot 4.x - Steamworks 1.65 - GodotSteam 4.23" / "In Godot 4.7.2 and 4.5.2 variants." (v4.23, módulo: editor + templates) / "Godot 4.4+ - Steamworks 1.65 - GodotSteam GDExtension 4.23.1" / "Works on any Godot version 4.4 and up." (v4.23.1) | https://codeberg.org/godotsteam/godotsteam/releases | Existe também v4.23-gde; v4.23.1 por enquanto só em GDExtension. O v4.23 avisa "Android ARM64 updates are temporarily paused."

@@ -4,7 +4,7 @@ title: 'Esqueleto andante: a cápsula em rede de ponta a ponta'
 status: To Refine
 assignee: []
 created_date: '2026-10-02 16:48'
-updated_date: '2026-10-07 19:24'
+updated_date: '2026-10-09 20:21'
 labels:
   - jogo
   - rede
@@ -14,6 +14,7 @@ dependencies:
   - TASK-4
   - TASK-5
   - TASK-6
+  - TASK-8
 ordinal: 9000
 ---
 

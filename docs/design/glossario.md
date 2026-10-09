@@ -1,6 +1,6 @@
 ---
-revisado_em: 2026-10-08
-fontes: [F-001, F-002, F-005, F-007, F-012, F-013, F-020, F-021, F-025, F-026, F-028, F-030, F-032, F-038, F-039, F-044, F-045, F-046, F-050, F-051, F-052, F-053, F-056, F-058]
+revisado_em: 2026-10-09
+fontes: [F-001, F-002, F-005, F-007, F-012, F-013, F-020, F-021, F-025, F-026, F-028, F-030, F-032, F-038, F-039, F-044, F-045, F-046, F-050, F-051, F-052, F-053, F-056, F-058, F-066, F-068, F-069, F-070]
 ---
 
 # Glossário
@@ -167,3 +167,19 @@ A linguagem ubíqua do jogo (DEC-0004, regra 5): o mesmo termo na conversa, no d
 | Marca do ativo | O trecho de um clipe em que o golpe pega, marcado à mão. O clipe de biblioteca não traz a marca; no `Sword_Regular_A`, ela fica de 46% a 69% do clipe (F-056 §4) | % do clipe | — |
 | Chave do evento | O nome de um acontecimento do combate que a tela apresenta uma vez só, por exemplo "ativo do ataque 542": a tela compara o estado exibido com o último que apresentou e toca o som ou o efeito de cada chave nova. Cobre o nó próprio, o oponente espelhado e o veredito que nasce num tick refeito, onde o `is_fresh` do netfox não chega (F-061 §2). Como a `key` de uma lista no React: reaplicar o mesmo estado não cria evento | — | `present()`, `_cued` |
 | Pack de terceiros | Um conjunto de assets de uma fonte de fora, numa pasta `assets/third_party/<fonte>/<pack>/` com o arquivo de licença dentro e uma linha no `CREDITS.md`; sem os dois, o portão derruba (DEC-0029) | — | `assets/third_party` |
+
+## Infraestrutura
+
+| Termo | O que é | Unidade | No código |
+|---|---|---|---|
+| Gatilho | O momento em que um serviço entra no projeto, amarrado a uma fase ou a um número, nunca antes. Contas, Steam e salas entram "na hora da funcionalidade" (DEC-0012) | — | — |
+| Ping | O tempo de um pacote ir até o servidor e voltar. Daqui, uns 26 ms até São Paulo e de 113 a 195 ms até os EUA; a 60 ticks, 26 ms são 1,6 tick (F-070) | ms | — |
+| Região | O lugar do data center onde o servidor roda. É escolher o servidor BR no LoL: o mesmo jogo, com outro ping (DEC-0011; F-070) | — | — |
+| CGNAT | A operadora divide um IPv4 público entre vários clientes. Ninguém de fora abre conexão direto com um PC atrás dele, nem com porta redirecionada; um amigo só entra por um túnel ou por um servidor fora de casa (F-070 §4; F-066 §4) | — | — |
+| VPS | Um servidor virtual alugado por mês num data center, com núcleos, memória e banda contados. Na Vultr em São Paulo, começa em US$ 7,50 por mês, 1,5 vez o preço das outras regiões (F-066 §13) | R$/mês | — |
+| Imagem e contêiner | A imagem é o servidor empacotado com um Linux mínimo, o binário e o pacote do jogo; o contêiner é uma cópia dela rodando. Roda igual aqui, no CI e num servidor alugado, como um `package-lock.json` que trava até o sistema operacional (F-066 §5) | MB | `Dockerfile` |
+| Servidor da comunidade | Um servidor dedicado que um jogador sobe com a build do servidor e anuncia na lista. O projeto paga o oficial, a lista e o ranking, e o ranking só conta nos servidores oficiais, como no DDNet (F-066 §6) | — | — |
+| Lista de servidores | O serviço pequeno em que cada servidor se anuncia e o cliente escolhe onde jogar. Com um servidor só, ele mesmo lista as salas, no estilo do GunZ (F-066 §6) | — | — |
+| Licença permissiva e copyleft | A permissiva (MIT, Apache) deixa qualquer um usar, mudar e até fechar o código, desde que mantenha o aviso, como o Godot e o netfox. A copyleft (GPL) obriga quem distribui uma versão mudada a abrir o código dela, como o Linux (F-068 §4) | — | `LICENSE` |
+| Assinatura da build | Um certificado que diz ao Windows quem publicou o `.exe`. Sem ele, o Smart App Control barra a build de um jogo novo; o SignPath assina de graça projeto de código aberto (F-069 §7; Q-20) | — | — |
+| Cota do LFS | Quanto o GitHub guarda e entrega dos arquivos grandes no plano grátis: 10 GiB guardados e 10 GiB baixados por mês. Num repositório público, todo download sai da cota do dono, até o de um fork (F-050 §5; F-069 §3) | GiB | `.gitattributes` |

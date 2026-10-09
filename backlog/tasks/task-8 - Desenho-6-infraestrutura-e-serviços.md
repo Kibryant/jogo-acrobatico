@@ -1,10 +1,10 @@
 ---
 id: TASK-8
 title: 'Desenho 6: infraestrutura e serviços'
-status: Ready
+status: In Progress
 assignee: []
 created_date: '2026-10-02 16:48'
-updated_date: '2026-10-09 20:21'
+updated_date: '2026-10-09 20:46'
 labels:
   - infra
   - desenho
@@ -106,6 +106,18 @@ Confirmadas pelo Arthur em 09/10 (F-071 §3 e §4):
 3. O plano no modo de plano, revisado antes por um agente de planejamento (registro da TASK-5). Com o ok: uma fonte com o plano, as DECs (a hospedagem; o repositório aberto e a licença; os serviços e os gatilhos), o `docs/arquitetura/infraestrutura.md`, a entrada do Desenho 6 na TASK-9 e a TASK-11 Ready; o `AGENTS.md` acompanha o que mudar.
 4. Registro: as fontes, o glossário, o `mudancas.md` (a correção da Oracle e o que mudar no roteiro), o `pendencias.md` (Q-05, Q-20 e as novas) e o registro da harness; depois o reviewer e o portão num clone limpo.
 <!-- SECTION:PLAN:END -->
+
+## Implementation Notes
+
+<!-- SECTION:NOTES:BEGIN -->
+Rodada 1 (09/10, sessão 10), o servidor fora de casa:
+- A sonda fica em `../servidor-sonda`: uma cópia do parry de brinquedo do Desenho 5 em `jogo/` (sem o `override.cfg`), com o preset "Servidor Linux" de servidor dedicado; o `Dockerfile` (debian:trixie-slim, o `tini` como PID 1, um usuário sem root e a porta 7777/udp); o `local.sh`, o `remoto.sh`, o `medir.py` e os scripts de ping.
+- Fora do editor, o `NetworkSimulator` do netfox se desliga sozinho (`OS.has_feature("editor")`), e o `main.gd` abre o ENet pelo `--port` e pelo `--host`: a build do servidor nunca simula lag.
+- A exportação pela linha de comando do Godot 4.7.2 levou 15 s e deu um binário só, de 73,8 MB, com o pacote embutido.
+- O teste sem contêiner, com os três processos neste PC: o servidor desta sonda gasta mediana de 41% de um núcleo, e cada cliente sobe uns 25 kB/s, acima do Desenho 3 (de 15 a 23% e 12,4 kB/s; F-034). O contêiner mede o servidor sozinho.
+- A instalação: o Docker Desktop 4.94.0 entrou pelo winget. O WSL 2.7.13 só entrou num PowerShell elevado: o `wsl.exe` de fábrica recusou o `--no-distribution`, e o pacote do WSL pede administrador. O Windows pede reinício para a plataforma de máquina virtual.
+- Depois do reinício: abrir o Docker Desktop, aceitar os termos, esperar o motor rodar e seguir com o `local.sh`.
+<!-- SECTION:NOTES:END -->
 
 ## Comments
 

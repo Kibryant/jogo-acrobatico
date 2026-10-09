@@ -1,10 +1,10 @@
 ---
 id: TASK-7
 title: 'Desenho 5: base visual, de áudio e de interface'
-status: Ready
+status: Done
 assignee: []
 created_date: '2026-10-02 16:48'
-updated_date: '2026-10-07 22:12'
+updated_date: '2026-10-08 12:50'
 labels:
   - desenho
 milestone: m-0
@@ -64,21 +64,21 @@ Confirmadas pelo Arthur em 07/10 (F-054 §2 a §4):
 
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
-- [ ] #1 Quando a conversa termina, `docs/design/visual-e-audio.md` tem a política de assets (as licenças aceitas e recusadas, a linha do `CREDITS.md` por tipo, o arquivo de licença ao lado do pack, a regra do repositório privado para EULA e a conta da cota do LFS), o pipeline de import (formato, escala, nomes, animação, texturas e o que vai para o git), o caminho da animação (fontes, rig, a pose como função do estado e os buracos) e os tokens do combate (os três canais por estado, onde o sinal mora, a paleta e o som com prioridade), com a fonte de cada número.
-- [ ] #2 Quando o Arthur decide a fonte de assets e a de animação, DECs registram cada uma com a licença conferida na origem: o nome, a versão ou a data, o link, a frase que permite o uso e o que ela proíbe (repositório público, redistribuição).
-- [ ] #3 Quando um asset de terceiros entra no repositório sem linha no `assets/CREDITS.md` ou sem o arquivo de licença ao lado, o portão falha; quando a linha e o arquivo existem, o passo fica verde; uma sonda prova o antes e o depois, e um canário vigia a checagem.
-- [ ] #4 Quando um personagem CC0 com animações de espada é importado no Godot 4.7.2 numa sonda fora do repositório, no renderer Compatibility neste PC, ele sai com 1,8 m, com material estilizado e contorno, e uma fonte registra a altura e os fps em 1080p com 1, 2 e 16 lutadores animados, com o MSAA desligado e ligado; quando ficar abaixo de 60 fps com 16, a Q-22 registra o que foi tentado (DEC-0002; DEC-0004, regra 6).
-- [ ] #5 Quando o Arthur assiste à sonda dos tokens (cor, pose e som a 60 ticks, com lag simulado, com e sem a simulação de daltonismo), ele diz o que leu e o que não leu, e uma fonte registra (F-041); quando um token não se lê, ele muda antes da DEC; quando o rollback refaz o tick de um golpe, o som não toca de novo.
-- [ ] #6 Quando a conversa termina, o Theme e a acessibilidade mínima estão desenhados: um Theme só, a base de 1920 × 1080 e a escala ajustável, as teclas remapeáveis guardando a posição física, nenhuma informação só por cor e as chaves de tradução por ID; o que muda o `project.godot` entra com guarda no teste de configurações.
-- [ ] #7 Quando um arquivo de um formato que a política aceita entra (`.glb`, `.gltf`, `.bin`, `.obj`, `.wav`, `.ogg`, `.ttf`, `.woff2` e os demais da lista), o `.gitattributes` o manda para o LFS, e um teste prova com um arquivo de sonda; quando um formato está fora da lista, o `visual-e-audio.md` diz por quê.
+- [x] #1 Quando a conversa termina, `docs/design/visual-e-audio.md` tem a política de assets (as licenças aceitas e recusadas, a linha do `CREDITS.md` por tipo, o arquivo de licença ao lado do pack, a regra do repositório privado para EULA e a conta da cota do LFS), o pipeline de import (formato, escala, nomes, animação, texturas e o que vai para o git), o caminho da animação (fontes, rig, a pose como função do estado e os buracos) e os tokens do combate (os três canais por estado, onde o sinal mora, a paleta e o som com prioridade), com a fonte de cada número.
+- [x] #2 Quando o Arthur decide a fonte de assets e a de animação, DECs registram cada uma com a licença conferida na origem: o nome, a versão ou a data, o link, a frase que permite o uso e o que ela proíbe (repositório público, redistribuição).
+- [x] #3 Quando um asset de terceiros entra no repositório sem linha no `assets/CREDITS.md` ou sem o arquivo de licença ao lado, o portão falha; quando a linha e o arquivo existem, o passo fica verde; uma sonda prova o antes e o depois, e um canário vigia a checagem.
+- [x] #4 Quando um personagem CC0 com animações de espada é importado no Godot 4.7.2 numa sonda fora do repositório, no renderer Compatibility neste PC, ele sai com 1,8 m, com material estilizado e contorno, e uma fonte registra a altura e os fps em 1080p com 1, 2 e 16 lutadores animados, com o MSAA desligado e ligado; quando ficar abaixo de 60 fps com 16, a Q-22 registra o que foi tentado (DEC-0002; DEC-0004, regra 6).
+- [x] #5 Quando o Arthur assiste à sonda dos tokens (cor, pose e som a 60 ticks, com lag simulado, com e sem a simulação de daltonismo), ele diz o que leu e o que não leu, e uma fonte registra (F-041); quando um token não se lê, ele muda antes da DEC; quando o rollback refaz o tick de um golpe, o som não toca de novo.
+- [x] #6 Quando a conversa termina, o Theme e a acessibilidade mínima estão desenhados: um Theme só, a base de 1920 × 1080 e a escala ajustável, as teclas remapeáveis guardando a posição física, nenhuma informação só por cor e as chaves de tradução por ID; o que muda o `project.godot` entra com guarda no teste de configurações.
+- [x] #7 Quando um arquivo de um formato que a política aceita entra (`.glb`, `.gltf`, `.bin`, `.obj`, `.wav`, `.ogg`, `.ttf`, `.woff2` e os demais da lista), o `.gitattributes` o manda para o LFS, e um teste prova com um arquivo de sonda; quando um formato está fora da lista, o `visual-e-audio.md` diz por quê.
 <!-- AC:END -->
 
 ## Definition of Done
 <!-- DOD:BEGIN -->
-- [ ] #1 Critérios de aceite verificados
+- [x] #1 Critérios de aceite verificados
 - [ ] #2 Teste automatizado para toda regra do núcleo (core/)
-- [ ] #3 Diário da sessão escrito e glossário atualizado
-- [ ] #4 Mudanças registradas em docs/mudancas.md
+- [x] #3 Diário da sessão escrito e glossário atualizado
+- [x] #4 Mudanças registradas em docs/mudancas.md
 <!-- DOD:END -->
 
 ## Implementation Plan
@@ -96,3 +96,55 @@ Confirmadas pelo Arthur em 07/10 (F-054 §2 a §4):
 3. O plano no modo de plano, revisado antes por um agente de planejamento (registro da TASK-5). Com o ok: uma fonte com o plano, as DECs (a política e as fontes de assets; o caminho da animação; os tokens e a base da interface), o `docs/design/visual-e-audio.md`, o `CREDITS.md` com a política, a checagem e o canário no portão, o `.gitattributes`, o `project.godot` com guarda, e o `AGENTS.md` acompanha o que mudar.
 4. Registro: fontes, glossário, `mudancas.md`, `pendencias.md` (Q-21 e Q-22) e o registro da harness; depois o reviewer e o portão num clone limpo.
 <!-- SECTION:PLAN:END -->
+
+## Implementation Notes
+
+<!-- SECTION:NOTES:BEGIN -->
+Rodada 1 (07/10, sessão 8), os assets e o pipeline:
+- A demonstração do git num repositório de sonda (`../git-sonda`): o pack apagado num commit novo voltou inteiro num clone, com um comando, e o objeto do LFS veio junto (F-056 §1).
+- O UAL2 Standard (CC0, OpenGameArt, zip com sha256 `ec0e40d6…`) entrou no Godot 4.7.2 em 5,8 s. O import tirou o `_Loop` do nome dos clipes e marcou o laço, e cortou cada clipe de 195 para 57 trilhas. Com `root_scale = 0,98414`, o manequim saiu com 1,800 m, a altura da cápsula (F-056 §2 e §3).
+- A espada de blocos ficou na mão pela linha dos nós dos dedos. Oito quadros do `Sword_Regular_A` mostraram o ativo de 46% a 69% do clipe, e o clipe não traz essa marca. O golpe leve do desenho toca a preparação 1,5 vez mais devagar que o clipe e a recuperação 4,4 vezes mais rápido (F-056 §4).
+- Os fps em 1080p, em duas rodadas: 16 manequins de 8.546 vértices a 127 a 129 fps, com os 1% piores em 105; com MSAA 4x, 107 a 108. Um manequim de 25.636 vértices derruba os 16 para 37 fps; o que pesa é o número de vértices (F-056 §5 e §6). A Q-22 ganhou a resposta medida.
+- A vitrine ganhou a seção da rodada 1 (versão 3).
+- Um tropeço da sonda: um argumento mal lido deixou o modo de assistir aberto em tela cheia até o limite de 300 s, numa das medições do feminino; a rodada foi refeita.
+
+Decidido na rodada 1 (07/10), sob a delegação do Arthur (F-058):
+- O jogo é aberto: repositório público, contribuições por PR e o Arthur como mantenedor principal, sem lucro. O repositório abre no Desenho 6 (TASK-8), junto com a licença do código (Q-04); até lá, segue privado.
+- A política de assets fica só com licença que deixa redistribuir e modificar: CC0 primeiro; CC BY com crédito; OFL para fontes; MIT, Apache e ISC para ícones e código. A EULA e o "não redistribua" saem de vez, pagos ou grátis (Synty, Sonniss, Mixamo, Fab Standard); NC, ND, Editorial, só-Unreal, uso pessoal e RemArc seguem fora; BY-SA, só com o ok do Arthur. Nada se compra. Muda a escolha 3 do Ready (F-054 §4).
+- O pipeline da sonda vira o padrão: glTF (`.glb`); a escala de import que leva o lutador à cápsula de 1,8 m; o `.import` no git; `_Loop` no nome para o laço; clipes in place; a marca do ativo à mão em cada clipe de golpe; a pose como função do estado; um rig só, o do UAL2.
+- O orçamento v0 de vértices: 10 mil por lutador no detalhe máximo, com a arma, e LOD para quem está longe. Com 10 mil, os 16 ficam em uns 9,4 ms na RX 550, pela conta de dois pontos (F-056 §6). Número v0 fechado pelo Claude (DEC-0017).
+- No v0, o MSAA fica em 2x (cerca de 0,8 ms com 16 lutadores), e a sombra e o contorno ficam ligados: a sombra mostra a altura de quem está no ar, e o contorno, a silhueta (pilar 1). Cortar o contorno a distância e o LOD são a primeira saída se o quadro apertar (Q-22). O MSAA entra no `project.godot`, com guarda, no fechamento.
+- A sonda fica para o Arthur assistir quando quiser (`godot --path ../assets-sonda`); o que ele sentir entra numa fonte (F-041; F-055).
+- A conferência da licença ficou sem resposta. A política já não depende dela, porque nada com EULA entra.
+- O Arthur assistiu à sonda: achou o movimento liso, e o contorno o surpreendeu; sem ele, "pareceu outro jogo" (F-059). O contorno entra na DEC do fechamento como parte da cara do jogo: se o quadro apertar, a saída é cortá-lo de quem está longe, não desligá-lo.
+
+Rodada 2 (noite de 07 para 08/10, sessão 9), a leitura do combate e a interface:
+- A sonda (`../netfox-sonda/sonda`, F-061): o parry de brinquedo ganhou os quatro golpes (leve, carregado com carga sorteada, quebra de guarda, finta), as três defesas, os tokens como dado num Resource, o som sintetizado no bus "leitura" com ducking do ambiente, o filtro de daltonismo de tela cheia com as matrizes da vitrine, o Theme único com a base de 1920 × 1080 e a escala pelas teclas, as teclas por posição física com o rótulo do layout, as cadeias por ID em pt-BR e en, e a versão de brinquedo do julgamento na tela de quem defende (DEC-0026 §3).
+- Achado de arquitetura (F-061 §2; `mudancas.md`): "som só no tick novo" cobre um caso só. O oponente espelhado nunca tem tick novo, e o veredito do contato nasce sempre num tick refeito. A regra que cobre os três casos é a chave do evento: cada cue apresentada uma vez, quando aparece no estado exibido. No cliente a ping 120, o `is_fresh` veria de um terço a metade dos eventos (SyncTest: 42 apresentados, 42 `is_fresh`, 168 ingênuos, zero divergência em 10.752 conferências). A redação da DEC-0004 (regra 2) e do `rede.md` muda no fechamento, com o ok do Arthur.
+- O atraso de visão vem do próprio estado (`sim_tick`): o `get_last_known_state()` do netfox devolve zero para o oponente no cliente.
+- O bot leitor de 200 ± 40 ms a ping 120: carregado aparado 8 de 8 com 50 ms de margem (contra zero no relógio do servidor no Desenho 3), quebra esquivada 13 de 16 (as 3 perdidas chegaram 14 a 25 ticks atrasadas: jitter, Q-09), finta sem morder 12 de 12, leve bloqueado 5 de 12 (a moeda da F-053 §2.4).
+- O Arthur jogou dois jogos, visão comum e deuteranopia (F-062): achou complicado e pouco claro, foi "no susto", desconfia do ping, não formou opinião sobre o som (sem fone) e pediu para testar mais. Os logs: a cor do carregado se leu (F em meio segundo, 29 de 29), o tempo do parry não (1 em 29, com a carga sorteada; 3 parries de 0 a 33 ms no leve, de preparação fixa); a forma da quebra não se leu (F em vez de esquiva, 1 esquiva em 27); a finta mordida 8 de 27; o leve "não tinha nem como reagir" (300 ms, F-053 §2.4).
+- O que muda antes da DEC (critério 5): a quebra ganha cor, a mão em vermelhão desde o tick 0, com o pulso e o pisão mantidos (trocado na sonda); o carregado de carga variável vai para a Q-21; o próximo teste roda a ping 0 e 100, com fone, antes do fechamento.
+- Sob deuteranopia o par vermelho × verde vira dois tons de oliva; os tokens seguem separados pelo brilho; o roxo "de longe" chega perto do cinza do leve (ponto para o arco).
+- A vitrine ganhou a seção da rodada 2 (versão 4).
+
+- Correção: a vitrine da rodada 2 é a versão 5 do artefato, não a 4.
+
+- Re-teste na mesma noite, a ping 0 e 100, com fone (F-063): o mesmo padrão sem lag. Nenhum parry no carregado em 21 (a carga sorteada), a quebra respondida com F mesmo com a mão vermelha (esquiva a tempo 2 de 22), 3 parries no leve com margem de 0 a 17 ms ("senti que ia sair e apertei"), a finta mordida 7 de 20. O lag está descartado; a quebra vira a Q-25 (reação de escolha em 350 ms); a Q-21 ganha a prova a ping 0. A sonda não muda de novo; o fechamento pode seguir.
+
+Fechamento (08/10, sessão 9), sob o plano aprovado (F-065):
+- A sonda do "antes" do critério 3: um pack falso em `assets/third_party/sonda/pack/modelo.txt`, sem linha no `CREDITS.md` e sem licença, passou pelo portão de hoje: `bash tools/gate.sh` terminou em "gate green in 18s", com saída 0. O buraco existia.
+- A pergunta fixa da chave do evento foi acertada: "o is_fresh só existe para o nó que este PC simula".
+
+- O implementer (um round): `tools/check_assets.sh` com os canários (`bad_no_line`, `bad_no_license`, `bad_stray_file`, `good_pack`; o orquestrador acrescentou `bad_name` para a regra do snake_case, que só a sonda provava), o passo "Assets and LFS (DEC-0029)" no portão, o `.gitattributes` com dez formatos novos (nenhum arquivo rastreado tinha essas extensões), o `project.godot` gravado por `ProjectSettings.save()` sem tela (a regravação deixou o arquivo idêntico, `cmp`), e quatro testes com cinco guardas no `project_settings_test.gd`, cada uma derrubada por sonda (1152, 648, "disabled", "ignore", 0).
+- A sonda do "depois" do critério 3: o pack `assets/third_party/sonda/pack/modelo.txt` sem licença e sem linha derruba o portão com duas linhas nomeando o pack; com `LICENSE.txt`, cai só pela linha; o canário `good_pack` prova o caso que passa. Um arquivo solto e uma pasta `sonda-x` caem pelos dois motivos.
+- A prova do LFS (critério 7): `git check-attr` em 28 formatos diz `lfs` e em 6 de texto diz `unspecified`; um `modelo.gltf` e um `fonte.woff2` de 52 bytes num pack temporário apareceram em `git lfs ls-files` (`f7d16005b0` e `3b68579668`) e o `cat-file` mostrou o ponteiro; um arquivo vazio não vira ponteiro (provado num repositório de sonda), por isso os canários usam `modelo.txt`. O pack temporário saiu antes do commit.
+- Ressalvas do implementer: a largura e a altura ficaram num teste só, com uma asserção de `Vector2i` (as cinco guardas caem); o `grep -F -w` evita que a linha de `pack_v2` valha pela de `pack`.
+
+- O portão num clone limpo (`git clone file:///C:/... --branch task-7-desenho-5` numa pasta temporária): verde em 32 s, 28 testes, 9 arquivos no LFS, o passo "Assets and LFS" dizendo `lfs ok: 28 formats tracked, 6 text formats free` e `assets ok: no packs yet (canaries ok: 4 bad flagged, 1 good clean)`. Commit `b4f7139`.
+- A vitrine ganhou a seção "O fechamento" (versão 7).
+
+- O reviewer (primeira conferência): CHANGES_REQUESTED só por texto: as citações da F-050 misturavam as subseções 1.x com as seções 2 a 6 ("§1.3" valia para o KayKit e para as fontes); duas faixas de números não batiam com a F-061 §2 (18 a 24 e 98 a 113); o exemplo da cota do LFS estava sem rótulo; o `AGENTS.md` ficou 77 caracteres acima da meta de 12.300. Corrigido: as seções da F-050 como §2 a §6, as subseções como §1.x, os veredictos pelo id; os números; o exemplo rotulado; o `AGENTS.md` abaixo de 12.300.
+
+- O DoD 2 (teste automatizado para toda regra do núcleo) não se aplica: a TASK-7 não tem código em `core/`, como a TASK-6. A segunda conferência do reviewer: APPROVE depois de um ponteiro (`F-050 §6`).
+<!-- SECTION:NOTES:END -->

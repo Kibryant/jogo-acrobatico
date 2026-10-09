@@ -4,6 +4,7 @@ title: 'Desenho 6: infraestrutura e serviços'
 status: To Refine
 assignee: []
 created_date: '2026-10-02 16:48'
+updated_date: '2026-10-07 23:13'
 labels:
   - infra
   - desenho
@@ -51,3 +52,12 @@ Sexta conversa da fase de desenho (DEC-0012). O jogo vai precisar de servidor em
 - [ ] #3 Diário da sessão escrito e glossário atualizado
 - [ ] #4 Mudanças registradas em docs/mudancas.md
 <!-- DOD:END -->
+
+## Comments
+
+<!-- COMMENTS:BEGIN -->
+created: 2026-10-07 23:13
+---
+Entrada do Desenho 5, rodada 1 (TASK-7; F-058): o Arthur quer o jogo aberto, com o repositório público, contribuições por PR e ele como mantenedor principal, sem lucro. O repositório abre neste desenho, junto com a licença do código (Q-04). Até lá, os assets já só entram com licença que deixa redistribuir (TASK-7). O que abrir muda: o CI fica grátis em repositório público, e a regra de branch passa a valer no plano Free (F-047 §1.1; Q-03); a banda do LFS é cobrada por download (F-050 §5), e num repositório público quem clona também baixa (inferência); o histórico precisa estar limpo de segredo e de asset fechado antes de abrir (o gitleaks já varre o histórico inteiro, registro da TASK-2).
+---
+<!-- COMMENTS:END -->

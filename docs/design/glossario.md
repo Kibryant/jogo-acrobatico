@@ -1,6 +1,6 @@
 ---
-revisado_em: 2026-10-07
-fontes: [F-001, F-002, F-005, F-007, F-012, F-013, F-020, F-021, F-025, F-026, F-028, F-030, F-032, F-038, F-039, F-044, F-045, F-046, F-050, F-051, F-052, F-053]
+revisado_em: 2026-10-08
+fontes: [F-001, F-002, F-005, F-007, F-012, F-013, F-020, F-021, F-025, F-026, F-028, F-030, F-032, F-038, F-039, F-044, F-045, F-046, F-050, F-051, F-052, F-053, F-056, F-058]
 ---
 
 # Glossário
@@ -30,7 +30,7 @@ A linguagem ubíqua do jogo (DEC-0004, regra 5): o mesmo termo na conversa, no d
 | Redundância de input | Cada pacote de input repete os 3 últimos ticks, para um pacote perdido não perder o aperto | ticks | `input_redundancy` |
 | Previsão | O cliente aplica o próprio input na hora, sem esperar o servidor. A previsão do input dos outros fica desligada (DEC-0026) | — | `prediction` |
 | Rollback | Voltar ao estado confirmado e re-simular os ticks seguintes | — | `rollback` |
-| Tick novo | Tick simulado pela primeira vez; só nele tocam som e efeito | — | `is_fresh` |
+| Tick novo | Tick simulado pela primeira vez neste peer. Só existe para o nó que o peer simula; som e efeito tocam pela chave do evento, não por ele (DEC-0031) | — | `is_fresh` |
 | Interpolação | Mostrar os outros jogadores suavizados entre dois estados recebidos | — | `interpolation` |
 | Oponente no passado | O oponente aparece na tela no último estado confirmado que chegou, atrasado pelo atraso de ponta a ponta, e nunca adivinhado (DEC-0026) | ms | — |
 | Atraso de visão | Quão velho estava o oponente na tela quando o jogador apertou: o tick atual menos o tick do último estado recebido dele. Vai no input, como um carimbo, a partir da fase 3 | ticks | `view_lag` |
@@ -149,7 +149,7 @@ A linguagem ubíqua do jogo (DEC-0004, regra 5): o mesmo termo na conversa, no d
 
 | Termo | O que é | Unidade | No código |
 |---|---|---|---|
-| Token de leitura | O sinal que um estado do combate emite para quem olha: uma cor, uma pose e um som, sempre os três juntos. Vive como dado num Resource, é lido do estado e só toca no tick novo (TASK-7; F-053) | — | `telegraph_token` |
+| Token de leitura | O sinal que um estado do combate emite para quem olha: uma cor, uma pose e um som, sempre os três juntos. Vive como dado num Resource, é lido do estado e toca uma vez por evento, pela chave (DEC-0031; F-053) | — | `telegraph_token` |
 | Reagível | Golpe que dá para ver começar e responder a tempo, sem adivinhar. Uma pessoa mediana reage em 213 a 273 ms; o leve de 300 ms não é reagível para bloquear, o carregado de 500 a 900 é (F-053 §2) | ms | — |
 | CC0 | Licença em que o autor abre mão de todos os direitos: uso comercial, modificação e redistribuição livres, sem crédito. Uma lib MIT sem nem o aviso (F-050) | — | — |
 | CC BY | Licença que permite tudo com crédito ao autor, na forma que a licença pede (F-050) | — | — |
@@ -161,3 +161,9 @@ A linguagem ubíqua do jogo (DEC-0004, regra 5): o mesmo termo na conversa, no d
 | Casco invertido | O contorno feito com uma segunda casca da malha, um pouco maior e só com as faces de trás. Funciona no Compatibility (F-051 §2.5) | — | `grow`, `next_pass` |
 | Theme | A folha de estilo da interface do Godot: os tipos de tema são os seletores, os itens são as propriedades, as variações são as classes e o override local é o style inline (F-051 §3.1) | — | `Theme` |
 | Bus de som | Um canal de mixagem com volume e efeitos próprios, como um canal de uma mesa de som. O bus "leitura" abaixa os outros para o aviso do golpe nunca ser mascarado (F-051 §5.2; F-053 §4) | dB | `AudioServer` |
+| Redistribuir | Passar adiante uma cópia do arquivo. Um repositório público redistribui tudo o que tem dentro, para cada pessoa que clona; por isso só entra asset cuja licença deixa redistribuir, pago ou grátis (F-058) | — | — |
+| Projeto aberto | Código público com uma licença que deixa outros usarem, mudarem e mandarem PR. O mantenedor decide o que entra no merge, como no próprio Godot (F-058) | — | — |
+| Orçamento de vértices | Quantos vértices um lutador pode ter no detalhe máximo para 16 lutadores caberem no piso de 60 fps. O valor v0 é 10 mil, com a arma, e LOD a distância (DEC-0030 §6; F-056 §6) | vértices | — |
+| Marca do ativo | O trecho de um clipe em que o golpe pega, marcado à mão. O clipe de biblioteca não traz a marca; no `Sword_Regular_A`, ela fica de 46% a 69% do clipe (F-056 §4) | % do clipe | — |
+| Chave do evento | O nome de um acontecimento do combate que a tela apresenta uma vez só, por exemplo "ativo do ataque 542": a tela compara o estado exibido com o último que apresentou e toca o som ou o efeito de cada chave nova. Cobre o nó próprio, o oponente espelhado e o veredito que nasce num tick refeito, onde o `is_fresh` do netfox não chega (F-061 §2). Como a `key` de uma lista no React: reaplicar o mesmo estado não cria evento | — | `present()`, `_cued` |
+| Pack de terceiros | Um conjunto de assets de uma fonte de fora, numa pasta `assets/third_party/<fonte>/<pack>/` com o arquivo de licença dentro e uma linha no `CREDITS.md`; sem os dois, o portão derruba (DEC-0029) | — | `assets/third_party` |

@@ -6,10 +6,12 @@ status: aceita
 decidido_por: Arthur
 fontes: [F-002, F-003, F-005, F-007]
 substitui:
-substituida_por: DEC-0022, só a frase sobre a RewindableStateMachine
+substituida_por: DEC-0022, só a frase sobre a RewindableStateMachine; DEC-0031, só a frase "Som e VFX só tocam em tick novo, nunca na re-simulação" da regra 2
 ---
 
 > ⚠️ Em parte substituída por DEC-0022 em 2026-10-02: a frase sobre a `RewindableStateMachine` não é a regra atual. As seis regras continuam valendo.
+
+> ⚠️ Em parte substituída por DEC-0031 em 2026-10-08: a frase "Som e VFX só tocam em tick novo, nunca na re-simulação" da regra 2 não é a regra atual; som e efeito tocam uma vez por evento, pela chave. O resto da regra 2 e as outras regras continuam valendo.
 
 # DEC-0004 — Arquitetura: núcleo puro, nós finos e DDD só estratégico
 

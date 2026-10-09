@@ -6,8 +6,10 @@ status: aceita
 decidido_por: Arthur
 fontes: [F-001, F-005, F-007, F-023, F-026, F-027, F-028, F-029, F-032, F-033, F-036]
 substitui:
-substituida_por:
+substituida_por: DEC-0031, só a frase do §2 que dá o atraso de visão pelo get_last_known_state()
 ---
+
+> ⚠️ Em parte substituída por DEC-0031 em 2026-10-08: a frase do §2 que dá o atraso de visão pelo `get_last_known_state()` não é a regra atual; o atraso vem do tick que o próprio estado carrega. O resto desta DEC continua valendo.
 
 # DEC-0026 — A rede: o input, o oponente no passado, a compensação de lag, a detecção do golpe, a fase 1 no tick e a Main
 

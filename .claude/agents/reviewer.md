@@ -12,7 +12,7 @@ Judge every acceptance criterion as MEETS, FAILS or CANNOT VERIFY. Each verdict 
 Also check, citing `path:line`:
 - `core/` stays pure, and the state is flat and counted in integer ticks.
 - Typed GDScript everywhere; no unchecked `as`.
-- No `Timer`, `await` or wall clock in the simulation; sound and VFX only on fresh ticks.
+- No `Timer`, `await` or wall clock in the simulation; sound and VFX once per event, by its key, when it first shows in the displayed state, never again on resimulation (DEC-0031).
 - Resources are not mutated at runtime, and every ms-to-ticks conversion has a test.
 - Every game number traces to `docs/design/`; none was invented.
 - Tests go through public interfaces: no reading source files, no mocking private functions. Two written exceptions (DEC-0027): the SyncTest may drive netfox's tick through its internal functions, and a test may read a configuration file that has no runtime API, such as `export_presets.cfg`.

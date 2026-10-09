@@ -1,0 +1,1 @@
+Canary asset (tools/check_assets.sh): a text file stands in for the model. Never a .glb or any other LFS format here: git-lfs lets an empty file through as a plain blob, and Godot would try to import it.

@@ -1,0 +1,1 @@
+CC0 1.0 Universal (canary stand-in). A real pack keeps its licence file under its original name, next to the assets (DEC-0029).

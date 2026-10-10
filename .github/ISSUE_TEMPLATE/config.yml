@@ -1,0 +1,5 @@
+blank_issues_enabled: true
+contact_links:
+  - name: Perguntas e ideias
+    url: https://github.com/Kibryant/jogo-acrobatico/discussions
+    about: Para conversar sobre o jogo, tirar dúvidas e propor ideias, use o Discussions.

@@ -3,9 +3,10 @@ id: TASK-11
 title: >-
   Abrir o repositório: a licença, os arquivos da comunidade e a virada para
   público
-status: Ready
+status: In Progress
 assignee: []
 created_date: '2026-10-10 13:20'
+updated_date: '2026-10-10 14:08'
 labels:
   - infra
 milestone: m-0

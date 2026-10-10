@@ -4,7 +4,7 @@ title: 'Desenho 6: infraestrutura e serviços'
 status: In Progress
 assignee: []
 created_date: '2026-10-02 16:48'
-updated_date: '2026-10-10 12:58'
+updated_date: '2026-10-10 13:04'
 labels:
   - infra
   - desenho
@@ -128,6 +128,12 @@ Decidido na rodada 1 (10/10), sob as escolhas do Arthur (F-074):
 - O servidor fecha limpo por um comando próprio (para o tick, fecha a conexão, sai com 0), e o tini fica como rede de segurança no contêiner; o teste confere a saída 0.
 - A Q-05 está respondida pela pesquisa e pela sonda: a Edgegap tem São Paulo e pôs o servidor lá; a relay grátis só serve a P2P (F-066 §2; F-073 §3). A resposta formal entra com a DEC.
 - Falta na rodada: o ping no horário de pico e a seção da rodada 1 na vitrine.
+
+Rodada 2 (10/10, sessão 10), o código aberto e os serviços:
+- O ensaio da abertura num clone (`../abertura-ensaio`): o gitleaks varreu os 40 commits de todas as refs sem achado; nenhum IP da casa, CPF ou telefone no histórico; o gdUnit4 e o netfox são MIT com a licença ao lado; nenhum asset de terceiros ainda (F-075). Critério 5 provado.
+- Decidido sob as escolhas do Arthur (F-076): MIT no código, CC BY 4.0 nos assets próprios, o nome e o logo fora da licença, contribuição pela regra do GitHub (inbound=outbound). A main recusa force push e apagar e um PR só entra com o portão verde; as sessões sem task seguem commitando direto na main (DEC-0028 §4); PR de fora só roda o CI depois da aprovação, sem segredo, e os jobs sem binário não baixam o LFS.
+- Os serviços: o crash pelo log do Godot na fase 2 e pelo Sentry, sem dado pessoal, na fase 3; contas e ranking na fase 4, com login pela Steam ou pelo Discord e o ranking gravado só pelo servidor oficial, e o lugar (Supabase ou banco do servidor) decidido lá pelo custo; o GitHub Discussions como casa da comunidade e o Discord só como canal extra; no jogo, sinais rápidos sem chat livre; o SignPath assim que abrir (Q-20); a página da Steam na fase 4 e o Steam Direct na fase 5, o SDK nunca no repositório; o aviso de privacidade quando o servidor guardar IP, a classificação indicativa no lançamento, um advogado antes das contas e do chat, o INPI só com o nome definitivo.
+- O `mudancas.md` registra o Discord fora do centro e a correção da Oracle; o `roteiro.md` muda no fechamento.
 <!-- SECTION:NOTES:END -->
 
 ## Comments

@@ -1,6 +1,6 @@
 ---
 revisado_em: 2026-10-10
-fontes: [F-001, F-002, F-005, F-007, F-012, F-013, F-020, F-021, F-025, F-026, F-028, F-030, F-032, F-038, F-039, F-044, F-045, F-046, F-050, F-051, F-052, F-053, F-056, F-058, F-066, F-068, F-069, F-070, F-073]
+fontes: [F-001, F-002, F-005, F-007, F-012, F-013, F-020, F-021, F-025, F-026, F-028, F-030, F-032, F-038, F-039, F-044, F-045, F-046, F-050, F-051, F-052, F-053, F-056, F-058, F-066, F-068, F-069, F-070, F-073, F-078, F-079, F-081]
 ---
 
 # Glossário
@@ -189,3 +189,10 @@ A linguagem ubíqua do jogo (DEC-0004, regra 5): o mesmo termo na conversa, no d
 | Ruleset | A trava da main no próprio GitHub: o pre-push do lado do servidor, valendo para quem não tem este PC. Aqui, recusa force push e apagar a main (DEC-0033 §3) | — | — |
 | PR de fork | O pedido de merge de quem não tem acesso ao repositório: a pessoa copia o projeto, muda e pede para entrar. O CI dele só roda com a aprovação do Arthur, sem segredo (DEC-0033 §3) | — | — |
 | Inbound=outbound | Quem manda um PR entrega o código sob a mesma licença do repositório, pelos termos do GitHub, sem contrato extra (DEC-0033 §1; F-068 §6) | — | `LICENSE` |
+| Virada para público | Tornar o repositório público. Libera o CI grátis em 4 núcleos e as travas que o plano Free só dá a repositório público, zera os watchers e não se desfaz: quem clonou ou fez fork fica com a cópia (F-069 §5 e §12, R-12; F-080 §2; F-081 §3 a §5) | — | `gh repo edit --visibility public` |
+| Commit solto | Commit que nenhuma branch alcança, como o de uma branch apagada. Não vem num clone, mas o GitHub ainda o mostra pelo SHA; por isso entrou na varredura da abertura (F-079 §2; F-081 §2) | — | `git rev-list <sha> --not --all` |
+| Runner | A máquina do GitHub que roda o CI. No repositório público, o padrão tem 4 núcleos e 16 GB e sai de graça; no privado, 2 núcleos e 8 GB, na cota de minutos. O passo "Runner size" do CI mostra qual rodou (F-069 §1; F-081 §5) | vCPU | `runs-on: ubuntu-24.04` |
+| Secret scanning e push protection | O GitHub procura senhas e chaves nos commits e, com o push protection, recusa o push que traz uma: o gitleaks do lado do servidor (F-069 §4; F-081 §4) | — | — |
+| Alerta do Dependabot | O aviso do GitHub quando uma dependência do repositório, como uma action do CI, tem uma falha de segurança conhecida (F-069 §4; F-081 §4) | — | — |
+| Relato privado de vulnerabilidade | O botão da aba Security por onde alguém conta uma falha só para o mantenedor, em vez de abrir uma issue pública (F-069 §4; F-081 §4) | — | `SECURITY.md` |
+| Código de conduta | As regras de convivência da comunidade: o Contributor Covenant 3.0 traduzido, com o Arthur na moderação e o Gmail dele como contato (F-078 §2; F-079 §3) | — | `CODE_OF_CONDUCT.md` |

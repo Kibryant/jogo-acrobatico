@@ -1,6 +1,6 @@
 ---
 revisado_em: 2026-10-10
-fontes: [F-001, F-050, F-066, F-067, F-068, F-069, F-070, F-071, F-073, F-074, F-075, F-076]
+fontes: [F-001, F-050, F-066, F-067, F-068, F-069, F-070, F-071, F-073, F-074, F-075, F-076, F-080, F-081]
 ---
 
 # Infraestrutura e serviços
@@ -10,7 +10,7 @@ Onde o jogo roda fora deste PC, quanto custa e quando cada serviço entra. As re
 ## Estado atual
 
 - O servidor e os clientes rodam neste PC. O servidor da sonda já rodou num contêiner Docker aqui e na Edgegap em São Paulo (F-073).
-- O repositório é privado e abre na TASK-11, em MIT para o código e CC BY 4.0 para os assets próprios (DEC-0033).
+- O repositório é público desde 10/10/2026, aberto na TASK-11 com o ok do Arthur (F-080 §2; F-081 §3). Tudo nele fica na MIT, inclusive os docs; os assets próprios ficam na CC BY 4.0 (DEC-0033; DEC-0035).
 - Nenhum serviço pago está ativo.
 
 ## O servidor
@@ -54,10 +54,11 @@ O estudo disse que a Oracle cortou o servidor gratuito em 15/06/2026 (F-001). O 
 
 ## O repositório aberto
 
-- MIT no código e CC BY 4.0 nos assets próprios; o nome e o logo fora da licença; a contribuição pela seção D.6 dos termos do GitHub (DEC-0033 §1).
-- O histórico abre como está, com o e-mail do Arthur (F-071 §3; F-075).
-- A main recusa force push e apagar; PR de fora só roda o CI depois da aprovação, com o token só de leitura (DEC-0033 §3).
-- Em repositório público, o Actions é grátis e roda em 4 núcleos, e todo download do LFS, até de fork, sai da cota do dono: 10 GiB guardados e 10 GiB baixados por mês, bloqueados sem cartão em vez de cobrados (F-069 §1 e §3; F-050 §5).
+- MIT em tudo, inclusive os docs; CC BY 4.0 nos assets próprios; os assets de terceiros e os addons na licença de cada um; o código de conduta na CC BY-SA 4.0; o nome e o logo fora da licença; a contribuição pela seção D.6 dos termos do GitHub (DEC-0033 §1; DEC-0035).
+- O histórico abriu como estava, com o e-mail do Arthur (F-071 §3; F-075; F-081 §2).
+- A main recusa force push e apagar; PR de fora só roda o CI depois da aprovação, com o token só de leitura (DEC-0033 §3). A sonda viu o force push recusado e o commit direto aceito (F-081 §5).
+- Ligados na abertura: o secret scanning com push protection, o alerta do Dependabot, o relato privado de vulnerabilidade e o Discussions; o Wiki ficou desligado (F-080 §1; F-081 §4).
+- Em repositório público, o Actions é grátis e roda em 4 núcleos, e todo download do LFS, até de fork, sai da cota do dono: 10 GiB guardados e 10 GiB baixados por mês, bloqueados sem cartão em vez de cobrados (F-069 §1 e §3; F-050 §5). O primeiro CI depois da virada rodou em 4 núcleos e 15 GB (F-081 §5).
 
 ## Os serviços
 

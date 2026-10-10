@@ -1,6 +1,6 @@
 ---
 revisado_em: 2026-10-10
-fontes: [F-001, F-007, F-032, F-044, F-074, F-076]
+fontes: [F-001, F-007, F-032, F-044, F-074, F-076, F-082, F-083]
 ---
 
 # Roteiro
@@ -20,9 +20,10 @@ As fases do estudo, cada uma com o teste que pode encerrar o projeto sem culpa (
 
 O detalhe de cada mudança está em `mudancas.md`.
 
-- **Fase 0:** virou base do repositório, fase de desenho e esqueleto andante (DEC-0012).
+- **Fase 0:** virou base do repositório, fase de desenho e esqueleto andante (DEC-0012). A fase de desenho fechou em 10/10/2026, com os seis desenhos e as DEC-0013 a DEC-0035; não se abre desenho de base novo. Cada fase abre com o seu desenho de jogo, com a lista na DEC-0036; o que aparecer no meio vira Q em `pendencias.md`.
 - **Fase 1:** no estudo, era "movimento sem rede". O rollback exige que o movimento rode dentro do tick desde o começo (F-007 §2). O Desenho 3 decidiu: a fase 1 nasce no tick do netfox e é jogada sozinha, no modo "Sozinho" da `Main`, sem rede. A SyncTest no portão cobre cada manobra nova (DEC-0026; DEC-0027). A gravação do replay por inputs também começa na fase 1, para reproduzir sem tela os bugs de movimento; o replay para o jogador segue na fase 4 (F-044 §1; DEC-0027).
 - **Fase 3:** o primeiro servidor fora de casa é uma VPS em São Paulo; até lá, nada se paga (DEC-0032).
+- **Entre a fase 3 e a 4:** o arco e as armas entram como marco próprio, depois do 1v1 online e antes do 4v4 com bots (DEC-0004, regra 6; DEC-0036).
 - **Fase 4:** a comunidade mora no GitHub Discussions, e o Discord só entra como canal extra; no jogo, só sinais rápidos, sem chat livre (DEC-0034; `mudancas.md`).
 
 A rota alternativa do estudo continua de pé: primeiro um jogo para jogar sozinho ou em dupla contra o computador, com a mesma movimentação, para formar público (F-001).

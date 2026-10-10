@@ -20,7 +20,7 @@
 | [DEC-0009](DEC-0009-harness-do-claude-code.md) | 2026-10-02 | A harness do SkinHub, mais leve | aceita; completada pela DEC-0027 nos hooks do Claude Code |
 | [DEC-0010](DEC-0010-construir-e-ensinar.md) | 2026-10-02 | O Claude constrói e ensina; o Arthur dirige | aceita |
 | [DEC-0011](DEC-0011-direcoes-para-depois.md) | 2026-10-02 | Direções para validação de acerto, hospedagem e replay | aceita, como direção; a validação de acerto da espada foi detalhada pela DEC-0026, e o replay pela DEC-0027; o ponto 2 completado pela DEC-0032 |
-| [DEC-0012](DEC-0012-fase-de-desenho-antes-do-codigo.md) | 2026-10-02 | Fase de desenho com seis conversas e um esqueleto andante | aceita na sessão 2 (F-010 §2); completada pela DEC-0034 (os gatilhos dos serviços) |
+| [DEC-0012](DEC-0012-fase-de-desenho-antes-do-codigo.md) | 2026-10-02 | Fase de desenho com seis conversas e um esqueleto andante | aceita na sessão 2 (F-010 §2); completada pela DEC-0034 (os gatilhos dos serviços) e pela DEC-0036 (o fechamento da fase e o desenho por fase) |
 | [DEC-0013](DEC-0013-camera-em-terceira-pessoa.md) | 2026-10-02 | Câmera em terceira pessoa | aceita; os números da câmera saem na rodada 2 do Desenho 1 |
 | [DEC-0014](DEC-0014-tribo-do-combate-for-honor.md) | 2026-10-02 | Tribo do combate For Honor e Chivalry 2: tempo fixo e aviso claro | aceita |
 | [DEC-0015](DEC-0015-registrar-ter-posicao-e-dizer-nao.md) | 2026-10-02 | O Claude registra o que o Arthur pensa em voz alta, tem posição e diz não | aceita; completa a DEC-0010 |
@@ -44,6 +44,7 @@
 | [DEC-0033](DEC-0033-repositorio-aberto-e-licenca.md) | 2026-10-10 | O repositório aberto e a licença: MIT no código, CC BY 4.0 nos assets próprios, o nome fora da licença, o histórico como está, a main sem force push e o PR de fora só com aprovação | aceita; completa a DEC-0008 e a DEC-0028; completada pela DEC-0035 (os docs na MIT) |
 | [DEC-0034](DEC-0034-servicos-e-gatilhos.md) | 2026-10-10 | Os serviços e os gatilhos: o crash, as contas e o ranking, a comunidade no GitHub, só sinais rápidos no jogo, a assinatura pelo SignPath, a Steam e a lei | aceita; completa a DEC-0012 |
 | [DEC-0035](DEC-0035-os-docs-na-mit.md) | 2026-10-10 | Os docs na MIT: tudo no repositório fica na MIT, inclusive os docs, as fontes e o AGENTS.md, salvo os assets próprios, os de terceiros e os addons, o código de conduta e o nome | aceita; completa a DEC-0033 |
+| [DEC-0036](DEC-0036-fase-de-desenho-fechada-um-desenho-por-fase.md) | 2026-10-10 | A fase de desenho fechou: nenhum desenho de base novo; o desenho de jogo acontece um por fase, na abertura da fase, com a lista nomeada; o que aparecer no meio vira Q | aceita; completa a DEC-0012 e fecha a pergunta da F-035 e da F-082 |
 
 ## Propostas — ainda não são regra
 

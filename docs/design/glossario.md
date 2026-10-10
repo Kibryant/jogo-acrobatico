@@ -1,6 +1,6 @@
 ---
 revisado_em: 2026-10-10
-fontes: [F-001, F-002, F-005, F-007, F-012, F-013, F-020, F-021, F-025, F-026, F-028, F-030, F-032, F-038, F-039, F-044, F-045, F-046, F-050, F-051, F-052, F-053, F-056, F-058, F-066, F-068, F-069, F-070, F-073, F-078, F-079, F-081]
+fontes: [F-001, F-002, F-005, F-007, F-012, F-013, F-020, F-021, F-025, F-026, F-028, F-030, F-032, F-038, F-039, F-044, F-045, F-046, F-050, F-051, F-052, F-053, F-056, F-058, F-066, F-068, F-069, F-070, F-073, F-078, F-079, F-081, F-083]
 ---
 
 # Glossário
@@ -76,6 +76,7 @@ A linguagem ubíqua do jogo (DEC-0004, regra 5): o mesmo termo na conversa, no d
 | Fatia varrida | A área que a lâmina percorre do começo ao fim de um tick. O teste do golpe usa a fatia, para a lâmina não pular o corpo entre dois ticks (DEC-0026) | m | `sweep` |
 | Vantagem | Depois de uma troca, quem volta a agir primeiro, e com quantos ms de folga | ms no design, ticks no código | `advantage` |
 | Tranco | O tempo sem agir de quem leva um golpe (hitstun) ou o bloqueia (blockstun). Ainda sem número (Q-10) | ms no design, ticks no código | `hitstun`, `blockstun` |
+| Hitstop | A pausa curta de quem bate e de quem leva, no instante do acerto, que faz o golpe parecer que encostou em algo. É só apresentação: o tick não para, a tela segura a pose. Padrão do gênero (F-083 §4); ainda sem número, v0 do Claude no desenho do duelo (DEC-0036; DEC-0017) | ms | `hitstop` |
 | Punir o erro | Acertar quem errou um golpe enquanto ele ainda está na recuperação | — | — |
 | Cancelamento | Cortar uma ação para começar outra. Só existe o desenhado: na lista, com preço, com aviso e com janela larga (DEC-0016) | — | `cancel` |
 | Janela | O intervalo em que uma ação vale, como a do parry | ms no design, ticks no código | `window` |

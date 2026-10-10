@@ -1,6 +1,6 @@
 ---
-revisado_em: 2026-10-09
-fontes: [F-001, F-002, F-005, F-007, F-012, F-013, F-020, F-021, F-025, F-026, F-028, F-030, F-032, F-038, F-039, F-044, F-045, F-046, F-050, F-051, F-052, F-053, F-056, F-058, F-066, F-068, F-069, F-070]
+revisado_em: 2026-10-10
+fontes: [F-001, F-002, F-005, F-007, F-012, F-013, F-020, F-021, F-025, F-026, F-028, F-030, F-032, F-038, F-039, F-044, F-045, F-046, F-050, F-051, F-052, F-053, F-056, F-058, F-066, F-068, F-069, F-070, F-073]
 ---
 
 # Glossário
@@ -183,3 +183,9 @@ A linguagem ubíqua do jogo (DEC-0004, regra 5): o mesmo termo na conversa, no d
 | Licença permissiva e copyleft | A permissiva (MIT, Apache) deixa qualquer um usar, mudar e até fechar o código, desde que mantenha o aviso, como o Godot e o netfox. A copyleft (GPL) obriga quem distribui uma versão mudada a abrir o código dela, como o Linux (F-068 §4) | — | `LICENSE` |
 | Assinatura da build | Um certificado que diz ao Windows quem publicou o `.exe`. Sem ele, o Smart App Control barra a build de um jogo novo; o SignPath assina de graça projeto de código aberto (F-069 §7; Q-20) | — | — |
 | Cota do LFS | Quanto o GitHub guarda e entrega dos arquivos grandes no plano grátis: 10 GiB guardados e 10 GiB baixados por mês. Num repositório público, todo download sai da cota do dono, até o de um fork (F-050 §5; F-069 §3) | GiB | `.gitattributes` |
+| Registro de imagens | Onde a imagem do servidor fica guardada para outra máquina baixar. É o npm das imagens; o da Edgegap é `registry.edgegap.com` (F-073 §1) | MB | `docker push` |
+| Deploy | Pôr uma cópia da imagem para rodar num servidor de verdade. Na Edgegap grátis, um por vez e por 60 minutos (F-066 §2; F-073 §3) | min | — |
+| Sinal de parada e PID 1 | O `docker stop` manda o SIGTERM ao primeiro processo do contêiner. O Godot não o trata e morre com saída 143; por isso o servidor fecha por um comando nosso, e o `tini` como PID 1 só repassa o sinal (DEC-0032 §2; F-073 §2) | — | `tini` |
+| Ruleset | A trava da main no próprio GitHub: o pre-push do lado do servidor, valendo para quem não tem este PC. Aqui, recusa force push e apagar a main (DEC-0033 §3) | — | — |
+| PR de fork | O pedido de merge de quem não tem acesso ao repositório: a pessoa copia o projeto, muda e pede para entrar. O CI dele só roda com a aprovação do Arthur, sem segredo (DEC-0033 §3) | — | — |
+| Inbound=outbound | Quem manda um PR entrega o código sob a mesma licença do repositório, pelos termos do GitHub, sem contrato extra (DEC-0033 §1; F-068 §6) | — | `LICENSE` |

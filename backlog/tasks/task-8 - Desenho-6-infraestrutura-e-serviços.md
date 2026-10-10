@@ -4,7 +4,7 @@ title: 'Desenho 6: infraestrutura e serviços'
 status: In Progress
 assignee: []
 created_date: '2026-10-02 16:48'
-updated_date: '2026-10-10 13:04'
+updated_date: '2026-10-10 13:20'
 labels:
   - infra
   - desenho
@@ -134,6 +134,14 @@ Rodada 2 (10/10, sessão 10), o código aberto e os serviços:
 - Decidido sob as escolhas do Arthur (F-076): MIT no código, CC BY 4.0 nos assets próprios, o nome e o logo fora da licença, contribuição pela regra do GitHub (inbound=outbound). A main recusa force push e apagar e um PR só entra com o portão verde; as sessões sem task seguem commitando direto na main (DEC-0028 §4); PR de fora só roda o CI depois da aprovação, sem segredo, e os jobs sem binário não baixam o LFS.
 - Os serviços: o crash pelo log do Godot na fase 2 e pelo Sentry, sem dado pessoal, na fase 3; contas e ranking na fase 4, com login pela Steam ou pelo Discord e o ranking gravado só pelo servidor oficial, e o lugar (Supabase ou banco do servidor) decidido lá pelo custo; o GitHub Discussions como casa da comunidade e o Discord só como canal extra; no jogo, sinais rápidos sem chat livre; o SignPath assim que abrir (Q-20); a página da Steam na fase 4 e o Steam Direct na fase 5, o SDK nunca no repositório; o aviso de privacidade quando o servidor guardar IP, a classificação indicativa no lançamento, um advogado antes das contas e do chat, o INPI só com o nome definitivo.
 - O `mudancas.md` registra o Discord fora do centro e a correção da Oracle; o `roteiro.md` muda no fechamento.
+
+Fechamento (10/10, sessão 10), sob o plano aprovado (F-077), criticado antes por um agente de planejamento com 22 achados, todos incorporados:
+- As DEC-0032 (a hospedagem; substitui a frase "O push na main não gera build" da DEC-0028), DEC-0033 (o repositório aberto e a licença) e DEC-0034 (os serviços e os gatilhos), aceitas; o índice com o "completa" e o "substitui" e a linha do Histórico.
+- O `docs/arquitetura/infraestrutura.md` com cada serviço, o gatilho, a direção, o custo nas quatro faixas, a lei e a fonte; a correção da Oracle.
+- O roteiro, as pendências (Q-03, Q-04, Q-05 e Q-20 respondidas; a nota da Q-09; as novas Q-27 e Q-28), o `mudancas.md`, o glossário e o `AGENTS.md` (12.299 caracteres).
+- A TASK-11 criada Ready, com os critérios da abertura em quatro blocos; a TASK-9 com a entrada do Desenho 6 e a dependência da TASK-11.
+- A vitrine na versão 3, com as rodadas 1 e 2.
+- O critério 3 vale com dois horários (sexta à tarde e sábado de manhã); o pico da noite fica em "o que não foi medido" e na Q-09.
 <!-- SECTION:NOTES:END -->
 
 ## Comments

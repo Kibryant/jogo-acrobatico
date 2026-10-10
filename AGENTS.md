@@ -4,7 +4,7 @@ Canonical instructions for every agent in this repository; `CLAUDE.md` only impo
 
 ## The project
 
-A free online 3D action game, a hobby of Arthur (~10 h/week) with Claude Code: acrobatic movement (wall-run, dash, grappling hook), sword, bow and guns with a free loadout; 1v1 first, then 4v4 and 8v8. A spiritual successor of GunZ in mechanics only: no GunZ name, art, maps, sounds or code (F-001). "Jogo Acrobático" is a working title.
+A free online 3D action game, a hobby of Arthur (~10 h/week) with Claude Code: acrobatic movement (wall-run, dash, grappling hook), sword, bow and guns with a free loadout; 1v1 first, then 4v4 and 8v8. A spiritual successor of GunZ in mechanics only: no GunZ name, art, maps, sounds or code (F-001). Open source: MIT code, CC BY 4.0 own assets (DEC-0033). "Jogo Acrobático" is a working title.
 
 Stack: Godot 4.7.2, statically typed GDScript, netfox at 60 ticks (server-authoritative, client prediction with rollback), Compatibility renderer, Jolt physics, gdUnit4 (DEC-0001 to DEC-0005, DEC-0023, DEC-0024, DEC-0027). Minimum spec is Arthur's PC (Ryzen 3 PRO 3200G, Radeon RX 550 4 GB) at 60 fps in 1080p (DEC-0002).
 
@@ -34,16 +34,16 @@ Explain in Arthur's world (DEC-0021): the first question of every round checks t
 | `core/` | Pure simulation rules: no nodes, integer ticks only (DEC-0004). |
 | `common/` | Code shared by features. |
 | `data/` | Resources (.tres) with design data. Immutable at runtime. |
-| `assets/` | Art and audio. Third-party packs live in `assets/third_party/<fonte>/<pack>/`, with the licence file beside and a row in `assets/CREDITS.md` (DEC-0029). |
-| `addons/` | Third-party Godot addons, vendored and pinned (gdUnit4 6.2.1; netfox main `cf5189d`, DEC-0023). |
+| `assets/` | Art and audio. Third-party packs in `assets/third_party/<fonte>/<pack>/`, licence beside, a row in `assets/CREDITS.md` (DEC-0029). |
+| `addons/` | Vendored, pinned addons (gdUnit4 6.2.1; netfox `cf5189d`, DEC-0023). |
 | `test/` | gdUnit4 suites, mirroring the code paths. |
 | `tools/` | The gate (`gate.sh`), its checks and their canaries. |
 | `backlog/` | Backlog.md tasks and milestones. CLI only. |
 | `docs/fontes/` | F-xxx: what was received, as received. Immutable. |
 | `docs/decisoes/` | DEC-xxxx in ADR format; `README.md` is the index. |
-| `docs/design/` | The game on paper: vision, combat, movement, visual and audio, and the glossary (ubiquitous language). |
+| `docs/design/` | The game on paper: vision, combat, movement, visual and audio, glossary (ubiquitous language). |
 | `docs/arquitetura/` | How the game is built; `README.md` is the index. |
-| `docs/diario/` | One devlog entry per session, for Arthur. |
+| `docs/diario/` | One devlog entry per session. |
 | `docs/roteiro.md` | Phases and their gates. |
 | `docs/mudancas.md` | What changed state, and why. Append-only. |
 | `docs/pendencias.md` | Open questions (Q-xx). |
@@ -105,7 +105,7 @@ The character's state machine lives in `core/` as data: a mode and the tick it b
 
 ## Branches and versions (DEC-0028)
 
-- Tasks are made Ready on main; from In Progress to Done each lives on a branch `task-N-slug` and closes in a PR in Portuguese. Arthur merges (merge commit), or Claude with his ok. Sessions without a task commit to main; parallel sessions use one git worktree each, never a shared folder.
+- Tasks are made Ready on main; from In Progress to Done each lives on a branch `task-N-slug` and closes in a PR in Portuguese. Arthur merges (merge commit), or Claude with his ok. No-task sessions commit to main, which refuses force push once public (DEC-0033); parallel sessions use one worktree each.
 - Version: `application/config/version`, SemVer `0.y.z`, digits only.
 
 ## Backlog.md (DEC-0007)

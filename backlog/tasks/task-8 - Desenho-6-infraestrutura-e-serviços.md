@@ -4,7 +4,7 @@ title: 'Desenho 6: infraestrutura e serviços'
 status: In Progress
 assignee: []
 created_date: '2026-10-02 16:48'
-updated_date: '2026-10-10 12:56'
+updated_date: '2026-10-10 12:58'
 labels:
   - infra
   - desenho
@@ -122,6 +122,12 @@ Rodada 1 (09/10, sessão 10), o servidor fora de casa:
 - O Arthur jogou 204 s com o servidor no contêiner aqui (21,5% de um núcleo, 43 MB) e 262 s com ele na Edgegap, que o pôs em São Paulo: 13,9% de um núcleo, ping de 24 ms e 37 ms no jogo, estável, sem perda (F-073 §2 e §3).
 - Ele achou liso, com umas travadas em que o golpe repetia (F-072 §3). Os logs mostram rajadas do tranco também sem rede: é regra da sonda, não servidor (F-073 §4); virou a Q-26.
 - O segundo horário do ping saiu num sábado às 9h47, igual ao de sexta à tarde; o pico da noite segue sem medida (F-073 §5).
+
+Decidido na rodada 1 (10/10), sob as escolhas do Arthur (F-074):
+- O esqueleto andante roda neste PC, servidor e clientes, e a imagem Docker do servidor Linux é construída e testada no CI a cada push. Nada pago até a fase 3; aí, uma VPS em São Paulo; a Edgegap grátis fica para testes de 60 minutos. Vira a DEC da hospedagem no fechamento (critério 2).
+- O servidor fecha limpo por um comando próprio (para o tick, fecha a conexão, sai com 0), e o tini fica como rede de segurança no contêiner; o teste confere a saída 0.
+- A Q-05 está respondida pela pesquisa e pela sonda: a Edgegap tem São Paulo e pôs o servidor lá; a relay grátis só serve a P2P (F-066 §2; F-073 §3). A resposta formal entra com a DEC.
+- Falta na rodada: o ping no horário de pico e a seção da rodada 1 na vitrine.
 <!-- SECTION:NOTES:END -->
 
 ## Comments

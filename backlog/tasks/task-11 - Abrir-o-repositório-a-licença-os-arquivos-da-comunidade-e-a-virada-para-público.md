@@ -6,7 +6,7 @@ title: >-
 status: Done
 assignee: []
 created_date: '2026-10-10 13:20'
-updated_date: '2026-10-10 21:35'
+updated_date: '2026-10-10 21:55'
 labels:
   - infra
 milestone: m-0
@@ -61,7 +61,7 @@ Confirmadas pelo Arthur no plano aprovado do fechamento do Desenho 6 (F-077) e n
 <!-- DOD:BEGIN -->
 - [x] #1 Critérios de aceite verificados
 - [ ] #2 Teste automatizado para toda regra do núcleo (core/)
-- [ ] #3 Diário da sessão escrito e glossário atualizado
+- [x] #3 Diário da sessão escrito e glossário atualizado
 - [x] #4 Mudanças registradas em docs/mudancas.md
 <!-- DOD:END -->
 
@@ -81,7 +81,11 @@ Parte 2 (10/10, sessão 11), a conferência, a virada e as sondas (F-080; F-081)
 - Logo depois: o ruleset 24855428 (`deletion` e `non_fast_forward`, sem ninguém para pular), a aprovação de todo PR de fora, o secret scanning com push protection, o alerta do Dependabot e o relato privado, cada um conferido por leitura.
 - As sondas: o commit vazio `f7857ca` passou direto na main; o force push de um commit igual foi recusado com o GH013; o CI no repositório público rodou em 4 vCPU e 15 GB, verde. A primeira tentativa de force push não testou nada (o amend recusou o commit vazio); a segunda tinha uma trava contra isso.
 - **A aprovação de PR de fora fica para conferir no primeiro PR de verdade vindo de um fork.**
-- O Watch: o Arthur disse que clicou, mas às 21:32 UTC a API respondia `UNSUBSCRIBED`; ele confere no botão se ficou em "All Activity".
+- O Watch: às 21:32 UTC a API respondia `UNSUBSCRIBED`; o Arthur pôs o Watch de novo, e às 21:38 a API respondia `SUBSCRIBED` (F-081 §6). Ele também conferiu na tela que o formulário de issue aparece (F-080 §4).
+- O CodeRabbit, app do GitHub que comenta em todo PR, fica por enquanto (F-080 §4); no primeiro PR de fora, ver se o resumo dele ajuda ou atrapalha quem contribui.
 - A TASK-11 fugiu da DEC-0028 §4 em três pontos, registrados no `mudancas.md`: dois PRs, um commit vazio direto na main e a branch `task-11-fechamento`.
 - O DoD 2 (teste para regra do núcleo) não se aplica: não há código em `core/`.
+
+Fechamento (10/10, sessão 11), no PR #5:
+- O reviewer (Fable 5.1, contexto limpo) aprovou os critérios 3 a 6 com prova ao vivo: o próprio gitleaks num clone espelho novo, os 22 logs do Actions, o ruleset com `current_user_can_bypass: never` e o registro de atividade do GitHub, que mostra só a `main` entre 21:19 e 21:37 UTC, em volta da virada. A prova da cota é inferência (o runner de 4 núcleos, que o GitHub dá de graça a repositório público), como a F-081 §5 diz. Os ajustes de texto (duas linhas do glossário) entraram no PR.
 <!-- SECTION:NOTES:END -->

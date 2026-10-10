@@ -14,7 +14,7 @@ substituida_por:
 - O merge commit `3fd067c` pôs na `main` a licença e os arquivos da comunidade.
 - A API de licença do GitHub lê o repositório como MIT, pelo arquivo `LICENSE`.
 - O perfil da comunidade dá 100%, com o README, a licença (`mit`), o CONTRIBUTING, o código de conduta (`other`, porque a tradução não é um texto que o GitHub conheça) e o modelo de PR.
-- O modelo de issue aparece como ausente na API, e a lista de modelos do GraphQL vem vazia. O `godotengine/godot`, que só usa formulários em YAML, também vem vazio nas duas, então a API não conta formulários. O `config.yml` foi lido: o link "Perguntas e ideias" aparece.
+- O modelo de issue aparece como ausente na API, e a lista de modelos do GraphQL vem vazia. O `godotengine/godot`, que só usa formulários em YAML, também vem vazio nas duas, então a API não conta formulários. O `config.yml` foi lido: o link "Perguntas e ideias" aparece. Depois da virada, o Arthur conferiu na tela que o formulário aparece (F-080 §4).
 - O Discussions foi ligado e o Wiki desligado logo depois do merge (F-080 §1).
 
 ## §2 — A conferência final (critério 3)
@@ -87,7 +87,7 @@ Seguem desligados, porque o critério não os pede: as atualizações de seguran
 ## §6 — O que fica para depois
 
 - A aprovação de PR de fora só se confere no primeiro PR de verdade vindo de um fork.
-- Às 21:32:55, depois de o Arthur dizer que clicou em Watch (F-080 §3), o GraphQL respondeu `viewerSubscription: UNSUBSCRIBED` e 0 watchers. A API da inscrição pede o escopo `notifications`, que o token do `gh` não tem.
+- Às 21:32:55, depois de o Arthur dizer que clicou em Watch (F-080 §3), o GraphQL respondeu `viewerSubscription: UNSUBSCRIBED` e 0 watchers. A API da inscrição pede o escopo `notifications`, que o token do `gh` não tem. Às 21:38:43, depois de ele dizer que tinha posto o Watch (F-080 §4), o GraphQL respondeu `SUBSCRIBED` e 1 watcher.
 - A TASK-11 fugiu da DEC-0028 §4 em três pontos, que a ordem dos blocos (F-077 §1) e os critérios 1 e 6 da task pedem:
   - dois PRs, porque a licença precisava estar na `main` antes da virada e o fechamento só existe depois dela;
   - um commit vazio direto na `main`, feito numa sessão com task, porque a sonda do critério 6 é um push direto;

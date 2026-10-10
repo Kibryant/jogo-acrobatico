@@ -1,8 +1,8 @@
 ---
 id: F-080
-titulo: O Arthur autoriza o merge do PR #4, liga o Discussions e desliga o Wiki, responde à conferência da virada com "Nao vou mudar de ideia", autoriza a virada para público e a atualização do infraestrutura.md, e diz que clicou em Watch (sessão 11, 10/10/2026)
+titulo: O Arthur autoriza o merge do PR #4, liga o Discussions e desliga o Wiki, responde à conferência da virada com "Nao vou mudar de ideia", autoriza a virada para público e a atualização do infraestrutura.md, põe o Watch, confere o formulário de issue e mantém o CodeRabbit (sessão 11, 10/10/2026)
 recebido_em: 2026-10-10
-como: Respostas escolhidas nas opções de três perguntas do Claude Code, com duas questões cada, e uma resposta digitada no campo livre. Texto das perguntas e das descrições como foram mostradas, copiado da transcrição da sessão.
+como: Respostas escolhidas nas opções de quatro perguntas do Claude Code, três com duas questões e uma com uma, mais uma resposta digitada no campo livre e duas mensagens digitadas. Texto das perguntas, das descrições e das mensagens como foram mostradas ou chegaram, sem correção, copiado da transcrição da sessão.
 status: vigente
 substituida_por:
 ---
@@ -40,3 +40,17 @@ Resposta: "Pode atualizar (Recomendado)", cuja descrição dizia: "O documento v
 Pergunta: "Você já clicou em Watch (All Activity) no repositório?"
 
 Resposta: "Já cliquei", cuja descrição dizia: "Você recebe aviso de toda issue, PR e discussão nova."
+
+## §4 — Depois da virada: o Watch, o formulário e o CodeRabbit
+
+> Contexto, escrito pelo agente: às 21:32:55 a API ainda dizia que a conta do Arthur não acompanhava o repositório (F-081 §6). O Claude pediu que ele conferisse o Watch em "All Activity" e olhasse o repositório numa janela anônima e o formulário do "New issue", porque a API do GitHub não conta formulários em YAML (F-081 §1). As duas mensagens vieram digitadas, sem pergunta. Depois, o reviewer apontou que nenhuma decisão registra o CodeRabbit, um app do GitHub que comenta em todo PR, e o Claude perguntou.
+
+"TAPronto agora coloquei o watch"
+
+"olhei, o formulário aparece certinho"
+
+Pergunta: "O CodeRabbit (o bot que comenta um resumo em todo PR) segue no repositório agora público?"
+
+Resposta: "Mantém por enquanto (Recomendado)", cuja descrição dizia: "Fica como está. No primeiro PR de fora, que já tem outra conferência anotada, a gente vê se o resumo dele ajuda ou atrapalha quem contribui."
+
+A outra opção era "Desinstala", cuja descrição dizia: "Você tira em Settings > Applications > Installed GitHub Apps; o token do gh não consegue. Os PRs ficam só com o nosso CI e o reviewer."

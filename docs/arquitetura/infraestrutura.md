@@ -71,7 +71,7 @@ O custo dos serviços abaixo não depende da faixa de jogadores, a não ser onde
 | Comunidade | A abertura (TASK-11) | O GitHub Discussions; o Discord só como canal extra | R$ 0 | O Discord é classificado como não recomendado para menores de 18 (S-15) | DEC-0034; F-067 §6 e §10 |
 | Conversa no jogo | O primeiro jogo em rede | Só sinais rápidos, sem chat livre | R$ 0 | Chat livre pediria denúncia, recurso e interação limitada por padrão (ECA Digital, art. 21) | DEC-0034; F-068 §2 |
 | Assinatura da build | Depois da abertura e da primeira release | O SignPath, grátis para código aberto; antes disso, um passo a passo para os testadores | R$ 0 | — | DEC-0034; F-069 §7 e §12 |
-| Steam | Fases 4 e 5 | O SDK fora do repositório; a build Steam opcional | US$ 100 por app, uma vez | A classificação indicativa no acesso; o questionário da Steam gera a do Brasil | DEC-0034; F-067 §2 e §3; F-068 §3 |
+| Steam | Fases 4 e 5 | O SDK fora do repositório; a build Steam opcional | US$ 100 por app, uma vez | A classificação indicativa no acesso; o questionário da Steam gera classificações regionais, e a do Brasil só consta num post de moderador, sem documentação oficial (F-068 §3 e §11) | DEC-0034; F-067 §2 e §3; F-068 §3 |
 | O repositório | A abertura (TASK-11) | MIT e CC BY 4.0, o ruleset e a aprovação de PR de fora | R$ 0, com o LFS na cota grátis | Citar o GunZ como inspiração é baixo risco; o nome nunca vai no título, no logo ou na Steam | DEC-0033; F-068 §8; F-069 §1 |
 
 O ECA Digital só proíbe expressamente a loot box paga, e o jogo não tem loja. Um advogado confere, antes das contas e do chat, se uma pessoa física que publica um jogo grátis conta como "fornecedor" (F-068 §2).

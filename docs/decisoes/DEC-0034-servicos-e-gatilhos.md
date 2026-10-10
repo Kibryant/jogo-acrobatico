@@ -26,7 +26,7 @@ A pesquisa conferida na origem mudou três coisas. O Discord está sob processo 
 
 ## Decisão
 
-Decidida pelo Arthur em 10/10/2026: "Na hora certa (Recomendado)", "GitHub + sinais rápidos (Recomendado)" e "Como na vitrine (Recomendado)" (F-076 §2).
+Decidida pelo Arthur em 10/10/2026: "Na hora certa (Recomendado)", "GitHub + sinais rápidos (Recomendado)" e "Como na vitrine (Recomendado)" (F-076 §2). O momento da assinatura foi refinado no plano aprovado (F-077 §1).
 
 | Serviço | Gatilho | Direção |
 |---|---|---|
@@ -34,7 +34,7 @@ Decidida pelo Arthur em 10/10/2026: "Na hora certa (Recomendado)", "GitHub + sin
 | Contas e ranking | Fase 4 | Login pela Steam ou pelo Discord, sem senha guardada por nós; o ranking gravado só pelo servidor oficial, com a chave secreta só nele (F-067 §1). Supabase ou banco do servidor, decidido lá pelo custo |
 | Comunidade | A abertura do repositório (TASK-11) | O GitHub Discussions é a casa; o Discord só entra como canal extra, nunca o único |
 | Conversa no jogo | O primeiro jogo em rede | Só sinais rápidos ("boa", "de novo?"), sem chat livre |
-| Assinatura da build | Depois da abertura e da primeira release (v0.1.0, TASK-9), antes de amigos testarem | Pedido ao SignPath, que exige projeto "já lançado" e tem a página em rascunho (F-069 §7; X-04). Até lá, um passo a passo para os testadores. A Certum é plano B não confirmado |
+| Assinatura da build | O Arthur escolheu "assim que o repositório abrir, antes de os amigos testarem" (F-076 §2). O plano aprovado refinou o momento: depois da abertura e da primeira release (v0.1.0, TASK-9), porque o SignPath exige projeto "já lançado" e tem a página em rascunho (F-077 §1; F-069 §7; X-04) | Pedido ao SignPath. Até lá, um passo a passo para os testadores. A Certum é plano B não confirmado |
 | Steam | Fases 4 e 5 | O SDK nunca no repositório; a build Steam é opcional, com o SDK baixado no CI. O Steam Direct custa US$ 100 por app, com 30 dias entre pagar e lançar e a página "em breve" no ar pelo menos 2 semanas antes (F-067 §2, §3 e §10) |
 | Lei | Cada gatilho acima | Aviso de privacidade quando o servidor guardar IP; dados mínimos nas contas; nenhuma loot box paga; classificação indicativa no lançamento; um advogado antes das contas e do chat (F-068 §1 a §3) |
 

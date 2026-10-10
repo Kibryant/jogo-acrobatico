@@ -62,6 +62,7 @@ Decidida pelo Arthur em 10/10/2026: "PC + imagem no CI (Recomendado)" e "Comando
 - A Q-05 está respondida: a Edgegap tem São Paulo e pôs o servidor lá; a relay grátis só serve para P2P (F-066 §2; F-073 §3).
 - A TASK-9 recebe a entrada do Desenho 6: o job da imagem, o comando de fechamento e a receita da sonda em `../servidor-sonda`.
 - A DEC-0028 fica em parte substituída, só na frase do §2.
+- Completa a DEC-0027: o job da imagem roda no CI fora do portão, sem mudar o portão nem o pre-push.
 
 ## Revisitar se
 

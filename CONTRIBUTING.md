@@ -76,6 +76,6 @@ Thanks for your interest! Jogo Acrobático is an open hobby project with one lea
 - Set up Godot 4.7.2, gdscript-formatter 0.27.0, gitleaks 8.30.1, lefthook and Git LFS. Run `git lfs install`, `lefthook install` and `godot --headless --path . --import`, then `bash tools/gate.sh`, which must pass. The same gate runs on pre-push and in CI. Never bypass or weaken a check, and never edit a locked test.
 - Statically typed GDScript; pure simulation rules in `core/`, with gdUnit4 tests. Code and comments are in English; commit messages and pull request descriptions are in Portuguese.
 - Third-party assets need a license that allows redistribution in a public repository, and go under `assets/third_party/` with their license file and a row in `assets/CREDITS.md`.
-- Under section D.6 of GitHub's Terms of Service, your contribution is licensed under the repository's licenses (MIT for code, CC BY 4.0 for original assets). There is no CLA.
+- Under section D.6 of GitHub's Terms of Service, your contribution is licensed under the repository's licenses (MIT for code and documentation, CC BY 4.0 for original assets). There is no CLA.
 - CI for pull requests from forks runs only after the maintainer approves it. The maintainer merges with a merge commit.
 - Follow the Code of Conduct, and report security issues privately as described in SECURITY.md.

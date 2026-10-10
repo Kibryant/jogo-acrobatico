@@ -37,7 +37,7 @@ substituida_por:
 | `6b97c12` | "Sonda da TASK-6, rodada 3: os dois presets exportados no Linux" | `.github/workflows/probe-export.yml`, `export_presets.cfg`, `probe_main.gd`, `probe_main.tscn`, `project.godot` |
 | `0353917` | "Sonda da TASK-6, rodada 3: a linha da cena de sonda dentro de 100 colunas" | `probe_main.gd` |
 | `3e97177` | "Sonda da TASK-6, rodada 3: segundo run, para medir o cache dos templates" | nenhum (commit vazio) |
-| `3fb7b48` | "Sonda da TASK-6, rodada 2: o replay gravado no Windows, rodado no Linux" | `.github/workflows/probe-replay.yml` e os arquivos de `probes/replay/` |
+| `3fb7b48` | "Sonda da TASK-6, rodada 2: o replay gravado no Windows, rodado no Linux" | `.github/workflows/probe-replay.yml`, `probes/.gdignore` e os arquivos de `probes/replay/` |
 
 ## §3 — De onde vêm os textos públicos
 

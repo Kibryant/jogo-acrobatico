@@ -43,4 +43,4 @@ Pergunta: "Qual licença cobre os docs (docs/, as fontes com as suas falas, os d
 
 Resposta: "MIT, como o código (Recomendado)", cuja descrição dizia: "Uma licença só para tudo o que não é asset, sem fronteira para discutir (o AGENTS.md, as skills e os comentários misturam código e texto). Quem copia mantém o aviso da licença; pode copiar e mudar, inclusive as suas falas nas fontes."
 
-A outra opção era "CC BY 4.0, como os assets".
+A outra opção era "CC BY 4.0, como os assets", cuja descrição dizia: "A licença feita para texto e mídia: quem copia dá o crédito e avisa o que mudou, o que protege um pouco mais as suas falas citadas. O README ganha uma terceira regra, e AGENTS.md e skills ficam numa fronteira para decidir."

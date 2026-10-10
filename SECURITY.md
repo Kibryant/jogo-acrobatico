@@ -21,8 +21,8 @@ O projeto ainda não tem release; só a `main` recebe correções.
 
 ## O que esperar
 
-O projeto é mantido por uma pessoa, no tempo livre. A resposta pode demorar, mas todo relato é lido. Depois da correção, o relato pode virar um aviso público no GitHub (security advisory), com crédito para quem relatou, se a pessoa quiser.
+O projeto é mantido por uma pessoa, no tempo livre, então a resposta pode demorar. Depois da correção, o GitHub permite publicar o relato como um aviso de segurança (security advisory), com crédito para quem relatou.
 
 ## English summary
 
-Please do not open a public issue for a security problem. Report it privately through GitHub: open the **Security** tab and click **Report a vulnerability**; only the maintainer sees it. Say what the flaw allows, how to reproduce it and which commit you used. There are no releases yet, so only `main` gets fixes. This is a one-person hobby project, so a reply may take a while, but every report is read.
+Please do not open a public issue for a security problem. Report it privately through GitHub: open the **Security** tab and click **Report a vulnerability**; only the maintainer sees it. Say what the flaw allows, how to reproduce it and which commit you used. There are no releases yet, so only `main` gets fixes. This is a one-person hobby project, so a reply may take a while.

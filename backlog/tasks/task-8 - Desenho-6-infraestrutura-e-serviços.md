@@ -4,7 +4,7 @@ title: 'Desenho 6: infraestrutura e serviços'
 status: In Progress
 assignee: []
 created_date: '2026-10-02 16:48'
-updated_date: '2026-10-09 20:46'
+updated_date: '2026-10-10 12:56'
 labels:
   - infra
   - desenho
@@ -117,6 +117,11 @@ Rodada 1 (09/10, sessão 10), o servidor fora de casa:
 - O teste sem contêiner, com os três processos neste PC: o servidor desta sonda gasta mediana de 41% de um núcleo, e cada cliente sobe uns 25 kB/s, acima do Desenho 3 (de 15 a 23% e 12,4 kB/s; F-034). O contêiner mede o servidor sozinho.
 - A instalação: o Docker Desktop 4.94.0 entrou pelo winget. O WSL 2.7.13 só entrou num PowerShell elevado: o `wsl.exe` de fábrica recusou o `--no-distribution`, e o pacote do WSL pede administrador. O Windows pede reinício para a plataforma de máquina virtual.
 - Depois do reinício: abrir o Docker Desktop, aceitar os termos, esperar o motor rodar e seguir com o `local.sh`.
+
+- Depois do reinício: o Docker 29.8.2 rodou; a imagem tem 222 MB e o servidor sobe em 1,2 a 1,6 s no contêiner; o `docker stop` leva 0,5 s, mas sai com 143, morto pelo SIGTERM: o fechamento limpo é ponto para o esqueleto andante (F-073 §1 e §2).
+- O Arthur jogou 204 s com o servidor no contêiner aqui (21,5% de um núcleo, 43 MB) e 262 s com ele na Edgegap, que o pôs em São Paulo: 13,9% de um núcleo, ping de 24 ms e 37 ms no jogo, estável, sem perda (F-073 §2 e §3).
+- Ele achou liso, com umas travadas em que o golpe repetia (F-072 §3). Os logs mostram rajadas do tranco também sem rede: é regra da sonda, não servidor (F-073 §4); virou a Q-26.
+- O segundo horário do ping saiu num sábado às 9h47, igual ao de sexta à tarde; o pico da noite segue sem medida (F-073 §5).
 <!-- SECTION:NOTES:END -->
 
 ## Comments

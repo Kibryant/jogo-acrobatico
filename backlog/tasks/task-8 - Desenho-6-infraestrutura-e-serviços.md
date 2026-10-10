@@ -1,10 +1,10 @@
 ---
 id: TASK-8
 title: 'Desenho 6: infraestrutura e serviços'
-status: In Progress
+status: Done
 assignee: []
 created_date: '2026-10-02 16:48'
-updated_date: '2026-10-10 13:20'
+updated_date: '2026-10-10 13:28'
 labels:
   - infra
   - desenho
@@ -75,21 +75,21 @@ Confirmadas pelo Arthur em 09/10 (F-071 §3 e §4):
 
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
-- [ ] #1 Quando a conversa termina, `docs/arquitetura/infraestrutura.md` tem cada serviço (servidor, contas e ranking, Steam, relatório de crash, comunidade, assinatura da build e o repositório) com o gatilho de entrada, a direção, o custo estimado por faixa de jogadores (10, 50, 200 e 1.000) e o que a lei pede nele, com a fonte de cada número.
-- [ ] #2 Quando o Arthur decide a hospedagem do esqueleto andante, uma DEC registra, e a TASK-9 ganha a entrada do Desenho 6.
-- [ ] #3 Quando a sonda da rodada 1 roda o servidor num contêiner, aqui e fora de casa, uma fonte registra o ping em dois horários, a CPU, a memória e a banda do servidor, o tamanho da imagem, onde o servidor rodou e o que o Arthur sentiu; quando o contêiner não sobe ou não fecha limpo, a fonte diz por quê.
-- [ ] #4 Quando o Arthur decide a licença do código e dos assets próprios, a contribuição e o que fica público, uma DEC registra e a Q-04 fecha.
-- [ ] #5 Quando o ensaio da abertura roda num clone, o gitleaks no histórico inteiro sai limpo e uma lista mostra tudo o que fica público; quando aparece segredo, arquivo de licença fechada ou dado que o Arthur não quer expor, a TASK-11 traz a correção antes da abertura.
-- [ ] #6 Quando a conversa termina, a TASK-11 está Ready com os critérios da abertura: os arquivos da licença e da comunidade, o CI de PR de fora sem segredo e só com aprovação, o LFS fora dos jobs que não precisam dele, a virada para público com o ok do Arthur na hora, a regra da main e a conferência no repositório público.
-- [ ] #7 Quando a conversa termina, a Q-05 e a Q-20 têm resposta, e cada pergunta nova vira Q em `docs/pendencias.md`.
+- [x] #1 Quando a conversa termina, `docs/arquitetura/infraestrutura.md` tem cada serviço (servidor, contas e ranking, Steam, relatório de crash, comunidade, assinatura da build e o repositório) com o gatilho de entrada, a direção, o custo estimado por faixa de jogadores (10, 50, 200 e 1.000) e o que a lei pede nele, com a fonte de cada número.
+- [x] #2 Quando o Arthur decide a hospedagem do esqueleto andante, uma DEC registra, e a TASK-9 ganha a entrada do Desenho 6.
+- [x] #3 Quando a sonda da rodada 1 roda o servidor num contêiner, aqui e fora de casa, uma fonte registra o ping em dois horários, a CPU, a memória e a banda do servidor, o tamanho da imagem, onde o servidor rodou e o que o Arthur sentiu; quando o contêiner não sobe ou não fecha limpo, a fonte diz por quê.
+- [x] #4 Quando o Arthur decide a licença do código e dos assets próprios, a contribuição e o que fica público, uma DEC registra e a Q-04 fecha.
+- [x] #5 Quando o ensaio da abertura roda num clone, o gitleaks no histórico inteiro sai limpo e uma lista mostra tudo o que fica público; quando aparece segredo, arquivo de licença fechada ou dado que o Arthur não quer expor, a TASK-11 traz a correção antes da abertura.
+- [x] #6 Quando a conversa termina, a TASK-11 está Ready com os critérios da abertura: os arquivos da licença e da comunidade, o CI de PR de fora sem segredo e só com aprovação, o LFS fora dos jobs que não precisam dele, a virada para público com o ok do Arthur na hora, a regra da main e a conferência no repositório público.
+- [x] #7 Quando a conversa termina, a Q-05 e a Q-20 têm resposta, e cada pergunta nova vira Q em `docs/pendencias.md`.
 <!-- AC:END -->
 
 ## Definition of Done
 <!-- DOD:BEGIN -->
-- [ ] #1 Critérios de aceite verificados
+- [x] #1 Critérios de aceite verificados
 - [ ] #2 Teste automatizado para toda regra do núcleo (core/)
-- [ ] #3 Diário da sessão escrito e glossário atualizado
-- [ ] #4 Mudanças registradas em docs/mudancas.md
+- [x] #3 Diário da sessão escrito e glossário atualizado
+- [x] #4 Mudanças registradas em docs/mudancas.md
 <!-- DOD:END -->
 
 ## Implementation Plan
@@ -142,6 +142,10 @@ Fechamento (10/10, sessão 10), sob o plano aprovado (F-077), criticado antes po
 - A TASK-11 criada Ready, com os critérios da abertura em quatro blocos; a TASK-9 com a entrada do Desenho 6 e a dependência da TASK-11.
 - A vitrine na versão 3, com as rodadas 1 e 2.
 - O critério 3 vale com dois horários (sexta à tarde e sábado de manhã); o pico da noite fica em "o que não foi medido" e na Q-09.
+
+- O reviewer (primeira conferência): CHANGES_REQUESTED só por texto: o momento do SignPath atribuído ao Arthur, que escolheu "assim que o repositório abrir" (o refinamento é do plano); o preço do INPI; o host do registro sem fonte; a classificação da Steam sem a ressalva; o "completa" da DEC-0027; a citação e os ticks da Q-26. Corrigido num commit.
+- O portão num clone limpo da branch: verde em 31 s, sem linha ERROR. A segunda conferência do reviewer: APPROVE, o portão verde em 23 s com 28 testes.
+- O DoD 2 (teste para regra do núcleo) não se aplica: não há código em `core/`, como na TASK-6 e na TASK-7.
 <!-- SECTION:NOTES:END -->
 
 ## Comments

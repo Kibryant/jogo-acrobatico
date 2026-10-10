@@ -6,8 +6,10 @@ status: aceita
 decidido_por: Arthur
 fontes: [F-009, F-017, F-038, F-045, F-046, F-047, F-048]
 substitui:
-substituida_por:
+substituida_por: DEC-0032, só a frase "O push na main não gera build" do §2
 ---
+
+> ⚠️ Em parte substituída por DEC-0032 em 2026-10-10: a frase "O push na main não gera build" do §2 não é a regra atual; o push na main e o PR constroem e testam a imagem do servidor num job do CI, sem guardar artefato. O resto continua valendo.
 
 # DEC-0028 — Builds, versões e fluxo de branch: dois presets, build no PR e na tag, SemVer 0.y.z com o commit carimbado, uma branch por task com PR e um worktree por sessão paralela
 

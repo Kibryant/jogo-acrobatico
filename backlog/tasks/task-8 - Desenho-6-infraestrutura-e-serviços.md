@@ -1,10 +1,10 @@
 ---
 id: TASK-8
 title: 'Desenho 6: infraestrutura e serviços'
-status: Ready
+status: Done
 assignee: []
 created_date: '2026-10-02 16:48'
-updated_date: '2026-10-09 20:21'
+updated_date: '2026-10-10 13:28'
 labels:
   - infra
   - desenho
@@ -75,21 +75,21 @@ Confirmadas pelo Arthur em 09/10 (F-071 §3 e §4):
 
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
-- [ ] #1 Quando a conversa termina, `docs/arquitetura/infraestrutura.md` tem cada serviço (servidor, contas e ranking, Steam, relatório de crash, comunidade, assinatura da build e o repositório) com o gatilho de entrada, a direção, o custo estimado por faixa de jogadores (10, 50, 200 e 1.000) e o que a lei pede nele, com a fonte de cada número.
-- [ ] #2 Quando o Arthur decide a hospedagem do esqueleto andante, uma DEC registra, e a TASK-9 ganha a entrada do Desenho 6.
-- [ ] #3 Quando a sonda da rodada 1 roda o servidor num contêiner, aqui e fora de casa, uma fonte registra o ping em dois horários, a CPU, a memória e a banda do servidor, o tamanho da imagem, onde o servidor rodou e o que o Arthur sentiu; quando o contêiner não sobe ou não fecha limpo, a fonte diz por quê.
-- [ ] #4 Quando o Arthur decide a licença do código e dos assets próprios, a contribuição e o que fica público, uma DEC registra e a Q-04 fecha.
-- [ ] #5 Quando o ensaio da abertura roda num clone, o gitleaks no histórico inteiro sai limpo e uma lista mostra tudo o que fica público; quando aparece segredo, arquivo de licença fechada ou dado que o Arthur não quer expor, a TASK-11 traz a correção antes da abertura.
-- [ ] #6 Quando a conversa termina, a TASK-11 está Ready com os critérios da abertura: os arquivos da licença e da comunidade, o CI de PR de fora sem segredo e só com aprovação, o LFS fora dos jobs que não precisam dele, a virada para público com o ok do Arthur na hora, a regra da main e a conferência no repositório público.
-- [ ] #7 Quando a conversa termina, a Q-05 e a Q-20 têm resposta, e cada pergunta nova vira Q em `docs/pendencias.md`.
+- [x] #1 Quando a conversa termina, `docs/arquitetura/infraestrutura.md` tem cada serviço (servidor, contas e ranking, Steam, relatório de crash, comunidade, assinatura da build e o repositório) com o gatilho de entrada, a direção, o custo estimado por faixa de jogadores (10, 50, 200 e 1.000) e o que a lei pede nele, com a fonte de cada número.
+- [x] #2 Quando o Arthur decide a hospedagem do esqueleto andante, uma DEC registra, e a TASK-9 ganha a entrada do Desenho 6.
+- [x] #3 Quando a sonda da rodada 1 roda o servidor num contêiner, aqui e fora de casa, uma fonte registra o ping em dois horários, a CPU, a memória e a banda do servidor, o tamanho da imagem, onde o servidor rodou e o que o Arthur sentiu; quando o contêiner não sobe ou não fecha limpo, a fonte diz por quê.
+- [x] #4 Quando o Arthur decide a licença do código e dos assets próprios, a contribuição e o que fica público, uma DEC registra e a Q-04 fecha.
+- [x] #5 Quando o ensaio da abertura roda num clone, o gitleaks no histórico inteiro sai limpo e uma lista mostra tudo o que fica público; quando aparece segredo, arquivo de licença fechada ou dado que o Arthur não quer expor, a TASK-11 traz a correção antes da abertura.
+- [x] #6 Quando a conversa termina, a TASK-11 está Ready com os critérios da abertura: os arquivos da licença e da comunidade, o CI de PR de fora sem segredo e só com aprovação, o LFS fora dos jobs que não precisam dele, a virada para público com o ok do Arthur na hora, a regra da main e a conferência no repositório público.
+- [x] #7 Quando a conversa termina, a Q-05 e a Q-20 têm resposta, e cada pergunta nova vira Q em `docs/pendencias.md`.
 <!-- AC:END -->
 
 ## Definition of Done
 <!-- DOD:BEGIN -->
-- [ ] #1 Critérios de aceite verificados
+- [x] #1 Critérios de aceite verificados
 - [ ] #2 Teste automatizado para toda regra do núcleo (core/)
-- [ ] #3 Diário da sessão escrito e glossário atualizado
-- [ ] #4 Mudanças registradas em docs/mudancas.md
+- [x] #3 Diário da sessão escrito e glossário atualizado
+- [x] #4 Mudanças registradas em docs/mudancas.md
 <!-- DOD:END -->
 
 ## Implementation Plan
@@ -106,6 +106,47 @@ Confirmadas pelo Arthur em 09/10 (F-071 §3 e §4):
 3. O plano no modo de plano, revisado antes por um agente de planejamento (registro da TASK-5). Com o ok: uma fonte com o plano, as DECs (a hospedagem; o repositório aberto e a licença; os serviços e os gatilhos), o `docs/arquitetura/infraestrutura.md`, a entrada do Desenho 6 na TASK-9 e a TASK-11 Ready; o `AGENTS.md` acompanha o que mudar.
 4. Registro: as fontes, o glossário, o `mudancas.md` (a correção da Oracle e o que mudar no roteiro), o `pendencias.md` (Q-05, Q-20 e as novas) e o registro da harness; depois o reviewer e o portão num clone limpo.
 <!-- SECTION:PLAN:END -->
+
+## Implementation Notes
+
+<!-- SECTION:NOTES:BEGIN -->
+Rodada 1 (09/10, sessão 10), o servidor fora de casa:
+- A sonda fica em `../servidor-sonda`: uma cópia do parry de brinquedo do Desenho 5 em `jogo/` (sem o `override.cfg`), com o preset "Servidor Linux" de servidor dedicado; o `Dockerfile` (debian:trixie-slim, o `tini` como PID 1, um usuário sem root e a porta 7777/udp); o `local.sh`, o `remoto.sh`, o `medir.py` e os scripts de ping.
+- Fora do editor, o `NetworkSimulator` do netfox se desliga sozinho (`OS.has_feature("editor")`), e o `main.gd` abre o ENet pelo `--port` e pelo `--host`: a build do servidor nunca simula lag.
+- A exportação pela linha de comando do Godot 4.7.2 levou 15 s e deu um binário só, de 73,8 MB, com o pacote embutido.
+- O teste sem contêiner, com os três processos neste PC: o servidor desta sonda gasta mediana de 41% de um núcleo, e cada cliente sobe uns 25 kB/s, acima do Desenho 3 (de 15 a 23% e 12,4 kB/s; F-034). O contêiner mede o servidor sozinho.
+- A instalação: o Docker Desktop 4.94.0 entrou pelo winget. O WSL 2.7.13 só entrou num PowerShell elevado: o `wsl.exe` de fábrica recusou o `--no-distribution`, e o pacote do WSL pede administrador. O Windows pede reinício para a plataforma de máquina virtual.
+- Depois do reinício: abrir o Docker Desktop, aceitar os termos, esperar o motor rodar e seguir com o `local.sh`.
+
+- Depois do reinício: o Docker 29.8.2 rodou; a imagem tem 222 MB e o servidor sobe em 1,2 a 1,6 s no contêiner; o `docker stop` leva 0,5 s, mas sai com 143, morto pelo SIGTERM: o fechamento limpo é ponto para o esqueleto andante (F-073 §1 e §2).
+- O Arthur jogou 204 s com o servidor no contêiner aqui (21,5% de um núcleo, 43 MB) e 262 s com ele na Edgegap, que o pôs em São Paulo: 13,9% de um núcleo, ping de 24 ms e 37 ms no jogo, estável, sem perda (F-073 §2 e §3).
+- Ele achou liso, com umas travadas em que o golpe repetia (F-072 §3). Os logs mostram rajadas do tranco também sem rede: é regra da sonda, não servidor (F-073 §4); virou a Q-26.
+- O segundo horário do ping saiu num sábado às 9h47, igual ao de sexta à tarde; o pico da noite segue sem medida (F-073 §5).
+
+Decidido na rodada 1 (10/10), sob as escolhas do Arthur (F-074):
+- O esqueleto andante roda neste PC, servidor e clientes, e a imagem Docker do servidor Linux é construída e testada no CI a cada push. Nada pago até a fase 3; aí, uma VPS em São Paulo; a Edgegap grátis fica para testes de 60 minutos. Vira a DEC da hospedagem no fechamento (critério 2).
+- O servidor fecha limpo por um comando próprio (para o tick, fecha a conexão, sai com 0), e o tini fica como rede de segurança no contêiner; o teste confere a saída 0.
+- A Q-05 está respondida pela pesquisa e pela sonda: a Edgegap tem São Paulo e pôs o servidor lá; a relay grátis só serve a P2P (F-066 §2; F-073 §3). A resposta formal entra com a DEC.
+- Falta na rodada: o ping no horário de pico e a seção da rodada 1 na vitrine.
+
+Rodada 2 (10/10, sessão 10), o código aberto e os serviços:
+- O ensaio da abertura num clone (`../abertura-ensaio`): o gitleaks varreu os 40 commits de todas as refs sem achado; nenhum IP da casa, CPF ou telefone no histórico; o gdUnit4 e o netfox são MIT com a licença ao lado; nenhum asset de terceiros ainda (F-075). Critério 5 provado.
+- Decidido sob as escolhas do Arthur (F-076): MIT no código, CC BY 4.0 nos assets próprios, o nome e o logo fora da licença, contribuição pela regra do GitHub (inbound=outbound). A main recusa force push e apagar e um PR só entra com o portão verde; as sessões sem task seguem commitando direto na main (DEC-0028 §4); PR de fora só roda o CI depois da aprovação, sem segredo, e os jobs sem binário não baixam o LFS.
+- Os serviços: o crash pelo log do Godot na fase 2 e pelo Sentry, sem dado pessoal, na fase 3; contas e ranking na fase 4, com login pela Steam ou pelo Discord e o ranking gravado só pelo servidor oficial, e o lugar (Supabase ou banco do servidor) decidido lá pelo custo; o GitHub Discussions como casa da comunidade e o Discord só como canal extra; no jogo, sinais rápidos sem chat livre; o SignPath assim que abrir (Q-20); a página da Steam na fase 4 e o Steam Direct na fase 5, o SDK nunca no repositório; o aviso de privacidade quando o servidor guardar IP, a classificação indicativa no lançamento, um advogado antes das contas e do chat, o INPI só com o nome definitivo.
+- O `mudancas.md` registra o Discord fora do centro e a correção da Oracle; o `roteiro.md` muda no fechamento.
+
+Fechamento (10/10, sessão 10), sob o plano aprovado (F-077), criticado antes por um agente de planejamento com 22 achados, todos incorporados:
+- As DEC-0032 (a hospedagem; substitui a frase "O push na main não gera build" da DEC-0028), DEC-0033 (o repositório aberto e a licença) e DEC-0034 (os serviços e os gatilhos), aceitas; o índice com o "completa" e o "substitui" e a linha do Histórico.
+- O `docs/arquitetura/infraestrutura.md` com cada serviço, o gatilho, a direção, o custo nas quatro faixas, a lei e a fonte; a correção da Oracle.
+- O roteiro, as pendências (Q-03, Q-04, Q-05 e Q-20 respondidas; a nota da Q-09; as novas Q-27 e Q-28), o `mudancas.md`, o glossário e o `AGENTS.md` (12.299 caracteres).
+- A TASK-11 criada Ready, com os critérios da abertura em quatro blocos; a TASK-9 com a entrada do Desenho 6 e a dependência da TASK-11.
+- A vitrine na versão 3, com as rodadas 1 e 2.
+- O critério 3 vale com dois horários (sexta à tarde e sábado de manhã); o pico da noite fica em "o que não foi medido" e na Q-09.
+
+- O reviewer (primeira conferência): CHANGES_REQUESTED só por texto: o momento do SignPath atribuído ao Arthur, que escolheu "assim que o repositório abrir" (o refinamento é do plano); o preço do INPI; o host do registro sem fonte; a classificação da Steam sem a ressalva; o "completa" da DEC-0027; a citação e os ticks da Q-26. Corrigido num commit.
+- O portão num clone limpo da branch: verde em 31 s, sem linha ERROR. A segunda conferência do reviewer: APPROVE, o portão verde em 23 s com 28 testes.
+- O DoD 2 (teste para regra do núcleo) não se aplica: não há código em `core/`, como na TASK-6 e na TASK-7.
+<!-- SECTION:NOTES:END -->
 
 ## Comments
 

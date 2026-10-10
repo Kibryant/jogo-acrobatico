@@ -4,7 +4,7 @@ title: 'Esqueleto andante: a cápsula em rede de ponta a ponta'
 status: To Refine
 assignee: []
 created_date: '2026-10-02 16:48'
-updated_date: '2026-10-09 20:21'
+updated_date: '2026-10-10 13:20'
 labels:
   - jogo
   - rede
@@ -15,6 +15,7 @@ dependencies:
   - TASK-5
   - TASK-6
   - TASK-8
+  - TASK-11
 ordinal: 9000
 ---
 
@@ -95,5 +96,14 @@ Entrada do Desenho 4, rodada 3 e fechamento (TASK-6; DEC-0027; DEC-0028), para o
 - A versão: o 0.1.0 entra no commit que fecha esta task, com a tag `v0.1.0`; o CI carimba o commit em `application/config/commit` no export (DEC-0028 §3).
 - O aperto de mão na Main: o cliente manda versão e commit, e o servidor recusa os diferentes (DEC-0028 §3).
 - Esta é a primeira task no fluxo de branch e PR: nasce numa branch `task-9-...` no In Progress e fecha num PR em português, com o Arthur no merge (DEC-0028 §4).
+---
+
+created: 2026-10-10 13:20
+---
+Entrada do Desenho 6 (TASK-8; DEC-0032), para o esqueleto andante:
+- O servidor e os clientes rodam neste PC. Um job do CI, fora do portão e do pre-push, constrói a imagem Docker do servidor Linux em todo push na main e em todo PR e confere que ela sobe e fecha com saída 0, sem guardar artefato (DEC-0032 §1). Como provar a conexão no CI, se não há cliente Linux exportado, sai desta task.
+- O fechamento limpo é por um comando nosso, fora de banda (entrada padrão, arquivo ou RPC, a escolher aqui): para o tick, fecha a conexão e sai com 0. O SIGTERM mata com 143, porque o Godot não o trata; o tini como PID 1 só repassa o sinal (DEC-0032 §2; F-073 §2).
+- Ponto de partida do Claude, não regra: a sonda em `../servidor-sonda` (Dockerfile com `debian:trixie-slim`, `tini`, usuário sem root e a porta 7777/udp; o preset de servidor dedicado; `application/run/flush_stdout_on_print=true`, sem o qual o log de uma build release só sai quando o buffer enche). A imagem tem 222 MB e fica pronta em 1,2 a 1,6 s (F-073 §1 e §2).
+- A TASK-9 começa depois da TASK-11, para o histórico estar parado na virada do repositório para público.
 ---
 <!-- COMMENTS:END -->

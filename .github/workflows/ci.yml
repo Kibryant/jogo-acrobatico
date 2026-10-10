@@ -1,12 +1,17 @@
 # CI (DEC-0027): the same gate as pre-push, plus a secret scan over the whole history.
 # Pinned tool versions match Arthur's machine: Godot 4.7.2, gdscript-formatter 0.27.0, gitleaks 8.30.1.
 # The runner image is pinned too (Q-15): moving to a new Ubuntu is a decision, not a surprise.
+# The token only reads (DEC-0033 §3): a fork's PR runs after Arthur approves it, never through
+# the privileged trigger that runs with this repository's token, and never on a self-hosted runner.
 name: ci
 
 on:
   push:
     branches: [main]
   pull_request:
+
+permissions:
+  contents: read
 
 concurrency:
   group: ci-${{ github.ref }}
@@ -17,6 +22,15 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 15
     steps:
+      # A public repository gets the 4-vCPU, 16 GB standard runner for free; a private one gets
+      # 2 vCPU and 8 GB on the minutes quota (F-069 §1). The log shows which one ran.
+      - name: Runner size
+        run: |
+          echo "vCPU: $(nproc)"
+          free -h | head -n 2
+
+      # lfs: true because the import reads gdUnit4's PNGs; a job without an import uses
+      # lfs: false, since every LFS download comes out of Arthur's quota (DEC-0033 §3).
       - uses: actions/checkout@v7
         with:
           fetch-depth: 0

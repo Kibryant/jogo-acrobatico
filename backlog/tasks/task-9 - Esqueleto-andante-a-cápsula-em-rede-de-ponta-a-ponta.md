@@ -4,7 +4,7 @@ title: 'Esqueleto andante: a cápsula em rede de ponta a ponta'
 status: In Progress
 assignee: []
 created_date: '2026-10-02 16:48'
-updated_date: '2026-10-17 17:45'
+updated_date: '2026-10-17 18:19'
 labels:
   - jogo
   - rede
@@ -142,6 +142,37 @@ Concretiza a `visao-geral.md` (o estado em quatro caixas, o sanduíche e as past
 - Leitura v0 do Claude: a câmera sobe e desce no máximo 80° (sem esse limite ela vira de ponta-cabeça; o papel não tem número).
 - O lutador nasce com o corpo no chão, no ponto de nascimento: um estado novo parte do chão, e nascer no ar abriria uma janela de coyote (achado da rodada A).
 - O snap do chão do motor cobre a corrida de 7 m/s descendo a rampa de 45° (uns 0,12 m por tick a 60), derivado da configuração.
+
+## Parte 2: a cápsula em rede (critérios 9 a 13; F-089)
+
+**Rodada C1 (critérios 9 a 11):**
+- A `Main` lê os argumentos `--server`, `--port=`, `--connect=host:porta` e `--stop-file=`. O build com a feature `dedicated_server` entra como servidor (DEC-0026 §6).
+- **O servidor:**
+  - escuta por ENet na porta de `--port` ou na 7777/udp (F-073), sem tela e sem lutador próprio;
+  - dá um lutador a cada cliente, num ponto de nascimento livre, com a autoridade do input no cliente;
+  - aceita no máximo 2 clientes; o terceiro é recusado com a mensagem de sala cheia;
+  - o lutador de quem sai some para o outro.
+- **O aperto de mão:**
+  - o cliente manda o `application/config/version` e o `application/config/commit`;
+  - o servidor compara exato, e o commit vazio só bate com outro vazio (DEC-0028 §3);
+  - se forem diferentes, ele recusa com o pedido de atualizar; se o servidor não responde, o cliente mostra o erro;
+  - sem tela, o cliente sai com código diferente de 0 nos dois casos.
+- **O relógio:** o servidor inicia o `NetworkTime` antes de aceitar clientes. O cliente o inicia depois do aperto de mão, e o `start()` sincroniza com o servidor (`rede.md` §9).
+- **O arquivo de parada:** conferido a cada segundo. Quando ele aparece, o servidor para o tick, fecha a conexão, solta a partida e sai com 0, e os clientes mostram que o servidor fechou (DEC-0032 §2).
+- **Os textos na tela** usam chaves de tradução, com pt-BR e en, carregadas pela `Main` (DEC-0031).
+- **O `project.godot`:** o `application/run/flush_stdout_on_print` ligado, guardado pelo teste de configurações (F-073 §2; escolha 8).
+
+**Rodada C2 (critérios 12 e 13):**
+- **O bot:** um cliente com `--bot` corre e pula a cada 2 s e só produz input (DEC-0022; "Números v0 do Claude").
+- **A corrida de 30 s:**
+  - um comando sobe o servidor e dois clientes com bot, sem tela, com o simulador do netfox a ping 100;
+  - cada cliente anota o que previu para o próprio lutador, e o servidor anota o que confirmou;
+  - o resumo mostra os ticks conferidos e os corrigidos.
+- **O comando para jogar:** sobe o servidor sem tela, um cliente com bot numa janela e a janela do Arthur, a ping 100 ou 220.
+  - O simulador do netfox só funciona com a conexão automática dele. Por isso o comando escreve um `override.cfg` temporário, como a sonda (`../netfox-sonda/sonda/play.sh`), e a `Main` usa a conexão que o simulador abriu.
+  - O `project.godot` segue com a conexão automática desligada (DEC-0023), e o `override.cfg` entra no `.gitignore`.
+
+**Depois:** o revisor julga os critérios 9 a 13. O Arthur joga a 100 e a 220, e o que ele sentir vai para uma fonte (critério 13).
 <!-- SECTION:PLAN:END -->
 
 ## Implementation Notes

@@ -4,7 +4,7 @@ title: 'Esqueleto andante: a cápsula em rede de ponta a ponta'
 status: In Progress
 assignee: []
 created_date: '2026-10-02 16:48'
-updated_date: '2026-10-17 13:55'
+updated_date: '2026-10-17 14:33'
 labels:
   - jogo
   - rede
@@ -130,6 +130,12 @@ Concretiza a `visao-geral.md` (o estado em quatro caixas, o sanduíche e as past
 - O ângulo do chão é julgado pelo motor, com o `floor_max_angle` da configuração; o núcleo lê `facts.on_floor`.
 
 **Quem testa o quê na parte 1:** o test-writer escreve os testes dos critérios 1 a 5, cegos à implementação, e eles são travados. O implementer escreve os testes dos critérios 6 a 8: as cenas, o input por posição física, a rampa de 45° contra a de 46° numa cena e a SyncTest.
+
+**Leituras v0 do Claude, sem número no papel** (DEC-0017; o Arthur julga jogando; anotadas depois da entrega do test-writer, que não as testa):
+- O alvo horizontal é `run_speed × move`, girado pelo `yaw`; com o teclado, o `move` só fica abaixo de 1 no tick em que a tecla muda, pela média dos frames (DEC-0026 §1).
+- No ar, sem input, a velocidade horizontal se conserva (`movimento.md`, Princípios: "a velocidade se conserva entre manobras"); com input, ela vai para o alvo com `air_control_pct` do ganho do chão. A sonda freava no ar, e um pulo sem tecla perderia a corrida inteira em 0,4 s.
+- O pulo do coyote substitui a velocidade vertical: é sempre um pulo cheio.
+- A física do pulo é derivada para o degrau do tick: o tick do aperto conta como o passo 1, o topo chega no passo `rise_ticks` e o pouso no passo `rise_ticks + fall_ticks`. A aceleração é um ganho fixo por tick, `run_speed / accel_ticks`, e a frenagem, `run_speed / stop_ticks`.
 <!-- SECTION:PLAN:END -->
 
 ## Comments

@@ -139,6 +139,11 @@ func _align_engine_floor_once(_tick: int) -> void:
 	var kept_position := global_position
 	velocity = (Vector3.DOWN if state.on_floor else Vector3.UP) * FLOOR_PROBE_SPEED
 	move_and_slide()
+	# The snap in reserve (DEC-0037): a body resting on a ledge's edge by its round bottom touches
+	# it at a slant, farther than the probe reaches, and the probe's own snap skipped because the
+	# engine's flag still said air. The snap the first run made puts the flag back on the floor.
+	if state.on_floor and not is_on_floor():
+		apply_floor_snap()
 	global_position = kept_position
 	velocity = kept_velocity
 

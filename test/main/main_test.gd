@@ -26,8 +26,8 @@ func test_no_argument_means_sozinho() -> void:
 	assert_int(options.mode).is_equal(LaunchOptions.Mode.SOLO)
 
 
-# Part 2 of TASK-9 knows --server, --port, --connect and --stop-file; a typo of each is refused
-# (test/main/launch_options_test.gd covers every form).
+# Part 2 of TASK-9 knows --server, --port, --connect, --stop-file, --bot and --record; a typo of
+# each is refused (test/main/launch_options_test.gd covers every form).
 func test_every_argument_this_build_does_not_know_is_refused() -> void:
 	var arguments := PackedStringArray(["--servr", "--prot=7777", "--conect=127.0.0.1:7777"])
 	var options := LaunchOptions.parse(arguments, false, false)

@@ -10,6 +10,8 @@
 set -euo pipefail
 cd "$(dirname "$0")/.."
 source tools/lib.sh
+source tools/net_lib.sh
+refuse_override_cfg
 godot_bin="$(resolve_godot)"
 
 default_port=7777
@@ -25,31 +27,9 @@ leave_timeout=45
 stop_budget_ms=2500
 
 logs="$(mktemp -d)"
-declare -A pids=()
 failures=0
 summary=()
-
-# Paths for Godot: a Windows path on Git Bash, the same path elsewhere.
-native_path() {
-	if command -v cygpath >/dev/null 2>&1; then
-		cygpath -m "$1"
-	else
-		echo "$1"
-	fi
-}
-
-cleanup() {
-	local name
-	for name in "${!pids[@]}"; do
-		kill "${pids[$name]}" 2>/dev/null || true
-	done
-	wait 2>/dev/null || true
-}
-trap cleanup EXIT
-
-now_ms() {
-	date +%s%3N
-}
+trap stop_started EXIT
 
 pass() {
 	summary+=("ok    $1")
@@ -58,44 +38,6 @@ pass() {
 fail() {
 	summary+=("FAIL  $1")
 	failures=$((failures + 1))
-}
-
-# start NAME ARGS...: one headless game with the game's arguments ARGS, logged to NAME.log.
-start() {
-	local name=$1
-	shift
-	"$godot_bin" --headless --path . -- "$@" >"$logs/$name.log" 2>&1 &
-	pids[$name]=$!
-}
-
-# wait_for NAME TEXT SECONDS: true once NAME.log holds TEXT, false after SECONDS.
-wait_for() {
-	local deadline=$((SECONDS + $3))
-	until grep -qF -- "$2" "$logs/$1.log" 2>/dev/null; do
-		if ((SECONDS >= deadline)); then
-			return 1
-		fi
-		sleep 0.1
-	done
-}
-
-# wait_exit NAME SECONDS: waits for NAME to end and leaves its exit code in exit_code; 124 when
-# it is still running after SECONDS, and then it is stopped.
-wait_exit() {
-	local pid=${pids[$1]} deadline=$((SECONDS + $2))
-	while kill -0 "$pid" 2>/dev/null; do
-		if ((SECONDS >= deadline)); then
-			kill "$pid" 2>/dev/null || true
-			wait "$pid" 2>/dev/null || true
-			unset "pids[$1]"
-			exit_code=124
-			return
-		fi
-		sleep 0.05
-	done
-	exit_code=0
-	wait "$pid" || exit_code=$?
-	unset "pids[$1]"
 }
 
 # check NAME TEXT WHAT: passes WHAT when NAME.log holds TEXT.
@@ -249,8 +191,8 @@ for log in "$logs"/*.log; do
 		scanned+=("$log")
 	fi
 done
-errors="$(grep -hE '^(ERROR|SCRIPT ERROR|USER ERROR):' "${scanned[@]}" || true)"
-warnings="$(grep -hE '^(WARNING|USER WARNING):' "${scanned[@]}" || true)"
+errors="$(log_errors "${scanned[@]}")"
+warnings="$(log_warnings "${scanned[@]}")"
 if [ -n "$errors" ]; then
 	fail "the logs hold errors:"
 	summary+=("$errors")

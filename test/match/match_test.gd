@@ -136,6 +136,31 @@ func test_fighters_are_named_in_spawn_order_and_never_twice() -> void:
 	assert_bool(is_instance_valid(leaving)).is_false()
 
 
+# TASK-9, round C2: a fighter exists from its first tick on (Fighter._rollback_spawn). Pushed
+# forward before it, it stays at its spawn point, and from it, it runs: netfox neither simulates nor
+# records it earlier, so a client whose clock lags the server's starts it where the server does.
+func test_a_fighter_is_not_simulated_before_its_first_tick() -> void:
+	var game_match := await _match_with_fighters(0)
+	var late := 5
+	var fighter := game_match.spawn_fighter(0, multiplayer.get_unique_id(), NetworkTime.tick + late)
+	await get_tree().process_frame
+	await get_tree().physics_frame
+	assert_int(fighter.synchronizer.spawn_tick).is_equal(NetworkTime.tick + late)
+	for _loop: int in late:
+		fighter.input.sample_frame(FORWARD, SPAWN_A_YAW)
+		NetfoxTicks.run_loop()
+	assert_vector(fighter.position).is_equal_approx(SPAWN_A, Vector3.ONE * HAIR)
+	fighter.input.sample_frame(FORWARD, SPAWN_A_YAW)
+	NetfoxTicks.run_loop()
+	assert_float(fighter.position.z).is_less(SPAWN_A.z - HAIR)
+
+
+# Without a first tick, a fighter starts on the clock's tick, the next one the loop runs.
+func test_a_fighter_starts_on_the_clocks_tick_by_default() -> void:
+	var game_match := await _match_with_fighters(1)
+	assert_int(game_match.fighters[0].synchronizer.spawn_tick).is_equal(NetworkTime.tick)
+
+
 # A client mirrors a fighter under the server's name, with netfox's history starting at the
 # clock's tick: right after the clock syncs no tick loop has run, and netfox's own guess, the tick
 # after its last rollback, would be 1 (Main._add_fighter).
@@ -155,4 +180,21 @@ func test_removing_the_watched_fighter_takes_its_camera_away() -> void:
 	game_match.remove_fighter(0)
 	assert_object(game_match.camera_rig).is_null()
 	await get_tree().process_frame
+	assert_bool(is_instance_valid(rig)).is_false()
+
+
+# TASK-9, part 2: the bot plays from the clock's tick with a camera that leaves the mouse alone, and
+# leaves the match with its fighter, as the camera does.
+func test_the_bot_plays_from_the_clocks_tick_and_leaves_with_its_fighter() -> void:
+	var game_match := await _match_with_fighters(1)
+	var bot := game_match.let_bot_play(game_match.fighters[0])
+	var rig := game_match.camera_rig
+	assert_int(bot.start_tick).is_equal(NetworkTime.tick)
+	assert_bool(rig.takes_mouse).is_false()
+	assert_float(rig.yaw).is_equal_approx(SPAWN_A_YAW, HAIR)
+	game_match.remove_fighter(0)
+	assert_object(game_match.bot).is_null()
+	assert_object(game_match.camera_rig).is_null()
+	await get_tree().process_frame
+	assert_bool(is_instance_valid(bot)).is_false()
 	assert_bool(is_instance_valid(rig)).is_false()

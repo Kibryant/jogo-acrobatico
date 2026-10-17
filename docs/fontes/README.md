@@ -93,3 +93,4 @@ O que chegou ao projeto e como chegou. Uma fonte não muda: só mudam `status`, 
 | [F-087](F-087-arthur-escolhe-o-snap-de-reserva.md) | 2026-10-17 | O Arthur escolhe o snap de reserva do contorno D e tira a trava de 5 s da SyncTest, depois do defeito que ela achou na beirada; erra duas vezes a conferência do contorno D |
 | [F-088](F-088-arthur-fecha-a-parte-1.md) | 2026-10-17 | O Arthur acerta a conferência do tick perdido, aprova o pacote de docs da parte 1 da TASK-9 e manda subir, abrir o PR e fazer o merge com o CI verde |
 | [F-089](F-089-arthur-comeca-a-parte-2.md) | 2026-10-17 | O Arthur começa a parte 2 da TASK-9, a cápsula em rede, e responde "Entendi" à pergunta fixa sobre o plano |
+| [F-090](F-090-arthur-ve-duas-capsulas-em-rede.md) | 2026-10-17 | O Arthur vê pela primeira vez duas cápsulas em rede se mexendo em tempo real, gosta muito e da viseira no rosto, sem entender ainda para que ela serve |

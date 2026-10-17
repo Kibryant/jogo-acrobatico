@@ -10,8 +10,13 @@ const EDITOR_BUILD := false
 const DEDICATED_BUILD := true
 
 
-func _parse(arguments: Array, dedicated := EDITOR_BUILD, screen := HEADLESS) -> LaunchOptions:
-	return LaunchOptions.parse(PackedStringArray(arguments), dedicated, screen)
+func _parse(
+	arguments: Array,
+	dedicated := EDITOR_BUILD,
+	screen := HEADLESS,
+	simulator: SimulatorLink = null,
+) -> LaunchOptions:
+	return LaunchOptions.parse(PackedStringArray(arguments), dedicated, screen, simulator)
 
 
 func _refused(arguments: Array, dedicated := EDITOR_BUILD, screen := HEADLESS) -> bool:
@@ -85,9 +90,95 @@ func test_a_client_connects_to_host_and_port_with_or_without_a_screen() -> void:
 			assert_int(options.port).override_failure_message(message).is_equal(case[2])
 
 
+# TASK-9, round C2: the bot plays a client, with or without a screen, and --record goes with the
+# server and the client, whose sessions compute the fighters' states.
+func test_the_bot_plays_a_client_and_the_record_goes_with_a_session() -> void:
+	var cases: Array[Array] = [
+		[["--connect=127.0.0.1:7777", "--bot"], EDITOR_BUILD, LaunchOptions.Mode.CLIENT, true, ""],
+		[
+			["--bot", "--connect=127.0.0.1", "--record=c.rec"],
+			EDITOR_BUILD,
+			LaunchOptions.Mode.CLIENT,
+			true,
+			"c.rec",
+		],
+		[
+			["--connect=127.0.0.1", "--record=/tmp/a b.rec"],
+			EDITOR_BUILD,
+			LaunchOptions.Mode.CLIENT,
+			false,
+			"/tmp/a b.rec",
+		],
+		[["--server", "--record=s.rec"], EDITOR_BUILD, LaunchOptions.Mode.SERVER, false, "s.rec"],
+		[["--record=s.rec"], DEDICATED_BUILD, LaunchOptions.Mode.SERVER, false, "s.rec"],
+	]
+	for case: Array in cases:
+		var arguments: Array = case[0]
+		var dedicated: bool = case[1]
+		var mode: LaunchOptions.Mode = case[2]
+		for screen: bool in [WITH_SCREEN, HEADLESS]:
+			if mode == LaunchOptions.Mode.SERVER and screen == WITH_SCREEN:
+				continue # the server runs without a screen
+			var options := _parse(arguments, dedicated, screen)
+			var message := "%s, screen %s" % [arguments, screen]
+			assert_array(options.errors).override_failure_message(message).is_empty()
+			assert_int(options.mode).override_failure_message(message).is_equal(mode)
+			assert_bool(options.bot).override_failure_message(message).is_equal(case[3])
+			assert_str(options.record).override_failure_message(message).is_equal(case[4])
+
+
+# TASK-9, round C2: --half puts a window on the left or the right half of the screen, so the play
+# command shows two games side by side; a game without a screen has no window to place.
+func test_a_window_takes_the_half_of_the_screen_it_is_given() -> void:
+	var cases: Array[Array] = [
+		[["--connect=127.0.0.1", "--half=left"], "left"],
+		[["--connect=127.0.0.1", "--bot", "--half=right"], "right"],
+		[["--half=right"], "right"],
+	]
+	for case: Array in cases:
+		var arguments: Array = case[0]
+		var options := _parse(arguments, EDITOR_BUILD, WITH_SCREEN)
+		var message := "%s" % [arguments]
+		assert_array(options.errors).override_failure_message(message).is_empty()
+		assert_str(options.half).override_failure_message(message).is_equal(case[1])
+	assert_str(_parse(["--connect=127.0.0.1"], EDITOR_BUILD, WITH_SCREEN).half).is_empty()
+
+
+# With netfox's network simulator on, the simulator connects the game to its own address and reads
+# no argument (network-simulator.gd): an address in the arguments that differs is refused, and so
+# is Sozinho, which has no network (TASK-9, round C2).
+func test_with_netfox_simulator_on_the_address_must_be_its_own() -> void:
+	var simulator := SimulatorLink.new("127.0.0.1", 7777, 50)
+	var accepted: Array[Array] = [
+		["--server"],
+		["--server", "--port=7777", "--stop-file=stop"],
+		["--connect=127.0.0.1:7777"],
+		["--connect=127.0.0.1", "--bot"],
+	]
+	for arguments: Array in accepted:
+		var options := _parse(arguments, EDITOR_BUILD, HEADLESS, simulator)
+		var message := "%s with the simulator on 127.0.0.1:7777" % [arguments]
+		assert_array(options.errors).override_failure_message(message).is_empty()
+		assert_object(options.simulator).override_failure_message(message).is_same(simulator)
+	var refused: Array[Array] = [
+		[],
+		["--server", "--port=7000"],
+		["--connect=127.0.0.1:7000"],
+		["--connect=localhost:7777"],
+	]
+	for arguments: Array in refused:
+		var errors := _parse(arguments, EDITOR_BUILD, HEADLESS, simulator).errors
+		var message := "%s with the simulator on 127.0.0.1:7777 must be refused once" % [arguments]
+		assert_int(errors.size()).override_failure_message(message).is_equal(1)
+	# netfox's own port is 9999: the game's 7777 does not match it.
+	var netfox_default := SimulatorLink.new("127.0.0.1", 9999, 0)
+	var on_its_default := _parse(["--server"], EDITOR_BUILD, HEADLESS, netfox_default)
+	assert_int(on_its_default.errors.size()).is_equal(1)
+
+
 # F-056: a typo once left a fullscreen probe open for 300 s.
 func test_every_unknown_argument_is_an_error() -> void:
-	var arguments: Array[String] = ["--servr", "server", "-server", "--bot", "--port7777"]
+	var arguments: Array[String] = ["--servr", "server", "-server", "--bots", "--port7777"]
 	var options := _parse(arguments)
 	assert_int(options.errors.size()).is_equal(arguments.size())
 	for argument: String in arguments:
@@ -120,6 +211,17 @@ func test_arguments_that_do_not_fit_together_are_errors() -> void:
 		["--stop-file=stop"],
 		["--connect=127.0.0.1:7777", "--port=7000"],
 		["--connect=127.0.0.1:7777", "--stop-file=stop"],
+		["--bot"],
+		["--server", "--bot"],
+		["--connect=127.0.0.1", "--bot=yes"],
+		["--connect=127.0.0.1", "--bot", "--bot"],
+		["--record=run.rec"],
+		["--server", "--record"],
+		["--connect=127.0.0.1", "--record="],
+		["--connect=127.0.0.1", "--half=left"],
+		["--connect=127.0.0.1", "--half=middle"],
+		["--connect=127.0.0.1", "--half"],
+		["--server", "--half=left"],
 	]
 	for arguments: Array in cases:
 		var message := "%s must be refused with one message" % [arguments]

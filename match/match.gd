@@ -20,8 +20,11 @@ var config: MovementConfig
 var camera_data: CameraData
 var arena: Arena
 var fighters: Array[Fighter] = []
-## The camera of whoever plays on this PC; null until watch().
+## The camera of whoever plays on this PC, a person or the bot; null until watch() or
+## let_bot_play().
 var camera_rig: CameraRig
+## The bot that plays on this PC; null unless let_bot_play().
+var bot: BotPlayer
 
 # The first tick of netfox's current tick loop.
 var _loop_first_tick := 0
@@ -60,10 +63,12 @@ func _exit_tree() -> void:
 # Fighter1, Fighter2... in the order they spawn, never twice in a match: a player who joins
 # where another left never meets the leaving node's route, which netfox drops only when the node
 # is freed (network-identity-server.gd).
-# first_tick is where netfox starts the fighter's history. By default netfox takes the tick after
-# its last rollback, which is stale on a client whose clock has just synced and has run no tick
-# loop yet: netfox would then try to redo every tick since 1 (Main._add_fighter passes the clock's
-# tick).
+# first_tick is the fighter's first tick: netfox starts its history there and neither simulates
+# nor records it before (Fighter._rollback_spawn). By default it is the clock's tick, the tick the
+# next loop runs first. netfox's own default, the tick after its last rollback, is stale on a client
+# whose clock has just synced and has run no tick loop yet: netfox would then try to redo every
+# tick since 1. A client's own fighter takes the server's first tick (Main._add_fighter), so both
+# start it on the same tick (TASK-9, round C2).
 func spawn_fighter(
 	slot: int,
 	input_owner: int,
@@ -81,8 +86,7 @@ func spawn_fighter(
 	# The match is never turned, so the spawn point's yaw in the world is its yaw in the match.
 	fighter.setup(config, to_local(point.global_position), point.global_rotation.y, own)
 	fighter.input.set_multiplayer_authority(input_owner)
-	if first_tick != NO_TICK:
-		fighter.synchronizer.spawn_tick = first_tick
+	fighter.synchronizer.spawn_tick = NetworkTime.tick if first_tick == NO_TICK else first_tick
 	add_child(fighter)
 	fighters.append(fighter)
 	_by_slot[slot] = fighter
@@ -109,23 +113,47 @@ func remove_fighter(slot: int) -> void:
 		camera_rig.queue_free()
 		camera_rig = null
 		_watched = null
+		if bot != null:
+			bot.queue_free()
+			bot = null
 	fighter.queue_free()
 
 
 # The camera of whoever plays fighter on this PC, and this PC's keyboard and mouse on its input.
 func watch(fighter: Fighter) -> CameraRig:
-	var node := CAMERA_RIG_SCENE.instantiate()
-	assert(node is CameraRig, "camera_rig.tscn must have a CameraRig at its root")
-	camera_rig = node as CameraRig
-	camera_rig.setup(camera_data, fighter, fighter.state.facing_yaw)
-	add_child(camera_rig)
+	_follow(fighter, true)
 	fighter.input.use_devices(camera_rig)
-	_watched = fighter
 	return camera_rig
+
+
+# The bot plays fighter on this PC instead of the keyboard and the mouse (TASK-9, part 2), its route
+# starting on the fighter's first tick. A camera follows the fighter without taking the mouse, so a
+# player can use another window beside this one.
+func let_bot_play(fighter: Fighter) -> BotPlayer:
+	_follow(fighter, false)
+	var first_tick: int = fighter.synchronizer.spawn_tick
+	bot = BotPlayer.new(
+		fighter.input,
+		BotRoute.new(config.tickrate),
+		first_tick,
+		fighter.state.facing_yaw,
+	)
+	add_child(bot)
+	return bot
 
 
 func _on_tick_loop_start() -> void:
 	_loop_first_tick = NetworkTime.tick
+
+
+# A camera on fighter, looking where it looks; with takes_mouse, the mouse turns it.
+func _follow(fighter: Fighter, takes_mouse: bool) -> void:
+	var node := CAMERA_RIG_SCENE.instantiate()
+	assert(node is CameraRig, "camera_rig.tscn must have a CameraRig at its root")
+	camera_rig = node as CameraRig
+	camera_rig.setup(camera_data, fighter, fighter.state.facing_yaw, takes_mouse)
+	add_child(camera_rig)
+	_watched = fighter
 
 
 # netfox simulates from the oldest tick that has news from the network, and with no news only the

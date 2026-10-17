@@ -123,6 +123,21 @@ func _rollback_tick(_delta: float, tick: int, _is_fresh: bool) -> void:
 	state = Movement.after_move(plan.state, facts, config, tick)
 
 
+# netfox's liveness (rollback-liveness-server.gd): with these two callbacks the fighter exists only
+# from its first tick, the synchronizer's spawn_tick. netfox neither simulates it nor records its
+# state on an earlier tick, even when its owner sent input for one, so a client and the server
+# start it on the same tick from the same state (TASK-9, round C2: a client whose clock lagged the
+# server's predicted its fighter one tick before the server's spawn, and the server's spawn state
+# then overwrote that prediction). netfox calls them when the tick it runs or restores crosses the
+# first tick; they do nothing, and the body stays in the physics world on both sides of it.
+func _rollback_spawn() -> void:
+	pass
+
+
+func _rollback_despawn() -> void:
+	pass
+
+
 func _on_rollback_loop_start() -> void:
 	_engine_floor_pending = true
 

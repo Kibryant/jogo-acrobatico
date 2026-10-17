@@ -3,6 +3,7 @@
 set -euo pipefail
 cd "$(dirname "$0")/.."
 source tools/lib.sh
+refuse_override_cfg
 godot_bin="$(resolve_godot)"
 started=$SECONDS
 

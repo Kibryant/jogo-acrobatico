@@ -4,7 +4,7 @@ title: 'Esqueleto andante: a cápsula em rede de ponta a ponta'
 status: In Progress
 assignee: []
 created_date: '2026-10-02 16:48'
-updated_date: '2026-10-17 19:34'
+updated_date: '2026-10-17 21:14'
 labels:
   - jogo
   - rede
@@ -231,6 +231,51 @@ Concretiza a `visao-geral.md` (o estado em quatro caixas, o sanduíche e as past
 
 - o `rede.md` §9 (o relógio, a porta 7777 e o aperto de mão na autenticação);
 - os textos na tela usam a fonte padrão de 16 px até o Theme chegar.
+
+## Parte 2, rodada C2 (critérios 12 e 13), 17/10/2026
+
+**Os comandos novos**, nenhum deles passo do portão:
+
+- `bash tools/net_run.sh [ping]`: a corrida de 30 s do critério 12;
+- `bash tools/play_online.sh [ping]`: o teste à mão do critério 13;
+- os dois escrevem o `override.cfg` com o simulador do netfox e o apagam quando os jogos já o leram, ou em qualquer saída;
+- o portão e o `net_check.sh` se recusam a rodar enquanto existir um `override.cfg`, que já está no `.gitignore`.
+
+**Escolhas v0 do implementer**, fora do papel até o fechamento da parte 2:
+
+| Escolha | Valor |
+|---|---|
+| Rota do bot | Corre de lado, 2 s para a direita e 2 s para a esquerda, e pula no primeiro tick de cada trecho, contando do primeiro tick do lutador |
+| Espera pela conexão do simulador | Até 10 frames |
+| Servidor com o simulador, ao sair | Espera a latência mais 100 ms no relógio de parede, para o adeus passar pelo proxy |
+| Registro da corrida | CSV com 6 casas; uma corrida exige 25 s de ticks conferidos |
+| Processos sem tela | `--max-fps 144`, como na sonda |
+| Janelas | `--half=left\|right`: a do bot abre primeiro, na direita, e a do Arthur na esquerda. O WindowTiler do netfox falhou na maioria das vezes |
+| Endereço com o simulador ligado | Um `--port` ou `--connect` diferente do simulador é recusado; o Sozinho também é recusado |
+| Varredura dos logs | Ignora só o `ERROR: Couldn't create an ENet host.`, que o simulador causa em todo cliente |
+
+**Três consertos na C1**, achados pela corrida de 30 s (a primeira teve 13 ticks corrigidos):
+
+- o lutador do cliente começa no primeiro tick do servidor, que o RPC `_add_fighter` agora leva;
+- o lutador usa o nascimento do netfox (`_rollback_spawn` e `_rollback_despawn`) e não existe antes desse tick;
+- o servidor com o simulador espera o proxy entregar o adeus antes de sair.
+
+**O que o netfox e o Godot ensinaram:**
+
+- logo depois de sincronizar, o relógio do cliente fica atrás do servidor mais ou menos a latência de ida, e o lutador dele nascia um tick antes; o estado de nascimento do servidor apagava a previsão no meio do pulo;
+- um `SceneTreeTimer` conta o tempo dos frames, e um frame longo come o timer inteiro;
+- um input mais velho que as 64 ticks de histórico faz o netfox refazer as 64 ticks em todo frame. Com o PC sobrecarregado, isso trava o servidor por segundos.
+
+**Provas:**
+
+- `bash tools/gate.sh`: verde, 286 testes, 79 s;
+- `bash tools/net_check.sh`: 26 de 26;
+- `bash tools/net_run.sh`: 1.852 e 1.850 ticks conferidos, 0 corrigidos, 10 m de distância mínima.
+
+**A acompanhar:**
+
+- o portão foi de 79 s a 85 s nesta rodada, contra o limite de 90 s do pre-push;
+- o corpo do lutador fica no mundo da física antes do primeiro tick dele. Já era assim; vale olhar quando houver colisão entre lutadores no nascimento.
 <!-- SECTION:NOTES:END -->
 
 ## Comments

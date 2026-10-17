@@ -3,9 +3,11 @@
 # - no argument: Sozinho, Godot's offline peer, where this PC is its own server (rede.md §8);
 # - --server, or the build exported as a dedicated server: the server, without a screen or a
 #   fighter of its own, which gives a fighter to each player the handshake accepts;
-# - --connect=host:port: a client, which plays its own fighter and mirrors the others.
+# - --connect=host:port: a client, which plays its own fighter and mirrors the others; with --bot,
+#   the bot plays it (BotPlayer).
 # The same Match, fighters and core run in all three; only the peer around them changes
-# (DEC-0026 §5; F-084 §3).
+# (DEC-0026 §5; F-084 §3). When netfox's network simulator connects the game (SimulatorLink), the
+# Main adopts the simulator's peer instead of opening its own, and the rest stays the same.
 class_name Main
 extends Node
 
@@ -34,13 +36,29 @@ const EXIT_UPDATE_REQUIRED := 4
 const EXIT_ROOM_FULL := 5
 ## The server could not open its port, usually because another program holds it.
 const EXIT_PORT_UNAVAILABLE := 6
+## Frames the Main waits for netfox's network simulator to connect the game: it does so one frame
+## after it starts (network-simulator.gd), and the Main started in between.
+const SIMULATOR_FRAMES := 10
+## ms: beyond the simulator's latency, how long a server that netfox's network simulator connected
+## stays up after closing. The simulator's proxy lives in the game that hosts and holds each packet
+## for the latency, so the clients still hear the goodbye. Claude's v0: a margin over the proxy's
+## loop of 1 ms (network-simulator.gd).
+const PROXY_DRAIN_MARGIN_MS := 100
 const USAGE := """Usage, with the game's arguments after "--":
   (no argument)            play Sozinho: this PC is its own server.
   --server                 run the dedicated server; open Godot with --headless, it has no screen.
     --port=N               the server's port, 7777/udp when not given.
     --stop-file=PATH       the server closes cleanly, with exit code 0, when PATH appears.
   --connect=HOST[:PORT]    join the server at HOST, on PORT or 7777.
-The build exported as a dedicated server runs the server and takes --port and --stop-file."""
+    --bot                  the bot plays instead of the keyboard and the mouse, which it leaves
+                           alone; it quits with the session, with or without a screen.
+  --record=PATH            with --server or --connect: when the session ends, write to PATH the
+                           state of the fighters tick by tick, the server's last result of every
+                           fighter or a client's first one of its own (tools/net_run.sh reads it).
+  --half=left|right        with a screen: the window takes that half of the screen.
+The build exported as a dedicated server runs the server and takes --port, --stop-file and
+--record. With netfox's network simulator on (netfox/autoconnect/enabled, from an override.cfg),
+the simulator connects the game and the address in the arguments must be its own."""
 
 ## The match of the session; null when no session runs.
 var current_match: Match
@@ -54,6 +72,8 @@ var _handshake_client: HandshakeClient
 # On the server, the peers whose fighter is in the match, in the order they joined.
 var _players: Array[int] = []
 var _client_phase := ClientPhase.CONNECTING
+# The record of --record; null without it, and once written.
+var _recorder: TickRecorder
 
 
 func _ready() -> void:
@@ -61,6 +81,7 @@ func _ready() -> void:
 		OS.get_cmdline_user_args(),
 		OS.has_feature("dedicated_server"),
 		DisplayServer.get_name() != "headless",
+		SimulatorLink.current(),
 	)
 	if not options.errors.is_empty():
 		printerr("%s\n%s" % ["\n".join(options.errors), USAGE])
@@ -72,11 +93,15 @@ func _ready() -> void:
 	# The server shows no text; its log is for whoever runs it.
 	if options.mode != LaunchOptions.Mode.SERVER:
 		GameText.install()
+	if not options.half.is_empty():
+		_place_window(options.half == "right")
+	if not options.record.is_empty():
+		_start_recording()
 	match options.mode:
 		LaunchOptions.Mode.SERVER:
 			await start_server()
 		LaunchOptions.Mode.CLIENT:
-			start_client()
+			await start_client()
 		_:
 			await start_solo()
 
@@ -109,15 +134,28 @@ func start_server() -> void:
 	_handshake_server.refused.connect(_on_player_refused)
 	_handshake_server.left.connect(_on_player_left)
 	NetworkTime.after_client_sync.connect(_on_player_clock_synced)
-	# ENet's own limit stays at its default of 32 connections, above the two seats, so a third
-	# player gets in far enough to hear that the room is full.
-	var peer := ENetMultiplayerPeer.new()
-	var error := peer.create_server(options.port)
-	if error != OK:
-		_log("server: cannot listen on port %d/udp: %s" % [options.port, error_string(error)])
-		_quit(EXIT_PORT_UNAVAILABLE)
-		return
-	multiplayer.multiplayer_peer = peer
+	if options.simulator != null:
+		# The simulator hosts, or joins when its port is taken (network-simulator.gd): a server
+		# that finds itself a client could not open its port.
+		var adopted := await _simulator_peer()
+		if adopted == null or not _hosts(adopted):
+			_log(
+				"server: cannot listen on port %d/udp: netfox's simulator did not host"
+				% [options.port]
+			)
+			_quit(EXIT_PORT_UNAVAILABLE)
+			return
+		_log("server: %s" % options.simulator.describe())
+	else:
+		# ENet's own limit stays at its default of 32 connections, above the two seats, so a third
+		# player gets in far enough to hear that the room is full.
+		var peer := ENetMultiplayerPeer.new()
+		var error := peer.create_server(options.port)
+		if error != OK:
+			_log("server: cannot listen on port %d/udp: %s" % [options.port, error_string(error)])
+			_quit(EXIT_PORT_UNAVAILABLE)
+			return
+		multiplayer.multiplayer_peer = peer
 	# netfox's NetworkEvents starts and stops the clock by itself when it sees the server, on the
 	# next frame (network-events.gd), so the Main does not start it twice. The server answers no
 	# handshake before its clock runs, so every client syncs with a running clock (rede.md §9).
@@ -147,13 +185,23 @@ func start_client() -> void:
 	api.connection_failed.connect(_on_server_lost)
 	api.server_disconnected.connect(_on_server_lost)
 	api.peer_authentication_failed.connect(_on_server_lost.unbind(1))
-	var peer := ENetMultiplayerPeer.new()
-	var error := peer.create_client(options.host, options.port)
-	if error != OK:
-		_log("client: cannot connect to %s: %s" % [options.host, error_string(error)])
-		_end_client(GameText.SERVER_NOT_RESPONDING, EXIT_SERVER_NOT_RESPONDING)
-		return
-	multiplayer.multiplayer_peer = peer
+	if options.simulator != null:
+		_log("client: %s" % options.simulator.describe())
+		# The simulator joins, or hosts when nobody holds its port (network-simulator.gd): a
+		# client that finds itself hosting found no server.
+		var adopted := await _simulator_peer()
+		if adopted == null or _hosts(adopted):
+			_log("client: no server on port %d: netfox's simulator hosted here" % options.port)
+			_end_client(GameText.SERVER_NOT_RESPONDING, EXIT_SERVER_NOT_RESPONDING)
+			return
+	else:
+		var peer := ENetMultiplayerPeer.new()
+		var error := peer.create_client(options.host, options.port)
+		if error != OK:
+			_log("client: cannot connect to %s: %s" % [options.host, error_string(error)])
+			_end_client(GameText.SERVER_NOT_RESPONDING, EXIT_SERVER_NOT_RESPONDING)
+			return
+		multiplayer.multiplayer_peer = peer
 	get_tree().create_timer(CONNECT_TIMEOUT_S).timeout.connect(_on_connect_timeout)
 
 
@@ -163,6 +211,7 @@ func start_client() -> void:
 func end_session() -> void:
 	_client_phase = ClientPhase.ENDED
 	NetworkTime.stop()
+	_save_record()
 	var peer := multiplayer.multiplayer_peer
 	if peer != null and peer is not OfflineMultiplayerPeer:
 		peer.close()
@@ -187,17 +236,21 @@ func _on_player_clock_synced(peer: int) -> void:
 	if slot == Room.NO_SEAT or _players.has(peer) or current_match == null:
 		return
 	var fighter := current_match.spawn_fighter(slot, peer)
+	if _recorder != null:
+		_recorder.follow(fighter)
 	# The others mirror the newcomer's fighter, and the newcomer mirrors every fighter, its own
-	# included, under the server's node names, so netfox's routes match on every peer. Each
-	# fighter's state goes to a peer only once the peer was told the fighter exists.
+	# included, under the server's node names, so netfox's routes match on every peer, and with
+	# each fighter's first tick on the server. Each fighter's state goes to a peer only once the
+	# peer was told the fighter exists.
 	for other: int in _players:
-		_add_fighter.rpc_id(other, slot, peer, String(fighter.name))
+		_add_fighter.rpc_id(other, slot, peer, String(fighter.name), _first_tick(fighter))
 		fighter.send_state_to(other)
 	_players.append(peer)
 	for player: int in _players:
 		var player_slot := _handshake_server.room.slot_of(player)
 		var mirrored := current_match.fighter_at(player_slot)
-		_add_fighter.rpc_id(peer, player_slot, player, String(mirrored.name))
+		var first_tick := _first_tick(mirrored)
+		_add_fighter.rpc_id(peer, player_slot, player, String(mirrored.name), first_tick)
 		mirrored.send_state_to(peer)
 	_log("server: peer %d joined the match as %s, seat %d" % [peer, fighter.name, slot])
 
@@ -207,6 +260,7 @@ func _on_player_left(peer: int, slot: int) -> void:
 		_players.erase(peer)
 		if current_match != null:
 			_log("server: %s leaves the match" % current_match.fighter_at(slot).name)
+			_forget(current_match.fighter_at(slot))
 			current_match.remove_fighter(slot)
 		for other: int in _players:
 			_remove_fighter.rpc_id(other, slot)
@@ -252,14 +306,15 @@ func _on_connect_timeout() -> void:
 
 
 # The client's session is over and its message stays on screen. With a screen, the player reads
-# it and closes the window; without one, the game quits with exit_code. Deferred, because these
-# calls come from inside SceneMultiplayer's poll, which must end before the connection closes.
+# it and closes the window; without one, or when the bot plays and nobody sits at the window, the
+# game quits with exit_code. Deferred, because these calls come from inside SceneMultiplayer's
+# poll, which must end before the connection closes.
 func _end_client(key: StringName, exit_code: int) -> void:
 	if _client_phase == ClientPhase.ENDED:
 		return
 	_client_phase = ClientPhase.ENDED
 	_show(key)
-	if DisplayServer.get_name() == "headless":
+	if DisplayServer.get_name() == "headless" or options.bot:
 		_quit.call_deferred(exit_code)
 	else:
 		end_session.call_deferred()
@@ -268,22 +323,34 @@ func _end_client(key: StringName, exit_code: int) -> void:
 # The server tells a client that a fighter exists: in slot, driven by the input of input_owner,
 # under the server's node name.
 @rpc("authority", "call_remote", "reliable")
-func _add_fighter(slot: int, input_owner: int, node_name: String) -> void:
+func _add_fighter(slot: int, input_owner: int, node_name: String, first_tick: int) -> void:
 	if current_match == null or slot < 0 or slot >= current_match.arena.spawn_point_count():
 		return
 	var free_name := node_name == node_name.validate_node_name() and not node_name.is_empty()
 	if current_match.fighter_at(slot) != null or not free_name or current_match.has_node(node_name):
 		return
-	var fighter := current_match.spawn_fighter(slot, input_owner, NetworkTime.tick, node_name)
+	var mine := input_owner == multiplayer.get_unique_id()
+	# This client's own fighter starts on the server's first tick, so both simulate it from the
+	# same tick and the same state; right after the clock syncs, this clock lags the server's by
+	# about the one-way latency, and that tick may still be ahead here (TASK-9, round C2). A
+	# mirrored fighter is never simulated here and starts on this clock's tick: one that spawned
+	# long ago would otherwise ask netfox to redo ticks it no longer keeps.
+	var start_tick := first_tick if mine else NetworkTime.tick
+	var fighter := current_match.spawn_fighter(slot, input_owner, start_tick, node_name)
 	# netfox learns a new fighter's route only at the end of the frame (RollbackSynchronizer._ready
 	# defers process_settings()), and the server's first state for it can come in this same poll:
 	# with no route yet, netfox would drop it with a warning. process_settings() is netfox's call
 	# for "the configuration changed", safe to run again.
 	fighter.synchronizer.process_settings()
-	var mine := input_owner == multiplayer.get_unique_id()
-	if mine:
+	if mine and options.bot:
+		current_match.let_bot_play(fighter)
+	elif mine:
 		current_match.watch(fighter)
+	if mine and _recorder != null:
+		_recorder.follow(fighter)
 	var whose := " (mine)" if mine else ""
+	if mine and options.bot:
+		whose = " (mine, the bot plays it)"
 	_log("client: %s joined, seat %d, peer %d%s" % [node_name, slot, input_owner, whose])
 
 
@@ -293,6 +360,7 @@ func _remove_fighter(slot: int) -> void:
 	if current_match == null or current_match.fighter_at(slot) == null:
 		return
 	_log("client: %s left" % current_match.fighter_at(slot).name)
+	_forget(current_match.fighter_at(slot))
 	current_match.remove_fighter(slot)
 
 
@@ -303,11 +371,91 @@ func _start_match() -> void:
 	add_child(current_match)
 
 
+# --half: the window takes the left or the right half of its screen's usable area, the layout of
+# netfox's WindowTiler for two windows (window-tiler.gd, _tile_window). The tiler itself waits for
+# the other window for about 0.45 s, and two games started together on this PC open up to a second
+# apart, so a window often found itself alone and filled the screen (TASK-9, round C2).
+func _place_window(right: bool) -> void:
+	var window := get_window()
+	var area := DisplayServer.screen_get_usable_rect(window.current_screen)
+	var width := floori(area.size.x / 2.0)
+	window.mode = Window.MODE_WINDOWED
+	window.size = Vector2i(width, area.size.y)
+	window.position = area.position + Vector2i(width if right else 0, 0)
+	_log("%s: the window takes the %s half of the screen" % [_role(), "right" if right else "left"])
+
+
+# --record: the recorder follows the fighters this game computes, from the session's start. A
+# client keeps its first result of each tick, what its player saw; the server its last one, what
+# it confirmed (TickRecorder).
+func _start_recording() -> void:
+	var server := options.mode == LaunchOptions.Mode.SERVER
+	var keep := TickRecorder.Keep.LAST if server else TickRecorder.Keep.FIRST
+	_recorder = TickRecorder.new(options.record, keep)
+	add_child(_recorder)
+	_log("%s: records its fighters to %s" % [_role(), options.record])
+
+
+func _forget(fighter: Fighter) -> void:
+	if _recorder != null and fighter != null:
+		_recorder.forget(fighter)
+
+
+# The tick netfox starts the fighter's history on, here on the server.
+static func _first_tick(fighter: Fighter) -> int:
+	var first_tick: int = fighter.synchronizer.spawn_tick
+	return first_tick
+
+
+# The record of --record is written once, when the session ends.
+func _save_record() -> void:
+	if _recorder == null:
+		return
+	var error := _recorder.save()
+	if error == OK:
+		_log("%s: wrote %d states to %s" % [_role(), _recorder.record.size(), options.record])
+	else:
+		push_error("cannot write the record to %s: %s" % [options.record, error_string(error)])
+	_recorder.queue_free()
+	_recorder = null
+
+
+# netfox's network simulator sets its peer one frame after it starts (network-simulator.gd), and
+# the Main started in between, so the handshake was in place before any connection could open. The
+# peer the simulator set; null when it set none.
+func _simulator_peer() -> MultiplayerPeer:
+	for _frame: int in SIMULATOR_FRAMES:
+		if multiplayer.multiplayer_peer is not OfflineMultiplayerPeer:
+			break
+		await get_tree().process_frame
+	var peer := multiplayer.multiplayer_peer
+	var connected := peer.get_connection_status() != MultiplayerPeer.CONNECTION_DISCONNECTED
+	if peer is OfflineMultiplayerPeer or not connected:
+		return null
+	return peer
+
+
+# True when peer hosts: the server is peer 1 (MultiplayerPeer.TARGET_PEER_SERVER).
+static func _hosts(peer: MultiplayerPeer) -> bool:
+	return peer.get_unique_id() == MultiplayerPeer.TARGET_PEER_SERVER
+
+
 # The probe crashed on exit (F-026 §4): the session ends while netfox is alive, then the game
-# quits with exit_code.
+# quits with exit_code. A server that netfox's network simulator connected also runs the
+# simulator's proxy, which holds every packet for the simulated latency: it stays up that long, so
+# the clients hear the goodbye instead of waiting 5 to 30 s for ENet to give up on a silent server.
+# The wait is on the wall clock: a SceneTreeTimer counts frames' deltas, and the frame after
+# end_session(), which may write a record, is long enough to eat most of a short timer at once
+# (measured in TASK-9, round C2: the server left 43 ms after its goodbye, with the goodbye still
+# in the proxy).
 func _quit(exit_code: int) -> void:
 	end_session()
+	var leave_at := Time.get_ticks_msec()
+	if options.mode == LaunchOptions.Mode.SERVER and options.simulator != null:
+		leave_at += options.simulator.latency_ms + PROXY_DRAIN_MARGIN_MS
 	await get_tree().process_frame
+	while Time.get_ticks_msec() < leave_at:
+		await get_tree().process_frame
 	_log("%s: exiting with %d" % [_role(), exit_code])
 	get_tree().quit(exit_code)
 

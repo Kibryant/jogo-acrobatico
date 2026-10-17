@@ -11,6 +11,9 @@ extends Node3D
 var yaw := 0.0
 ## Up and down, in rad: positive looks up. Only the camera tilts, never the body.
 var pitch := 0.0
+## False for a rig that only follows, as the camera of a bot (BotPlayer): it neither captures the
+## mouse nor turns with it, so a player can use another window beside this one (TASK-9, part 2).
+var takes_mouse := true
 
 ## Rotates with the pitch and pulls the camera in when a wall is in the way.
 @export var arm: SpringArm3D
@@ -24,8 +27,9 @@ var _max_pitch := 0.0 # rad
 
 
 # Takes the numbers of movimento.md from the data and starts looking along start_yaw. Called by
-# the Match before the rig enters the tree.
-func setup(data: CameraData, target: Node3D, start_yaw: float) -> void:
+# the Match before the rig enters the tree; mouse false makes a rig that only follows.
+func setup(data: CameraData, target: Node3D, start_yaw: float, mouse := true) -> void:
+	takes_mouse = mouse
 	_target = target
 	_pivot_height = data.pivot_height_m
 	_turn_per_pixel = deg_to_rad(data.sensitivity_deg_per_px)
@@ -40,14 +44,16 @@ func setup(data: CameraData, target: Node3D, start_yaw: float) -> void:
 
 func _ready() -> void:
 	camera.make_current()
-	Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
+	if takes_mouse:
+		Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
 	_follow()
 
 
 # The rig leaves with its fighter or its match, as when the server closes: the mouse comes back,
 # so the player can use the window again.
 func _exit_tree() -> void:
-	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
+	if takes_mouse:
+		Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 
 
 # After netfox's tick loop of the frame, which interpolates the fighter between two ticks
@@ -65,6 +71,8 @@ func turn(screen_pixels: Vector2) -> void:
 
 # The mouse is captured while playing; Esc releases it and a click captures it again.
 func _unhandled_input(event: InputEvent) -> void:
+	if not takes_mouse:
+		return
 	if event.is_action_pressed(&"ui_cancel"):
 		Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 		get_viewport().set_input_as_handled()

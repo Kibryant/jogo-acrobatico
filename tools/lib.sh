@@ -19,6 +19,17 @@ resolve_godot() {
 	exit 1
 }
 
+# Stops the calling script while an override.cfg sits at the project root. tools/net_run.sh and
+# tools/play_online.sh write one to turn on netfox's network simulator for one session (TASK-9,
+# part 2), and a session that was killed can leave it behind: then every Godot run of this project
+# hosts or joins by itself on port 7777, the tests' runner included. Call it from the project root.
+refuse_override_cfg() {
+	if [ -e override.cfg ]; then
+		echo "override.cfg at the project root turns on netfox's network simulator in every Godot run here; tools/net_run.sh and tools/play_online.sh write it for one session: if none is running, delete it (rm override.cfg) and run again" >&2
+		exit 1
+	fi
+}
+
 # Lists the project's own GDScript files, tracked or new, without third-party addons and without
 # the gate's canaries, which are broken on purpose and checked by the gate itself (TASK-6).
 own_gd_files() {

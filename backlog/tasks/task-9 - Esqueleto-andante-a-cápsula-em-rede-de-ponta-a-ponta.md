@@ -1,10 +1,10 @@
 ---
 id: TASK-9
 title: 'Esqueleto andante: a cápsula em rede de ponta a ponta'
-status: Ready
+status: In Progress
 assignee: []
 created_date: '2026-10-02 16:48'
-updated_date: '2026-10-17 13:42'
+updated_date: '2026-10-17 13:55'
 labels:
   - jogo
   - rede
@@ -98,6 +98,39 @@ Fechados pelo Claude (DEC-0017), fora da identidade do jogo; o Arthur julga joga
 - [ ] #3 Diário da sessão escrito e glossário atualizado
 - [ ] #4 Mudanças registradas em docs/mudancas.md
 <!-- DOD:END -->
+
+## Implementation Plan
+
+<!-- SECTION:PLAN:BEGIN -->
+## Parte 1: a interface pública combinada (para o test-writer e o implementer)
+
+Concretiza a `visao-geral.md` (o estado em quatro caixas, o sanduíche e as pastas; DEC-0022). Nomes de código em inglês (DEC-0008).
+
+**Dados** (`data/`):
+- `movement_data.gd`: `class_name MovementData extends Resource`, com os números do `movimento.md` nas unidades do papel: `capsule_height_m`, `capsule_radius_m`, `max_slope_deg`, `run_speed_mps`, `accel_time_ms`, `stop_time_ms`, `air_control_pct`, `max_fall_speed_mps`, `jump_height_m`, `jump_rise_ms`, `jump_fall_ms`, `coyote_ms`, `buffer_ms` (tempos em `int`, o resto em `float`). `func validate() -> PackedStringArray` devolve uma mensagem por número impossível; vazio quando está certo.
+- `movement_v0.tres`: os números das seções O corpo, Chão, Pulo e ar e Perdão do `movimento.md`.
+
+**Tempo** (`core/time/ticks.gd`): `class_name Ticks`, com `static func from_ms(ms: int, tickrate: int) -> int`: o tick mais próximo, e o empate sobe.
+
+**O lutador no núcleo** (`core/fighter/`):
+- `movement_config.gd`: `class_name MovementConfig extends RefCounted`, criado por `static func create(data: MovementData, tickrate: int) -> MovementConfig`. Campos: `tickrate`, `accel_ticks`, `stop_ticks`, `rise_ticks`, `fall_ticks`, `coyote_ticks`, `buffer_ticks` (`int`); `run_speed`, `max_fall_speed` (m/s), `floor_max_angle` (rad), `capsule_height`, `capsule_radius` (m); a física derivada para o tick tem nomes livres.
+- `fighter_state.gd`: `class_name FighterState extends RefCounted`, com `enum Mode { GROUND, AIR }`, `const NEVER := -1073741824` (o carimbo de "nunca") e os campos `mode`, `mode_since`, `on_floor`, `left_floor_tick`, `jump_pressed_tick`, `jumps_used`, `facing_yaw`; `func copy() -> FighterState`.
+- `tick_input.gd`: `class_name TickInput extends RefCounted`: `move: Vector2` (x para a direita, y para a frente, relativo ao `yaw`, comprimento até 1), `yaw: float` (rad), `jump: bool` (um toque, vale um tick).
+- `move_plan.gd`: `class_name MovePlan extends RefCounted`: `state: FighterState`, `velocity: Vector3` (m/s).
+- `move_facts.gd`: `class_name MoveFacts extends RefCounted`: `on_floor: bool`, `velocity: Vector3` (m/s, depois da colisão).
+- `movement.gd`: `class_name Movement`, com `static func before_move(state: FighterState, velocity: Vector3, input: TickInput, config: MovementConfig, tick: int) -> MovePlan` e `static func after_move(state: FighterState, facts: MoveFacts, config: MovementConfig, tick: int) -> FighterState`. Nenhuma das duas altera o estado que recebe.
+
+**As convenções em que os testes se apoiam:**
+- O motor move o corpo por `plan.velocity × (1 / tickrate)` no mesmo tick. No ar, sem colisão, `facts.velocity` é a `plan.velocity`.
+- A direção no mundo é `Basis(Vector3.UP, yaw) * Vector3(move.x, 0, -move.y)`: `yaw` 0 olha para −Z. O `facing_yaw` copia o `input.yaw` (o corpo olha para onde a câmera olha).
+- O aperto do pulo é carimbado no `before_move` (`jump_pressed_tick = tick`) e consumido pelo pulo (volta a `NEVER`). O pulo soma 1 em `jumps_used`; pousar zera.
+- As duas janelas contam ticks inteiros desde o carimbo, inclusive: o pulo vale no tick `t` enquanto `t - carimbo <= janela`. O `left_floor_tick` é o tick cujo `after_move` primeiro diz que o corpo saiu do chão. O coyote só vale com `jumps_used == 0`. O aperto guardado pelo buffer pula no `before_move` do primeiro tick que começa no chão.
+- A gravidade de subida vale enquanto `velocity.y > 0`; a de descida, no resto. O `velocity.y` nunca passa de `-max_fall_speed`.
+- Sem input, a velocidade horizontal chega a 0 em `stop_ticks`. Com input cheio, sai do zero e chega a `run_speed` em `accel_ticks`. No ar, a aceleração é `air_control_pct` da do chão.
+- O ângulo do chão é julgado pelo motor, com o `floor_max_angle` da configuração; o núcleo lê `facts.on_floor`.
+
+**Quem testa o quê na parte 1:** o test-writer escreve os testes dos critérios 1 a 5, cegos à implementação, e eles são travados. O implementer escreve os testes dos critérios 6 a 8: as cenas, o input por posição física, a rampa de 45° contra a de 46° numa cena e a SyncTest.
+<!-- SECTION:PLAN:END -->
 
 ## Comments
 

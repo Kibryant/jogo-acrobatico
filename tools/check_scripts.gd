@@ -10,7 +10,10 @@ extends SceneTree
 const MUST_COMPILE: Dictionary[String, bool] = { "own": true, "bad": false, "good": true }
 
 
-func _init() -> void:
+# _initialize(), not _init(): Godot 4.7.2 runs a script's _init() before it registers the
+# autoloads, so a script naming netfox's NetworkTime failed here with "Identifier not found" while
+# it compiles in the editor and in the game (TASK-9, part 1).
+func _initialize() -> void:
 	var counts: Dictionary[String, int] = { "own": 0, "bad": 0, "good": 0 }
 	var failures := 0
 	for argument: String in OS.get_cmdline_user_args():
@@ -46,8 +49,8 @@ func _init() -> void:
 # as a Script, so a load that returns one proves nothing: such a script can be neither instantiated
 # nor abstract. An abstract script is legal, whether or not Godot calls it instantiable (TASK-6).
 func _compiles(path: String) -> bool:
-	# This script compiled, or it would not be running. Loading it again from its own _init()
-	# crashes Godot 4.7.2 (signal 11).
+	# This script compiled, or it would not be running. Loading it again while it runs crashes
+	# Godot 4.7.2 (signal 11).
 	var running: Script = get_script()
 	if path == running.resource_path:
 		return true

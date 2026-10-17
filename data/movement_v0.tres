@@ -1,0 +1,19 @@
+[gd_resource type="Resource" script_class="MovementData" format=3 uid="uid://b1y1xk83cal7g"]
+
+[ext_resource type="Script" path="res://data/movement_data.gd" id="1_yx5js"]
+
+[resource]
+script = ExtResource("1_yx5js")
+capsule_height_m = 1.8
+capsule_radius_m = 0.35
+max_slope_deg = 45.0
+run_speed_mps = 7.0
+accel_time_ms = 150
+stop_time_ms = 100
+jump_height_m = 1.2
+jump_rise_ms = 350
+jump_fall_ms = 280
+air_control_pct = 25.0
+max_fall_speed_mps = 30.0
+coyote_ms = 100
+buffer_ms = 150

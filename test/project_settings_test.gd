@@ -1,7 +1,21 @@
 # Guards the project settings decided in DEC-0002, DEC-0005, DEC-0022, DEC-0023, DEC-0024,
-# DEC-0026, DEC-0028 (the version), DEC-0030 (MSAA) and DEC-0031 (the interface base). A failure
-# here means project.godot changed: read the DEC before "fixing" the test.
+# DEC-0026 (and the Main scene of TASK-9), DEC-0028 (the version), DEC-0030 (MSAA) and DEC-0031
+# (the interface base and the physical keys). A failure here means project.godot changed: read
+# the DEC before "fixing" the test.
 extends GdUnitTestSuite
+
+# DEC-0026 §6: the game opens on the Main, which picks the mode from the arguments.
+const MAIN_SCENE := "res://main/main.tscn"
+
+# DEC-0031 §8: the movement keys by physical position, so WASD sits in the same place on ABNT2,
+# AZERTY and Dvorak (TASK-9, criterion 7).
+const PHYSICAL_KEYS: Dictionary[StringName, Key] = {
+	&"move_forward": KEY_W,
+	&"move_back": KEY_S,
+	&"move_left": KEY_A,
+	&"move_right": KEY_D,
+	&"jump": KEY_SPACE,
+}
 
 const UNSAFE_ACCESS_WARNINGS: Array[String] = [
 	"unsafe_property_access",
@@ -52,6 +66,7 @@ const OWN_FOLDERS: Array[String] = [
 	"res://fighter",
 	"res://arena",
 	"res://match",
+	"res://main",
 	"res://net",
 	"res://ui",
 	"res://tools",
@@ -224,6 +239,41 @@ func test_msaa_3d_is_2x() -> void:
 	var msaa: int = ProjectSettings.get_setting("rendering/anti_aliasing/quality/msaa_3d")
 	var message := "MSAA 3D must be 2x (1), found %d (DEC-0030)" % msaa
 	assert_int(msaa).override_failure_message(message).is_equal(1)
+
+
+# TASK-9, criterion 6. The editor may write the scene as a uid:// path, the same scene.
+func test_the_game_opens_on_the_main_scene() -> void:
+	var main_scene: String = ProjectSettings.get_setting("application/run/main_scene", "")
+	if main_scene.begins_with("uid://"):
+		main_scene = ResourceUID.uid_to_path(main_scene)
+	var message := 'the main scene must be "%s", found "%s" (DEC-0026 §6)' % [
+		MAIN_SCENE,
+		main_scene,
+	]
+	assert_str(main_scene).override_failure_message(message).is_equal(MAIN_SCENE)
+
+
+# TASK-9, criterion 7: each movement action has its key by position, and no key by label, which
+# would move with the keyboard layout.
+func test_the_movement_keys_are_bound_by_physical_position() -> void:
+	for action: StringName in PHYSICAL_KEYS:
+		var has_action := InputMap.has_action(action)
+		assert_bool(has_action).override_failure_message("missing action %s" % action).is_true()
+		if not has_action:
+			continue
+		var bound: Array[Key] = []
+		for event: InputEvent in InputMap.action_get_events(action):
+			if event is InputEventKey:
+				var key := event as InputEventKey
+				var by_label := "%s binds keycode %d by label (DEC-0031)" % [action, key.keycode]
+				assert_int(key.keycode).override_failure_message(by_label).is_equal(KEY_NONE)
+				bound.append(key.physical_keycode)
+		var expected: Key = PHYSICAL_KEYS[action]
+		var message := (
+			"%s must have the physical key %s, found %s (DEC-0031)"
+			% [action, OS.get_keycode_string(expected), bound]
+		)
+		assert_bool(bound.has(expected)).override_failure_message(message).is_true()
 
 
 # Every autoload in ProjectSettings, by name, with its path as written in project.godot.

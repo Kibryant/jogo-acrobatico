@@ -4,7 +4,7 @@ title: 'Esqueleto andante: a cápsula em rede de ponta a ponta'
 status: In Progress
 assignee: []
 created_date: '2026-10-02 16:48'
-updated_date: '2026-10-17 14:33'
+updated_date: '2026-10-17 14:57'
 labels:
   - jogo
   - rede
@@ -136,6 +136,12 @@ Concretiza a `visao-geral.md` (o estado em quatro caixas, o sanduíche e as past
 - No ar, sem input, a velocidade horizontal se conserva (`movimento.md`, Princípios: "a velocidade se conserva entre manobras"); com input, ela vai para o alvo com `air_control_pct` do ganho do chão. A sonda freava no ar, e um pulo sem tecla perderia a corrida inteira em 0,4 s.
 - O pulo do coyote substitui a velocidade vertical: é sempre um pulo cheio.
 - A física do pulo é derivada para o degrau do tick: o tick do aperto conta como o passo 1, o topo chega no passo `rise_ticks` e o pouso no passo `rise_ticks + fall_ticks`. A aceleração é um ganho fixo por tick, `run_speed / accel_ticks`, e a frenagem, `run_speed / stop_ticks`.
+
+**Rodada B (as cenas, o input e a SyncTest):**
+- A `Main` fica em `main/main.tscn`, a cena principal do `project.godot`; os números da câmera do `movimento.md` ficam num `data/camera_data.gd` com `data/camera_v0.tres`, com a mesma checagem dos dados.
+- Leitura v0 do Claude: a câmera sobe e desce no máximo 80° (sem esse limite ela vira de ponta-cabeça; o papel não tem número).
+- O lutador nasce com o corpo no chão, no ponto de nascimento: um estado novo parte do chão, e nascer no ar abriria uma janela de coyote (achado da rodada A).
+- O snap do chão do motor cobre a corrida de 7 m/s descendo a rampa de 45° (uns 0,12 m por tick a 60), derivado da configuração.
 <!-- SECTION:PLAN:END -->
 
 ## Comments

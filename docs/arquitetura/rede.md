@@ -1,13 +1,13 @@
 ---
-revisado_em: 2026-10-08
-fontes: [F-001, F-005, F-007, F-023, F-024, F-025, F-026, F-027, F-028, F-029, F-030, F-032, F-033, F-034, F-036, F-042, F-044, F-046]
+revisado_em: 2026-10-17
+fontes: [F-001, F-005, F-007, F-023, F-024, F-025, F-026, F-027, F-028, F-029, F-030, F-032, F-033, F-034, F-036, F-042, F-044, F-046, F-084, F-085, F-087, F-088]
 ---
 
 # Rede
 
-Estado atual: o Desenho 3 (TASK-5) fechado, com as DEC-0023 a DEC-0026. Nenhum código de jogo existe ainda.
+Estado atual: o Desenho 3 (TASK-5) fechado, com as DEC-0023 a DEC-0026 e a DEC-0037. A parte 1 do esqueleto andante (TASK-9) pôs o lutador no tick do netfox, no modo Sozinho, com a SyncTest no portão.
 
-- A rede entra no esqueleto andante (TASK-9).
+- A rede de verdade entra na parte 2 do esqueleto andante (TASK-9).
 - A compensação e a detecção do golpe nascem com a espada: local na fase 2, em rede na fase 3 (F-023 §3).
 - A versão visual e interativa deste documento é a vitrine [A rede por dentro](https://claude.ai/artifact/Sb4Q5e4M16UymdoaR9UAzp), privada (DEC-0019), na versão 9.
 
@@ -49,6 +49,11 @@ O loop de ticks, a cada frame (`addons/netfox/network-time.gd`, `_loop`):
 **Outras regras do tick:**
 
 - O histórico guarda 64 ticks, 1,07 s a 60 ticks (`addons/netfox/rollback/network-rollback.gd`, `history_limit`).
+- **Cada tick do loop roda uma vez.**
+  - Sem notícia da rede, o loop de rollback do netfox simula só o último tick do loop, porque começa em `NetworkTime.tick - 1` (`network-rollback.gd`, `_rollback`). Num frame atrasado de dois ticks, o primeiro some, com o movimento e o aperto dele.
+  - O `Match` pede ao netfox o primeiro tick do loop (`notify_resimulation_start`, no `before_loop`), e cada tick roda.
+  - Quando a rede pede um tick mais antigo, vale o pedido da rede, porque o netfox fica com o menor.
+  - Achado da TASK-9; `test/match/match_test.gd` cobre (F-085; F-088 §1).
 - Som e efeito tocam uma vez por evento, pela chave, quando o evento aparece pela primeira vez no estado exibido, nunca de novo na re-simulação; o `is_fresh` cobre só o nó que o peer simula (DEC-0031 §6; F-061 §2).
 - A animação troca no `after_tick_loop`, comparando o modo desenhado com o do estado (DEC-0022).
 
@@ -59,7 +64,7 @@ O input é o pedido do jogador para o tick, como o corpo de uma requisição: o 
 | Campo | O que é | Desde |
 |---|---|---|
 | `move` | Para onde andar, até 1, relativo à câmera; a média das amostras dos frames do tick, o padrão do netfox para entrada contínua | esqueleto andante |
-| `yaw` | Para onde a câmera olha | esqueleto andante |
+| `yaw` | Para onde a câmera olha; a última amostra dos frames do tick | esqueleto andante |
 | `jump` | Um toque | esqueleto andante |
 | `pitch` | A mira na vertical, para o gancho | fase 1 |
 | `dash`, `grapple` | Um toque | fase 1 |
@@ -68,7 +73,7 @@ O input é o pedido do jogador para o tick, como o corpo de uma requisição: o 
 | `view_lag` | Quão velho estava o oponente na tela, em ticks (§6) | fase 3 |
 
 - **O comando de um toque** fica guardado entre os frames e é consumido depois de cada tick. Assim, vale no máximo um tick, mesmo quando um frame roda dois ticks para alcançar o relógio. É o padrão do exemplo [`one-off-input.gd`](https://github.com/foxssake/netfox/blob/cf5189d18e98766022c8c1c5e637a6a30c4c3703/examples/snippets/input-gathering-tutorial/one-off-input.gd), que consome no `after_tick` (guia `input-gathering-tips-and-tricks.md`).
-- **O `yaw` e o `pitch` são ângulos,** e a média simples erra quando o ângulo dá a volta em 360°. Como eles entram no tick, a última amostra ou uma média que respeite a volta, fica para a TASK-9.
+- **O `yaw` e o `pitch` são ângulos,** e a média simples erra quando o ângulo dá a volta em 360°. O `yaw` entra no tick pela última amostra, que é para onde a câmera olha agora (TASK-9, escolha 1; F-084 §4). O `pitch` nasce na fase 1.
 - **O buffer de 150 ms** (`movimento.md`) não mora no input: o núcleo guarda o carimbo do aperto no estado (DEC-0022).
 
 **A configuração do netfox:** tudo fica no padrão, e o teste de configurações guarda cada valor (DEC-0026).
@@ -125,7 +130,8 @@ flowchart LR
 - **O contorno do transform:** o corpo vai para o modo estático, recebe o transform e volta a cinemático, pelo `PhysicsServer3D`, no `after_prepare_tick` (guia `rollback-caveats.md`). Sem isso, o Jolt colide com o outro lutador onde ele estava no presente.
 - **O contorno D:**
   - no primeiro tick preparado de cada rollback, um micro-movimento de sonda alinha o "estava no chão" que o `move_and_slide()` guarda (`character_body_3d.cpp:95`, usado no snap nas linhas 394 e 495, no Godot 4.7.2);
-  - o movimento vai para baixo se o estado diz chão, para cima se diz ar;
+  - o movimento vai para baixo se o estado diz chão, para cima se diz ar, e anda um tick, pelo `physics_factor`, como o sanduíche;
+  - se a sonda não acha o chão que o estado diz, o lutador chama o snap do motor (`apply_floor_snap()`), o mesmo da primeira execução. A cápsula apoiada na quina pela base redonda fica longe demais da sonda (DEC-0037);
   - depois, a posição e a velocidade voltam ao que eram.
 
 ### As três hipóteses do Desenho 2
@@ -142,7 +148,12 @@ O teste é mais duro que a rede: ele força o rollback a cada tick. As mediçõe
 
 **O float:** com o frame sem limite, o contorno D deu erro máximo de 0,000000 m. O resíduo do `physics_factor` fica abaixo de 1 µm nesta máquina (F-025 §5).
 
-**A prova permanente:** a SyncTest vira teste no portão, no esqueleto andante (TASK-9; DEC-0004, regra 4). Ela avança os ticks à mão, como a suíte do netfox (`test/network-mocks.gd`): pelo relógio do netfox, cada cenário custaria o tempo de jogo dele (F-042 §1; DEC-0027 §3).
+**A prova permanente:** a SyncTest está no portão desde a TASK-9 (`test/fighter/fighter_sync_test.gd`; DEC-0004, regra 4).
+- Ela roda a partida de verdade no Sozinho, com um rollback de 7 ticks a cada tick, nas cenas da rampa de 45°, da beirada, do pouso e do empurrão.
+- Avança os ticks à mão, pelo ajudante `test/support/netfox_ticks.gd`, como a suíte do netfox (`test/network-mocks.gd`). Pelo relógio do netfox, cada cenário custaria o tempo de jogo dele (F-042 §1; DEC-0027 §3).
+- As quatro cenas dão zero divergência em uns 2,5 s, e o tempo aparece em toda rodada do portão, sem trava (F-087 §1).
+- Um autoteste tira o `on_floor` do que o netfox grava e exige que ela acuse.
+- Na beirada, ela achou a cápsula apoiada na quina, que a sonda do Desenho 3 não via (DEC-0037).
 
 ## 5. O oponente no passado (DEC-0026 §2)
 

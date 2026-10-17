@@ -1,14 +1,14 @@
 ---
-revisado_em: 2026-10-08
-fontes: [F-007, F-009, F-010, F-021, F-038, F-039, F-040, F-041, F-042, F-043, F-044, F-045, F-046, F-047, F-048, F-049]
+revisado_em: 2026-10-17
+fontes: [F-007, F-009, F-010, F-021, F-038, F-039, F-040, F-041, F-042, F-043, F-044, F-045, F-046, F-047, F-048, F-049, F-085, F-087, F-088]
 ---
 
 # Testes e entrega
 
-Estado atual: o Desenho 4 (TASK-6) fechado, com as DEC-0027 e DEC-0028. Nenhum código de jogo existe ainda.
+Estado atual: o Desenho 4 (TASK-6) fechado, com as DEC-0027 e DEC-0028. A parte 1 do esqueleto andante (TASK-9) trouxe o primeiro código de jogo.
 
 - O portão, os canários e os hooks do Claude Code já rodam.
-- As camadas de teste do jogo, o job de build e o aperto de mão nascem no esqueleto andante (TASK-9).
+- A especificação, a checagem dos dados e a SyncTest nasceram na parte 1 da TASK-9. O aperto de mão vem na parte 2; a referência e o job de build, na parte 3.
 - O gravador do replay nasce na fase 1 (TASK-10).
 - A versão visual e interativa deste documento é a vitrine [A esteira por dentro](https://claude.ai/artifact/L9FpEtDFoyGJYWLSR6TFA1), privada (DEC-0019).
 
@@ -52,7 +52,7 @@ Os tempos são os da rodada B depois dos consertos (F-049 §5). O total foi 31,3
 | Camada | Pega o quê | Onde roda | Nasce | Quanto gasta |
 |---|---|---|---|---|
 | 1. A especificação | A regra do núcleo diferente do papel; o teste de unidade do Jest para função pura | portão | TASK-9 | sem medida |
-| 2. A SyncTest | Estado escondido: refazer um tick dá outro resultado (DEC-0025) | portão | TASK-9, com os ticks à mão | pelo relógio, ~6 s por cenário de 5 s (F-042 §1); à mão, sem medida |
+| 2. A SyncTest | Estado escondido: refazer um tick dá outro resultado (DEC-0025) | portão | TASK-9, com os ticks à mão | pelo relógio, ~6 s por cenário de 5 s (F-042 §1); à mão, as quatro cenas em uns 2,5 s (F-087 §1) |
 | 3. A checagem dos dados | Um número impossível num `.tres` | portão | com o primeiro `.tres` de design (F-048) | sem medida |
 | 4. O replay como referência | Uma mudança de código que muda o movimento sem querer; o snapshot do Jest | portão e CI | TASK-9 | 1.200 ticks em 11 a 13 ms (F-042 §3) |
 | 5. A rede à mão | A sensação com lag | o Arthur | TASK-9, e de tempos em tempos (DEC-0026) | o tempo dele, e o que ele sentiu (F-041) |
@@ -64,6 +64,9 @@ Os tempos são os da rodada B depois dos consertos (F-049 §5). O total foi 31,3
 - Pelo relógio do netfox, cada cenário custa o tempo de jogo dele, e o `--fixed-fps` não acelera (F-042 §1).
 - A SyncTest da TASK-9 avança os ticks como a suíte do próprio netfox faz em `test/network-mocks.gd`: chama `NetworkTime._before_tick_loop()`, os sinais do tick e `_after_tick_loop()`. Assim ela roda o rollback de verdade dele sem esperar o relógio.
 - É a exceção escrita à regra de testar só por interface pública. O netfox está fixado no `cf5189d` (DEC-0023), e atualizá-lo já é uma DEC nova, com a SyncTest refeita (F-044 §2).
+- O ajudante `test/support/netfox_ticks.gd` faz isso para toda suíte que roda o netfox, e não só para a SyncTest: o lutador, a entrada, a rampa, a partida e a Main. As 4 chamadas privadas dele declaram a exceção ao linter, linha a linha, com o ok do Arthur (F-085 §1; F-088 §1).
+- Os ticks rodam dentro de um frame de física: ali o `physics_factor` do netfox vale 1, e o `move_and_slide()` anda o passo fixo da física, então um tick anda exatamente um tick.
+- O tempo das quatro cenas aparece em toda rodada do portão, sem trava: uns 2,5 s com o PC quieto, até o triplo com o PC ocupado (F-087 §1).
 
 **A referência (golden master).**
 - É um percurso de bot gravado como replay, com o hash do caminho conferido no portão, no Windows, e no CI, no Linux.

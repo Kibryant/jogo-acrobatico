@@ -4,7 +4,7 @@ title: 'Esqueleto andante: a cápsula em rede de ponta a ponta'
 status: In Progress
 assignee: []
 created_date: '2026-10-02 16:48'
-updated_date: '2026-10-17 14:57'
+updated_date: '2026-10-17 17:45'
 labels:
   - jogo
   - rede
@@ -71,14 +71,14 @@ Fechados pelo Claude (DEC-0017), fora da identidade do jogo; o Arthur julga joga
 
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
-- [ ] #1 Quando o `movement_v0.tres` é carregado, cada tempo do `movimento.md` vira ticks pelo tick mais próximo, com o empate para cima, e um teste falha se algum erro passar de meio tick, a 30 e a 60 ticks (DEC-0004, regra 3; `visao-geral.md`).
-- [ ] #2 Quando a cápsula pula do chão, a 30 e a 60 ticks, ela sobe 1,2 m com tolerância de 1 cm, chega ao topo em 350 ms e volta ao chão em 280 ms, cada tempo com erro de até meio tick, porque a física é derivada para o tamanho do tick (`movimento.md`; `visao-geral.md`).
-- [ ] #3 Quando as regras do chão e do ar rodam no núcleo, testes de tabela escritos do `movimento.md` antes do código provam a corrida de 7 m/s, igual para frente, para o lado e para trás, os 150 ms até a velocidade máxima, os 100 ms até parar sem input, o controle no ar de 25% da aceleração do chão, a queda máxima de 30 m/s e a rampa de até 45° como chão, e acima disso não (`movimento.md`; DEC-0004, regra 4).
-- [ ] #4 Quando o pulo é apertado, o núcleo aceita o aperto até 100 ms depois de sair da beirada (coyote) e guarda o aperto no ar por até 150 ms antes de pousar (buffer); um tick além de cada janela já não pula, um aperto no ar fora do buffer não faz nada (o pulo duplo é da fase 1) e soltar o botão cedo não encurta o pulo (`movimento.md`; DEC-0016).
-- [ ] #5 Quando um `.tres` de movimento tem um número impossível, como um tempo negativo, um zero onde a regra divide ou uma rampa acima de 90°, a checagem dos dados reprova no portão, e um teste prova que ela barra um `.tres` errado (DEC-0027 §2, camada 3).
-- [ ] #6 Quando o jogo abre sem argumento, ele entra no modo Sozinho, o par offline: a cápsula de 1,8 m × 0,35 m anda e pula na arena de blocos, com rampa de 45° e beirada, e a câmera em terceira pessoa segue o `movimento.md` (3,5 m, pivô a 1,6 m, centralizada, 70° na vertical, colisão e 0,06° por pixel do mouse), com o corpo olhando para onde a câmera olha; o teste de configurações passa a guardar a cena principal `Main` (DEC-0026 §6; DEC-0013; F-084).
-- [ ] #7 Quando o jogador usa o teclado, as ações vêm do `InputMap` por posição física (`physical_keycode`), com teste; o `move` é a média das amostras dos frames do tick, o `yaw` é a última amostra e o pulo vale no máximo um tick (DEC-0031; DEC-0026 §1; F-084).
-- [ ] #8 Quando a SyncTest roda no portão, com os ticks avançados à mão e o rollback forçado de 7 ticks a cada tick, os quatro cenários (rampa de 45°, beirada, pouso e dois lutadores se empurrando no chão) dão zero divergência (posição até 1 mm, `on_floor` e `mode` iguais), juntos em menos de 5 s neste PC; o resumo prova que cada caminho rodou (ticks refeitos, pousos, decolagens, ticks na rampa e choques), e um campo do estado fora do que o netfox grava faz ela acusar (DEC-0025; DEC-0027 §3; `rede.md` §4; F-084).
+- [x] #1 Quando o `movement_v0.tres` é carregado, cada tempo do `movimento.md` vira ticks pelo tick mais próximo, com o empate para cima, e um teste falha se algum erro passar de meio tick, a 30 e a 60 ticks (DEC-0004, regra 3; `visao-geral.md`).
+- [x] #2 Quando a cápsula pula do chão, a 30 e a 60 ticks, ela sobe 1,2 m com tolerância de 1 cm, chega ao topo em 350 ms e volta ao chão em 280 ms, cada tempo com erro de até meio tick, porque a física é derivada para o tamanho do tick (`movimento.md`; `visao-geral.md`).
+- [x] #3 Quando as regras do chão e do ar rodam no núcleo, testes de tabela escritos do `movimento.md` antes do código provam a corrida de 7 m/s, igual para frente, para o lado e para trás, os 150 ms até a velocidade máxima, os 100 ms até parar sem input, o controle no ar de 25% da aceleração do chão, a queda máxima de 30 m/s e a rampa de até 45° como chão, e acima disso não (`movimento.md`; DEC-0004, regra 4).
+- [x] #4 Quando o pulo é apertado, o núcleo aceita o aperto até 100 ms depois de sair da beirada (coyote) e guarda o aperto no ar por até 150 ms antes de pousar (buffer); um tick além de cada janela já não pula, um aperto no ar fora do buffer não faz nada (o pulo duplo é da fase 1) e soltar o botão cedo não encurta o pulo (`movimento.md`; DEC-0016).
+- [x] #5 Quando um `.tres` de movimento tem um número impossível, como um tempo negativo, um zero onde a regra divide ou uma rampa acima de 90°, a checagem dos dados reprova no portão, e um teste prova que ela barra um `.tres` errado (DEC-0027 §2, camada 3).
+- [x] #6 Quando o jogo abre sem argumento, ele entra no modo Sozinho, o par offline: a cápsula de 1,8 m × 0,35 m anda e pula na arena de blocos, com rampa de 45° e beirada, e a câmera em terceira pessoa segue o `movimento.md` (3,5 m, pivô a 1,6 m, centralizada, 70° na vertical, colisão e 0,06° por pixel do mouse), com o corpo olhando para onde a câmera olha; o teste de configurações passa a guardar a cena principal `Main` (DEC-0026 §6; DEC-0013; F-084).
+- [x] #7 Quando o jogador usa o teclado, as ações vêm do `InputMap` por posição física (`physical_keycode`), com teste; o `move` é a média das amostras dos frames do tick, o `yaw` é a última amostra e o pulo vale no máximo um tick (DEC-0031; DEC-0026 §1; F-084).
+- [x] #8 Quando a SyncTest roda no portão, com os ticks avançados à mão e o rollback forçado de 7 ticks a cada tick, os quatro cenários (rampa de 45°, beirada, pouso e dois lutadores se empurrando no chão) dão zero divergência (posição até 1 mm, `on_floor` e `mode` iguais), juntos em menos de 5 s neste PC; o resumo prova que cada caminho rodou (ticks refeitos, pousos, decolagens, ticks na rampa e choques), e um campo do estado fora do que o netfox grava faz ela acusar (DEC-0025; DEC-0027 §3; `rede.md` §4; F-084).
 - [ ] #9 Quando o jogo abre com `--server`, na porta de `--port` ou na 7777/udp, ou é o build de servidor dedicado, ele sobe sem tela e sem lutador próprio; sem cliente, espera; cada cliente que entra ganha um lutador num ponto de nascimento; o terceiro é recusado com a mensagem de sala cheia; o lutador de quem sai some para o outro; e o log sai na hora, com o `flush_stdout_on_print` guardado pelo teste de configurações (DEC-0026 §6; F-073 §2; F-084).
 - [ ] #10 Quando um cliente abre com `--connect=host:porta`, ele manda a versão e o commit; se um dos dois for diferente do servidor, o servidor recusa e o cliente mostra o pedido para atualizar; se o servidor não responde, o cliente mostra o erro; sem tela, nos dois casos, ele sai com código diferente de 0; todo texto na tela usa chave de tradução, com pt-BR e en (DEC-0028 §3; DEC-0031; F-084).
 - [ ] #11 Quando o arquivo de parada aparece, o servidor o percebe em até 1 s, para o tick, fecha a conexão, solta a partida e sai com código 0, com ou sem clientes conectados, e os clientes mostram que o servidor fechou; quando o jogador fecha a janela, o cliente sai com código 0 (DEC-0026 §6; DEC-0032 §2; F-084).
@@ -143,6 +143,31 @@ Concretiza a `visao-geral.md` (o estado em quatro caixas, o sanduíche e as past
 - O lutador nasce com o corpo no chão, no ponto de nascimento: um estado novo parte do chão, e nascer no ar abriria uma janela de coyote (achado da rodada A).
 - O snap do chão do motor cobre a corrida de 7 m/s descendo a rampa de 45° (uns 0,12 m por tick a 60), derivado da configuração.
 <!-- SECTION:PLAN:END -->
+
+## Implementation Notes
+
+<!-- SECTION:NOTES:BEGIN -->
+## Parte 1, fechada em 17/10/2026 (branch task-9-solo-capsule)
+
+- O revisor aprovou os critérios 1 a 8, com o portão verde (231 testes). O Arthur jogou o modo Sozinho e gostou (F-086).
+- Achados que viraram regra ou doc:
+  - sem notícia da rede, o netfox simulava só o último tick de um loop, e o `Match` pede o primeiro (F-085; `rede.md` §2);
+  - a checagem de compilação do portão roda no `_initialize()`, depois dos autoloads (F-085);
+  - o snap de reserva do contorno D (DEC-0037; F-087);
+  - o tempo da SyncTest aparece sem trava (F-087 §1);
+  - a escada dos blocos, com o pulo atrasado (F-086; `movimento.md`).
+- Para a parte 2:
+  - o `Match` já pede o primeiro tick do loop em todos os modos;
+  - a SyncTest e o `test/support/netfox_ticks.gd` servem de base;
+  - o `main_test` ainda não exercita a recusa de um argumento desconhecido, só o `unknown_arguments()`, e o critério 10 pede a saída diferente de 0 sem tela.
+- Para a parte 3:
+  - o `MovementConfig.create()` barra um tempo que arredonda para 0 tick só com `assert`, que some no build de release. Vale uma checagem que devolva erro antes das builds (achado 5 do revisor);
+  - o `camera_v0.tres` não tem uid, e o editor põe um no primeiro save.
+- No fechamento da task, a linha da TASK-9 no `.claude/harness/registro.md`, com as lições da parte 1:
+  - as cinco conferências erradas da sessão 13 e a explicação de uma coisa por vez;
+  - a SyncTest achando o que a sonda do Desenho 3 não via;
+  - a medição feita num worktree separado.
+<!-- SECTION:NOTES:END -->
 
 ## Comments
 

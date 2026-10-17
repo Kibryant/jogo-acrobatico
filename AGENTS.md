@@ -85,7 +85,7 @@ The character's state machine lives in `core/` as data: a mode and the tick it b
 
 ## Tests and the gate (DEC-0027)
 
-- gdUnit4. Test names describe behavior (`test_parry_beats_charged_attack`). Test through public interfaces only: never read source files in a test, never mock private functions. Exceptions (DEC-0027): the SyncTest drives netfox's tick by hand; a test may read a config file with no runtime API.
+- gdUnit4. Test names describe behavior (`test_parry_beats_charged_attack`). Test through public interfaces only: never read source files in a test, never mock private functions. Exceptions (DEC-0027): tests drive netfox's tick by hand through `test/support/netfox_ticks.gd` (F-085); a test may read a config file with no runtime API.
 - `bash tools/gate.sh` runs format, lint, core purity, assets and LFS, locked tests, import, compile and all tests; purity, assets and compile carry canaries, and a green run logs no `ERROR:`. Pre-push and CI run the same script. Run it before saying a task is done, and paste its last lines.
 - Git hooks (lefthook): pre-commit under 15 s (gitleaks, format, core purity); pre-push under 90 s (the gate).
 - Never use `--no-verify`, never weaken a check, never edit a locked test. If a check is wrong, stop and tell Arthur.

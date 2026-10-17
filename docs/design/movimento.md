@@ -1,11 +1,11 @@
 ---
-revisado_em: 2026-10-02
-fontes: [F-001, F-012, F-013, F-015]
+revisado_em: 2026-10-17
+fontes: [F-001, F-012, F-013, F-015, F-084, F-086, F-088]
 ---
 
 # Movimento
 
-Estado atual: o kit v0 fechado no Desenho 1 (TASK-3). O Arthur fechou a primeira tabela (corpo, chão, pulo, perdão e câmera) como v0, para julgar no protótipo (F-015 §1). O resto foi fechado pelo Claude, pela melhor experiência do jogador (DEC-0017). Nenhum número foi sentido em jogo: o valor certo sai da fase 1. No código, tudo vira tick na carga, e o arredondamento é testado (DEC-0004, regra 3).
+Estado atual: o kit v0 fechado no Desenho 1 (TASK-3). O Arthur fechou a primeira tabela (corpo, chão, pulo, perdão e câmera) como v0, para julgar no protótipo (F-015 §1). O resto foi fechado pelo Claude, pela melhor experiência do jogador (DEC-0017). A primeira tabela já foi jogada na parte 1 do esqueleto andante, e o Arthur gostou (TASK-9; F-086 §1). O resto ainda não foi sentido em jogo, e o valor certo sai da fase 1. No código, tudo vira tick na carga, e o arredondamento é testado (DEC-0004, regra 3).
 
 Vitrine visual, em escala e no tempo real: [Kit de movimento v0](https://claude.ai/artifact/DT8QMmuKiBffEjtfUimDWL), privada (DEC-0019). Quando um número daqui mudar, a vitrine é republicada no mesmo link.
 
@@ -66,6 +66,8 @@ Cada número tem uma origem, e nem todos têm a mesma firmeza; a vitrine mostra 
 | Renovação do pulo duplo | ao tocar o chão ou começar uma corrida na parede | — | |
 | Custo do pulo duplo | 10 | pontos de stamina | |
 | Dano de queda | não | — | Decisão do Arthur (F-015 §1); a explicação no mundo do jogo é a Q-13 |
+
+**No tick:** o código refaz a conta para o tick de 16,7 ms. A subida, 350 ms, vira 21 ticks, e o topo cai em 1,2 m. A descida, 280 ms, vira 17 ticks (283 ms). Por isso a saída do chão fica em 6,69 m/s e a gravidade de descida em 29,9 m/s², e não nos 6,86 m/s e 30,6 m/s² da conta lisa (TASK-9, critério 2; a vitrine, seção "O pulo em ticks").
 
 ## Perdão
 
@@ -133,11 +135,13 @@ Cada número tem uma origem, e nem todos têm a mesma firmeza; a vitrine mostra 
 | Campo de visão | 70 | ° na vertical | ≈ 102° na horizontal em 16:9; o Godot mede na vertical |
 | Colisão | sim | — | Aproxima quando uma parede fica no meio |
 | Sensibilidade padrão | 0,06 | ° por pixel do mouse | Ajuste do jogador |
+| Inclinação máxima | 80 | ° para cima e para baixo | Leitura v0 do Claude (DEC-0017): sem limite, a câmera vira de ponta-cabeça (TASK-9) |
 
 ## Métricas de nível (derivadas)
 
-- **Vão:** até ≈ 4,4 m correndo, com o pulo; até ≈ 7 m com o pulo duplo. Mais que isso pede parede ou gancho.
-- **Altura:** um bloco de 1 m se sobe com o pulo; um de 2 m, com o pulo duplo (alcance de ≈ 2,2 m). Com 3 m ou mais, só pela parede ou pelo gancho.
+- **Vão:** até ≈ 4,4 m correndo, com o pulo, sem contar o coyote; até ≈ 7 m com o pulo duplo. Mais que isso pede parede ou gancho.
+- **Altura, partindo do chão:** um bloco de 1 m se sobe com o pulo; um de 2 m, com o pulo duplo (alcance de ≈ 2,2 m). Com 3 m ou mais, só pela parede ou pelo gancho.
+- **Escada:** degraus de 1 m com 4 m de vão se sobem só com o pulo, se ele sair de 3 a 6 ticks depois de deixar o degrau, no fim da janela do coyote: o pulo atrasado. Na arena da TASK-9, o Arthur subiu assim os blocos de 1, 2 e 3 m (F-086 §1), e a medição no jogo está no `mudancas.md` (17/10/2026) e na vitrine, seção "A escada dos três blocos".
 - **Parede:** até ≈ 20 m de corrida (2,5 s a 8 m/s).
 
 ## O que o esqueleto andante usa (TASK-9)

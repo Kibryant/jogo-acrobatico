@@ -1,10 +1,10 @@
 ---
 id: TASK-9
 title: 'Esqueleto andante: a cápsula em rede de ponta a ponta'
-status: To Refine
+status: Ready
 assignee: []
 created_date: '2026-10-02 16:48'
-updated_date: '2026-10-10 13:20'
+updated_date: '2026-10-17 13:42'
 labels:
   - jogo
   - rede
@@ -23,27 +23,72 @@ ordinal: 9000
 
 <!-- SECTION:DESCRIPTION:BEGIN -->
 ### Por quê
-O primeiro código de jogo (DEC-0012): provar a esteira inteira antes de qualquer funcionalidade. A cápsula se move pelo núcleo puro, dentro do tick do netfox, num servidor dedicado com dois clientes e lag simulado, e o CI gera as builds.
+O primeiro código de jogo (DEC-0012): provar a esteira inteira antes de qualquer funcionalidade. A cápsula se move pelo núcleo puro, dentro do tick do netfox, num servidor dedicado com dois clientes e lag simulado, e o CI gera as builds. Os Desenhos 2 a 6 deixaram a entrada nos comentários desta task. Ela fecha o marco m-0 com a versão 0.1.0 (DEC-0028 §3); depois vem o teste da fase 0, "Gosto de jogar ou só da ideia?" (`roteiro.md`).
+
+### Entrega em três partes
+Uma task, com uma branch e um PR por parte, como a TASK-11 (F-084 §2). O Arthur joga no fim de cada parte.
+1. **A cápsula sozinha** (critérios 1 a 8): os números do `movimento.md` num `.tres`, convertidos em ticks; as regras do chão, do pulo, do coyote e do buffer em `core/`; o lutador, a arena de blocos, a câmera e o modo Sozinho da `Main`; a SyncTest com os quatro cenários.
+2. **A cápsula em rede** (critérios 9 a 13): os modos servidor e cliente da `Main`, o aperto de mão, o fechamento limpo, o oponente suavizado e o comando que abre o servidor e dois clientes com lag.
+3. **A esteira** (critérios 14 a 18): as builds no PR e na tag, a imagem do servidor no CI com a conexão provada, a referência, os 60 fps e a versão 0.1.0 com a tag.
+
+O movimento da parte 1 não muda nas partes 2 e 3: o mesmo `_rollback_tick` e o mesmo núcleo rodam no modo Sozinho, no servidor e nos clientes (DEC-0026 §5; F-084 §3).
 
 ### Perguntas em aberto
-- Saem dos Desenhos 2, 3 e 4.
+Nenhuma. A Q-16 (ficar em pé na cabeça do outro) segue na fase 1 (DEC-0036); aqui o empurrão da SyncTest fica no chão.
 
-### Escolhas a confirmar
-- Saem dos Desenhos 2, 3 e 4.
+### Escolhas confirmadas
+Confirmadas pelo Arthur em 17/10/2026, com "Fechar com as recomendações (Recomendado)" e depois "Continuam (Recomendado)" (F-084 §2 e §3; a lista como ele viu está no §4). O que vem marcado como detalhe do Claude refina a escolha e não foi mostrado a ele.
+1. O `yaw` entra no tick pela última amostra; o `move` segue a média das amostras dos frames do tick (DEC-0026 §1).
+2. O servidor fecha por um arquivo, conferido a cada segundo: quando ele aparece, o servidor para o tick, fecha a conexão, solta a partida e sai com 0; no Docker, basta um `docker exec … touch` (DEC-0026 §6; DEC-0032 §2). Detalhe do Claude: o caminho do arquivo vem de um argumento da `Main`.
+3. A conexão se prova no CI: um cliente sem tela conecta no contêiner, passa no aperto de mão e sai; um cliente de outra versão é recusado (DEC-0032 §1). Detalhe do Claude: o cliente roda do código-fonte, com o mesmo carimbo de commit do servidor, porque não existe cliente Linux exportado.
+4. No máximo 2 jogadores; o terceiro é recusado com uma mensagem.
+5. O empurrão da SyncTest fica no chão; a Q-16 continua na fase 1.
+6. Os quatro cenários da SyncTest juntos em menos de 5 s neste PC (DEC-0027 §3).
+7. O teste à mão usa o simulador do netfox a ping 100, com 220 como limite (`rede.md` §10).
+8. Duas configurações novas no `project.godot`, guardadas pelo teste de configurações: a cena principal `Main` e o `application/run/flush_stdout_on_print` ligado (F-073 §2).
+9. A porta padrão é 7777/udp, a da sonda, trocável por `--port` (F-073).
+10. O aperto de mão compara versão e commit exatos; o commit vazio do editor só bate com outro vazio (DEC-0028 §3).
+
+### Números v0 do Claude para o esqueleto
+Fechados pelo Claude (DEC-0017), fora da identidade do jogo; o Arthur julga jogando.
+- **A arena** junta as duas sondas: um chão de 80 × 80 m; a plataforma de 1 m de altura com beirada e a rampa de 45° da sonda do Desenho 3 (`../netfox-sonda/sonda/probe_arena.gd`); três blocos de 4 × 4 m, com 1, 2 e 3 m de altura, separados (`movimento.md`: bancada, porta e teto); e dois pontos de nascimento a 10 m um do outro, de frente. O bloco de 1 m se sobe com o pulo; o de 2 m e o de 3 m esperam o pulo duplo e a parede da fase 1 (`movimento.md`, métricas de nível).
+- **As cores:** o chão e os blocos nos cinzas das sondas; as duas cápsulas em tons neutros, fora das cores dos tokens, a de quem joga mais clara e a outra mais escura (DEC-0031; `visual-e-audio.md`). A câmera seguindo a própria cápsula já a separa da outra sem depender só da cor.
+- **O bot:** corre e pula a cada 2 s, como nas medições do Desenho 3 (`rede.md` §10).
 
 ### Fora do escopo
-- Parede, dash, gancho e combate: da fase 1 em diante.
+- Parede, pulo duplo, dash, gancho e stamina: fase 1 (TASK-10; `movimento.md`, "O que o esqueleto andante usa").
+- Combate: fase 2.
+- O gravador do replay para o Arthur: fase 1 (DEC-0027 §5). Aqui só a referência, que roda um percurso de bot.
+- A tela de remapear as teclas e o Theme: nascem com a primeira cena de interface (DEC-0031).
+- O servidor fora deste PC: fase 3 (DEC-0032 §3).
+- Os 8 clientes a 60 ticks (Q-09).
 
 ### O que você vai aprender
 - Como uma tecla vira input, passa pela rede, é simulada no servidor e volta como estado, com o rollback acontecendo na sua frente.
+- Por que a mesma função de movimento roda no modo Sozinho, no servidor e no cliente: a rede só a chama mais vezes (F-084 §3).
+- Como o servidor vira uma imagem Docker testada a cada push, e como a build sai do CI com a versão e o commit carimbados.
 <!-- SECTION:DESCRIPTION:END -->
 
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
-- [ ] #1 Quando o servidor dedicado roda sem tela e dois clientes conectam com lag simulado, cada um vê a própria cápsula responder na hora e a outra suavizada.
-- [ ] #2 Quando o mesmo input é simulado no servidor e no cliente, o núcleo puro dá o mesmo resultado nos dois, com teste.
-- [ ] #3 Quando o push chega na main, o CI gera a build do cliente Windows e a do servidor Linux.
-- [ ] #4 Quando o jogo roda neste PC em 1080p, fica em 60 fps ou mais (DEC-0002).
+- [ ] #1 Quando o `movement_v0.tres` é carregado, cada tempo do `movimento.md` vira ticks pelo tick mais próximo, com o empate para cima, e um teste falha se algum erro passar de meio tick, a 30 e a 60 ticks (DEC-0004, regra 3; `visao-geral.md`).
+- [ ] #2 Quando a cápsula pula do chão, a 30 e a 60 ticks, ela sobe 1,2 m com tolerância de 1 cm, chega ao topo em 350 ms e volta ao chão em 280 ms, cada tempo com erro de até meio tick, porque a física é derivada para o tamanho do tick (`movimento.md`; `visao-geral.md`).
+- [ ] #3 Quando as regras do chão e do ar rodam no núcleo, testes de tabela escritos do `movimento.md` antes do código provam a corrida de 7 m/s, igual para frente, para o lado e para trás, os 150 ms até a velocidade máxima, os 100 ms até parar sem input, o controle no ar de 25% da aceleração do chão, a queda máxima de 30 m/s e a rampa de até 45° como chão, e acima disso não (`movimento.md`; DEC-0004, regra 4).
+- [ ] #4 Quando o pulo é apertado, o núcleo aceita o aperto até 100 ms depois de sair da beirada (coyote) e guarda o aperto no ar por até 150 ms antes de pousar (buffer); um tick além de cada janela já não pula, um aperto no ar fora do buffer não faz nada (o pulo duplo é da fase 1) e soltar o botão cedo não encurta o pulo (`movimento.md`; DEC-0016).
+- [ ] #5 Quando um `.tres` de movimento tem um número impossível, como um tempo negativo, um zero onde a regra divide ou uma rampa acima de 90°, a checagem dos dados reprova no portão, e um teste prova que ela barra um `.tres` errado (DEC-0027 §2, camada 3).
+- [ ] #6 Quando o jogo abre sem argumento, ele entra no modo Sozinho, o par offline: a cápsula de 1,8 m × 0,35 m anda e pula na arena de blocos, com rampa de 45° e beirada, e a câmera em terceira pessoa segue o `movimento.md` (3,5 m, pivô a 1,6 m, centralizada, 70° na vertical, colisão e 0,06° por pixel do mouse), com o corpo olhando para onde a câmera olha; o teste de configurações passa a guardar a cena principal `Main` (DEC-0026 §6; DEC-0013; F-084).
+- [ ] #7 Quando o jogador usa o teclado, as ações vêm do `InputMap` por posição física (`physical_keycode`), com teste; o `move` é a média das amostras dos frames do tick, o `yaw` é a última amostra e o pulo vale no máximo um tick (DEC-0031; DEC-0026 §1; F-084).
+- [ ] #8 Quando a SyncTest roda no portão, com os ticks avançados à mão e o rollback forçado de 7 ticks a cada tick, os quatro cenários (rampa de 45°, beirada, pouso e dois lutadores se empurrando no chão) dão zero divergência (posição até 1 mm, `on_floor` e `mode` iguais), juntos em menos de 5 s neste PC; o resumo prova que cada caminho rodou (ticks refeitos, pousos, decolagens, ticks na rampa e choques), e um campo do estado fora do que o netfox grava faz ela acusar (DEC-0025; DEC-0027 §3; `rede.md` §4; F-084).
+- [ ] #9 Quando o jogo abre com `--server`, na porta de `--port` ou na 7777/udp, ou é o build de servidor dedicado, ele sobe sem tela e sem lutador próprio; sem cliente, espera; cada cliente que entra ganha um lutador num ponto de nascimento; o terceiro é recusado com a mensagem de sala cheia; o lutador de quem sai some para o outro; e o log sai na hora, com o `flush_stdout_on_print` guardado pelo teste de configurações (DEC-0026 §6; F-073 §2; F-084).
+- [ ] #10 Quando um cliente abre com `--connect=host:porta`, ele manda a versão e o commit; se um dos dois for diferente do servidor, o servidor recusa e o cliente mostra o pedido para atualizar; se o servidor não responde, o cliente mostra o erro; sem tela, nos dois casos, ele sai com código diferente de 0; todo texto na tela usa chave de tradução, com pt-BR e en (DEC-0028 §3; DEC-0031; F-084).
+- [ ] #11 Quando o arquivo de parada aparece, o servidor o percebe em até 1 s, para o tick, fecha a conexão, solta a partida e sai com código 0, com ou sem clientes conectados, e os clientes mostram que o servidor fechou; quando o jogador fecha a janela, o cliente sai com código 0 (DEC-0026 §6; DEC-0032 §2; F-084).
+- [ ] #12 Quando dois clientes com bot correm e pulam por 30 s contra o servidor neste PC, a ping 100 e sem se encostar, o estado que o servidor confirma bate com o que cada cliente previu para o próprio lutador em todos os ticks, e o resumo da corrida mostra quantos ticks foram conferidos e quantos corrigidos (DEC-0026 §2; `rede.md` §10).
+- [ ] #13 Quando o Arthur abre, com um comando, o servidor e dois clientes com o simulador do netfox a ping 100, cada um vê a própria cápsula responder na hora e a outra suavizada, sem previsão; a 220, a própria segue respondendo na hora; o que ele sentiu vai para uma fonte (DEC-0026 §2; DEC-0027 §2, camada 5; F-041).
+- [ ] #14 Quando um PR é aberto ou atualizado, o CI exporta o cliente Windows e o servidor Linux, com o commit carimbado em `application/config/commit`, e guarda os dois como artefato por 3 dias; quando uma tag `v0.y.z` sobe, eles viram uma release pública do GitHub; o push na main não guarda build (DEC-0028 §2; DEC-0032 §1; DEC-0033).
+- [ ] #15 Quando há push na main ou num PR, um job do CI fora do portão e do pre-push constrói a imagem Docker do servidor, sobe o contêiner, conecta um cliente sem tela que passa no aperto de mão, vê um cliente de outra versão ser recusado e fecha o servidor pelo arquivo de parada com saída 0, sem guardar a imagem; se o Godot cair ao sair do export (#123712), o job confere o artefato e o teste, e não só o código de saída (DEC-0032 §1; DEC-0028; F-084).
+- [ ] #16 Quando o portão roda neste PC e o CI roda no Linux, a referência, um percurso de bot de 1.200 ticks na arena com uma cópia congelada dos números do movimento, só do teste, dá o mesmo hash nos dois; uma mudança de código que altere o caminho reprova o portão, e regravar é um comando, com o porquê no commit (DEC-0027 §2, camada 4; F-044 §2).
+- [ ] #17 Quando a build do cliente roda neste PC em 1080p, com os dois lutadores na tela por 60 s, a média fica em 60 fps ou mais, com os 1% piores registrados (DEC-0002).
+- [ ] #18 Quando as três partes estão verdes e o Arthur dá o ok, a versão sobe para 0.1.0 no commit que fecha a task, a tag `v0.1.0` vira a primeira release, com notas em português tiradas do diário, e o marco m-0 fecha (DEC-0028 §3).
 <!-- AC:END -->
 
 ## Definition of Done

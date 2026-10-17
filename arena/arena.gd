@@ -4,8 +4,9 @@
 # bench, door and ceiling); and two spawn points 10 m apart, facing each other. From the floor the
 # jump climbs only the 1 m block, but in a row 4 m apart, each 1 m above the last, the blocks make
 # a staircase: a jump 3 to 6 ticks after leaving a block, late in the coyote window, climbs to the
-# next one (F-086). Everything sits on PhysicsLayers.WORLD, Godot's default layer. The floor's top
-# is y = 0, so a spawn point at y = 0 stands on it.
+# next one (F-086; measured in game, docs/mudancas.md, 2026-10-17). Everything sits on
+# PhysicsLayers.WORLD, Godot's default layer. The floor's top is y = 0, so a spawn point at y = 0
+# stands on it.
 class_name Arena
 extends Node3D
 

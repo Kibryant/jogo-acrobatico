@@ -13,8 +13,9 @@ extends CharacterBody3D
 # fighter tells them apart without relying on colour alone.
 const OWN_TONE := Color(0.62, 0.62, 0.6)
 const OTHER_TONE := Color(0.16, 0.16, 0.18)
-# m/s: the probe move of contour D, the one the SyncTest of Desenho 3 proved (F-025 §4). It moves
-# the body under a millimetre in a frame, and the body goes back right after.
+# m/s: the probe move of contour D (DEC-0025 §2), the speed of the Desenho 3 probe whose SyncTest
+# proved it (netfox-sonda, probe_fighter.gd; F-025 §4). For one tick it moves the body 0.83 mm at
+# 60 ticks, and the body goes back right after.
 const FLOOR_PROBE_SPEED := 0.05
 
 ## The input box, recorded by netfox as Input:move, Input:yaw and Input:jump.
@@ -40,10 +41,11 @@ var _engine_floor_pending := false
 # that, 7 / 60 * tan(45°) = 0.1167 m at 60 ticks and 0.2333 m at 30. On top of the drop, the
 # engine keeps a body up to one safe margin off the floor and its downward cast stops one margin
 # short, both along the floor's normal: two margins / cos(angle) upright, and a third keeps the
-# worst case off the edge. At 60 ticks on 45° that is 0.1167 + 0.0042 = 0.121 m; measured on the
-# crest of a 45° ramp, 0.1187 m loses the floor and 0.1197 m holds (test/fighter/
-# fighter_slope_test.gd). A shorter snap throws the body off the ramp; a longer one would glue it
-# to drops that should be ledges, and the arena's only drop, the 1 m ledge, is far longer.
+# worst case off the edge. At 60 ticks on 45° that is 0.1167 + 0.0042 = 0.121 m. Measured by hand
+# on the crest of a 45° ramp with the rig of test/fighter/fighter_slope_test.gd, 0.1187 m loses
+# the floor and 0.1197 m holds; the test itself runs the full snap and half of it. A shorter snap
+# throws the body off the ramp; a longer one would glue it to drops that should be ledges, and the
+# arena's only drop, the 1 m ledge, is far longer.
 static func floor_snap_for(movement_config: MovementConfig, margin: float) -> float:
 	var angle := movement_config.floor_max_angle
 	assert(angle < PI / 2.0, "a floor of 90 degrees has no snap: it is a wall")
@@ -134,10 +136,13 @@ func _align_engine_floor_once(_tick: int) -> void:
 	# move_and_slide() keeps its own "was on the floor" from the last move and snaps with it
 	# (character_body_3d.cpp in Godot 4.7.2); after a rollback that flag belongs to the present.
 	# A tiny probe, down when the state says floor and up when it says air, aligns it; the body
-	# and its velocity then go back to what they were.
+	# and its velocity then go back to what they were. Like the sandwich, the probe is scaled to
+	# one tick by physics_factor, so the game probes at any frame rate the distance the SyncTest
+	# proves (review of TASK-9, part 1).
 	var kept_velocity := velocity
 	var kept_position := global_position
-	velocity = (Vector3.DOWN if state.on_floor else Vector3.UP) * FLOOR_PROBE_SPEED
+	var probe := Vector3.DOWN if state.on_floor else Vector3.UP
+	velocity = probe * FLOOR_PROBE_SPEED * NetworkTime.physics_factor
 	move_and_slide()
 	# The snap in reserve (DEC-0037): a body resting on a ledge's edge by its round bottom touches
 	# it at a slant, farther than the probe reaches, and the probe's own snap skipped because the

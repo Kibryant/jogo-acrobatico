@@ -13,7 +13,7 @@ substituida_por:
 
 ## Contexto
 
-O contorno D (DEC-0025 §2) acerta, no primeiro tick de cada rollback, o "estava no chão" que o `move_and_slide()` do Godot guarda do movimento anterior. Ele faz isso com uma sonda: 0,05 m/s por um passo de física, 0,83 mm, para baixo quando o estado diz chão e para cima quando diz ar (F-025 §4).
+O contorno D (DEC-0025 §2) acerta, no primeiro tick de cada rollback, o "estava no chão" que o `move_and_slide()` do Godot guarda do movimento anterior. Ele faz isso com uma sonda: 0,05 m/s por um passo de física, 0,83 mm, para baixo quando o estado diz chão e para cima quando diz ar (F-025 §4; o número está no código da sonda do Desenho 3, `netfox-sonda/sonda/probe_fighter.gd`).
 
 A SyncTest permanente da TASK-9 (critério 8; `test/fighter/fighter_sync_test.gd`) achou um caso que a sonda do Desenho 3 não cobria (F-087, contexto):
 
@@ -46,6 +46,7 @@ Na cena da beirada foram 84 divergências em 2.526 conferências, até 5,7 cm. O
 
 - A DEC-0025 continua valendo inteira; o índice a marca como completada por esta DEC.
 - A ordem do tick do lutador não muda: o contorno D continua no primeiro tick de cada rollback, depois do contorno do transform e antes do sanduíche (DEC-0025, Consequências).
+- A sonda anda um tick, como o sanduíche: a velocidade dela passa pelo `physics_factor` do netfox. Assim, no jogo, em qualquer taxa de frames, ela sonda os mesmos 0,83 mm que a SyncTest prova; antes, a 144 fps, eram 0,35 mm. Achado da revisão da parte 1 da TASK-9.
 - O `rede.md` §4 ganha a frase do snap de reserva. Ela vai na proposta de docs do fechamento da parte 1 da TASK-9.
 - A SyncTest permanente vigia o caso: a cena da beirada conta os pulos de coyote e exige 2 de 2.
 

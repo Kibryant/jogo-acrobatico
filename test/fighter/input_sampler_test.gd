@@ -1,0 +1,99 @@
+# Criterion 7 of TASK-9: how the frames become the input of a tick (DEC-0026 §1; rede.md §3).
+# move is the mean of the frame samples, yaw is the last sample and jump is a one-touch command
+# taken once.
+extends GdUnitTestSuite
+
+const HAIR := 1e-9 # floating-point slack, not a design number
+const FORWARD := Vector2(0, 1)
+
+
+func test_move_is_the_mean_of_the_frame_samples() -> void:
+	var sampler := InputSampler.new()
+	sampler.add_frame(FORWARD, 0.0)
+	sampler.add_frame(Vector2.ZERO, 0.0)
+	assert_vector(sampler.take_move()).is_equal_approx(Vector2(0, 0.5), Vector2.ONE * HAIR)
+
+
+# With the keyboard, move is below 1 only on the tick a key changes (TASK-9 plan): three frames
+# with W held and one after it is released.
+func test_a_key_released_between_frames_gives_a_partial_move() -> void:
+	var sampler := InputSampler.new()
+	for _frame: int in 3:
+		sampler.add_frame(FORWARD, 0.0)
+	sampler.add_frame(Vector2.ZERO, 0.0)
+	assert_vector(sampler.take_move()).is_equal_approx(Vector2(0, 0.75), Vector2.ONE * HAIR)
+	for _frame: int in 2:
+		sampler.add_frame(FORWARD, 0.0)
+	assert_vector(sampler.take_move()).is_equal_approx(FORWARD, Vector2.ONE * HAIR)
+
+
+func test_each_tick_loop_starts_new_samples() -> void:
+	var sampler := InputSampler.new()
+	sampler.add_frame(FORWARD, 0.0)
+	assert_vector(sampler.take_move()).is_equal(FORWARD)
+	sampler.add_frame(Vector2(1, 0), 0.0)
+	assert_vector(sampler.take_move()).is_equal(Vector2(1, 0))
+
+
+func test_no_frame_means_no_push() -> void:
+	var sampler := InputSampler.new()
+	assert_vector(sampler.take_move()).is_equal(Vector2.ZERO)
+	sampler.add_frame(FORWARD, 0.0)
+	sampler.take_move()
+	assert_vector(sampler.take_move()).is_equal(Vector2.ZERO)
+
+
+# A sample longer than 1 counts as 1: move goes up to 1 (TickInput).
+func test_a_frame_sample_counts_at_most_one() -> void:
+	var sampler := InputSampler.new()
+	sampler.add_frame(Vector2(3, 4), 0.0)
+	assert_vector(sampler.take_move()).is_equal_approx(Vector2(0.6, 0.8), Vector2.ONE * HAIR)
+
+
+# A mean of angles breaks where they wrap: 179° and -179° would average to 0°, the opposite way.
+func test_yaw_is_the_last_sample() -> void:
+	var sampler := InputSampler.new()
+	sampler.add_frame(FORWARD, deg_to_rad(179.0))
+	sampler.add_frame(FORWARD, deg_to_rad(-179.0))
+	sampler.take_move()
+	assert_float(sampler.last_yaw()).is_equal_approx(deg_to_rad(-179.0), HAIR)
+
+
+func test_yaw_stays_until_a_new_sample() -> void:
+	var sampler := InputSampler.new(1.5)
+	assert_float(sampler.last_yaw()).is_equal(1.5)
+	sampler.add_frame(Vector2.ZERO, -0.5)
+	sampler.take_move()
+	sampler.take_move()
+	assert_float(sampler.last_yaw()).is_equal(-0.5)
+
+
+func test_a_jump_press_is_taken_once() -> void:
+	var sampler := InputSampler.new()
+	sampler.press_jump()
+	assert_bool(sampler.take_jump()).is_true()
+	assert_bool(sampler.take_jump()).is_false()
+
+
+func test_presses_before_one_take_are_one_jump() -> void:
+	var sampler := InputSampler.new()
+	sampler.press_jump()
+	sampler.press_jump()
+	assert_bool(sampler.take_jump()).is_true()
+	assert_bool(sampler.take_jump()).is_false()
+
+
+func test_no_press_is_no_jump() -> void:
+	var sampler := InputSampler.new()
+	sampler.add_frame(FORWARD, 0.0)
+	assert_bool(sampler.take_jump()).is_false()
+
+
+# The press waits between frames for the tick: samples and takes of move do not consume it.
+func test_a_press_waits_across_frames_for_its_tick() -> void:
+	var sampler := InputSampler.new()
+	sampler.press_jump()
+	sampler.add_frame(FORWARD, 0.0)
+	sampler.take_move()
+	sampler.add_frame(FORWARD, 0.0)
+	assert_bool(sampler.take_jump()).is_true()

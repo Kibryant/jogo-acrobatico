@@ -1,0 +1,56 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://fighter/fighter.gd" id="1_p2hm0"]
+[ext_resource type="Script" path="res://fighter/fighter_input.gd" id="2_jt8mh"]
+[ext_resource type="Script" path="res://addons/netfox/rollback/rollback-synchronizer.gd" id="3_np4d7"]
+[ext_resource type="Script" path="res://addons/netfox/tick-interpolator.gd" id="4_7n60b"]
+
+[sub_resource type="CapsuleShape3D" id="CapsuleShape3D_n3j5n"]
+radius = 0.35
+height = 1.8
+
+[sub_resource type="CapsuleMesh" id="CapsuleMesh_sxmh8"]
+radius = 0.35
+height = 1.8
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_yed1o"]
+albedo_color = Color(0.08, 0.08, 0.1, 1)
+
+[sub_resource type="BoxMesh" id="BoxMesh_cptg2"]
+material = SubResource("StandardMaterial3D_yed1o")
+size = Vector3(0.3, 0.1, 0.12)
+
+[node name="Fighter" type="CharacterBody3D" unique_id=1399579468 node_paths=PackedStringArray("input", "collision", "visual", "body_mesh")]
+script = ExtResource("1_p2hm0")
+input = NodePath("Input")
+collision = NodePath("Collision")
+visual = NodePath("Visual")
+body_mesh = NodePath("Visual/Body")
+
+[node name="Collision" type="CollisionShape3D" parent="." unique_id=25633465]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.9, 0)
+shape = SubResource("CapsuleShape3D_n3j5n")
+
+[node name="Input" type="Node" parent="." unique_id=1776514511]
+script = ExtResource("2_jt8mh")
+
+[node name="RollbackSynchronizer" type="Node" parent="." unique_id=1892651429 node_paths=PackedStringArray("root")]
+script = ExtResource("3_np4d7")
+root = NodePath("..")
+state_properties = Array[String]([":position", ":velocity", ":state:mode", ":state:mode_since", ":state:on_floor", ":state:left_floor_tick", ":state:jump_pressed_tick", ":state:jumps_used", ":state:facing_yaw"])
+input_properties = Array[String](["Input:move", "Input:yaw", "Input:jump"])
+
+[node name="TickInterpolator" type="Node" parent="." unique_id=1758612698 node_paths=PackedStringArray("root")]
+script = ExtResource("4_7n60b")
+root = NodePath("..")
+properties = Array[String]([":position"])
+
+[node name="Visual" type="Node3D" parent="." unique_id=514661716]
+
+[node name="Body" type="MeshInstance3D" parent="Visual" unique_id=1210682929]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.9, 0)
+mesh = SubResource("CapsuleMesh_sxmh8")
+
+[node name="Visor" type="MeshInstance3D" parent="Visual" unique_id=295899572]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.55, -0.32)
+mesh = SubResource("BoxMesh_cptg2")

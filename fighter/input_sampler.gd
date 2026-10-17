@@ -1,0 +1,59 @@
+# Turns the frames between two tick loops into the input of a tick (DEC-0026 §1; rede.md §3). The
+# screen runs at its own rate and the game at 60 ticks, so a tick can see several frames, or a
+# frame can run several ticks; this object keeps what the frames said until the tick asks:
+# - move is the mean of the frame samples since the last tick loop, netfox's pattern for
+#   continuous input (continuous-sampled-input.gd). With the keyboard it is below 1 only on the
+#   tick a key changes (TASK-9 plan, Claude's v0 readings);
+# - yaw is the last sample: a mean of angles breaks where they wrap at 180 degrees, and the last
+#   sample is where the camera looks now (TASK-9, choice 1);
+# - jump is a one-touch command kept between frames and taken once, so a press counts for at most
+#   one tick even when a frame runs two (netfox's one-off-input.gd).
+# No node and no engine input here: FighterInput feeds it, from the devices or from a bot.
+class_name InputSampler
+extends RefCounted
+
+var _move_sum := Vector2.ZERO
+var _move_samples := 0
+var _yaw: float
+var _jump_pressed := false
+
+
+# start_yaw is the yaw before any sample: where the fighter looks at its spawn point.
+func _init(start_yaw := 0.0) -> void:
+	_yaw = start_yaw
+
+
+# One frame of input: where the player pushes (x right, y forward, up to 1) and where the camera
+# looks, in rad.
+func add_frame(move: Vector2, yaw: float) -> void:
+	_move_sum += move.limit_length(1.0)
+	_move_samples += 1
+	_yaw = yaw
+
+
+# One press of the jump, kept until take_jump().
+func press_jump() -> void:
+	_jump_pressed = true
+
+
+# The mean of the move samples since the last call, which starts a new tick's samples. Zero when
+# no frame was sampled: no frame, no push.
+func take_move() -> Vector2:
+	var mean := Vector2.ZERO
+	if _move_samples > 0:
+		mean = _move_sum / _move_samples
+	_move_sum = Vector2.ZERO
+	_move_samples = 0
+	return mean
+
+
+# The yaw of the last sample; it stays until a new sample comes.
+func last_yaw() -> float:
+	return _yaw
+
+
+# True once per press: the press is consumed, and the next call is false until a new press.
+func take_jump() -> bool:
+	var pressed := _jump_pressed
+	_jump_pressed = false
+	return pressed

@@ -1,7 +1,7 @@
 # Guards the project settings decided in DEC-0002, DEC-0005, DEC-0022, DEC-0023, DEC-0024,
 # DEC-0026 (and the Main scene of TASK-9), DEC-0028 (the version), DEC-0030 (MSAA) and DEC-0031
-# (the interface base and the physical keys). A failure here means project.godot changed: read
-# the DEC before "fixing" the test.
+# (the interface base and the physical keys), and the log flush of TASK-9 (F-073 §2). A failure
+# here means project.godot changed: read the DEC before "fixing" the test.
 extends GdUnitTestSuite
 
 # DEC-0026 §6: the game opens on the Main, which picks the mode from the arguments.
@@ -251,6 +251,24 @@ func test_the_game_opens_on_the_main_scene() -> void:
 		main_scene,
 	]
 	assert_str(main_scene).override_failure_message(message).is_equal(MAIN_SCENE)
+
+
+# TASK-9, criterion 9 and choice 8: a release build writes print() out only when its buffer
+# fills, and the probe's server log came out 26 s late (F-073 §1 and §2). Flushed on every print,
+# the server's log says each event at once.
+func test_the_log_is_written_out_at_every_print() -> void:
+	var flush: bool = ProjectSettings.get_setting("application/run/flush_stdout_on_print", false)
+	var message := "application/run/flush_stdout_on_print must stay on (F-073 §2)"
+	assert_bool(flush).override_failure_message(message).is_true()
+
+
+# TASK-9, part 2: in the server and client modes, netfox's NetworkEvents starts and stops the
+# clock as the connection opens and closes (network-events.gd), and the Main waits for it instead
+# of starting the clock a second time. netfox's own default is on.
+func test_netfox_events_start_the_clock_of_the_server_and_the_client() -> void:
+	var events: bool = ProjectSettings.get_setting("netfox/events/enabled", true)
+	var message := "netfox/events/enabled must stay on: the Main relies on it (rede.md §9)"
+	assert_bool(events).override_failure_message(message).is_true()
 
 
 # TASK-9, criterion 7: each movement action has its key by position, and no key by label, which

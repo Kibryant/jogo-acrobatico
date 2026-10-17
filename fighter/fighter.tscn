@@ -20,9 +20,10 @@ albedo_color = Color(0.08, 0.08, 0.1, 1)
 material = SubResource("StandardMaterial3D_yed1o")
 size = Vector3(0.3, 0.1, 0.12)
 
-[node name="Fighter" type="CharacterBody3D" unique_id=1399579468 node_paths=PackedStringArray("input", "collision", "visual", "body_mesh")]
+[node name="Fighter" type="CharacterBody3D" unique_id=1399579468 node_paths=PackedStringArray("input", "synchronizer", "collision", "visual", "body_mesh")]
 script = ExtResource("1_p2hm0")
 input = NodePath("Input")
+synchronizer = NodePath("RollbackSynchronizer")
 collision = NodePath("Collision")
 visual = NodePath("Visual")
 body_mesh = NodePath("Visual/Body")

@@ -20,6 +20,8 @@ const FLOOR_PROBE_SPEED := 0.05
 
 ## The input box, recorded by netfox as Input:move, Input:yaw and Input:jump.
 @export var input: FighterInput
+## netfox's node that records the boxes on every tick and sends them over the network.
+@export var synchronizer: RollbackSynchronizer
 ## The capsule the engine collides, shaped from the configuration at setup.
 @export var collision: CollisionShape3D
 ## What the screen shows; it only reads the state.
@@ -74,8 +76,18 @@ func setup(
 	state = FighterState.new()
 	state.facing_yaw = spawn_yaw
 	input.face(spawn_yaw)
+	# Only the server sends a fighter's state, and only to the peers it told that the fighter
+	# exists (send_state_to): a state for a node a client does not have yet is dropped with a
+	# warning (netfox's dense-snapshot-serializer.gd).
+	synchronizer.visibility_filter.default_visibility = false
 	_shape_capsule()
 	_paint(OWN_TONE if own else OTHER_TONE)
+
+
+# From now on the server sends this fighter's state to peer, which mirrors the fighter.
+func send_state_to(peer: int) -> void:
+	synchronizer.visibility_filter.set_visibility_for(peer, true)
+	synchronizer.visibility_filter.update_visibility()
 
 
 func _enter_tree() -> void:

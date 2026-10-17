@@ -113,3 +113,46 @@ func test_the_two_fighters_spawn_10_m_apart_facing_each_other() -> void:
 	assert_vector(second_forward).is_equal_approx(-first_to_second, Vector3.ONE * HAIR)
 	assert_float(first.position.y).is_equal_approx(0.0, HAIR)
 	assert_float(second.position.y).is_equal_approx(0.0, HAIR)
+
+
+# TASK-9, part 2: the server names each new fighter in the order they spawn, never twice in a
+# match, so a player who joins where another left never meets the leaving node's route in netfox
+# (Match.spawn_fighter). The leaving fighter frees its seat at once and its node when the frame
+# ends.
+func test_fighters_are_named_in_spawn_order_and_never_twice() -> void:
+	var game_match := await _match_with_fighters(2)
+	assert_str(game_match.fighters[0].name).is_equal("Fighter0")
+	assert_str(game_match.fighters[1].name).is_equal("Fighter1")
+	var leaving := game_match.fighter_at(1)
+	game_match.remove_fighter(1)
+	assert_object(game_match.fighter_at(1)).is_null()
+	assert_array(game_match.fighters).is_equal([game_match.fighter_at(0)])
+	game_match.remove_fighter(1) # a free seat: nothing to remove
+	assert_array(game_match.fighters).is_equal([game_match.fighter_at(0)])
+	var newcomer := game_match.spawn_fighter(1, multiplayer.get_unique_id())
+	assert_str(newcomer.name).is_equal("Fighter2")
+	assert_object(game_match.fighter_at(1)).is_same(newcomer)
+	await get_tree().process_frame
+	assert_bool(is_instance_valid(leaving)).is_false()
+
+
+# A client mirrors a fighter under the server's name, with netfox's history starting at the
+# clock's tick: right after the clock syncs no tick loop has run, and netfox's own guess, the tick
+# after its last rollback, would be 1 (Main._add_fighter).
+func test_a_mirrored_fighter_takes_the_servers_name_and_the_clocks_tick() -> void:
+	var game_match := await _match_with_fighters(0)
+	var other_peer := 1450222694
+	var fighter := game_match.spawn_fighter(1, other_peer, NetworkTime.tick, "Fighter7")
+	assert_str(fighter.name).is_equal("Fighter7")
+	assert_int(fighter.synchronizer.spawn_tick).is_equal(NetworkTime.tick)
+	assert_int(fighter.input.get_multiplayer_authority()).is_equal(other_peer)
+	assert_object(game_match.fighter_at(1)).is_same(fighter)
+
+
+func test_removing_the_watched_fighter_takes_its_camera_away() -> void:
+	var game_match := await _match_with_fighters(1)
+	var rig := game_match.watch(game_match.fighters[0])
+	game_match.remove_fighter(0)
+	assert_object(game_match.camera_rig).is_null()
+	await get_tree().process_frame
+	assert_bool(is_instance_valid(rig)).is_false()

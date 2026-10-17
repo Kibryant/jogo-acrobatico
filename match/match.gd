@@ -10,6 +10,10 @@ const FIGHTER_SCENE := preload("res://fighter/fighter.tscn")
 const CAMERA_RIG_SCENE := preload("res://fighter/camera_rig.tscn")
 const MOVEMENT_DATA_PATH := "res://data/movement_v0.tres"
 const CAMERA_DATA_PATH := "res://data/camera_v0.tres"
+## spawn_fighter() without a first tick: netfox picks it.
+const NO_TICK := -1
+## spawn_fighter() without a node name: the match names the fighter.
+const ANY_NAME := ""
 
 ## The movement numbers in ticks, shared by every fighter of the match.
 var config: MovementConfig
@@ -21,6 +25,12 @@ var camera_rig: CameraRig
 
 # The first tick of netfox's current tick loop.
 var _loop_first_tick := 0
+# The fighters by slot, the seat of their player and the spawn point they start at.
+var _by_slot: Dictionary[int, Fighter] = { }
+# How many fighters the match has named: the next one is FighterN, with N this count.
+var _named := 0
+# The fighter the camera follows; null until watch().
+var _watched: Fighter
 
 
 func _ready() -> void:
@@ -45,19 +55,61 @@ func _exit_tree() -> void:
 
 # A fighter at the spawn point of slot, driven by the input of the peer input_owner. The body is
 # the server's (peer 1); in Sozinho this PC is that server.
-func spawn_fighter(slot: int, input_owner: int) -> Fighter:
+# The node's name is its route in netfox's packets (visao-geral.md, "As cenas"), so a mirrored
+# fighter takes node_name from the server, and the server names each new fighter Fighter0,
+# Fighter1, Fighter2... in the order they spawn, never twice in a match: a player who joins
+# where another left never meets the leaving node's route, which netfox drops only when the node
+# is freed (network-identity-server.gd).
+# first_tick is where netfox starts the fighter's history. By default netfox takes the tick after
+# its last rollback, which is stale on a client whose clock has just synced and has run no tick
+# loop yet: netfox would then try to redo every tick since 1 (Main._add_fighter passes the clock's
+# tick).
+func spawn_fighter(
+	slot: int,
+	input_owner: int,
+	first_tick := NO_TICK,
+	node_name := ANY_NAME,
+) -> Fighter:
+	assert(not _by_slot.has(slot), "slot %d already has a fighter" % slot)
 	var point := arena.spawn_point(slot)
 	var node := FIGHTER_SCENE.instantiate()
 	assert(node is Fighter, "fighter.tscn must have a Fighter at its root")
 	var fighter := node as Fighter
-	fighter.name = "Fighter%d" % slot
+	fighter.name = "Fighter%d" % _named if node_name == ANY_NAME else node_name
+	_named += 1
 	var own := input_owner == multiplayer.get_unique_id()
 	# The match is never turned, so the spawn point's yaw in the world is its yaw in the match.
 	fighter.setup(config, to_local(point.global_position), point.global_rotation.y, own)
 	fighter.input.set_multiplayer_authority(input_owner)
+	if first_tick != NO_TICK:
+		fighter.synchronizer.spawn_tick = first_tick
 	add_child(fighter)
 	fighters.append(fighter)
+	_by_slot[slot] = fighter
 	return fighter
+
+
+# The fighter in slot; null when the slot is free.
+func fighter_at(slot: int) -> Fighter:
+	if not _by_slot.has(slot):
+		return null
+	return _by_slot[slot]
+
+
+# Takes the fighter of slot out of the match, with its camera when this PC watches it, and frees
+# the seat's spawn point for the next fighter. The node stays in the tree until the frame ends,
+# as netfox expects: its handlers still run on it in this frame (base-net-input.gd).
+func remove_fighter(slot: int) -> void:
+	var fighter := fighter_at(slot)
+	if fighter == null:
+		return
+	_by_slot.erase(slot)
+	fighters.erase(fighter)
+	if fighter == _watched:
+		camera_rig.queue_free()
+		camera_rig = null
+		_watched = null
+	fighter.queue_free()
 
 
 # The camera of whoever plays fighter on this PC, and this PC's keyboard and mouse on its input.
@@ -68,6 +120,7 @@ func watch(fighter: Fighter) -> CameraRig:
 	camera_rig.setup(camera_data, fighter, fighter.state.facing_yaw)
 	add_child(camera_rig)
 	fighter.input.use_devices(camera_rig)
+	_watched = fighter
 	return camera_rig
 
 

@@ -4,7 +4,7 @@ title: 'Esqueleto andante: a cápsula em rede de ponta a ponta'
 status: In Progress
 assignee: []
 created_date: '2026-10-02 16:48'
-updated_date: '2026-10-17 18:19'
+updated_date: '2026-10-17 19:34'
 labels:
   - jogo
   - rede
@@ -198,6 +198,39 @@ Concretiza a `visao-geral.md` (o estado em quatro caixas, o sanduíche e as past
   - as cinco conferências erradas da sessão 13 e a explicação de uma coisa por vez;
   - a SyncTest achando o que a sonda do Desenho 3 não via;
   - a medição feita num worktree separado.
+
+## Parte 2, rodada C1 (critérios 9 a 11), 17/10/2026
+
+**Escolhas v0 do implementer**, fora do papel até o fechamento da parte 2:
+
+| Escolha | Valor |
+|---|---|
+| Espera do cliente pelo servidor | 5 s; o ENet sozinho desiste só depois de uns 31 s |
+| Códigos de saída | 0 fim limpo; 2 argumento errado; 3 servidor não respondeu; 4 atualizar o jogo; 5 sala cheia; 6 porta ocupada |
+| Cliente sem tela quando o servidor fecha | Sai com 0, então um arquivo de parada encerra todos os processos limpos |
+| Assento | O primeiro livre; o primeiro jogador nasce no SpawnA |
+| Nome do lutador | Pela ordem de nascimento, escolhido pelo servidor: `Fighter0`, `Fighter1`, `Fighter2`...; nunca se repete na partida, então quem entra no lugar de quem saiu não herda a rota dele no netfox |
+| Arquivo de parada | Nunca é apagado: um caminho errado, como `--stop-file=project.godot`, seria destruído |
+| `--server` com tela | Recusado com o código 2: o servidor nunca abre janela |
+
+**O que o Godot e o netfox ensinaram:**
+
+- o aperto de mão roda na etapa de autenticação do Godot, antes de o netfox ou qualquer RPC ver o cliente;
+- a recusa sai com `peer_disconnect_later()`: o `disconnect_peer()` joga fora a mensagem que estava na fila;
+- no servidor e no cliente, o `NetworkEvents` do netfox inicia e para o relógio, e a `Main` espera por ele (`docs/mudancas.md`);
+- o servidor manda o estado de um lutador só a quem já sabe que ele existe (o filtro de visibilidade do netfox).
+
+**Provas:**
+
+- `bash tools/gate.sh`: verde, 268 testes, 74 s;
+- `bash tools/net_check.sh`: 26 de 26.
+
+**A acompanhar:** o portão foi de 58 s no começo da sessão para 71 a 82 s, contra o limite de 90 s do pre-push.
+
+**Para o fechamento da parte 2:**
+
+- o `rede.md` §9 (o relógio, a porta 7777 e o aperto de mão na autenticação);
+- os textos na tela usam a fonte padrão de 16 px até o Theme chegar.
 <!-- SECTION:NOTES:END -->
 
 ## Comments

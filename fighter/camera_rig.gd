@@ -44,6 +44,12 @@ func _ready() -> void:
 	_follow()
 
 
+# The rig leaves with its fighter or its match, as when the server closes: the mouse comes back,
+# so the player can use the window again.
+func _exit_tree() -> void:
+	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
+
+
 # After netfox's tick loop of the frame, which interpolates the fighter between two ticks
 # (TickInterpolator): the camera follows what the screen shows.
 func _process(_delta: float) -> void:

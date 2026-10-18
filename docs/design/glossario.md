@@ -1,6 +1,6 @@
 ---
 revisado_em: 2026-10-18
-fontes: [F-001, F-002, F-005, F-007, F-012, F-013, F-020, F-021, F-025, F-026, F-028, F-030, F-032, F-038, F-039, F-044, F-045, F-046, F-050, F-051, F-052, F-053, F-056, F-058, F-066, F-068, F-069, F-070, F-073, F-078, F-079, F-081, F-083, F-085, F-086, F-087, F-088, F-090, F-091, F-093]
+fontes: [F-001, F-002, F-005, F-007, F-012, F-013, F-020, F-021, F-025, F-026, F-028, F-030, F-032, F-038, F-039, F-044, F-045, F-046, F-050, F-051, F-052, F-053, F-056, F-058, F-066, F-068, F-069, F-070, F-073, F-078, F-079, F-081, F-083, F-085, F-086, F-087, F-088, F-090, F-091, F-093, F-094, F-095, F-097]
 ---
 
 # Glossário
@@ -140,7 +140,7 @@ A linguagem ubíqua do jogo (DEC-0004, regra 5): o mesmo termo na conversa, no d
 | Trava do teste de aceite | O sha256 de um teste de aceite, guardado enquanto a task está aberta. Só o Arthur destrava (DEC-0009) | — | `.claude/harness/locks/` |
 | Hook do Claude Code | Um comando que o Claude Code roda antes ou depois de cada ferramenta do agente, como um middleware. Aqui, ele nega a edição de teste travado e formata o `.gd` | — | `.claude/hooks/` |
 | Replay por inputs | A partida guardada como o input de cada tick e tocada de novo no servidor. Só reproduz na mesma build: a mesma tecla com outra regra dá outra partida (DEC-0011; DEC-0027) | — | — |
-| Referência | Um replay gravado de um percurso, com o caminho guardado; o teste refaz e compara, como o snapshot do Jest. Mudou de propósito? Regrava, e o commit diz por quê (golden master; DEC-0027) | — | — |
+| Referência | Um percurso fixo de bot, com o rastro do caminho guardado; o teste refaz e compara, como o snapshot do Jest. Reprovou sem uma mudança de movimento de propósito? Investiga. Mudou de propósito? Regrava, e o commit diz por quê (golden master; DEC-0027; F-094) | ticks | `test/reference/`, `tools/record_reference.sh` |
 | Números congelados | A cópia dos números do movimento que só a referência usa: o ajuste fino do jogo não a quebra, só uma mudança de código (DEC-0027) | — | — |
 | Build | O jogo empacotado para rodar fora do editor: o template mais o pacote do jogo, num arquivo só (DEC-0028) | MB | `build/` |
 | Template de export | O motor compilado sem o editor, por plataforma. É o Chromium do Electron (DEC-0028) | MB | — |
@@ -151,6 +151,10 @@ A linguagem ubíqua do jogo (DEC-0004, regra 5): o mesmo termo na conversa, no d
 | Release | Uma versão publicada no GitHub, a partir de uma tag, com as builds e as notas (DEC-0028) | — | `v0.y.z` |
 | Versão | O número da build, em SemVer `0.y.z`: o `y` sobe a cada marco do roteiro, o `z` a cada build que sai (DEC-0028) | — | `application/config/version` |
 | Carimbo do commit | Os 7 primeiros caracteres do commit, escritos pelo CI na build: dizem exatamente qual código rodou (DEC-0028) | — | `application/config/commit` |
+| Teste de fumaça | A prova mais curta de que uma build funciona: o servidor exportado sobe, mostra o carimbo e fecha com 0. Como ligar um aparelho novo para ver se não sai fumaça | s | `tools/smoke_test_server.sh` |
+| Imagem do servidor | O servidor exportado empacotado com um Linux pequeno, numa imagem Docker que roda igual em qualquer máquina. O CI a constrói e testa em todo push, e não a guarda (DEC-0032) | MB | `Dockerfile` |
+| Ensaio | Rodar um passo de publicação conferindo tudo, mas sem publicar (dry run). A release ensaia em todo PR | — | `--dry-run` |
+| 1% piores | O fps dos quadros mais lentos: o 99º percentil do tempo de quadro. A média esconde o engasgo; os 1% piores mostram (F-056 §5) | fps | `one_percent_low_fps` |
 | Aperto de mão | Na conexão, o cliente manda a versão e o commit, e o servidor recusa os diferentes (DEC-0028). Roda na etapa de autenticação do Godot, e a recusa pede para atualizar o jogo ou diz que a sala está cheia (`rede.md` §9) | — | `Handshake` |
 | Branch da task | A linha de trabalho de uma task, do In Progress ao Done, que volta para a main num PR (DEC-0028) | — | `task-N-nome` |
 | PR | O pedido para juntar uma branch na main: o lugar onde o Arthur revisa o diff e joga a build (DEC-0028) | — | — |

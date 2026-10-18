@@ -4,7 +4,7 @@ Jogo de ação 3D online e gratuito. A identidade é o movimento acrobático: co
 
 O Arthur faz o jogo com o Claude Code. O Claude escreve o código e ensina enquanto constrói; o Arthur define a sensação, decide a arquitetura, revisa e testa (DEC-0010).
 
-**Em que pé está:** o jogo ainda está no papel. O desenho da fase 0 terminou (`docs/design/` e `docs/arquitetura/`), e o próximo passo é o esqueleto andante, uma cápsula em rede de ponta a ponta. Ainda não há build para jogar (`docs/roteiro.md`).
+**Em que pé está:** o esqueleto andante está pronto: uma cápsula que corre e pula, sozinha ou em rede contra um servidor dedicado, com o CI gerando as builds. A v0.1.0 é a primeira build para jogar, na página de Releases do repositório: um `.exe` para Windows, ainda sem assinatura, e o servidor para Linux. O próximo passo é a fase 1, o movimento acrobático (`docs/roteiro.md`).
 
 *English summary at the end.*
 
@@ -63,6 +63,6 @@ O nome do jogo, hoje o provisório "Jogo Acrobático" (DEC-0018), e o logo, quan
 
 ## English summary
 
-Jogo Acrobático (a working title) is a free online 3D action game built around acrobatic movement (wall-running, dashing and a grappling hook) and a free mix of sword, bow and guns, starting with 1v1 duels. It is made in Godot 4.7.2 with typed GDScript and netfox, and it is still on paper: there is no playable build yet. The project is written in Portuguese, including commit messages and pull requests; CONTRIBUTING.md has an English summary.
+Jogo Acrobático (a working title) is a free online 3D action game built around acrobatic movement (wall-running, dashing and a grappling hook) and a free mix of sword, bow and guns, starting with 1v1 duels. It is made in Godot 4.7.2 with typed GDScript and netfox. The walking skeleton is done: a capsule that runs and jumps, alone or online against a dedicated server. Version 0.1.0 is the first playable build, under Releases: an unsigned Windows `.exe` and the Linux server. The project is written in Portuguese, including commit messages and pull requests; CONTRIBUTING.md has an English summary.
 
 Everything in this repository is under the MIT License (LICENSE), including code, tests, tools and documentation, with these exceptions. Original assets under `assets/`, outside `assets/third_party/`, are under CC BY 4.0 (LICENSE-ASSETS), credited as "Arthur Gustavo and contributors, https://github.com/Kibryant/jogo-acrobatico, CC BY 4.0". Third-party assets and addons keep their own licenses. The Code of Conduct is a translation of the Contributor Covenant 3.0 under CC BY-SA 4.0. The game's name and logo are not licensed: copies and derived games must use a different name and logo and must not suggest they are the official game; saying that your project is based on this one is fine.

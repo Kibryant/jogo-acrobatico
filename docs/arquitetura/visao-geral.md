@@ -194,13 +194,17 @@ common/         código compartilhado
 data/           os .tres e as classes deles (movement_data.gd e movement_v0.tres)
 assets/         arte e áudio, no LFS, com CREDITS.md
 addons/         gdUnit4 e o netfox (core, extras e internals; DEC-0023)
-fighter/        a cena do lutador, o FighterInput e o CameraRig
+fighter/        a cena do lutador, o FighterInput, o CameraRig e o bot de teste
 arena/          a arena e os blocos
 match/          a partida
-net/, ui/       quando a primeira task precisar
-test/           espelha o código: test/core/fighter/...
-tools/          portão e checagens
+main/           a Main, os argumentos, o arquivo de parada e a medição de fps
+net/            o aperto de mão, a sala e o gravador da corrida de 30 s
+ui/             os textos da tela, por chave de tradução
+test/           espelha o código: test/core/fighter/...; a referência em test/reference/
+tools/          o portão, as checagens e os scripts de rede, de build e de release
 ```
+
+Na raiz, o `Dockerfile` é a receita da imagem do servidor (DEC-0032 §1; `rede.md` §10).
 
 O **jogador** é a pessoa; o **lutador** é o boneco, que também pode ser de um bot. É a diferença entre o invocador e o campeão no LoL.
 

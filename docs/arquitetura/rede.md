@@ -1,13 +1,13 @@
 ---
 revisado_em: 2026-10-18
-fontes: [F-001, F-005, F-007, F-023, F-024, F-025, F-026, F-027, F-028, F-029, F-030, F-032, F-033, F-034, F-036, F-042, F-044, F-046, F-073, F-084, F-085, F-087, F-088, F-089, F-091, F-092, F-093]
+fontes: [F-001, F-005, F-007, F-023, F-024, F-025, F-026, F-027, F-028, F-029, F-030, F-032, F-033, F-034, F-036, F-042, F-044, F-046, F-073, F-084, F-085, F-087, F-088, F-089, F-091, F-092, F-093, F-095, F-097]
 ---
 
 # Rede
 
 Estado atual: o Desenho 3 (TASK-5) fechado, com as DEC-0023 a DEC-0026, a DEC-0037 e a DEC-0038. A parte 1 do esqueleto andante (TASK-9) pôs o lutador no tick do netfox, no modo Sozinho, com a SyncTest no portão. A parte 2 pôs a rede de verdade: o servidor dedicado e os clientes da `Main` (§9), e a corrida de 30 s a ping 100 sem nenhum tick corrigido (§10).
 
-- A parte 3 do esqueleto andante leva o servidor para a build e para o contêiner do CI (TASK-9; DEC-0032 §1).
+- A parte 3 do esqueleto andante levou o servidor para a build e para o contêiner do CI, testado em todo push da main e em todo PR (TASK-9; DEC-0032 §1; §10).
 - A compensação e a detecção do golpe nascem com a espada: local na fase 2, em rede na fase 3 (F-023 §3).
 - A versão visual e interativa deste documento é a vitrine [A rede por dentro](https://claude.ai/artifact/Sb4Q5e4M16UymdoaR9UAzp), privada (DEC-0019), na versão 9.
 
@@ -311,6 +311,7 @@ A cena de entrada olha como o jogo foi aberto, como um `main.ts` que lê o `proc
 - **O log do servidor sai na hora:** o `application/run/flush_stdout_on_print` fica ligado, guardado pelo teste de configurações. Sem ele, a build release só descarrega o log quando o buffer enche, e o da sonda saiu 26 s atrasado (F-073 §1).
 - **Zero autoloads nossos** (DEC-0022): a `Main` é a cena principal. O `netfox/autoconnect/enabled` fica desligado, porque quem conecta é a `Main` (DEC-0023). A exceção é a sessão de teste com lag, por um `override.cfg` temporário (DEC-0038; §10).
 - A porta e o endereço vêm dos argumentos. A hospedagem é do Desenho 6 (TASK-8).
+- **A medição de fps** (`--measure-fps=CAMINHO`, só com tela, no Sozinho ou como cliente): a janela vai para tela cheia, com o vsync desligado e o fps sem limite, como a sonda dos assets (F-056 §5). Quando o lutador dela joga, ela espera 2 s e mede 60 s quadro a quadro. Grava em JSON a média, o 99º percentil do tempo de quadro, os 1% piores e quanto do tempo os dois lutadores ficaram na vista da câmera, e sai com 0 (TASK-9, critério 17; F-095).
 
 **Os códigos de saída**, números v0 do Claude, um por jeito de uma abertura falhar:
 
@@ -333,6 +334,7 @@ A cena de entrada olha como o jogo foi aberto, como um `main.ts` que lê o `proc
 | Folga do servidor ao sair, com o simulador | a latência mais 100 ms | O proxy segura cada pacote pela latência, e o adeus precisa passar (DEC-0038) |
 | Frames por segundo dos jogos sem tela, nos scripts | até 144 | Três jogos dividem os 4 núcleos, como nas corridas da sonda; os ticks seguem 60 |
 | Mínimo de uma corrida de 30 s | 25 s de ticks conferidos por cliente | Uma corrida que conferiu menos não prova o critério 12 |
+| Aquecimento e medida do fps | 2 s e 60 s | O aquecimento é o da sonda dos assets (F-056 §5); a medida, a do critério 17 |
 
 ## 10. As medições (TASK-5, critério 5)
 
@@ -426,6 +428,23 @@ A primeira corrida achou 13 ticks corrigidos: o lutador do cliente nascia um tic
 
 O `tools/play_online.sh [ping]` abre um servidor sem tela, um cliente com o bot na metade direita da tela e o do jogador na esquerda. O Arthur jogou a 100 e a 220 e não sentiu lag na própria cápsula; a 220, sentiu uma diferença leve que não sabe explicar (F-091; F-092). Os jogos à mão não gravam ticks.
 
+### A imagem do servidor (TASK-9, critério 15)
+
+Em todo push da main e em todo PR, o job `server-image` do CI exporta o servidor, constrói a imagem Docker (`Dockerfile`, a receita da sonda: `debian:trixie-slim`, o `tini` como PID 1, um usuário sem root e a porta 7777/udp) e roda o `tools/server_image_check.sh`, fora do portão (DEC-0032 §1):
+
+- um cliente sem tela, do código-fonte e com o mesmo carimbo, passa no aperto de mão e ganha o seu lutador;
+- um cliente com outro commit é recusado com o código 4;
+- o `docker exec … touch` no arquivo de parada fecha o servidor com 0, e o primeiro cliente sai com 0, mostrando que o servidor fechou;
+- a imagem não é guardada.
+
+No PR #8, a imagem teve 153 MB, o servidor ficou pronto 0,45 s depois do `docker run` e fechou 0,2 s depois do arquivo de parada.
+
+**O erro conhecido do Godot:** depois que um cliente usou RPCs, o servidor Linux exportado imprime, ao fechar a conexão, uma linha de `ERROR` por nó que fez RPC (`NetworkTime`, `NetworkTickrateHandshake`, a `Main`).
+- O cache de caminhos do multiplayer liga o `tree_exited` de cada nó com um callable preso e de um disparo só, e o `clear()` tenta desligar a forma solta. Só a build de release do Godot 4.7.2 no Linux erra nessa comparação (Godot #123751, fechado como "não planejado"). O editor, a build de debug e a de release do Windows fecham limpas.
+- Nada muda para quem joga: o servidor sai com 0 e os clientes recebem o aviso.
+- O job da imagem deixa de fora só essa linha exata e a conta no relatório; o teste de fumaça do export segue reprovando qualquer `ERROR` (F-097).
+- O contorno do relato, liberar os nós que fizeram RPC antes de fechar, mexeria nos autoloads do netfox e na ordem de fechar do §9.
+
 ## 11. O que fica para depois
 
 - **Q-09:**
@@ -435,7 +454,7 @@ O `tools/play_online.sh [ping]` abre um servidor sem tela, um cliente com o bot 
 - **Q-16:** dá para ficar em pé na cabeça do outro? É o único caso em que o choque entre lutadores diverge ao refazer.
 - **Q-17:** a conferência do `view_lag` com o ping e a regra contra o lag switch de quem ataca.
 - **Q-18:** o `view_lag` por oponente no 4v4.
-- **TASK-9, parte 3:** o servidor na build e no contêiner do CI, e a referência de 1.200 ticks no Windows e no Linux (critérios 14 a 16).
+- **O erro conhecido do servidor de release (Godot #123751):** volta a ser olhado a cada versão nova do Godot, para tirar a exceção do job da imagem (F-097).
 - **O corpo do lutador antes do primeiro tick:** ele já está no mundo da física antes de existir para o netfox (TASK-9, rodada C2). Vale olhar quando houver colisão entre lutadores no nascimento.
 - **Contar as correções no teste à mão:** o `play_online.sh` pode gravar os ticks da janela do jogador, como o `net_run.sh`, para uma sensação virar número (F-091 §4).
 - **Fases 2 e 3:** as regras do golpe com `view_lag` zero; depois o `view_lag`, o histórico de poses e os testes com rede.

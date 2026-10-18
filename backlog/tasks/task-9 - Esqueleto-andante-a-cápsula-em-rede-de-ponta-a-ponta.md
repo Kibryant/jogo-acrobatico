@@ -1,10 +1,10 @@
 ---
 id: TASK-9
 title: 'Esqueleto andante: a cápsula em rede de ponta a ponta'
-status: In Progress
+status: Done
 assignee: []
 created_date: '2026-10-02 16:48'
-updated_date: '2026-10-18 16:44'
+updated_date: '2026-10-18 20:45'
 labels:
   - jogo
   - rede
@@ -84,19 +84,19 @@ Fechados pelo Claude (DEC-0017), fora da identidade do jogo; o Arthur julga joga
 - [x] #11 Quando o arquivo de parada aparece, o servidor o percebe em até 1 s, para o tick, fecha a conexão, solta a partida e sai com código 0, com ou sem clientes conectados, e os clientes mostram que o servidor fechou; quando o jogador fecha a janela, o cliente sai com código 0 (DEC-0026 §6; DEC-0032 §2; F-084).
 - [x] #12 Quando dois clientes com bot correm e pulam por 30 s contra o servidor neste PC, a ping 100 e sem se encostar, o estado que o servidor confirma bate com o que cada cliente previu para o próprio lutador em todos os ticks, e o resumo da corrida mostra quantos ticks foram conferidos e quantos corrigidos (DEC-0026 §2; `rede.md` §10).
 - [x] #13 Quando o Arthur abre, com um comando, o servidor e dois clientes com o simulador do netfox a ping 100, cada um vê a própria cápsula responder na hora e a outra suavizada, sem previsão; a 220, a própria segue respondendo na hora; o que ele sentiu vai para uma fonte (DEC-0026 §2; DEC-0027 §2, camada 5; F-041).
-- [ ] #14 Quando um PR é aberto ou atualizado, o CI exporta o cliente Windows e o servidor Linux, com o commit carimbado em `application/config/commit`, e guarda os dois como artefato por 3 dias; quando uma tag `v0.y.z` sobe, eles viram uma release pública do GitHub; o push na main não guarda build (DEC-0028 §2; DEC-0032 §1; DEC-0033).
-- [ ] #15 Quando há push na main ou num PR, um job do CI fora do portão e do pre-push constrói a imagem Docker do servidor, sobe o contêiner, conecta um cliente sem tela que passa no aperto de mão, vê um cliente de outra versão ser recusado e fecha o servidor pelo arquivo de parada com saída 0, sem guardar a imagem; se o Godot cair ao sair do export (#123712), o job confere o artefato e o teste, e não só o código de saída (DEC-0032 §1; DEC-0028; F-084).
-- [ ] #16 Quando o portão roda neste PC e o CI roda no Linux, a referência, um percurso de bot de 1.200 ticks na arena com uma cópia congelada dos números do movimento, só do teste, dá o mesmo hash nos dois; uma mudança de código que altere o caminho reprova o portão, e regravar é um comando, com o porquê no commit (DEC-0027 §2, camada 4; F-044 §2).
-- [ ] #17 Quando a build do cliente roda neste PC em 1080p, com os dois lutadores na tela por 60 s, a média fica em 60 fps ou mais, com os 1% piores registrados (DEC-0002).
-- [ ] #18 Quando as três partes estão verdes e o Arthur dá o ok, a versão sobe para 0.1.0 no commit que fecha a task, a tag `v0.1.0` vira a primeira release, com notas em português tiradas do diário, e o marco m-0 fecha (DEC-0028 §3).
+- [x] #14 Quando um PR é aberto ou atualizado, o CI exporta o cliente Windows e o servidor Linux, com o commit carimbado em `application/config/commit`, e guarda os dois como artefato por 3 dias; quando uma tag `v0.y.z` sobe, eles viram uma release pública do GitHub; o push na main não guarda build (DEC-0028 §2; DEC-0032 §1; DEC-0033).
+- [x] #15 Quando há push na main ou num PR, um job do CI fora do portão e do pre-push constrói a imagem Docker do servidor, sobe o contêiner, conecta um cliente sem tela que passa no aperto de mão, vê um cliente de outra versão ser recusado e fecha o servidor pelo arquivo de parada com saída 0, sem guardar a imagem; se o Godot cair ao sair do export (#123712), o job confere o artefato e o teste, e não só o código de saída (DEC-0032 §1; DEC-0028; F-084).
+- [x] #16 Quando o portão roda neste PC e o CI roda no Linux, a referência, um percurso de bot de 1.200 ticks na arena com uma cópia congelada dos números do movimento, só do teste, dá o mesmo hash nos dois; uma mudança de código que altere o caminho reprova o portão, e regravar é um comando, com o porquê no commit (DEC-0027 §2, camada 4; F-044 §2).
+- [x] #17 Quando a build do cliente roda neste PC em 1080p, com os dois lutadores na tela por 60 s, a média fica em 60 fps ou mais, com os 1% piores registrados (DEC-0002).
+- [x] #18 Quando as três partes estão verdes e o Arthur dá o ok, a versão sobe para 0.1.0 no commit que fecha a task, a tag `v0.1.0` vira a primeira release, com notas em português tiradas do diário, e o marco m-0 fecha (DEC-0028 §3).
 <!-- AC:END -->
 
 ## Definition of Done
 <!-- DOD:BEGIN -->
-- [ ] #1 Critérios de aceite verificados
-- [ ] #2 Teste automatizado para toda regra do núcleo (core/)
-- [ ] #3 Diário da sessão escrito e glossário atualizado
-- [ ] #4 Mudanças registradas em docs/mudancas.md
+- [x] #1 Critérios de aceite verificados
+- [x] #2 Teste automatizado para toda regra do núcleo (core/)
+- [x] #3 Diário da sessão escrito e glossário atualizado
+- [x] #4 Mudanças registradas em docs/mudancas.md
 <!-- DOD:END -->
 
 ## Implementation Plan
@@ -340,6 +340,44 @@ Branch `task-9-delivery-pipeline`. O mapa das entradas (DECs, fontes, CI de hoje
 - o corpo do lutador fica no mundo da física antes do primeiro tick dele;
 - o `play_online.sh` pode gravar os ticks da janela do jogador, para uma sensação virar número (F-091 §4);
 - na parte 2, o portão rodou entre 61 e 85 s, contra o limite de 90 s do pre-push.
+
+## Parte 3, revisão e fechamento, 18/10/2026 (branch task-9-delivery-pipeline, PR #8)
+
+**As rodadas:**
+- D1: a referência (1.200 ticks, `b73cccbc…` no Windows e no Linux) e a checagem dos ticks, cujo teste o test-writer escreveu antes e ficou travado;
+- D2: os jobs de export, release e imagem do servidor;
+- D3: a medição de fps. O Arthur rodou e deu 312,71 fps de média e 157,62 nos 1% piores (F-095).
+
+**O que o CI achou:** no primeiro run do PR #8, o servidor Linux de release imprimiu quatro linhas de `ERROR` ao fechar, depois de RPCs. É o bug #123751 do Godot 4.7.2, só na build de release do Linux. O Arthur escolheu deixar só essa linha de fora no job da imagem (F-097).
+
+**O revisor**, com o modelo Fable e contexto limpo, aprovou os critérios 14 a 17:
+- portão verde em 86 s, com 340 testes;
+- no CI, a referência com o mesmo hash no Linux, o export com o artefato de 68,5 MB e o `server-image` com 15 conferências ok;
+- o ensaio da release passou, e uma tag que não bate com a versão foi recusada.
+
+A metade do critério 14 que fala da tag se prova na release v0.1.0.
+
+**Os achados e o que foi feito:**
+
+| Achado | O que foi feito |
+|---|---|
+| O filtro da F-097 valia também no teste de fumaça | Ficou só no job da imagem (`0b55f35`) |
+| O custo da referência nos docs era o da sonda | `testes-e-entrega.md` §3 e uma linha no `mudancas.md` |
+| Docs desatualizados | `testes-e-entrega.md`, `rede.md`, glossário, `README.md`, `visao-geral.md` e `infraestrutura.md`, com o ok do Arthur (F-098 §1) |
+
+**O critério 18:**
+- a versão sobe para 0.1.0 neste fechamento;
+- as notas da release estão em `docs/releases/v0.1.0.md`, tiradas do diário de 18/10, com o passo a passo da build sem assinatura (Q-20);
+- o Arthur lê as notas antes do merge e da tag `v0.1.0` (F-098 §1).
+
+**As conferências:** desde o fechamento da parte 2, cinco erradas e duas certas. O arquivo do simulador e a release pública falharam duas vezes cada, e foram explicados uma vez com o próprio projeto.
+
+**A acompanhar depois da TASK-9:**
+- o portão leva de 61 a 114 s neste PC, contra o limite de 90 s do pre-push;
+- o erro #123751 do Godot, a olhar a cada versão nova;
+- o corpo do lutador fica no mundo da física antes do primeiro tick;
+- o `play_online.sh` pode gravar os ticks da janela do jogador (F-091 §4);
+- a DEC-0037 e a DEC-0038 ainda não estão no Yabadoo.
 <!-- SECTION:NOTES:END -->
 
 ## Comments

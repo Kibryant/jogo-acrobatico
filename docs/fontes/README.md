@@ -101,3 +101,4 @@ O que chegou ao projeto e como chegou. Uma fonte não muda: só mudam `status`, 
 | [F-095](F-095-medicao-de-fps-do-esqueleto-andante.md) | 2026-10-18 | A medição de fps do esqueleto andante: 312,71 fps de média e 157,62 nos 1% piores, em 1080p no PC do Arthur, com os dois lutadores na vista o tempo todo |
 | [F-096](F-096-arthur-libera-o-pr-rascunho-da-parte-3.md) | 2026-10-18 | O Arthur olha a medição de fps, diz que está tudo certo e libera subir a branch da parte 3 e abrir o PR rascunho |
 | [F-097](F-097-arthur-separa-o-erro-do-godot.md) | 2026-10-18 | O Arthur acerta que as linhas de ERROR do servidor Linux exportado não mudam nada para quem joga e escolhe ignorar só essa mensagem no job da imagem |
+| [F-098](F-098-arthur-fecha-a-parte-3.md) | 2026-10-18 | O Arthur erra duas vezes a conferência sobre a release pública, aprova os docs da parte 3 e escolhe ler as notas da release antes de publicar a v0.1.0 |

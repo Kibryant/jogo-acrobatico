@@ -129,17 +129,30 @@ check_server_log() {
 	check_log "$log" "server: exiting with 0" "it says it exits with 0"
 }
 
+# The one engine error a release server build may print, set aside by check_clean_logs. When a
+# server that sent RPCs closes its connection, Godot's multiplayer path cache disconnects each
+# node's tree_exited with the unbound callable it had connected bound and one-shot; the 4.7.2
+# release template on Linux misses the match and prints this line for each node, while the editor,
+# the debug template and the Windows release build stay silent (Godot #123751, closed as not
+# planned). It changes nothing: the server still exits with 0 and its clients hear the goodbye.
+# Arthur chose to set aside only this exact line (F-097); any other error still fails.
+known_engine_error="^ERROR: Attempt to disconnect a nonexistent connection from '[^']*'[.] Signal: 'tree_exited', callable: ''[.]\$"
+
 # check_clean_logs LOG...: fails when the logs hold an engine error (log_errors of
-# tools/net_lib.sh) and notes their warnings.
+# tools/net_lib.sh) other than known_engine_error, which it counts, and notes their warnings.
 check_clean_logs() {
-	local errors warnings
-	errors="$(log_errors "$@")"
+	local errors known warnings
+	errors="$(log_errors "$@" | grep -vE "$known_engine_error" || true)"
+	known="$(log_errors "$@" | grep -cE "$known_engine_error" || true)"
 	warnings="$(log_warnings "$@")"
 	if [ -n "$errors" ]; then
 		fail "the logs hold errors:"
 		summary+=("$errors")
 	else
 		pass "no error in the logs"
+	fi
+	if [ "$known" -gt 0 ]; then
+		summary+=("note  $known line(s) of the known engine error set aside (Godot #123751)")
 	fi
 	if [ -n "$warnings" ]; then
 		summary+=("note  warnings in the logs:" "$warnings")

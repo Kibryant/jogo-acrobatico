@@ -99,3 +99,4 @@ O que chegou ao projeto e como chegou. Uma fonte não muda: só mudam `status`, 
 | [F-093](F-093-arthur-fecha-a-parte-2.md) | 2026-10-18 | O Arthur erra duas vezes a conferência do simulador de lag, aprova o pacote de docs da parte 2 com a DEC-0038 e manda subir, abrir o PR e fazer o merge com o CI verde |
 | [F-094](F-094-arthur-comeca-a-parte-3.md) | 2026-10-18 | O Arthur começa a parte 3 da TASK-9, a esteira, erra a primeira conferência da referência, acerta a segunda e aprova o plano |
 | [F-095](F-095-medicao-de-fps-do-esqueleto-andante.md) | 2026-10-18 | A medição de fps do esqueleto andante: 312,71 fps de média e 157,62 nos 1% piores, em 1080p no PC do Arthur, com os dois lutadores na vista o tempo todo |
+| [F-096](F-096-arthur-libera-o-pr-rascunho-da-parte-3.md) | 2026-10-18 | O Arthur olha a medição de fps, diz que está tudo certo e libera subir a branch da parte 3 e abrir o PR rascunho |

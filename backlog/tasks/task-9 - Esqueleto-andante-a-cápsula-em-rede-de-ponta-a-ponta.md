@@ -4,7 +4,7 @@ title: 'Esqueleto andante: a cápsula em rede de ponta a ponta'
 status: In Progress
 assignee: []
 created_date: '2026-10-02 16:48'
-updated_date: '2026-10-18 16:19'
+updated_date: '2026-10-18 16:44'
 labels:
   - jogo
   - rede
@@ -173,6 +173,39 @@ Concretiza a `visao-geral.md` (o estado em quatro caixas, o sanduíche e as past
   - O `project.godot` segue com a conexão automática desligada (DEC-0023), e o `override.cfg` entra no `.gitignore`.
 
 **Depois:** o revisor julga os critérios 9 a 13. O Arthur joga a 100 e a 220, e o que ele sentir vai para uma fonte (critério 13).
+
+## Parte 3: a esteira (critérios 14 a 18; F-094)
+
+Branch `task-9-delivery-pipeline`. O mapa das entradas (DECs, fontes, CI de hoje e sondas) foi feito pelo explorer em 18/10/2026.
+
+**Rodada D1, no portão (critério 16 e as sobras da parte 1):**
+- **A referência** (DEC-0027 §2, camada 4; F-044 §2; F-042):
+  - um teste do portão roda a partida de verdade no Sozinho, com os ticks à mão (`test/support/netfox_ticks.gd`), por 1.200 ticks;
+  - um percurso fixo de bot, só do teste, com `yaw` 0 o tempo todo e sem passar pela rampa: seno e cosseno podem diferir no último bit entre Windows e Linux, e a sonda não provou isso (F-042, limites). A SyncTest segue cobrindo a rampa;
+  - uma cópia congelada dos números do `movement_v0.tres`, só do teste: o ajuste fino do jogo não quebra a referência;
+  - o rastro guarda, por tick, a posição com 9 casas e o chão, como a sonda (`../replay-sonda`). O teste compara o rastro com o guardado e mostra o sha256 dos dois; se diferirem, mostra o primeiro tick diferente;
+  - regravar é um comando, `bash tools/record_reference.sh`, e o commit diz por quê;
+  - se o Windows e o Linux derem rastros diferentes, o Claude para e leva ao Arthur: a DEC-0027 diz que aí a referência vale só no Linux, e o critério 16 pede os dois.
+- **A checagem dos dados** (achado 5 do revisor da parte 1): um dos quatro tempos que as regras dividem (aceleração, parada, subida e queda) que arredonda para 0 tick a 30 ou a 60 ticks reprova no `MovementData.validate()`. O `assert` do `MovementConfig.create()` some na build de release. O test-writer escreve o teste antes, num arquivo novo, e ele fica travado.
+- **O `data/camera_v0.tres`** ganha um uid.
+- **A recusa de argumento desconhecido** já tem prova com processo no `tools/net_check.sh` (código 2); a nota da parte 1 fecha.
+
+**Rodada D2, no CI (critérios 14 e 15):**
+- **As builds, no PR e na tag `v0.y.z`, nunca no push da main** (DEC-0028 §2):
+  - o `setup-godot` com os templates (1,28 GB, em cache), o import antes do export (gdUnit4 #1324), o carimbo dos 7 primeiros caracteres do commit em `application/config/commit` e o export dos dois presets;
+  - o teste de fumaça: o servidor exportado sobe sem tela e fecha pelo arquivo de parada com 0. Se o Godot cair ao sair do export (#123712), o job confere a build e o teste de fumaça, e não só o código de saída;
+  - no PR, as duas builds num artefato de 3 dias;
+  - na tag, um job à parte, o único com permissão de escrita, publica a release pública com as duas builds e as notas do `docs/releases/v0.y.z.md`, em português (DEC-0033). No PR, ele ensaia, sem publicar.
+- **A imagem do servidor, no push da main e no PR, fora do portão** (DEC-0032 §1):
+  - o `Dockerfile` da sonda (`../servidor-sonda`): `debian:trixie-slim`, o `tini` como PID 1, um usuário sem root, a porta 7777/udp e o servidor com `--stop-file`;
+  - o `tools/server_image_check.sh` exporta o servidor, constrói a imagem e sobe o contêiner. Conecta um cliente sem tela do código-fonte, com o mesmo carimbo, que passa no aperto de mão; carimba outro commit e vê o segundo cliente ser recusado (código 4); fecha pelo `docker exec … touch` e confere a saída 0 do servidor e do primeiro cliente. A imagem não é guardada;
+  - o script roda também neste PC, com o Docker Desktop, antes do CI.
+
+**Rodada D3, neste PC (critério 17):**
+- O jogo ganha `--measure-fps=CAMINHO`: com tela, em tela cheia 1920 × 1080, vsync desligado e fps sem limite. Espera 2 s e mede 60 s quadro a quadro, como a sonda dos assets (F-056 §5), e grava a média e os 1% piores (o 99º percentil do tempo de quadro).
+- O `tools/measure_fps.sh` exporta o cliente aqui, sobe um servidor e um bot sem tela e abre a build em tela cheia, com o bot jogando o lutador dela, a ping 0: os dois lutadores na tela. O Arthur roda com o PC livre, por uns 2 minutos.
+
+**Depois:** o revisor julga os critérios 14 a 17. O critério 18 vem por último, com o ok do Arthur: a versão 0.1.0 no commit que fecha a task, as notas tiradas do diário com o passo a passo para abrir uma build sem assinatura (Q-20), a tag `v0.1.0`, a release e o marco m-0 fechado.
 <!-- SECTION:PLAN:END -->
 
 ## Implementation Notes

@@ -31,7 +31,7 @@
 | [DEC-0020](DEC-0020-linguagem-gdscript-e-nucleo-trocavel.md) | 2026-10-02 | GDScript no jogo todo; só o núcleo muda de linguagem, se a medição de CPU pedir | aceita; completa a DEC-0001 |
 | [DEC-0021](DEC-0021-explicar-no-mundo-do-arthur.md) | 2026-10-02 | Explicar no mundo do Arthur: pergunta fixa de entendimento, exemplo do que ele conhece e escolha como trade-off | aceita; completa a DEC-0010 |
 | [DEC-0022](DEC-0022-arquitetura-detalhada.md) | 2026-10-02 | Arquitetura detalhada: estado em quatro caixas, máquina de estados no núcleo, tick em sanduíche, cenas, zero autoloads nossos, pastas e acesso inseguro como erro | aceita; substitui só a frase da DEC-0004 sobre a RewindableStateMachine. As cenas e as pastas foram aprovadas no plano (F-022). A hipótese 3 foi substituída pela DEC-0025 |
-| [DEC-0023](DEC-0023-netfox-no-godot-4-7-2.md) | 2026-10-04 | O netfox no Godot 4.7.2: main fixada no `cf5189d`, com core, extras e internals em `addons/`, e os autoloads em `res://` guardados por teste | aceita; completa a DEC-0003 e fecha a Q-02 |
+| [DEC-0023](DEC-0023-netfox-no-godot-4-7-2.md) | 2026-10-04 | O netfox no Godot 4.7.2: main fixada no `cf5189d`, com core, extras e internals em `addons/`, e os autoloads em `res://` guardados por teste | aceita; completa a DEC-0003 e fecha a Q-02; o §7 completado pela DEC-0038 (a sessão de teste com o simulador) |
 | [DEC-0024](DEC-0024-sessenta-ticks-por-segundo.md) | 2026-10-04 | 60 ticks por segundo | aceita; fecha a Q-01 |
 | [DEC-0025](DEC-0025-contornos-do-rollback-no-jolt.md) | 2026-10-04 | Os contornos do rollback no Jolt: o do transform em todo tick refeito e o contorno D no começo de cada rollback | aceita; substitui só a hipótese 3 da DEC-0022; o §2 completado pela DEC-0037 (o snap de reserva do contorno D) |
 | [DEC-0026](DEC-0026-a-rede.md) | 2026-10-04 | A rede: o input, o oponente no passado, a compensação de lag, a detecção do golpe, a fase 1 no tick e a Main | aceita; completa a DEC-0011 na validação de acerto da espada; a frase do §2 sobre o atraso de visão pelo `get_last_known_state()` foi substituída pela DEC-0031; o §6 completado pela DEC-0032 (o fechamento no contêiner) |
@@ -46,6 +46,7 @@
 | [DEC-0035](DEC-0035-os-docs-na-mit.md) | 2026-10-10 | Os docs na MIT: tudo no repositório fica na MIT, inclusive os docs, as fontes e o AGENTS.md, salvo os assets próprios, os de terceiros e os addons, o código de conduta e o nome | aceita; completa a DEC-0033 |
 | [DEC-0036](DEC-0036-fase-de-desenho-fechada-um-desenho-por-fase.md) | 2026-10-10 | A fase de desenho fechou: nenhum desenho de base novo; o desenho de jogo acontece um por fase, na abertura da fase, com a lista nomeada; o que aparecer no meio vira Q | aceita; completa a DEC-0012 e fecha a pergunta da F-035 e da F-082 |
 | [DEC-0037](DEC-0037-snap-de-reserva-do-contorno-d.md) | 2026-10-17 | O snap de reserva do contorno D: quando a sonda não acha o chão que o estado diz, o lutador chama o snap do motor | aceita; completa a DEC-0025 §2 |
+| [DEC-0038](DEC-0038-sessao-de-teste-com-o-simulador.md) | 2026-10-18 | A sessão de teste com o simulador de lag: um `override.cfg` temporário liga a conexão automática do netfox, e a `Main` usa a conexão do simulador | aceita; completa a DEC-0023 §7 |
 
 ## Propostas — ainda não são regra
 

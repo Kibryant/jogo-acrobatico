@@ -4,7 +4,7 @@ title: 'Esqueleto andante: a cápsula em rede de ponta a ponta'
 status: In Progress
 assignee: []
 created_date: '2026-10-02 16:48'
-updated_date: '2026-10-17 21:14'
+updated_date: '2026-10-18 16:19'
 labels:
   - jogo
   - rede
@@ -79,11 +79,11 @@ Fechados pelo Claude (DEC-0017), fora da identidade do jogo; o Arthur julga joga
 - [x] #6 Quando o jogo abre sem argumento, ele entra no modo Sozinho, o par offline: a cápsula de 1,8 m × 0,35 m anda e pula na arena de blocos, com rampa de 45° e beirada, e a câmera em terceira pessoa segue o `movimento.md` (3,5 m, pivô a 1,6 m, centralizada, 70° na vertical, colisão e 0,06° por pixel do mouse), com o corpo olhando para onde a câmera olha; o teste de configurações passa a guardar a cena principal `Main` (DEC-0026 §6; DEC-0013; F-084).
 - [x] #7 Quando o jogador usa o teclado, as ações vêm do `InputMap` por posição física (`physical_keycode`), com teste; o `move` é a média das amostras dos frames do tick, o `yaw` é a última amostra e o pulo vale no máximo um tick (DEC-0031; DEC-0026 §1; F-084).
 - [x] #8 Quando a SyncTest roda no portão, com os ticks avançados à mão e o rollback forçado de 7 ticks a cada tick, os quatro cenários (rampa de 45°, beirada, pouso e dois lutadores se empurrando no chão) dão zero divergência (posição até 1 mm, `on_floor` e `mode` iguais), juntos em menos de 5 s neste PC; o resumo prova que cada caminho rodou (ticks refeitos, pousos, decolagens, ticks na rampa e choques), e um campo do estado fora do que o netfox grava faz ela acusar (DEC-0025; DEC-0027 §3; `rede.md` §4; F-084).
-- [ ] #9 Quando o jogo abre com `--server`, na porta de `--port` ou na 7777/udp, ou é o build de servidor dedicado, ele sobe sem tela e sem lutador próprio; sem cliente, espera; cada cliente que entra ganha um lutador num ponto de nascimento; o terceiro é recusado com a mensagem de sala cheia; o lutador de quem sai some para o outro; e o log sai na hora, com o `flush_stdout_on_print` guardado pelo teste de configurações (DEC-0026 §6; F-073 §2; F-084).
-- [ ] #10 Quando um cliente abre com `--connect=host:porta`, ele manda a versão e o commit; se um dos dois for diferente do servidor, o servidor recusa e o cliente mostra o pedido para atualizar; se o servidor não responde, o cliente mostra o erro; sem tela, nos dois casos, ele sai com código diferente de 0; todo texto na tela usa chave de tradução, com pt-BR e en (DEC-0028 §3; DEC-0031; F-084).
-- [ ] #11 Quando o arquivo de parada aparece, o servidor o percebe em até 1 s, para o tick, fecha a conexão, solta a partida e sai com código 0, com ou sem clientes conectados, e os clientes mostram que o servidor fechou; quando o jogador fecha a janela, o cliente sai com código 0 (DEC-0026 §6; DEC-0032 §2; F-084).
-- [ ] #12 Quando dois clientes com bot correm e pulam por 30 s contra o servidor neste PC, a ping 100 e sem se encostar, o estado que o servidor confirma bate com o que cada cliente previu para o próprio lutador em todos os ticks, e o resumo da corrida mostra quantos ticks foram conferidos e quantos corrigidos (DEC-0026 §2; `rede.md` §10).
-- [ ] #13 Quando o Arthur abre, com um comando, o servidor e dois clientes com o simulador do netfox a ping 100, cada um vê a própria cápsula responder na hora e a outra suavizada, sem previsão; a 220, a própria segue respondendo na hora; o que ele sentiu vai para uma fonte (DEC-0026 §2; DEC-0027 §2, camada 5; F-041).
+- [x] #9 Quando o jogo abre com `--server`, na porta de `--port` ou na 7777/udp, ou é o build de servidor dedicado, ele sobe sem tela e sem lutador próprio; sem cliente, espera; cada cliente que entra ganha um lutador num ponto de nascimento; o terceiro é recusado com a mensagem de sala cheia; o lutador de quem sai some para o outro; e o log sai na hora, com o `flush_stdout_on_print` guardado pelo teste de configurações (DEC-0026 §6; F-073 §2; F-084).
+- [x] #10 Quando um cliente abre com `--connect=host:porta`, ele manda a versão e o commit; se um dos dois for diferente do servidor, o servidor recusa e o cliente mostra o pedido para atualizar; se o servidor não responde, o cliente mostra o erro; sem tela, nos dois casos, ele sai com código diferente de 0; todo texto na tela usa chave de tradução, com pt-BR e en (DEC-0028 §3; DEC-0031; F-084).
+- [x] #11 Quando o arquivo de parada aparece, o servidor o percebe em até 1 s, para o tick, fecha a conexão, solta a partida e sai com código 0, com ou sem clientes conectados, e os clientes mostram que o servidor fechou; quando o jogador fecha a janela, o cliente sai com código 0 (DEC-0026 §6; DEC-0032 §2; F-084).
+- [x] #12 Quando dois clientes com bot correm e pulam por 30 s contra o servidor neste PC, a ping 100 e sem se encostar, o estado que o servidor confirma bate com o que cada cliente previu para o próprio lutador em todos os ticks, e o resumo da corrida mostra quantos ticks foram conferidos e quantos corrigidos (DEC-0026 §2; `rede.md` §10).
+- [x] #13 Quando o Arthur abre, com um comando, o servidor e dois clientes com o simulador do netfox a ping 100, cada um vê a própria cápsula responder na hora e a outra suavizada, sem previsão; a 220, a própria segue respondendo na hora; o que ele sentiu vai para uma fonte (DEC-0026 §2; DEC-0027 §2, camada 5; F-041).
 - [ ] #14 Quando um PR é aberto ou atualizado, o CI exporta o cliente Windows e o servidor Linux, com o commit carimbado em `application/config/commit`, e guarda os dois como artefato por 3 dias; quando uma tag `v0.y.z` sobe, eles viram uma release pública do GitHub; o push na main não guarda build (DEC-0028 §2; DEC-0032 §1; DEC-0033).
 - [ ] #15 Quando há push na main ou num PR, um job do CI fora do portão e do pre-push constrói a imagem Docker do servidor, sobe o contêiner, conecta um cliente sem tela que passa no aperto de mão, vê um cliente de outra versão ser recusado e fecha o servidor pelo arquivo de parada com saída 0, sem guardar a imagem; se o Godot cair ao sair do export (#123712), o job confere o artefato e o teste, e não só o código de saída (DEC-0032 §1; DEC-0028; F-084).
 - [ ] #16 Quando o portão roda neste PC e o CI roda no Linux, a referência, um percurso de bot de 1.200 ticks na arena com uma cópia congelada dos números do movimento, só do teste, dá o mesmo hash nos dois; uma mudança de código que altere o caminho reprova o portão, e regravar é um comando, com o porquê no commit (DEC-0027 §2, camada 4; F-044 §2).
@@ -276,6 +276,37 @@ Concretiza a `visao-geral.md` (o estado em quatro caixas, o sanduíche e as past
 
 - o portão foi de 79 s a 85 s nesta rodada, contra o limite de 90 s do pre-push;
 - o corpo do lutador fica no mundo da física antes do primeiro tick dele. Já era assim; vale olhar quando houver colisão entre lutadores no nascimento.
+
+## Parte 2, revisão e fechamento, 18/10/2026
+
+**O teste à mão do critério 13:** o Arthur jogou pelo `play_online.sh` a ping 100, uns 5 minutos, e a 220, uns 2,5 minutos. Ele não sentiu lag na própria cápsula; a 220, sentiu uma diferença leve que não sabe explicar (F-091; F-092).
+
+**O revisor**, com o modelo Fable e contexto limpo, aprovou os critérios 9 a 13 com estas provas, que ele mesmo rodou:
+
+- `bash tools/gate.sh`: verde em 61 s, com 286 testes;
+- `bash tools/net_check.sh`: 26 de 26, em 32 s;
+- `bash tools/net_run.sh`: 1.852 e 1.846 ticks conferidos e 0 corrigidos, em 36 s.
+
+**Os achados e o que foi feito:**
+
+| Achado | O que foi feito |
+|---|---|
+| A história do erro de digitação da sonda (300 s em tela cheia) citava a F-056; ela está no registro do harness, 07/10/2026 | Quatro comentários corrigidos no `c9af37c`, dois deles herdados da parte 1 |
+| A frase do flush do log citava a F-073 §2; ela está no §1 | Um comentário e a mensagem do teste de configurações, no `c9af37c`. O texto do critério 9 segue com "F-073 §2" |
+| Os números v0 de engenharia não tinham casa nos docs | Uma tabela no `rede.md` §9, com os códigos de saída |
+| A sessão do simulador não estava numa DEC | DEC-0038, completando a DEC-0023 §7 (F-093) |
+| O `net_run.sh` ignora uma linha de erro do motor | Fica, descrito na DEC-0038 e no `rede.md` §10: só a linha exata que o simulador deixa em todo cliente |
+| Docs desatualizados | `rede.md`, `testes-e-entrega.md`, o glossário e o `mudancas.md`, com o ok do Arthur (F-093 §1) |
+
+**A conferência do fechamento:** o Arthur errou duas vezes a pergunta sobre o simulador (F-093). Uma nota da mesma sessão tinha dito que "o lag do simulador mora no servidor", e as duas respostas seguiram essa ideia. O Claude explicou uma vez com o autoload do `project.godot` e seguiu com as escolhas dele: os docs com a DEC-0038, o push, o PR e o merge com o CI verde.
+
+**O portão no fechamento:** verde em 64 s, depois das correções.
+
+**A acompanhar na parte 3:**
+
+- o corpo do lutador fica no mundo da física antes do primeiro tick dele;
+- o `play_online.sh` pode gravar os ticks da janela do jogador, para uma sensação virar número (F-091 §4);
+- na parte 2, o portão rodou entre 61 e 85 s, contra o limite de 90 s do pre-push.
 <!-- SECTION:NOTES:END -->
 
 ## Comments

@@ -96,3 +96,4 @@ O que chegou ao projeto e como chegou. Uma fonte não muda: só mudam `status`, 
 | [F-090](F-090-arthur-ve-duas-capsulas-em-rede.md) | 2026-10-17 | O Arthur vê pela primeira vez duas cápsulas em rede se mexendo em tempo real, gosta muito e da viseira no rosto, sem entender ainda para que ela serve |
 | [F-091](F-091-arthur-joga-em-rede-a-100-e-220.md) | 2026-10-18 | O Arthur joga a cápsula em rede a ping 100 e 220 pelo comando único e não sente lag; a 220, sente uma diferença leve que não sabe explicar |
 | [F-092](F-092-arthur-pede-uma-visao-do-codigo.md) | 2026-10-18 | O Arthur não sabe dizer se a diferença a 220 foi um tranco, pergunta qual é a próxima task e pede uma visão do código e do Godot |
+| [F-093](F-093-arthur-fecha-a-parte-2.md) | 2026-10-18 | O Arthur erra duas vezes a conferência do simulador de lag, aprova o pacote de docs da parte 2 com a DEC-0038 e manda subir, abrir o PR e fazer o merge com o CI verde |

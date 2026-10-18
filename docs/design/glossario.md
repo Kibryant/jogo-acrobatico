@@ -1,6 +1,6 @@
 ---
-revisado_em: 2026-10-17
-fontes: [F-001, F-002, F-005, F-007, F-012, F-013, F-020, F-021, F-025, F-026, F-028, F-030, F-032, F-038, F-039, F-044, F-045, F-046, F-050, F-051, F-052, F-053, F-056, F-058, F-066, F-068, F-069, F-070, F-073, F-078, F-079, F-081, F-083, F-085, F-086, F-087, F-088]
+revisado_em: 2026-10-18
+fontes: [F-001, F-002, F-005, F-007, F-012, F-013, F-020, F-021, F-025, F-026, F-028, F-030, F-032, F-038, F-039, F-044, F-045, F-046, F-050, F-051, F-052, F-053, F-056, F-058, F-066, F-068, F-069, F-070, F-073, F-078, F-079, F-081, F-083, F-085, F-086, F-087, F-088, F-090, F-091, F-093]
 ---
 
 # Glossário
@@ -50,7 +50,14 @@ A linguagem ubíqua do jogo (DEC-0004, regra 5): o mesmo termo na conversa, no d
 | Contorno D | No começo de cada rollback, um micro-movimento de sonda que alinha o "estava no chão" guardado pelo `move_and_slide()` com o `on_floor` do estado (DEC-0025). Se a sonda não acha o chão que o estado diz, o snap do motor completa: o snap de reserva (DEC-0037) | — | `apply_floor_snap()` |
 | Par offline | O modo em que o jogo é o próprio servidor, sem rede: o `OfflineMultiplayerPeer` do Godot. É o modo "Sozinho" da `Main` | — | `OfflineMultiplayerPeer` |
 | Servidor dedicado | O servidor sem tela e sem lutador próprio, que só simula e decide. Sobe com `--server` ou como build exportado para servidor (DEC-0026) | — | `--server`, `dedicated_server` |
+| Sala | As vagas de uma partida no servidor: 2 no esqueleto andante. A vaga escolhe o ponto de nascimento, e quem chega com a sala cheia é recusado (`rede.md` §9) | vagas | `Room` |
+| Arquivo de parada | O arquivo cujo aparecimento fecha o servidor limpo, com o código 0: o comando próprio de fechar do servidor (DEC-0032 §2). O servidor confere o caminho a cada segundo | — | `--stop-file`, `StopFile` |
+| Tick de nascimento | O primeiro tick em que um lutador existe para o netfox. O servidor o manda ao cliente, e os dois começam dali, do mesmo estado (`rede.md` §9) | tick | `spawn_tick` |
 | Ticks refeitos | Os ticks que o rollback simula de novo, por segundo. Crescem com o ping e com o quadrado do tickrate (F-026) | tick/s | `rollback_ticks` |
+| Ticks conferidos | Os ticks em que o estado que o cliente previu para o próprio lutador foi comparado com o que o servidor confirmou (`tools/net_run.sh`; `rede.md` §10) | ticks | `PredictionCheck` |
+| Ticks corrigidos | Os ticks conferidos em que o servidor discordou da previsão: a posição a mais de 1 mm, ou o `on_floor` ou o `mode` diferentes. Quando a correção é grande, o lutador pula para o lugar certo na tela | ticks | `PredictionCheck` |
+| Simulador de rede | A peça do netfox que atrasa os pacotes entre os jogos deste PC, para testar com ping sem um servidor longe. Vem em todo jogo como autoload e só liga numa sessão de teste, por um `override.cfg` temporário (DEC-0038) | ms | `NetworkSimulator` |
+| Bot de teste | O programa que joga um lutador no lugar do teclado e do mouse: corre de lado e pula a cada 2 s. Só produz input, como todo bot (DEC-0022) | — | `--bot`, `BotPlayer`, `BotRoute` |
 | Sonda | Código descartável, fora do repositório, feito para provar ou derrubar uma hipótese. O jogo não usa | — | — |
 | Simulação | O contexto que roda a cada tick: movimento e combate | — | `core/` |
 | Meta | O contexto que roda fora do tick: salas, contas e ranking | — | — |
@@ -97,10 +104,11 @@ A linguagem ubíqua do jogo (DEC-0004, regra 5): o mesmo termo na conversa, no d
 | Animação | A apresentação de uma manobra ou de um golpe, no nó. Mostra e nunca decide (DEC-0004) | — | `animation` |
 | Transição | Uma animação deslizando para a próxima sem encurtar nenhuma das duas (blend). É só visual | ms | `blend` |
 | Cápsula | O corpo de colisão do personagem: 1,8 m de altura e 0,35 m de raio no v0 | m | `capsule` |
+| Viseira | A faixa escura na frente da cápsula. Mostra para onde o lutador olha, e o corpo olha para onde a câmera olha (`movimento.md`, princípios; F-090) | — | nó `Visor` |
 | Pulo duplo | O segundo pulo no ar, um por voo, renovado no chão ou ao começar uma corrida na parede | m | `double_jump` |
 | Pulo da parede | O pulo que sai da corrida na parede, jogando o jogador para fora dela | m, m/s | `wall_jump` |
 | Controle no ar | Quanto o jogador muda a direção no ar, em % da aceleração do chão | % | `air_control` |
-| Coyote time | O tempo em que ainda dá para pular depois de sair da beirada | ms no design, ticks no código | `coyote_time` |
+| Coyote time | O tempo em que ainda dá para pular depois de sair da beirada. O nome vem do Coiote do Papa-Léguas, que corre para fora do penhasco e só cai quando olha para baixo | ms no design, ticks no código | `coyote_time` |
 | Pulo atrasado | O pulo de coyote dado no fim da janela. A corrida antes dele ganha distância, e ele sobe um degrau de 1 m a 4 m de distância que o pulo na beirada não alcança (`movimento.md`, métricas de nível; F-086) | ticks | — |
 | Snap do chão | O puxão do motor que, depois de mover, cola o corpo num chão que desce. Cobre a descida da rampa de 45° a 7 m/s: 0,121 m por tick a 60 | m | `floor_snap_length` |
 | Conservação de velocidade | A velocidade que passa de uma manobra para a outra | m/s | `momentum` |
@@ -143,7 +151,7 @@ A linguagem ubíqua do jogo (DEC-0004, regra 5): o mesmo termo na conversa, no d
 | Release | Uma versão publicada no GitHub, a partir de uma tag, com as builds e as notas (DEC-0028) | — | `v0.y.z` |
 | Versão | O número da build, em SemVer `0.y.z`: o `y` sobe a cada marco do roteiro, o `z` a cada build que sai (DEC-0028) | — | `application/config/version` |
 | Carimbo do commit | Os 7 primeiros caracteres do commit, escritos pelo CI na build: dizem exatamente qual código rodou (DEC-0028) | — | `application/config/commit` |
-| Aperto de mão | Na conexão, o cliente manda a versão e o commit, e o servidor recusa os diferentes (DEC-0028) | — | — |
+| Aperto de mão | Na conexão, o cliente manda a versão e o commit, e o servidor recusa os diferentes (DEC-0028). Roda na etapa de autenticação do Godot, e a recusa pede para atualizar o jogo ou diz que a sala está cheia (`rede.md` §9) | — | `Handshake` |
 | Branch da task | A linha de trabalho de uma task, do In Progress ao Done, que volta para a main num PR (DEC-0028) | — | `task-N-nome` |
 | PR | O pedido para juntar uma branch na main: o lugar onde o Arthur revisa o diff e joga a build (DEC-0028) | — | — |
 | Merge commit | O commit que junta a branch na main sem apagar os commits dela; desfazer a task inteira é um revert só (DEC-0028) | — | — |

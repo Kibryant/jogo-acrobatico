@@ -1,13 +1,16 @@
-# CI (DEC-0027): the same gate as pre-push, plus a secret scan over the whole history.
+# CI (DEC-0027): the same gate as pre-push, plus a secret scan over the whole history; and the
+# delivery jobs: the builds, the release and the server image (DEC-0028 §2; DEC-0032 §1).
 # Pinned tool versions match Arthur's machine: Godot 4.7.2, gdscript-formatter 0.27.0, gitleaks 8.30.1.
 # The runner image is pinned too (Q-15): moving to a new Ubuntu is a decision, not a surprise.
 # The token only reads (DEC-0033 §3): a fork's PR runs after Arthur approves it, never through
 # the privileged trigger that runs with this repository's token, and never on a self-hosted runner.
+# Only the release job, on a version tag, may write.
 name: ci
 
 on:
   push:
     branches: [main]
+    tags: ["v*.*.*"]
   pull_request:
 
 permissions:
@@ -18,6 +21,7 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  # The gate (DEC-0027): the pre-push's checks again, on a push to main, a PR or a version tag.
   gate:
     runs-on: ubuntu-24.04
     timeout-minutes: 15
@@ -56,3 +60,107 @@ jobs:
 
       - name: Gate (tools/gate.sh)
         run: bash tools/gate.sh
+
+  # The builds (DEC-0028 §2): on a PR, kept 3 days for Arthur to play before the merge; on a
+  # version tag, handed to the release job. A push to main keeps no build.
+  export:
+    if: github.event_name == 'pull_request' || startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    outputs:
+      artifact: ${{ steps.stamp.outputs.artifact }}
+    steps:
+      # The build comes from the commit its stamp names: on a PR, the branch's head, since
+      # github.sha is a temporary merge commit there (DEC-0028 §3). lfs: true for the import.
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          lfs: true
+
+      # The templates, 1.28 GB, come from the cache after the first run (F-045 §3; F-047 §1.4).
+      - uses: chickensoft-games/setup-godot@v2
+        with:
+          version: 4.7.2
+          use-dotnet: false
+          include-templates: true
+
+      - name: Stamp the commit (tools/stamp_build.sh)
+        id: stamp
+        run: |
+          commit="$(git rev-parse HEAD | cut -c 1-7)"
+          bash tools/stamp_build.sh "$commit"
+          echo "artifact=jogo-acrobatico-$commit" >>"$GITHUB_OUTPUT"
+
+      # Godot may crash on exit after an export that worked (#123712): the build files and the
+      # smoke test decide, not the exit code (DEC-0028, Consequences).
+      - name: Export both presets (tools/export_builds.sh)
+        run: bash tools/export_builds.sh
+
+      - name: Smoke test of the server build (tools/smoke_test_server.sh)
+        run: bash tools/smoke_test_server.sh
+
+      # The release script runs on every PR before the first tag; the notes may not exist yet.
+      - name: Release rehearsal (tools/release.sh --dry-run)
+        if: github.event_name == 'pull_request'
+        run: bash tools/release.sh --dry-run
+
+      # Both builds in one artifact: 3 days on a PR (DEC-0028 §2); 1 day on a tag, for the
+      # release job right after.
+      - uses: actions/upload-artifact@v7
+        with:
+          name: ${{ steps.stamp.outputs.artifact }}
+          path: |
+            build/windows/jogo-acrobatico.exe
+            build/linux/jogo-acrobatico-servidor.x86_64
+          if-no-files-found: error
+          retention-days: ${{ github.event_name == 'pull_request' && 3 || 1 }}
+
+  # The release (DEC-0028 §2 and §3; DEC-0033): a version tag becomes a public GitHub release with
+  # both builds and docs/releases/TAG.md as its notes. The only job that may write.
+  release:
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: [gate, export]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    permissions:
+      contents: write
+    steps:
+      # No import here, so no LFS download (DEC-0033 §3).
+      - uses: actions/checkout@v7
+        with:
+          lfs: false
+
+      - uses: actions/download-artifact@v8
+        with:
+          name: ${{ needs.export.outputs.artifact }}
+          path: build
+
+      - name: Publish the release (tools/release.sh)
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: bash tools/release.sh "$GITHUB_REF_NAME"
+
+  # The server image (DEC-0032 §1): on a push to main or a PR, outside the gate and the pre-push,
+  # the server's Docker image is built and run; a client of the same build joins it, one of another
+  # build is refused, and the stop file closes it. Main has no export job, so this job exports the
+  # server itself. The image is never kept or pushed.
+  server-image:
+    if: github.event_name == 'pull_request' || github.ref == 'refs/heads/main'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      # The same commit as the builds; lfs: true for the import.
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          lfs: true
+
+      - uses: chickensoft-games/setup-godot@v2
+        with:
+          version: 4.7.2
+          use-dotnet: false
+          include-templates: true
+
+      - name: Server image check (tools/server_image_check.sh)
+        run: bash tools/server_image_check.sh "$(git rev-parse HEAD | cut -c 1-7)"

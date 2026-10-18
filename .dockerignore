@@ -1,0 +1,4 @@
+# The server image's build context (Dockerfile): only the Linux server build goes to Docker, and
+# nothing else of the repository.
+*
+!build/linux/jogo-acrobatico-servidor.x86_64

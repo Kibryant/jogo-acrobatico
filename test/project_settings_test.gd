@@ -1,7 +1,8 @@
 # Guards the project settings decided in DEC-0002, DEC-0005, DEC-0022, DEC-0023, DEC-0024,
-# DEC-0026 (and the Main scene of TASK-9), DEC-0028 (the version), DEC-0030 (MSAA) and DEC-0031
-# (the interface base and the physical keys), and the log flush of TASK-9 (F-073 §2). A failure
-# here means project.godot changed: read the DEC before "fixing" the test.
+# DEC-0026 (and the Main scene of TASK-9), DEC-0028 (the version, and the commit stamped only at
+# export), DEC-0030 (MSAA) and DEC-0031 (the interface base and the physical keys), and the log
+# flush of TASK-9 (F-073 §2). A failure here means project.godot changed: read the DEC before
+# "fixing" the test.
 extends GdUnitTestSuite
 
 # DEC-0026 §6: the game opens on the Main, which picks the mode from the arguments.
@@ -209,6 +210,23 @@ func test_version_is_three_numbers_of_digits_only() -> void:
 	var message := 'version must be three numbers like "0.1.0", found "%s" (DEC-0028)' % version
 	var is_three_numbers := three_numbers.search(version) != null
 	assert_bool(is_three_numbers).override_failure_message(message).is_true()
+
+
+# DEC-0028 §3: the CI stamps the commit into application/config/commit right before an export
+# (tools/stamp_build.sh). The editor and the gate run without a stamp, so their empty commit
+# matches only another empty one (TASK-9, choice 10). tools/server_image_check.sh stamps
+# project.godot and restores it on exit; a run killed outright can leave the stamp behind.
+func test_the_project_carries_no_stamped_commit() -> void:
+	var stamped := ProjectSettings.has_setting(BuildStamp.COMMIT_SETTING)
+	var commit := str(ProjectSettings.get_setting(BuildStamp.COMMIT_SETTING, ""))
+	var message := (
+		(
+			'project.godot carries the stamp %s="%s", which only the CI writes, at export'
+			+ " (DEC-0028 §3): remove that line"
+		)
+		% [BuildStamp.COMMIT_SETTING, commit]
+	)
+	assert_bool(stamped).override_failure_message(message).is_false()
 
 
 # DEC-0031: the interface is drawn for 1920 x 1080 and stretched from there with canvas_items

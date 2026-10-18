@@ -5,6 +5,7 @@
 #   fighter of its own, which gives a fighter to each player the handshake accepts;
 # - --connect=host:port: a client, which plays its own fighter and mirrors the others; with --bot,
 #   the bot plays it (BotPlayer).
+# With a screen, --measure-fps=PATH measures the frame rate of Sozinho or of a client (FpsMeter).
 # The same Match, fighters and core run in all three; only the peer around them changes
 # (DEC-0026 §5; F-084 §3). When netfox's network simulator connects the game (SimulatorLink), the
 # Main adopts the simulator's peer instead of opening its own, and the rest stays the same.
@@ -56,6 +57,10 @@ const USAGE := """Usage, with the game's arguments after "--":
                            state of the fighters tick by tick, the server's last result of every
                            fighter or a client's first one of its own (tools/net_run.sh reads it).
   --half=left|right        with a screen: the window takes that half of the screen.
+  --measure-fps=PATH       with a screen, in Sozinho or with --connect: fullscreen, vsync off and
+                           no frame limit; once this game's fighter plays, 2 s of warm-up, then
+                           the frames are timed for 60 s, written to PATH as JSON, and the game
+                           quits with 0 (tools/measure_fps.sh).
 The build exported as a dedicated server runs the server and takes --port, --stop-file and
 --record. With netfox's network simulator on (netfox/autoconnect/enabled, from an override.cfg),
 the simulator connects the game and the address in the arguments must be its own."""
@@ -74,6 +79,8 @@ var _players: Array[int] = []
 var _client_phase := ClientPhase.CONNECTING
 # The record of --record; null without it, and once written.
 var _recorder: TickRecorder
+# The frame rate measurement of --measure-fps; null without it, and once the session ends.
+var _meter: FpsMeter
 
 
 func _ready() -> void:
@@ -95,6 +102,8 @@ func _ready() -> void:
 		GameText.install()
 	if not options.half.is_empty():
 		_place_window(options.half == "right")
+	if not options.measure_fps.is_empty():
+		_prepare_measurement()
 	if not options.record.is_empty():
 		_start_recording()
 	match options.mode:
@@ -120,6 +129,7 @@ func start_solo() -> void:
 	assert(started == OK, "netfox's clock did not start: %s" % error_string(started))
 	_start_match()
 	current_match.watch(current_match.spawn_fighter(0, multiplayer.get_unique_id()))
+	_measure_from_now()
 
 
 # The dedicated server (DEC-0026 §6): a match with the arena and no fighter until a player
@@ -212,6 +222,7 @@ func end_session() -> void:
 	_client_phase = ClientPhase.ENDED
 	NetworkTime.stop()
 	_save_record()
+	_stop_measuring()
 	var peer := multiplayer.multiplayer_peer
 	if peer != null and peer is not OfflineMultiplayerPeer:
 		peer.close()
@@ -306,15 +317,17 @@ func _on_connect_timeout() -> void:
 
 
 # The client's session is over and its message stays on screen. With a screen, the player reads
-# it and closes the window; without one, or when the bot plays and nobody sits at the window, the
-# game quits with exit_code. Deferred, because these calls come from inside SceneMultiplayer's
-# poll, which must end before the connection closes.
+# it and closes the window; without one, when the bot plays and nobody sits at the window, or when
+# the window measured its frame rate in fullscreen, the game quits with exit_code. Deferred,
+# because these calls come from inside SceneMultiplayer's poll, which must end before the
+# connection closes.
 func _end_client(key: StringName, exit_code: int) -> void:
 	if _client_phase == ClientPhase.ENDED:
 		return
 	_client_phase = ClientPhase.ENDED
 	_show(key)
-	if DisplayServer.get_name() == "headless" or options.bot:
+	var unattended := options.bot or not options.measure_fps.is_empty()
+	if DisplayServer.get_name() == "headless" or unattended:
 		_quit.call_deferred(exit_code)
 	else:
 		end_session.call_deferred()
@@ -352,6 +365,8 @@ func _add_fighter(slot: int, input_owner: int, node_name: String, first_tick: in
 	if mine and options.bot:
 		whose = " (mine, the bot plays it)"
 	_log("client: %s joined, seat %d, peer %d%s" % [node_name, slot, input_owner, whose])
+	if mine:
+		_measure_from_now()
 
 
 # The server tells a client that the fighter in slot left the match.
@@ -399,6 +414,59 @@ func _start_recording() -> void:
 func _forget(fighter: Fighter) -> void:
 	if _recorder != null and fighter != null:
 		_recorder.forget(fighter)
+
+
+# --measure-fps (TASK-9, criterion 17): the screen as the assets probe measured it (F-056 §5),
+# fullscreen with vsync off and no frame limit, and the meter, which begins once this game's own
+# fighter plays (_measure_from_now).
+func _prepare_measurement() -> void:
+	var window := get_window()
+	window.mode = Window.MODE_FULLSCREEN
+	DisplayServer.window_set_vsync_mode(DisplayServer.VSYNC_DISABLED, window.get_window_id())
+	Engine.max_fps = 0
+	_meter = FpsMeter.new(options.measure_fps)
+	_meter.finished.connect(_on_measured)
+	add_child(_meter)
+	_log(
+		"%s: measures the frame rate to %s once its fighter plays: %d s of warm-up, then %d s"
+		% [_role(), options.measure_fps, FpsMeter.WARMUP_S, FpsMeter.MEASURE_S],
+	)
+
+
+# This game's own fighter plays: the warm-up begins, and the meter looks for the match's fighters
+# in the camera's view.
+func _measure_from_now() -> void:
+	if _meter == null or _meter.phase != FpsMeter.Phase.IDLE:
+		return
+	_meter.watched_match = current_match
+	_meter.begin_at(Time.get_ticks_usec())
+	_log("%s: its fighter plays; the frames are timed after the warm-up" % _role())
+
+
+# The measurement is over: it is written, and the session ends cleanly with 0. A file that cannot
+# be written is an error in the log, as with --record.
+func _on_measured() -> void:
+	var error := _meter.save()
+	if error == OK:
+		_log("%s: %s; written to %s" % [_role(), _meter.stats.describe(), options.measure_fps])
+	else:
+		push_error(
+			"cannot write the measurement to %s: %s" % [options.measure_fps, error_string(error)],
+		)
+	_quit(OK)
+
+
+# The session ends: the meter stops, and a measurement it had not finished is not written.
+func _stop_measuring() -> void:
+	if _meter == null:
+		return
+	if _meter.phase != FpsMeter.Phase.DONE:
+		_log(
+			"%s: the session ended before the measurement did; nothing written to %s"
+			% [_role(), options.measure_fps],
+		)
+	_meter.queue_free()
+	_meter = null
 
 
 # The tick netfox starts the fighter's history on, here on the server.

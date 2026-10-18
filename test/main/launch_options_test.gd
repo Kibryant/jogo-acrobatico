@@ -144,6 +144,54 @@ func test_a_window_takes_the_half_of_the_screen_it_is_given() -> void:
 	assert_str(_parse(["--connect=127.0.0.1"], EDITOR_BUILD, WITH_SCREEN).half).is_empty()
 
 
+# TASK-9, criterion 17: --measure-fps measures the frame rate of a window, Sozinho or a client,
+# played by a person or by the bot.
+func test_a_window_measures_its_frame_rate_in_sozinho_or_as_a_client() -> void:
+	var cases: Array[Array] = [
+		[["--measure-fps=fps.json"], LaunchOptions.Mode.SOLO, "fps.json"],
+		[
+			["--connect=127.0.0.1", "--bot", "--measure-fps=C:/a b/fps.json"],
+			LaunchOptions.Mode.CLIENT,
+			"C:/a b/fps.json",
+		],
+		[
+			["--measure-fps=/tmp/fps.json", "--connect=127.0.0.1"],
+			LaunchOptions.Mode.CLIENT,
+			"/tmp/fps.json",
+		],
+	]
+	for case: Array in cases:
+		var arguments: Array = case[0]
+		var options := _parse(arguments, EDITOR_BUILD, WITH_SCREEN)
+		var message := "%s" % [arguments]
+		assert_array(options.errors).override_failure_message(message).is_empty()
+		assert_int(options.mode).override_failure_message(message).is_equal(case[1])
+		assert_str(options.measure_fps).override_failure_message(message).is_equal(case[2])
+	assert_str(_parse(["--connect=127.0.0.1"], EDITOR_BUILD, WITH_SCREEN).measure_fps).is_empty()
+
+
+# A measurement times the frames of a window that takes the whole screen: without a screen, on the
+# server or with --half, --measure-fps is refused with one message, and the game does not open.
+func test_the_frame_rate_is_measured_only_in_a_window_that_takes_the_whole_screen() -> void:
+	var cases: Array[Array] = [
+		[["--measure-fps=fps.json"], HEADLESS],
+		[["--connect=127.0.0.1", "--bot", "--measure-fps=fps.json"], HEADLESS],
+		[["--server", "--measure-fps=fps.json"], HEADLESS],
+		[["--connect=127.0.0.1", "--half=left", "--measure-fps=fps.json"], WITH_SCREEN],
+		[["--connect=127.0.0.1", "--measure-fps"], WITH_SCREEN],
+		[["--measure-fps="], WITH_SCREEN],
+	]
+	for case: Array in cases:
+		var arguments: Array = case[0]
+		var screen: bool = case[1]
+		var options := _parse(arguments, EDITOR_BUILD, screen)
+		var message := "%s, screen %s, must be refused with one message" % [arguments, screen]
+		assert_int(options.errors.size()).override_failure_message(message).is_equal(1)
+		assert_str(options.measure_fps).override_failure_message(message).is_empty()
+	assert_str(_parse(["--measure-fps=fps.json"]).errors[0]).contains("it needs a screen")
+	assert_bool(_refused(["--measure-fps=fps.json"], DEDICATED_BUILD)).is_true()
+
+
 # With netfox's network simulator on, the simulator connects the game to its own address and reads
 # no argument (network-simulator.gd): an address in the arguments that differs is refused, and so
 # is Sozinho, which has no network (TASK-9, round C2).

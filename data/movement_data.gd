@@ -5,6 +5,11 @@
 class_name MovementData
 extends Resource
 
+## The tickrates a time the rules divide by must hold at: 60, the game's (DEC-0024), and 30,
+## netfox's default (glossario.md, "Ticks por segundo"), the two of criterion 1 of TASK-9. Fewer
+## ticks per second never give more ticks for the same time, so 30 is the one that binds first.
+const CHECKED_TICKRATES: Array[int] = [30, 60]
+
 @export_group("Body")
 ## movimento.md, "O corpo".
 @export var capsule_height_m: float
@@ -42,11 +47,13 @@ extends Resource
 
 # The data check, layer 3 of DEC-0027 §2: one message per impossible number, empty when every
 # number can be. The gate runs it over every movement .tres under data/
-# (test/data/movement_data_test.gd).
+# (test/data/movement_data_test.gd), so a time that would break the rules fails before any build:
+# the assert of MovementConfig.create() is gone from a release build (TASK-9, part 3).
 func validate() -> PackedStringArray:
 	var checks: Array[String] = [
-		# The rules divide by these four: acceleration is speed / time, and the jump's gravities
-		# and exit speed come from the rise and fall times (movimento.md, the "Deriva" notes).
+		# The rules divide by these four, in ticks: acceleration is speed / time, and the jump's
+		# gravities and exit speed come from the rise and fall times (movimento.md, the "Deriva"
+		# notes). Each must be at least 1 tick at every checked tickrate.
 		_time_error("accel_time_ms", accel_time_ms, true),
 		_time_error("stop_time_ms", stop_time_ms, true),
 		_time_error("jump_rise_ms", jump_rise_ms, true),
@@ -71,12 +78,24 @@ func validate() -> PackedStringArray:
 	return errors
 
 
+# A negative time is wrong on its own, and only that is said of it. A time the rules divide by is
+# also wrong when it rounds to 0 ticks, the nearest tick with ties up (Ticks.from_ms), at any of
+# CHECKED_TICKRATES: the message names the rates where it does, 30 alone for 9 to 16 ms.
 static func _time_error(field: String, ms: int, divides: bool) -> String:
 	if ms < 0:
 		return "%s is %d ms: a time cannot be negative" % [field, ms]
-	if ms == 0 and divides:
-		return "%s is 0 ms: the rules divide by it" % field
-	return ""
+	if not divides:
+		return ""
+	var zero_at: Array[String] = []
+	for tickrate: int in CHECKED_TICKRATES:
+		if Ticks.from_ms(ms, tickrate) < 1:
+			zero_at.append(str(tickrate))
+	if zero_at.is_empty():
+		return ""
+	return (
+		"%s is %d ms: it rounds to 0 ticks at %s ticks per second, and the rules divide by it"
+		% [field, ms, " and ".join(zero_at)]
+	)
 
 
 func _slope_error() -> String:

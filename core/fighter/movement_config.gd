@@ -57,6 +57,10 @@ static func create(data: MovementData, tickrate: int) -> MovementConfig:
 	config.capsule_height = data.capsule_height_m
 	config.capsule_radius = data.capsule_radius_m
 
+	# The data check, MovementData.validate(), rejects a time that rounds to 0 ticks at 30 or at 60
+	# ticks, and the gate runs it over every movement .tres under data/, before any build. This
+	# assert, gone from a release build, only guards a debug run: data that skipped the check, or
+	# another tickrate.
 	for ticks: int in [config.accel_ticks, config.stop_ticks, config.rise_ticks, config.fall_ticks]:
 		assert(ticks > 0, "a time the rules divide by became 0 ticks at %d ticks" % tickrate)
 	config.ground_accel_per_tick = config.run_speed / config.accel_ticks

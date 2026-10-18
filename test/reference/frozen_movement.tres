@@ -1,0 +1,25 @@
+[gd_resource type="Resource" script_class="MovementData" format=3 uid="uid://7vli7dipttql"]
+
+; The reference's own copy of the movement numbers, frozen (TASK-9, criterion 16; F-044 §2): the
+; numbers of data/movement_v0.tres on 2026-10-18, which the reference never reads. Tuning the game
+; changes movement_v0.tres and leaves the reference alone; only a code change moves its path.
+; Change a number here only together with the code that needs it, and record the trace again
+; (bash tools/record_reference.sh), saying why in the commit message.
+
+[ext_resource type="Script" path="res://data/movement_data.gd" id="1_yx5js"]
+
+[resource]
+script = ExtResource("1_yx5js")
+capsule_height_m = 1.8
+capsule_radius_m = 0.35
+max_slope_deg = 45.0
+run_speed_mps = 7.0
+accel_time_ms = 150
+stop_time_ms = 100
+jump_height_m = 1.2
+jump_rise_ms = 350
+jump_fall_ms = 280
+air_control_pct = 25.0
+max_fall_speed_mps = 30.0
+coyote_ms = 100
+buffer_ms = 150

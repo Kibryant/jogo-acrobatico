@@ -25,8 +25,8 @@ const MAX_PLAYERS := 2
 const CONNECT_TIMEOUT_S := 5.0
 # The exit codes. 0 is the clean end: the window closed, the stop file, or the server closing the
 # session of a client without a screen. The others are Claude's v0, one per way a launch fails.
-## An argument this build does not know: a typo once left a fullscreen probe open for 300 s
-## (F-056).
+## An argument this build does not know: a typo once left a fullscreen probe open for up to
+## 300 s (.claude/harness/registro.md, 2026-10-07).
 const EXIT_USAGE := 2
 ## A client without a screen found no server that answered in time.
 const EXIT_SERVER_NOT_RESPONDING := 3
@@ -123,7 +123,7 @@ func start_solo() -> void:
 
 
 # The dedicated server (DEC-0026 §6): a match with the arena and no fighter until a player
-# joins. Its log says each key event at once (application/run/flush_stdout_on_print; F-073 §2).
+# joins. Its log says each key event at once (application/run/flush_stdout_on_print; F-073 §1).
 func start_server() -> void:
 	var build := BuildStamp.current()
 	_log("server: %s" % build.describe())

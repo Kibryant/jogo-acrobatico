@@ -10,7 +10,7 @@
 # When netfox's network simulator connects the game (SimulatorLink), the address is its own: an
 # address in the arguments that differs is refused, and so is Sozinho, which has no network.
 # An argument this build does not know, or one that does not fit the mode, is an error: a typo
-# once left a fullscreen probe open for 300 s (F-056).
+# once left a fullscreen probe open for up to 300 s (.claude/harness/registro.md, 2026-10-07).
 class_name LaunchOptions
 extends RefCounted
 

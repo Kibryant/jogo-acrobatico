@@ -1,8 +1,9 @@
 # Criterion 6 of TASK-9 and DEC-0026 §6: the Main reads how the game was opened. With no argument
 # it plays Sozinho: netfox's clock starts on Godot's offline peer, then a match with this PC's
-# fighter and its camera. An argument it does not know is refused (F-056). Ending the session
-# stops the clock before the match goes, the clean exit the probe lacked (F-026 §4). The server
-# and client modes need two processes; tools/net_check.sh runs them (TASK-9, part 2).
+# fighter and its camera. An argument it does not know is refused (.claude/harness/registro.md,
+# 2026-10-07). Ending the session stops the clock before the match goes, the clean exit the probe
+# lacked (F-026 §4). The server and client modes need two processes; tools/net_check.sh runs them
+# (TASK-9, part 2).
 extends GdUnitTestSuite
 
 const NetfoxTicks := preload("res://test/support/netfox_ticks.gd")

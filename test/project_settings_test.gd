@@ -258,7 +258,7 @@ func test_the_game_opens_on_the_main_scene() -> void:
 # the server's log says each event at once.
 func test_the_log_is_written_out_at_every_print() -> void:
 	var flush: bool = ProjectSettings.get_setting("application/run/flush_stdout_on_print", false)
-	var message := "application/run/flush_stdout_on_print must stay on (F-073 §2)"
+	var message := "application/run/flush_stdout_on_print must stay on (F-073 §1)"
 	assert_bool(flush).override_failure_message(message).is_true()
 
 

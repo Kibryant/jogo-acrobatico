@@ -176,7 +176,8 @@ func test_with_netfox_simulator_on_the_address_must_be_its_own() -> void:
 	assert_int(on_its_default.errors.size()).is_equal(1)
 
 
-# F-056: a typo once left a fullscreen probe open for 300 s.
+# A typo once left a fullscreen probe open for up to 300 s (.claude/harness/registro.md,
+# 2026-10-07).
 func test_every_unknown_argument_is_an_error() -> void:
 	var arguments: Array[String] = ["--servr", "server", "-server", "--bots", "--port7777"]
 	var options := _parse(arguments)

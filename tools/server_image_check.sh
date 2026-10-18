@@ -207,7 +207,9 @@ check_server_log "$logs/server.log" "$version" "$commit"
 check_log "$logs/server.log" "joined the match as Fighter0" "the server gives the client a fighter"
 check_log "$logs/server.log" "handshake refused: update required" \
 	"the server refuses the other build"
-check_clean_logs "$logs/server.log" "$logs/first.log" "$logs/second.log"
+# The server sent RPCs to its client, so the known engine error of its release build is set
+# aside here, and only here (tools/build_lib.sh, known_engine_error; F-097).
+check_clean_logs --set-aside-known "$logs/server.log" "$logs/first.log" "$logs/second.log"
 
 report
 if [ "$failures" -gt 0 ]; then

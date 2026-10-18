@@ -129,21 +129,33 @@ check_server_log() {
 	check_log "$log" "server: exiting with 0" "it says it exits with 0"
 }
 
-# The one engine error a release server build may print, set aside by check_clean_logs. When a
-# server that sent RPCs closes its connection, Godot's multiplayer path cache disconnects each
-# node's tree_exited with the unbound callable it had connected bound and one-shot; the 4.7.2
-# release template on Linux misses the match and prints this line for each node, while the editor,
-# the debug template and the Windows release build stay silent (Godot #123751, closed as not
-# planned). It changes nothing: the server still exits with 0 and its clients hear the goodbye.
-# Arthur chose to set aside only this exact line (F-097); any other error still fails.
+# The one engine error a release server build prints after its clients used RPCs, set aside only
+# by the server image check (check_clean_logs --set-aside-known). When such a server closes its
+# connection, Godot's multiplayer path cache disconnects each node's tree_exited with the unbound
+# callable it had connected bound and one-shot; the 4.7.2 release template on Linux misses the
+# match and prints this line for each node, while the editor, the debug template and the Windows
+# release build stay silent (Godot #123751, closed as not planned). It changes nothing: the server
+# still exits with 0 and its clients hear the goodbye. Arthur chose to set aside only this exact
+# line, in the server image job (F-097); any other error still fails. The smoke test of the export
+# job keeps it: no client joins there, so the line would be another bug.
 known_engine_error="^ERROR: Attempt to disconnect a nonexistent connection from '[^']*'[.] Signal: 'tree_exited', callable: ''[.]\$"
 
-# check_clean_logs LOG...: fails when the logs hold an engine error (log_errors of
-# tools/net_lib.sh) other than known_engine_error, which it counts, and notes their warnings.
+# check_clean_logs [--set-aside-known] LOG...: fails when the logs hold an engine error
+# (log_errors of tools/net_lib.sh) and notes their warnings. With --set-aside-known, the lines of
+# known_engine_error are counted in the report instead of failing.
 check_clean_logs() {
-	local errors known warnings
-	errors="$(log_errors "$@" | grep -vE "$known_engine_error" || true)"
-	known="$(log_errors "$@" | grep -cE "$known_engine_error" || true)"
+	local set_aside=false
+	if [ "${1:-}" = "--set-aside-known" ]; then
+		set_aside=true
+		shift
+	fi
+	local errors known=0 warnings
+	if $set_aside; then
+		errors="$(log_errors "$@" | grep -vE "$known_engine_error" || true)"
+		known="$(log_errors "$@" | grep -cE "$known_engine_error" || true)"
+	else
+		errors="$(log_errors "$@")"
+	fi
 	warnings="$(log_warnings "$@")"
 	if [ -n "$errors" ]; then
 		fail "the logs hold errors:"

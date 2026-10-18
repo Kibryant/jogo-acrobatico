@@ -1,0 +1,28 @@
+# The on-screen texts in Brazilian Portuguese (DEC-0031 §8), one message per key of
+# ui/game_text.gd. The keys and the comments stay in English; the messages are what players read.
+msgid ""
+msgstr ""
+"Language: pt_BR\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+# A client opened with --connect, waiting for the server to accept it.
+msgid "NET_CONNECTING"
+msgstr "Conectando ao servidor…"
+
+# The server already seats its players (TASK-9, choice 4).
+msgid "NET_ROOM_FULL"
+msgstr "A sala está cheia. Tente de novo mais tarde."
+
+# The server runs another version or commit of the game (TASK-9, choice 10).
+msgid "NET_UPDATE_REQUIRED"
+msgstr "O servidor roda outra versão do jogo. Atualize o jogo para entrar."
+
+# No answer from the server in time.
+msgid "NET_SERVER_NOT_RESPONDING"
+msgstr "O servidor não respondeu. Confira o endereço e se ele está no ar."
+
+# The server ended the session: its stop file, or the connection dropped.
+msgid "NET_SERVER_CLOSED"
+msgstr "O servidor fechou a partida."

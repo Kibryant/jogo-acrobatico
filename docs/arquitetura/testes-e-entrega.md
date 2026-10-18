@@ -1,14 +1,14 @@
 ---
-revisado_em: 2026-10-17
-fontes: [F-007, F-009, F-010, F-021, F-038, F-039, F-040, F-041, F-042, F-043, F-044, F-045, F-046, F-047, F-048, F-049, F-085, F-087, F-088]
+revisado_em: 2026-10-18
+fontes: [F-007, F-009, F-010, F-021, F-038, F-039, F-040, F-041, F-042, F-043, F-044, F-045, F-046, F-047, F-048, F-049, F-085, F-087, F-088, F-091, F-093]
 ---
 
 # Testes e entrega
 
-Estado atual: o Desenho 4 (TASK-6) fechado, com as DEC-0027 e DEC-0028. A parte 1 do esqueleto andante (TASK-9) trouxe o primeiro código de jogo.
+Estado atual: o Desenho 4 (TASK-6) fechado, com as DEC-0027 e DEC-0028. A parte 1 do esqueleto andante (TASK-9) trouxe o primeiro código de jogo; a parte 2, a rede e os scripts que a provam com processos de verdade.
 
 - O portão, os canários e os hooks do Claude Code já rodam.
-- A especificação, a checagem dos dados e a SyncTest nasceram na parte 1 da TASK-9. O aperto de mão vem na parte 2; a referência e o job de build, na parte 3.
+- A especificação, a checagem dos dados e a SyncTest nasceram na parte 1 da TASK-9, e o aperto de mão, na parte 2. A referência e o job de build vêm na parte 3.
 - O gravador do replay nasce na fase 1 (TASK-10).
 - A versão visual e interativa deste documento é a vitrine [A esteira por dentro](https://claude.ai/artifact/L9FpEtDFoyGJYWLSR6TFA1), privada (DEC-0019).
 
@@ -23,7 +23,7 @@ O caminho de uma mudança até o jogo na mão de quem joga, com uma checagem em 
 | `git push` | O pre-push: o portão inteiro (§2) | 31 s, de um teto de 90 (F-049 §5) |
 | O CI no GitHub | O gitleaks no histórico e o mesmo portão; no PR e na tag, as duas builds | 21 a 29 s só com o portão, antes da rodada 1 (F-038, contexto); o job de export, de 57 a 83 s (F-045 §3) |
 | A build | O cliente Windows e o servidor Linux (§6) | Nasce na TASK-9 |
-| Quem joga | A versão certa, conferida na conexão (§7) | Nasce na TASK-9 |
+| Quem joga | A versão certa, conferida na conexão (§7) | Desde a parte 2 da TASK-9 (`rede.md` §9) |
 
 ## 2. O portão (DEC-0027 §1)
 
@@ -55,7 +55,8 @@ Os tempos são os da rodada B depois dos consertos (F-049 §5). O total foi 31,3
 | 2. A SyncTest | Estado escondido: refazer um tick dá outro resultado (DEC-0025) | portão | TASK-9, com os ticks à mão | pelo relógio, ~6 s por cenário de 5 s (F-042 §1); à mão, as quatro cenas em uns 2,5 s (F-087 §1) |
 | 3. A checagem dos dados | Um número impossível num `.tres` | portão | com o primeiro `.tres` de design (F-048) | sem medida |
 | 4. O replay como referência | Uma mudança de código que muda o movimento sem querer; o snapshot do Jest | portão e CI | TASK-9 | 1.200 ticks em 11 a 13 ms (F-042 §3) |
-| 5. A rede à mão | A sensação com lag | o Arthur | TASK-9, e de tempos em tempos (DEC-0026) | o tempo dele, e o que ele sentiu (F-041) |
+| 5. A rede à mão | A sensação com lag | o Arthur, pelo `tools/play_online.sh` | TASK-9, parte 2 (F-091), e de tempos em tempos (DEC-0026) | o tempo dele, e o que ele sentiu (F-041) |
+| As checagens com processos | O servidor e os clientes de verdade: as portas, o aperto de mão, a sala, o arquivo de parada, os códigos de saída e a previsão conferida com o servidor | à mão, fora do portão: `tools/net_check.sh` e `tools/net_run.sh` | TASK-9, parte 2 | 32 s e 36 s na revisão da parte 2 |
 | A guarda das configurações | Uma configuração decidida que voltou atrás | portão | desde o Desenho 2 | dentro dos testes |
 | Compilar tudo e os canários | §2 | portão | rodada 1 (F-039) | ~4 s e menos de 1 s (F-049 §5) |
 | O teste de fumaça da build | O servidor exportado não sobe, ou não fecha com código 0 | CI | TASK-9, com a Main (F-048) | sem medida; na sonda, ele subiu e fechou com código 0 (F-045 §3) |
@@ -179,12 +180,10 @@ O plano Free não impõe nada disso: o pre-push continua sendo a trava, e o CI n
 
 ## 11. O que fica para depois
 
-- **TASK-9, o esqueleto andante:**
-  - a especificação, a SyncTest à mão, a checagem dos dados e a referência;
-  - o job de build no PR e na tag, e o teste de fumaça;
-  - o 0.1.0 com a tag `v0.1.0`, e o aperto de mão na Main.
-
-  O critério 3 dela é refeito quando ela ficar Ready.
+- **TASK-9, parte 3:**
+  - a referência;
+  - o job de build no PR e na tag, e o teste de fumaça da imagem do servidor;
+  - o 0.1.0 com a tag `v0.1.0`.
 - **TASK-10, a fase 1:** o gravador do replay.
 - **Q-20:** a assinatura do `.exe`, antes de alguém de fora testar.
 - **Canários** para o formato, o lint, as travas, o import e o log limpo, se um furo aparecer ali.
@@ -197,5 +196,11 @@ O inventário que o `AGENTS.md` resumia (veio para cá no fechamento do Desenho 
 - Windows 11 com o Git Bash; os scripts são bash.
 - No PATH (`~/.local/bin`): `godot` (o console do 4.7.2), `backlog`, `gdscript-formatter` 0.27.0, `lefthook`, `gitleaks` e `gh`; o `git-lfs` vem com o Git.
 - O clumsy 0.3 (`~/.local/opt/clumsy-0.3`, como administrador) simula lag para 4 clientes ou mais (F-023 §2).
+- Os scripts de rede, fora do portão (TASK-9, parte 2):
+  - `tools/net_check.sh`: 26 checagens com processos de verdade;
+  - `tools/net_run.sh [ping]`: a corrida de 30 s;
+  - `tools/play_online.sh [ping]`: o teste à mão.
+
+  Os dois últimos ligam o simulador do netfox por um `override.cfg` temporário, e o portão recusa rodar com ele na raiz (DEC-0038; `rede.md` §10).
 - O `node` 24 e o `python` 3.14 servem scripts de apoio e os hooks, nunca o portão (F-016 §2); `python`, nunca `python3`, que aqui é um atalho da Store.
 - As sondas ficam fora do repositório, em pastas ao lado dele (`../netfox-sonda`, `../assets-sonda`, `../git-sonda`).

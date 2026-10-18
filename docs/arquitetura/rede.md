@@ -1,13 +1,13 @@
 ---
-revisado_em: 2026-10-17
-fontes: [F-001, F-005, F-007, F-023, F-024, F-025, F-026, F-027, F-028, F-029, F-030, F-032, F-033, F-034, F-036, F-042, F-044, F-046, F-084, F-085, F-087, F-088]
+revisado_em: 2026-10-18
+fontes: [F-001, F-005, F-007, F-023, F-024, F-025, F-026, F-027, F-028, F-029, F-030, F-032, F-033, F-034, F-036, F-042, F-044, F-046, F-073, F-084, F-085, F-087, F-088, F-089, F-091, F-092, F-093]
 ---
 
 # Rede
 
-Estado atual: o Desenho 3 (TASK-5) fechado, com as DEC-0023 a DEC-0026 e a DEC-0037. A parte 1 do esqueleto andante (TASK-9) pôs o lutador no tick do netfox, no modo Sozinho, com a SyncTest no portão.
+Estado atual: o Desenho 3 (TASK-5) fechado, com as DEC-0023 a DEC-0026, a DEC-0037 e a DEC-0038. A parte 1 do esqueleto andante (TASK-9) pôs o lutador no tick do netfox, no modo Sozinho, com a SyncTest no portão. A parte 2 pôs a rede de verdade: o servidor dedicado e os clientes da `Main` (§9), e a corrida de 30 s a ping 100 sem nenhum tick corrigido (§10).
 
-- A rede de verdade entra na parte 2 do esqueleto andante (TASK-9).
+- A parte 3 do esqueleto andante leva o servidor para a build e para o contêiner do CI (TASK-9; DEC-0032 §1).
 - A compensação e a detecção do golpe nascem com a espada: local na fase 2, em rede na fase 3 (F-023 §3).
 - A versão visual e interativa deste documento é a vitrine [A rede por dentro](https://claude.ai/artifact/Sb4Q5e4M16UymdoaR9UAzp), privada (DEC-0019), na versão 9.
 
@@ -271,30 +271,68 @@ O modelo bate com o que o Arthur fez a 60 ticks: 72 % sem lag e 13 % com ping 10
 
 - **O movimento da fase 1 nasce no tick do netfox.** É jogado no modo "Sozinho" da `Main`, o par offline do Godot: o PC do jogador é o servidor dele mesmo, sem rede, sem rollback e sem o custo de refazer. A sonda rodou assim (F-025 §1).
 - **A SyncTest no CI** cobre cada manobra nova, parede, gancho e dash, no dia em que ela nasce. É o jeito de achar estado escondido enquanto ele ainda é pequeno: o Mortal Kombat precisou mexer fundo na engine porque adaptou o rollback depois (F-007 §2).
-- **De tempos em tempos,** o mesmo movimento roda com 2 clientes e o simulador do netfox, para ver a correção com lag.
+- **De tempos em tempos,** o mesmo movimento roda com 2 clientes e o simulador do netfox, para ver a correção com lag. É o `tools/net_run.sh` (§10).
 
 ## 9. A Main (DEC-0026 §6)
 
-A cena de entrada olha como o jogo foi aberto, como um `main.ts` que lê o `process.argv`:
+A cena de entrada olha como o jogo foi aberto, como um `main.ts` que lê o `process.argv` (`main/main.gd`; os argumentos, em `main/launch_options.gd`):
 
 | Como abre | Papel |
 |---|---|
-| `godot --headless -- --server --port=9999`, ou o build exportado como servidor dedicado, que liga a feature `dedicated_server` e força o modo sem tela ([guia do Godot](https://docs.godotengine.org/en/stable/tutorials/export/exporting_for_dedicated_servers.html)) | **Servidor dedicado:** sem tela e sem lutador próprio; cria um lutador para cada cliente que entra |
-| `godot -- --connect=127.0.0.1:9999` | **Cliente** |
+| `godot --headless -- --server`, na porta 7777/udp, ou noutra com `--port=N`; ou o build exportado como servidor dedicado, que liga a feature `dedicated_server` e força o modo sem tela ([guia do Godot](https://docs.godotengine.org/en/stable/tutorials/export/exporting_for_dedicated_servers.html)) | **Servidor dedicado:** sem tela e sem lutador próprio; cria um lutador para cada cliente que entra |
+| `godot -- --connect=127.0.0.1`, na porta 7777, ou `--connect=host:porta` | **Cliente** |
 | `godot`, sem argumento | **Sozinho:** o par offline |
 
-- **Depois:**
-  - ela inicia o relógio do netfox; no cliente, o `NetworkTime.start()` sincroniza com o servidor antes de começar os ticks (guia `network-time.md`);
-  - ela cria a `Match` com a configuração, passada na mão (DEC-0022).
+- **Argumento desconhecido, repetido ou fora do modo é erro:** o jogo mostra o uso e sai com o código 2. Um erro de digitação já deixou uma sonda em tela cheia aberta por até 300 s (`.claude/harness/registro.md`, 07/10/2026). O servidor sem o `--headless` também é recusado.
+- **O relógio do netfox:**
+  - no Sozinho, a `Main` o inicia (`NetworkTime.start()`) e só depois cria a `Match`, com a configuração passada na mão (DEC-0022);
+  - no servidor e no cliente, quem inicia e para o relógio é o `NetworkEvents` do netfox, quando a conexão abre e fecha (`addons/netfox/network-events.gd`). A `Main` só espera por ele;
+  - o cliente sincroniza com o servidor antes de começar os ticks (guia `network-time.md`), e o servidor só responde ao aperto de mão com o relógio rodando;
+  - chamar o `start()` também no servidor e no cliente faz o netfox avisar de início dobrado. O teste de configurações guarda o `netfox/events/enabled` ligado.
+- **O aperto de mão** (`net/handshake.gd`, `net/handshake_server.gd` e `net/handshake_client.gd`):
+  - roda na etapa de autenticação do Godot (`SceneMultiplayer.auth_callback`). Antes de ser aceito, o cliente não aparece para o netfox nem para RPC;
+  - o cliente manda a versão e o commit da build, e o servidor confere os dois, exatos. No rollback, os dois lados precisam rodar a mesma regra (F-046 §2; DEC-0028 §3);
+  - a resposta é "aceito", "atualize o jogo" ou "sala cheia". A outra build é recusada antes de o servidor olhar a sala, porque o que ajuda é o pedido para atualizar;
+  - a recusa sai com o `peer_disconnect_later()`, que entrega a resposta antes de desligar. O `disconnect_peer()` descartaria a resposta.
+- **A sala:** 2 vagas, primeiro a mais baixa livre (`net/room.gd`). A vaga escolhe o ponto de nascimento na arena. O terceiro jogador ouve "sala cheia".
+- **O nascimento do lutador:**
+  - o servidor cria o lutador quando o relógio do cliente sincroniza, e conta aos dois clientes, por RPC (`_add_fighter`), o primeiro tick dele no servidor;
+  - o lutador só existe a partir desse tick, pelos `_rollback_spawn` e `_rollback_despawn` do netfox (`rollback-liveness-server.gd`). Assim, o cliente e o servidor começam do mesmo estado, no mesmo tick;
+  - sem isso, o cliente previa o próprio lutador um tick antes do servidor, porque, logo depois de sincronizar, o relógio dele fica atrás do servidor mais ou menos a ida de um pacote. O estado de nascimento do servidor apagava a previsão no meio do pulo. A corrida de 30 s achou 13 ticks corrigidos assim (TASK-9, rodada C2);
+  - o servidor só manda o estado de um lutador a quem já sabe dele, pelo filtro de visibilidade do `RollbackSynchronizer` (`send_state_to`).
+- **Os textos na tela** usam chave de tradução, em pt-BR e en, carregadas na hora (DEC-0031): conectando, sala cheia, atualize o jogo, o servidor não respondeu e o servidor fechou a partida.
 - **Fechar limpo:**
   - parar o relógio (`NetworkTime.stop()`, que também limpa o histórico);
   - fechar a conexão;
   - soltar a partida;
   - só então sair.
-- A sonda caía com falha de segmentação ao fechar (F-026 §4); o esqueleto andante confere que o servidor sai com código 0.
-- **O aperto de mão:** ao conectar, o cliente manda a versão e o commit da build, e o servidor recusa os diferentes, pedindo para atualizar. No rollback, os dois precisam rodar a mesma regra (F-046 §2; DEC-0028 §3).
-- **Zero autoloads nossos** (DEC-0022): a `Main` é a cena principal. O `netfox/autoconnect/enabled` fica desligado, porque quem conecta é a `Main` (DEC-0023).
+- **O arquivo de parada:** o servidor sobe com `--stop-file=CAMINHO` e confere o caminho a cada segundo. Quando o arquivo aparece, ele fecha limpo e sai com o código 0, com ou sem clientes, e os clientes mostram que o servidor fechou (DEC-0032 §2). Fechar a janela do cliente também fecha limpo, com o código 0.
+- A sonda caía com falha de segmentação ao fechar (F-026 §4). O `tools/net_check.sh` confere, com processos de verdade, que o servidor e os clientes saem com o código certo.
+- **O log do servidor sai na hora:** o `application/run/flush_stdout_on_print` fica ligado, guardado pelo teste de configurações. Sem ele, a build release só descarrega o log quando o buffer enche, e o da sonda saiu 26 s atrasado (F-073 §1).
+- **Zero autoloads nossos** (DEC-0022): a `Main` é a cena principal. O `netfox/autoconnect/enabled` fica desligado, porque quem conecta é a `Main` (DEC-0023). A exceção é a sessão de teste com lag, por um `override.cfg` temporário (DEC-0038; §10).
 - A porta e o endereço vêm dos argumentos. A hospedagem é do Desenho 6 (TASK-8).
+
+**Os códigos de saída**, números v0 do Claude, um por jeito de uma abertura falhar:
+
+| Código | Quando |
+|---|---|
+| 0 | O fim limpo: a janela fechada, o arquivo de parada, ou o servidor fechando a sessão de um cliente sem tela |
+| 2 | Argumento desconhecido, repetido ou fora do modo |
+| 3 | O cliente sem tela não achou servidor que respondesse a tempo |
+| 4 | O cliente sem tela foi recusado: é outra build |
+| 5 | O cliente sem tela foi recusado: a sala estava cheia |
+| 6 | O servidor não conseguiu abrir a porta, em geral porque outro programa a usa |
+
+**Os números v0 de engenharia da parte 2.** Não são números de design (DEC-0017): são do Claude, e cada um tem um porquê.
+
+| Número | Valor | Por quê |
+|---|---|---|
+| Espera do cliente pela resposta do servidor | 5 s | Passado esse tempo, o cliente mostra que o servidor não respondeu (`CONNECT_TIMEOUT_S`) |
+| Tamanho do "olá" do aperto de mão | até 256 bytes | A versão e o commit cabem com folga. Um "olá" maior não é dos nossos, e o servidor responde "atualize o jogo" (`HELLO_LIMIT`) |
+| Espera pela conexão do simulador | até 10 frames | O simulador conecta um frame depois de começar (DEC-0038) |
+| Folga do servidor ao sair, com o simulador | a latência mais 100 ms | O proxy segura cada pacote pela latência, e o adeus precisa passar (DEC-0038) |
+| Frames por segundo dos jogos sem tela, nos scripts | até 144 | Três jogos dividem os 4 núcleos, como nas corridas da sonda; os ticks seguem 60 |
+| Mínimo de uma corrida de 30 s | 25 s de ticks conferidos por cliente | Uma corrida que conferiu menos não prova o critério 12 |
 
 ## 10. As medições (TASK-5, critério 5)
 
@@ -359,6 +397,35 @@ A cena de entrada olha como o jogo foi aberto, como um `main.ts` que lê o `proc
 - Clientes sem tela: o `TickInterpolator` fica desligado sem tela e, com tela, soma até 1 tick ao atraso que a pessoa vê (F-026 §4).
 - Os processos da sonda caíam ao fechar, depois de gravar os logs (F-026 §4).
 
+### A sessão com o simulador (DEC-0038)
+
+- O simulador do netfox só aplica a latência quando ele mesmo conecta o jogo, numa build do editor e com o `autoconnect` ligado (`addons/netfox.extras/network-simulator.gd`, `_ready`).
+  - O primeiro jogo que abre hospeda na porta 7777, com o proxy de UDP na 7778, dentro do processo dele. Os outros entram pelo proxy.
+  - A latência vale em cada sentido: ping 100 são 50 ms na ida e 50 na volta.
+- Os scripts `tools/net_run.sh` e `tools/play_online.sh` ligam o simulador por um `override.cfg` temporário, só para os jogos da sessão, e a `Main` usa a conexão que ele abriu. O portão e o `tools/net_check.sh` recusam rodar com o arquivo na raiz.
+- Todo cliente loga `ERROR: Couldn't create an ENet host.`, porque o simulador tenta hospedar antes de entrar e a porta já é do servidor. O `net_run.sh` ignora só essa linha, pelo texto exato.
+- O servidor espera a latência mais 100 ms antes de sair, para o adeus passar pelo proxy. Sem isso, os clientes ficavam esperando a conexão cair.
+- O relógio de cada cliente fica acertado uma ida e volta depois do pedido do servidor: 7 ticks a ping 100 e 14 a ping 220 (F-091 §3).
+
+### A corrida de 30 s (TASK-9, critério 12)
+
+O `tools/net_run.sh [ping]` roda um servidor sem tela e dois clientes sem tela com o bot, por 30 s, a ping 100.
+
+- O bot corre de lado, 2 s para cada lado, e pula no primeiro tick de cada trecho. Ele só produz input (DEC-0022).
+- Cada cliente grava o que previu para o próprio lutador, tick a tick: o primeiro resultado de cada tick. O servidor grava o que confirmou: o último.
+- O `tools/net_run_check.gd` junta os registros e confere cada tick com a tolerância da SyncTest: a posição a até 1 mm, e o `on_floor` e o `mode` iguais (§4).
+
+| Corrida | Cliente 1 | Cliente 2 | Menor distância entre os dois |
+|---|---|---|---|
+| Fechamento da rodada C2, 17/10/2026 | 1.852 ticks conferidos, 0 corrigidos | 1.850 conferidos, 0 corrigidos | 10,00 m |
+| Revisão da parte 2, 18/10/2026 | 1.852 conferidos, 0 corrigidos | 1.846 conferidos, 0 corrigidos | 10,00 m |
+
+A primeira corrida achou 13 ticks corrigidos: o lutador do cliente nascia um tick antes do servidor (§9, o nascimento do lutador).
+
+### O teste à mão (TASK-9, critério 13)
+
+O `tools/play_online.sh [ping]` abre um servidor sem tela, um cliente com o bot na metade direita da tela e o do jogador na esquerda. O Arthur jogou a 100 e a 220 e não sentiu lag na própria cápsula; a 220, sentiu uma diferença leve que não sabe explicar (F-091; F-092). Os jogos à mão não gravam ticks.
+
 ## 11. O que fica para depois
 
 - **Q-09:**
@@ -368,11 +435,7 @@ A cena de entrada olha como o jogo foi aberto, como um `main.ts` que lê o `proc
 - **Q-16:** dá para ficar em pé na cabeça do outro? É o único caso em que o choque entre lutadores diverge ao refazer.
 - **Q-17:** a conferência do `view_lag` com o ping e a regra contra o lag switch de quem ataca.
 - **Q-18:** o `view_lag` por oponente no 4v4.
-- **TASK-9, o esqueleto andante:**
-  - os modos da `Main`;
-  - o input com o comando de um toque;
-  - o oponente sem previsão;
-  - a SyncTest dos dois contornos no portão, com os ticks à mão (DEC-0027);
-  - o aperto de mão de versão na `Main` (DEC-0028);
-  - o fechamento limpo.
+- **TASK-9, parte 3:** o servidor na build e no contêiner do CI, e a referência de 1.200 ticks no Windows e no Linux (critérios 14 a 16).
+- **O corpo do lutador antes do primeiro tick:** ele já está no mundo da física antes de existir para o netfox (TASK-9, rodada C2). Vale olhar quando houver colisão entre lutadores no nascimento.
+- **Contar as correções no teste à mão:** o `play_online.sh` pode gravar os ticks da janela do jogador, como o `net_run.sh`, para uma sensação virar número (F-091 §4).
 - **Fases 2 e 3:** as regras do golpe com `view_lag` zero; depois o `view_lag`, o histórico de poses e os testes com rede.

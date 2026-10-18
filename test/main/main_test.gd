@@ -1,7 +1,9 @@
 # Criterion 6 of TASK-9 and DEC-0026 §6: the Main reads how the game was opened. With no argument
 # it plays Sozinho: netfox's clock starts on Godot's offline peer, then a match with this PC's
-# fighter and its camera. An argument it does not know is refused (F-056). Ending the session
-# stops the clock before the match goes, the clean exit the probe lacked (F-026 §4).
+# fighter and its camera. An argument it does not know is refused (.claude/harness/registro.md,
+# 2026-10-07). Ending the session stops the clock before the match goes, the clean exit the probe
+# lacked (F-026 §4). The server and client modes need two processes; tools/net_check.sh runs them
+# (TASK-9, part 2).
 extends GdUnitTestSuite
 
 const NetfoxTicks := preload("res://test/support/netfox_ticks.gd")
@@ -20,12 +22,19 @@ func after_test() -> void:
 
 
 func test_no_argument_means_sozinho() -> void:
-	assert_array(Main.unknown_arguments(PackedStringArray())).is_empty()
+	var options := LaunchOptions.parse(PackedStringArray(), false, true)
+	assert_array(options.errors).is_empty()
+	assert_int(options.mode).is_equal(LaunchOptions.Mode.SOLO)
 
 
+# Part 2 of TASK-9 knows --server, --port, --connect, --stop-file, --bot and --record; a typo of
+# each is refused (test/main/launch_options_test.gd covers every form).
 func test_every_argument_this_build_does_not_know_is_refused() -> void:
-	var arguments := PackedStringArray(["--servr", "--port=7777", "--connect=127.0.0.1:7777"])
-	assert_array(Main.unknown_arguments(arguments)).is_equal(arguments)
+	var arguments := PackedStringArray(["--servr", "--prot=7777", "--conect=127.0.0.1:7777"])
+	var options := LaunchOptions.parse(arguments, false, false)
+	assert_int(options.errors.size()).is_equal(arguments.size())
+	for argument: String in arguments:
+		assert_bool(options.errors.has("Unknown argument: %s" % argument)).is_true()
 
 
 func test_an_unknown_argument_exits_with_a_code_other_than_zero() -> void:

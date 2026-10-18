@@ -1,0 +1,50 @@
+# Criterion 10 of TASK-9 and DEC-0031 §8: every text on screen is a key with a message in pt-BR
+# and in en from the start, loaded by the Main when the game opens, so project.godot lists no
+# translation. A language the game does not have falls back to en.
+extends GdUnitTestSuite
+
+const LANGUAGES: Array[String] = ["pt_BR", "en"]
+
+var _locale_before := ""
+
+
+func before_test() -> void:
+	_locale_before = TranslationServer.get_locale()
+
+
+func after_test() -> void:
+	TranslationServer.set_locale(_locale_before)
+
+
+func test_every_key_has_a_message_in_pt_br_and_in_en() -> void:
+	for locale: String in LANGUAGES:
+		assert_bool(GameText.FILES.has(locale)).is_true()
+		var translation := GameText.load_language(locale)
+		assert_object(translation).is_not_null()
+		assert_str(translation.locale).is_equal(locale)
+		for key: StringName in GameText.KEYS:
+			var message := str(translation.get_message(key))
+			var failure := "%s has no %s message" % [key, locale]
+			assert_str(message).override_failure_message(failure).is_not_empty()
+			assert_str(message).override_failure_message(failure).is_not_equal(String(key))
+
+
+# The English file is not a copy of the Portuguese one.
+func test_the_two_languages_say_each_message_their_own_way() -> void:
+	var portuguese := GameText.load_language("pt_BR")
+	var english := GameText.load_language("en")
+	for key: StringName in GameText.KEYS:
+		var failure := "%s is the same in pt_BR and en" % key
+		var same := portuguese.get_message(key) == english.get_message(key)
+		assert_bool(same).override_failure_message(failure).is_false()
+
+
+func test_installed_the_text_follows_the_players_language_or_falls_back_to_english() -> void:
+	GameText.install()
+	for locale: String in LANGUAGES:
+		TranslationServer.set_locale(locale)
+		var expected := str(GameText.load_language(locale).get_message(GameText.ROOM_FULL))
+		assert_str(GameText.text(GameText.ROOM_FULL)).is_equal(expected)
+	TranslationServer.set_locale("de")
+	var english := str(GameText.load_language("en").get_message(GameText.SERVER_CLOSED))
+	assert_str(GameText.text(GameText.SERVER_CLOSED)).is_equal(english)

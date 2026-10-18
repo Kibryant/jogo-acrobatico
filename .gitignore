@@ -6,6 +6,10 @@
 /build/
 /reports/
 
+# netfox's network simulator for one session, written and removed by tools/net_run.sh and
+# tools/play_online.sh (TASK-9, part 2)
+/override.cfg
+
 # Secrets and local environment
 .env
 .env.*

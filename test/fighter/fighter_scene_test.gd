@@ -121,3 +121,18 @@ func test_the_fighter_collides_with_the_world_and_with_fighters() -> void:
 	var fighter := _fighter()
 	assert_int(fighter.collision_layer).is_equal(PhysicsLayers.FIGHTERS)
 	assert_int(fighter.collision_mask).is_equal(PhysicsLayers.WORLD | PhysicsLayers.FIGHTERS)
+
+
+# TASK-9, criterion 9: only the server sends a fighter's state, and only to the peers it told that
+# the fighter exists (Main._on_player_clock_synced); a state for a node a client does not have
+# yet would be dropped there with a warning.
+func test_the_state_goes_only_to_the_peers_told_about_the_fighter() -> void:
+	var fighter := _fighter()
+	var told := 1450222694
+	var not_told := 78230771
+	var filter := fighter.synchronizer.visibility_filter
+	assert_bool(filter.get_visibility_for(told)).is_false()
+	assert_bool(filter.get_visibility_for(not_told)).is_false()
+	fighter.send_state_to(told)
+	assert_bool(filter.get_visibility_for(told)).is_true()
+	assert_bool(filter.get_visibility_for(not_told)).is_false()

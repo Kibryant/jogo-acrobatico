@@ -1,5 +1,5 @@
 ---
-revisado_em: 2026-10-17
+revisado_em: 2026-10-19
 ---
 
 # Pendências
@@ -39,3 +39,4 @@ Perguntas abertas, cada uma com o lugar onde se resolve. A resposta vira DEC, e 
 | Q-29 | A vida do lutador e o formato da partida: quantos pontos de vida, e a partida é por rounds, melhor de quantos, com que tempo, e o que acontece ao morrer? O `combate.md` tem o dano do arco (15 a 45) e do mosquete (60) sem um total de vida, e a arquitetura só nomeia o contexto "Partida e round" (`visao-geral.md`; F-083 §5) | Fase 2, no desenho do duelo (DEC-0036) | Números v0 fechados pelo Claude junto com o primeiro golpe jogável (DEC-0017), numa vitrine (DEC-0019); rounds curtos, que preservam o "pensado" do 1v1 (F-001). O Arthur julga jogando | — |
 | Q-30 | O modo do 4v4 e do 8v8: qual é o objetivo da partida em time? O estudo só diz "anel visível contra 2 em 1" no 4v4 e "leitura de mapa" no 8v8 (F-001; `combate.md`; F-083 §5) | Antes da fase 4, no desenho do anti-hack e do 4v4 (DEC-0036) | Começar pelo mais simples, a eliminação por rounds como no 1v1, e só pôr objetivo se o 4v4 jogável pedir; decidir com o 4v4 com bots (DEC-0004, regra 6) | — |
 | Q-31 | Controle (gamepad): as teclas são físicas e remapeáveis desde o primeiro dia (DEC-0031), mas só mouse e teclado foram pensados, e a câmera tem sensibilidade por pixel do mouse (`movimento.md`). O jogo vai aceitar controle, e quando? (F-083 §4 e §5) | Quando alguém de fora pedir, da fase 2 em diante; antes, não | Mouse e teclado até alguém pedir. Se entrar, a mira das armas de longe no controle é pergunta de identidade, e o Arthur decide | — |
+| Q-32 | O jogo precisa de som mínimo (pulo duplo, dash, parede, gancho) antes do teste da fase 1? Os sinais v0 das manobras são só visuais, porque só entra áudio com licença livre (DEC-0029) | O ensaio cronometrado de 15 min no fim da TASK-10.5 | Só se o ensaio disser que o silêncio pesa; aí um pacote CC0 pequeno, com a linha no `CREDITS.md` | — |

@@ -1,0 +1,96 @@
+---
+id: TASK-10.2
+title: 'A barra na tela e o vão de 6 m: o HUD, o Theme e as plataformas'
+status: To Refine
+assignee: []
+created_date: '2026-10-19 13:46'
+labels:
+  - jogo
+milestone: m-1
+dependencies:
+  - TASK-10.1
+parent_task_id: TASK-10
+ordinal: 13000
+---
+
+## Description
+
+<!-- SECTION:DESCRIPTION:BEGIN -->
+### Por quê
+A stamina da TASK-10.1 existe só no estado; o jogador precisa vê-la para decidir o próximo pulo, e o HUD é lido do estado, nunca de um timer, sem informação só por cor (DEC-0031 §2). A primeira cena de interface traz o Theme único (DEC-0031 §8), que a TASK-9 adiou de propósito. As duas plataformas abrem o vão de 6 m, que só o pulo duplo cruza ("Métricas de nível": acima dos ≈ 4,4 m do pulo com coyote, abaixo dos ≈ 7 m do pulo duplo), e a referência ganha um aperto no topo do pulo para o pulo duplo entrar no rastro que o CI confere (DEC-0027 §2, camada 4). Esta filha saiu da TASK-10.1 para cada sessão caber no tamanho da TASK-9: lá as regras e a SyncTest, aqui a tela e a arena. Nenhuma regra nova do núcleo: o test-writer não roda.
+
+### Perguntas em aberto
+Nenhuma.
+
+### Escolhas a confirmar
+1. O HUD traz o Theme único em `ui/theme/game_theme.tres`, apontado por `gui/theme/custom` no `project.godot` (guardado pelo teste de configurações), e a tela de opções vira a Q-32, uma task pequena antes de outra pessoa jogar. Padrão: sim, porque a DEC-0031 §8 diz que o Theme nasce com a primeira cena de interface, e a tela de opções não muda o que você joga agora.
+2. A referência é regravada com um aperto no topo do pulo (`route.trace` novo, `LEAST` com `double_jumps: 1`), com o motivo no commit. Padrão: sim, porque o pulo duplo precisa estar no rastro que o Windows e o Linux comparam; deixar a rota só com pulos do chão deixaria o pulo duplo fora da camada 4 até a TASK-10.8.
+
+### Números v0 do Claude
+Fechados pelo Claude (DEC-0017); você julga jogando.
+- A barra tem 300 × 12 px na base de 1080p, canto inferior esquerdo, com o número ao lado e o modo em texto, porque o papel não tem pixel e a DEC-0031 §2 pede texto e forma além da cor; sem stamina para o pulo duplo, o número ganha um traço embaixo (forma, não cor). Vai para o `visual-e-audio.md`.
+- As plataformas: `PlataformaVaoA` em (−20, 0,5, 6) e `PlataformaVaoB` em (−20, 0,5, −6), 6 × 1 × 6 m, topo a 1 m, vão de 6 m entre z = 3 e z = −3, em chão livre (o conteúdo de hoje fica em x −10..10, z −14..9), porque o vão fica acima do pulo com coyote (≈ 4,4 + 0,7 m, margem de ≈ 0,5 m) e abaixo do pulo duplo. Vai para "Métricas de nível".
+- O HUD só existe com tela: o servidor sem tela não o cria. Vai para o `visao-geral.md`.
+
+### Fora do escopo
+- A tela de opções e o remapeamento das teclas (Q-32).
+- O arco de recarga do dash e a mira do gancho no HUD (TASK-10.4 e TASK-10.6). Som (DEC-0029). Qualquer regra do núcleo.
+
+### O que você vai aprender
+- Um HUD que não mente: por que a barra se calcula do estado exibido a cada quadro, e o que aconteceria com um timer durante um rollback.
+- O Theme do Godot como as variáveis de CSS de um site: um lugar para a fonte e as cores, e nenhuma cena com número solto.
+- Por que a referência muda de propósito, e por que o commit precisa dizer o motivo.
+<!-- SECTION:DESCRIPTION:END -->
+
+## Acceptance Criteria
+<!-- AC:BEGIN -->
+- [ ] #1 Quando o Sozinho abre com tela, o HUD mostra a stamina como barra (300 × 12 px na base de 1080p, leitura v0 do Claude) e número, e o modo em texto, lidos do estado exibido a cada quadro por `Stamina.at` e nunca de um timer, nada só por cor; sem stamina para o pulo duplo, o número muda de forma; sem tela, nenhum HUD é criado (DEC-0031 §2 e §8; DEC-0022).
+- [ ] #2 Quando a primeira cena de interface nasce, ela usa o Theme único `ui/theme/game_theme.tres`, apontado por `gui/theme/custom` e guardado pelo teste de configurações; os textos da TASK-9 passam a usar o Theme; nenhuma cena de interface carrega fonte ou cor própria (DEC-0031 §8; F-006 §3).
+- [ ] #3 Quando a arena ganha `PlataformaVaoA` e `PlataformaVaoB` (6 × 1 × 6 m, topo a 1 m, vão de 6 m entre elas), elas ficam em chão livre, fora do percurso da referência e das áreas dos cenários, com nomes únicos sob `Arena` e colisão e malha do mesmo tamanho, e um teste de cena prova isso; os cenários da SyncTest seguem verdes (F-086 §1; `movimento.md`, "Métricas de nível").
+- [ ] #4 Quando a referência ganha um aperto no topo do pulo, o `route.trace` é regravado por `bash tools/record_reference.sh`, o commit diz por quê, `LEAST` ganha `double_jumps: 1`, e o hash bate no portão deste PC e no CI no Linux (DEC-0027 §2, camada 4; F-094 §2).
+- [ ] #5 Quando o Arthur joga no Sozinho, ele cruza o vão de 6 m só com o pulo duplo, vê a barra cair 10 e encher de novo depois de 0,8 s, e o que ele sentiu vai para uma fonte (F-041; `movimento.md`, "Stamina").
+<!-- AC:END -->
+
+## Definition of Done
+<!-- DOD:BEGIN -->
+- [ ] #1 Critérios de aceite verificados
+- [ ] #2 Teste automatizado para toda regra do núcleo (core/)
+- [ ] #3 Diário da sessão escrito e glossário atualizado
+- [ ] #4 Mudanças registradas em docs/mudancas.md
+<!-- DOD:END -->
+
+## Implementation Notes
+
+<!-- SECTION:NOTES:BEGIN -->
+Rascunho do plano da fase 1 (19/10/2026), em inglês para os agentes; vira o plano em português quando a filha ficar Ready (F-100).
+
+**HUD** (`ui/hud.gd`, `ui/hud.tscn`): `class_name Hud extends CanvasLayer`; `func follow(fighter: Fighter, config: MovementConfig) -> void`; in `_process` it reads `fighter.state` (the displayed state) and `NetworkTime.tick`, computes `Stamina.at(state, config, tick)` and sets the bar width, the number label and the mode label; no `Timer`, no own counter. Nodes `StaminaBar` (sized by code, 300 × 12 at the 1080p base, stretch `canvas_items`), `StaminaLabel`, `ModeLabel`. Created by `Match.watch(fighter)` only when `DisplayServer.get_name() != "headless"`; the server path never instantiates it.
+
+**Theme** (`ui/theme/game_theme.tres`): the font and sizes of `GameText` move into it; `project.godot` `gui/theme/custom = "res://ui/theme/game_theme.tres"` (named with its reason in the commit; `test/project_settings_test.gd` gains the row).
+
+**Arena** (`arena/arena.tscn`): two `StaticBody3D` on `PhysicsLayers.WORLD` with a `BoxShape3D` 6 × 1 × 6 and a mesh of the same size, unique names `PlataformaVaoA`/`PlataformaVaoB` under `Arena`; `test/arena/arena_scene_test.gd` asserts unique names, matching sizes and no overlap with the reference route's bounds or the scenario areas (`fighter_sync_test.gd`:23-60; `sync_observer.gd`:18-20).
+
+**Reference** (`test/reference/reference_route.gd`): an apex press at :62 (a jump press 350 ms after a floor jump); `LEAST` gains `double_jumps: 1`; `route.trace` re-recorded.
+
+**Who tests what**: no test-writer (adapters and scenes, DEC-0009). The implementer writes `test/ui/hud_test.gd` (the bar reads a state with `stamina_spent_tick` set and shows the right width and text; headless `Match.watch` creates no HUD), the settings row, the arena scene test and the re-record. The reviewer checks the re-record commit message and that no scene carries a loose font or colour.
+
+**Rounds**: A (HUD, Theme, settings test); B (platforms, reference, docs, playtest).
+
+| Agent | Model | Effort | Why |
+|---|---|---|---|
+| implementer | Opus 5.5 | xhigh | scene work under the Theme rule, plus the re-record |
+| reviewer | Fable | high | DEC-0031 §2 and §8 are easy to break quietly |
+| explorer | Sonnet | high | only to locate `GameText` and the route bounds |
+
+## SyncTest (en)
+No new scenario; the five existing ones stay green with the new bodies in the tree, mismatches 0.
+
+## Arena (en)
+`PlataformaVaoA` (−20, 0.5, 6) and `PlataformaVaoB` (−20, 0.5, −6), 6 × 1 × 6 m, tops at 1 m, a 6 m gap across z −3..3; extents x −23..−17.
+
+## Teste à mão e o que sentir
+Cruzar o vão só com o pulo: não chega. Com pulo e pulo duplo: chega com folga de ≈ 1 m. Olhar a barra: cai 10 no aperto, fica parada 0,8 s, enche em ≈ 3,3 s quando vazia. O que sentir: se a barra chama a atenção na hora certa, se o número é legível em 1080p, e se o vão parece "quase" ou "fácil". Perguntar só depois de jogar (F-041).
+
+## Docs a atualizar
+Com o seu ok e uma linha no `mudancas.md` cada: `visual-e-audio.md` (a barra em px; o Theme como o lugar das fontes); `movimento.md` "Métricas de nível" (o vão e as plataformas); `glossario.md` (HUD); `visao-geral.md` (o HUD só com tela); `pendencias.md` (Q-32); `testes-e-entrega.md` §3 (a referência com o pulo duplo); a vitrine com o vão (DEC-0019); o diário e o `registro.md`.
+<!-- SECTION:NOTES:END -->

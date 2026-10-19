@@ -1,12 +1,14 @@
 # Guards the project settings decided in DEC-0002, DEC-0005, DEC-0022, DEC-0023, DEC-0024,
 # DEC-0026 (and the Main scene of TASK-9), DEC-0028 (the version, and the commit stamped only at
-# export), DEC-0030 (MSAA) and DEC-0031 (the interface base and the physical keys), and the log
-# flush of TASK-9 (F-073 §2). A failure here means project.godot changed: read the DEC before
-# "fixing" the test.
+# export), DEC-0030 (MSAA) and DEC-0031 (the interface base, the one Theme and the physical keys),
+# and the log flush of TASK-9 (F-073 §2). A failure here means project.godot changed: read the
+# DEC before "fixing" the test.
 extends GdUnitTestSuite
 
 # DEC-0026 §6: the game opens on the Main, which picks the mode from the arguments.
 const MAIN_SCENE := "res://main/main.tscn"
+# DEC-0031 §8: the one Theme of the interface, born with its first scene, the HUD (TASK-10.2).
+const GAME_THEME := "res://ui/theme/game_theme.tres"
 
 # DEC-0031 §8: the movement keys by physical position, so WASD sits in the same place on ABNT2,
 # AZERTY and Dvorak (TASK-9, criterion 7).
@@ -249,6 +251,17 @@ func test_stretch_aspect_is_expand() -> void:
 	var aspect: String = ProjectSettings.get_setting("display/window/stretch/aspect")
 	var message := 'stretch aspect must be "expand", found "%s" (DEC-0031)' % aspect
 	assert_str(aspect).override_failure_message(message).is_equal("expand")
+
+
+# DEC-0031 §8: every Control of the game takes its fonts, sizes and colours from this one Theme,
+# and Godot's built-in theme only fills what it leaves out. The editor may write it as a uid://
+# path, the same file.
+func test_the_interface_takes_the_one_game_theme() -> void:
+	var theme: String = ProjectSettings.get_setting("gui/theme/custom", "")
+	if theme.begins_with("uid://"):
+		theme = ResourceUID.uid_to_path(theme)
+	var message := 'gui/theme/custom must be "%s", found "%s" (DEC-0031 §8)' % [GAME_THEME, theme]
+	assert_str(theme).override_failure_message(message).is_equal(GAME_THEME)
 
 
 # DEC-0030: MSAA 2x is value 1 of msaa_3d (0 off, 1 2x, 2 4x, 3 8x), about 0.8 ms with 16

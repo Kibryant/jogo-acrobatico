@@ -29,6 +29,24 @@ func test_every_key_has_a_message_in_pt_br_and_in_en() -> void:
 			assert_str(message).override_failure_message(failure).is_not_equal(String(key))
 
 
+# TASK-10.2, criterion 3, the other way round: a message the code never shows is a key that was
+# renamed or dropped in GameText and left behind in a .po file.
+func test_every_message_of_each_language_is_a_key_the_code_shows() -> void:
+	for locale: String in LANGUAGES:
+		var translation := GameText.load_language(locale)
+		var messages := translation.get_message_list()
+		assert_int(messages.size()).is_greater(0)
+		for message_id: String in messages:
+			if message_id.is_empty():
+				continue
+			var failure := "%s.po has %s, which is not a key of GameText.KEYS" % [
+				locale,
+				message_id,
+			]
+			var known := GameText.KEYS.has(StringName(message_id))
+			assert_bool(known).override_failure_message(failure).is_true()
+
+
 # The English file is not a copy of the Portuguese one.
 func test_the_two_languages_say_each_message_their_own_way() -> void:
 	var portuguese := GameText.load_language("pt_BR")

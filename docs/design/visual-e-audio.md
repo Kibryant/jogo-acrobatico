@@ -1,6 +1,6 @@
 ---
-revisado_em: 2026-10-08
-fontes: [F-050, F-051, F-052, F-053, F-054, F-056, F-058, F-059, F-061, F-062, F-063]
+revisado_em: 2026-10-19
+fontes: [F-050, F-051, F-052, F-053, F-054, F-056, F-058, F-059, F-061, F-062, F-063, F-100]
 ---
 
 # Visual e áudio
@@ -160,7 +160,7 @@ Som e efeito tocam uma vez por evento, pela chave (nó, tipo, id), quando o even
 
 | O quê | Como | Fonte |
 |---|---|---|
-| O Theme | Um só, em `gui/theme/custom`, criado com a primeira cena de interface; tipos como seletores, itens como propriedades, variações como classes | F-051 §3.1 e §3.2 |
+| O Theme | Um só, em `gui/theme/custom`, criado com a primeira cena de interface, o HUD: `ui/theme/game_theme.tres`; tipos como seletores, itens como propriedades, variações como classes | F-051 §3.1 e §3.2; TASK-10.2 |
 | A base | 1920 × 1080 com `canvas_items` e `expand`, guardada no teste de configurações; hoje valia 1152 × 648 | F-051 §3.3; F-054 §2 |
 | A escala | `content_scale_factor` nas opções, de 0,8 a 1,5 (v0) | F-051 §4.4 |
 | As teclas | Posição física, remapeáveis desde o primeiro dia, salvas em `user://`, com o rótulo do teclado ativo | F-051 §4.2 e §4.3 |
@@ -168,6 +168,23 @@ Som e efeito tocam uma vez por evento, pela chave (nó, tipo, id), quando o even
 | Os menus | Nomes de acessibilidade; o leitor de tela na partida fica fora do v0 | F-051 §4.1 |
 | As traduções | Chaves por ID, com pt-BR e en | F-051 §3.5 |
 | O HUD | Barras e números leem o estado, nunca um timer | F-051 §3.4 |
+
+### O HUD da stamina (TASK-10.2)
+
+Leitura v0 do Claude, que o Arthur julga jogando (DEC-0017; TASK-10.2).
+
+- **A barra:** 300 × 12 px na base de 1080p, no canto inferior esquerdo. O papel não tem pixel; a medida é a da tela (TASK-10.2).
+- **O número:** ao lado da barra, em pontos inteiros, arredondado para baixo. O modo vem acima, em texto: "No chão" ou "No ar" (TASK-10.2).
+- **O traço:** abaixo do custo do pulo duplo, 10 pontos, o número ganha um traço embaixo. É forma, não cor (DEC-0031 §2; `movimento.md`, "Pulo e ar").
+- **De onde vem:** a barra se calcula do estado exibido a cada quadro, pelo valor e pelo carimbo da stamina. Nenhum timer, nenhum contador (DEC-0031 §2; F-051 §3.4; `movimento.md`, "Stamina").
+- **Quem tem:** só o PC com tela; o servidor dedicado nunca cria o HUD (`arquitetura/visao-geral.md`, "As cenas").
+
+### O Theme, o lugar das fontes (TASK-10.2)
+
+- O Theme único, `ui/theme/game_theme.tres`, guarda a fonte, os tamanhos e as cores de toda a tela. Nenhuma cena de interface carrega fonte ou cor própria; um teste confere (DEC-0031 §8).
+- A fonte é a padrão do Godot, em 16 px na base de 1080p, o tamanho que os textos da TASK-9 já tinham. O texto ganha um contorno escuro de 4 px, para se ler sobre os blocos claros. A margem do canto é de 24 px. Leitura v0 do Claude (DEC-0017; TASK-10.2).
+- As cores do HUD são branco e preto: a barra cheia em branco sobre um fundo preto translúcido. Nenhuma cor de token (DEC-0031 §1 e §3).
+- Cada texto da tela é uma chave de tradução, com pt-BR e en. Um teste reprova a chave sem mensagem num dos dois idiomas (DEC-0031 §8).
 
 ## Em aberto
 

@@ -27,6 +27,9 @@ var fighters: Array[Fighter] = []
 ## The camera of whoever plays on this PC, a person or the bot; null until watch() or
 ## let_bot_play().
 var camera_rig: CameraRig
+## The HUD of whoever plays on this PC; null until watch(), and always null without a screen, as
+## on the dedicated server and in headless runs (TASK-10.2).
+var hud: Hud
 ## The bot that plays on this PC; null unless let_bot_play().
 var bot: BotPlayer
 
@@ -122,17 +125,32 @@ func remove_fighter(slot: int) -> void:
 		camera_rig.queue_free()
 		camera_rig = null
 		_watched = null
+		if hud != null:
+			hud.queue_free()
+			hud = null
 		if bot != null:
 			bot.queue_free()
 			bot = null
 	fighter.queue_free()
 
 
-# The camera of whoever plays fighter on this PC, and this PC's keyboard and mouse on its input.
+# The camera of whoever plays fighter on this PC, this PC's keyboard and mouse on its input, and,
+# with a screen, the HUD of its stamina and mode (TASK-10.2). Without one nobody would see it.
 func watch(fighter: Fighter) -> CameraRig:
 	_follow(fighter, true)
 	fighter.input.use_devices(camera_rig)
+	if hud == null and has_screen():
+		hud = Hud.new()
+		add_child(hud)
+	if hud != null:
+		hud.follow(fighter, config)
 	return camera_rig
+
+
+# True when this PC draws to a screen; the dedicated server and the headless runs have none,
+# the same check the Main makes.
+static func has_screen() -> bool:
+	return DisplayServer.get_name() != "headless"
 
 
 # The bot plays fighter on this PC instead of the keyboard and the mouse (TASK-9, part 2), its route

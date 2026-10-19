@@ -26,3 +26,11 @@ msgstr "O servidor não respondeu. Confira o endereço e se ele está no ar."
 # The server ended the session: its stop file, or the connection dropped.
 msgid "NET_SERVER_CLOSED"
 msgstr "O servidor fechou a partida."
+
+# The HUD's mode of the fighter: standing, running or stopping on the floor (TASK-10.2).
+msgid "HUD_MODE_GROUND"
+msgstr "No chão"
+
+# The HUD's mode of the fighter: from leaving the floor to touching it again (TASK-10.2).
+msgid "HUD_MODE_AIR"
+msgstr "No ar"

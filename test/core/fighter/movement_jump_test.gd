@@ -57,13 +57,12 @@ func _design_ticks(ms: int, tickrate: int) -> float:
 	return ms * tickrate / 1000.0
 
 
-# Presses jump now, holds it for hold_ticks ticks, and records until the fighter lands or five
-# seconds pass.
-func _fly(rig: MovementRig, hold_ticks := 1) -> Flight:
+# Presses jump now, for one tick, and records until the fighter lands or five seconds pass.
+func _fly(rig: MovementRig) -> Flight:
 	var flight := Flight.new()
 	flight.press_tick = rig.tick
 	for step: int in range(1, 5 * rig.config.tickrate + 1):
-		var input := MovementRig.press_jump() if step <= hold_ticks else MovementRig.idle()
+		var input := MovementRig.press_jump() if step == 1 else MovementRig.idle()
 		rig.step(input)
 		flight.heights.append(rig.position.y)
 		if step > 1 and rig.state.on_floor:
@@ -223,23 +222,30 @@ func test_the_fighter_lands_280_ms_after_the_apex_within_half_a_tick(
 			.is_less_equal(HALF_TICK)
 
 
-# No variable jump (movimento.md, "Pulo e ar": "Soltar o botão cedo não encurta o pulo"). The
-# press is a one-tick touch, so one tick gives the whole 1.2 m, and ten ticks of the button held
-# give the very same flight and no second jump after it.
-func test_a_press_of_one_tick_gives_the_full_jump_and_holding_adds_nothing(
+# No variable jump (movimento.md, "Pulo e ar": "Pulo variável: não; soltar o botão cedo não
+# encurta o pulo"). The press is a one-tick touch, and that one tick gives the whole 1.2 m, with
+# the apex 350 ms after the press and the landing 280 ms after the apex, the same steps the three
+# flights above establish; after it, the fighter rests with nothing left in the slot. Holding the
+# key is not the core's business: FighterInput hands a held key over as one press (F-102 §2), and
+# a press repeated on the next tick would be the double jump, as the tests of TASK-10.1 below
+# require. The ten-tick "held" flight this test once ran was that repeat, not a held key.
+func test_a_press_of_one_tick_gives_the_full_jump(
 	tickrate: int,
 	_test_parameters := [[30], [60]],
 ) -> void:
-	var tap := _fly(_rig(tickrate))
-	var held_rig := _rig(tickrate)
-	var held := _fly(held_rig, 10)
-	assert_float(tap.apex_height).is_equal_approx(JUMP_HEIGHT_M, HEIGHT_TOLERANCE_M)
-	assert_float(held.apex_height).is_equal_approx(tap.apex_height, HAIR)
-	assert_int(held.apex_step).is_equal(tap.apex_step)
-	assert_int(held.landing_step).is_equal(tap.landing_step)
-	held_rig.rest(2 * BUFFER_TICKS[tickrate])
-	assert_bool(held_rig.state.on_floor).override_failure_message("jumped again").is_true()
-	assert_int(held_rig.state.jumps_used).is_equal(0)
+	var rig := _rig(tickrate)
+	var flight := _fly(rig)
+	assert_float(flight.apex_height).is_equal_approx(JUMP_HEIGHT_M, HEIGHT_TOLERANCE_M)
+	assert_float(absf(flight.rise_steps() - _design_ticks(JUMP_RISE_MS, tickrate))) \
+			.override_failure_message("the apex step of a one-tick press") \
+			.is_less_equal(HALF_TICK)
+	assert_int(flight.landing_step).override_failure_message("never landed").is_greater(0)
+	assert_float(absf(flight.fall_steps() - _design_ticks(JUMP_FALL_MS, tickrate))) \
+			.override_failure_message("the landing step of a one-tick press") \
+			.is_less_equal(HALF_TICK)
+	rig.rest(2 * BUFFER_TICKS[tickrate])
+	assert_bool(rig.state.on_floor).override_failure_message("jumped again").is_true()
+	assert_int(rig.state.jumps_used).is_equal(0)
 
 
 func test_a_press_on_the_floor_jumps_on_the_same_tick(

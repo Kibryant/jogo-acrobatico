@@ -2,15 +2,16 @@
 # impossible number must fail the gate: MovementData.validate() returns one message per
 # impossible number, movement_v0.tres passes it, and the scan below runs it over every
 # MovementData under res://data/, so a bad file committed later fails here. The baseline numbers
-# come from docs/design/movimento.md, cited by section.
+# come from docs/design/movimento.md, cited by section. TASK-10.1, criterion 7, adds the double
+# jump and the stamina (movimento.md, "Pulo e ar" and "Stamina").
 extends GdUnitTestSuite
 
 const MOVEMENT_V0 := "res://data/movement_v0.tres"
 const DATA_DIR := "res://data"
 const HAIR := 1e-9 # floating-point slack, not a design number
 
-# The six times of the skeleton (movimento.md, "Chão", "Pulo e ar" and "Perdão") as MovementData
-# fields (TASK-9 plan).
+# The six times of the skeleton (movimento.md, "Chão", "Pulo e ar" and "Perdão") and the wait
+# of the stamina ("Stamina") as MovementData fields (TASK-9 and TASK-10.1 plans).
 const TIME_FIELDS: Array[String] = [
 	"accel_time_ms",
 	"stop_time_ms",
@@ -18,7 +19,19 @@ const TIME_FIELDS: Array[String] = [
 	"jump_fall_ms",
 	"coyote_ms",
 	"buffer_ms",
+	"stamina_wait_ms",
 ]
+
+# The five numbers of TASK-10.1 (movimento.md, "Pulo e ar" and "Stamina"), each with one value
+# that cannot be: a height of zero, a max of zero, a negative cost, a negative wait and a
+# negative regen. The height, the max, the cost and the regen are floats; the wait is a time.
+const NEW_IMPOSSIBLE: Dictionary[String, Variant] = {
+	"double_jump_height_m": 0.0,
+	"stamina_max": 0.0,
+	"double_jump_cost": -10.0,
+	"stamina_wait_ms": -1,
+	"stamina_regen_per_s": -30.0,
+}
 
 
 # The numbers of movimento.md as a MovementData built in code: the baseline each failure case
@@ -38,6 +51,11 @@ func _design_data() -> MovementData:
 	data.max_fall_speed_mps = 30.0 # "Pulo e ar"
 	data.coyote_ms = 100 # "Perdão"
 	data.buffer_ms = 150 # "Perdão"
+	data.double_jump_height_m = 1.0 # "Pulo e ar": "Altura do pulo duplo"
+	data.double_jump_cost = 10.0 # "Pulo e ar": "Custo do pulo duplo"
+	data.stamina_max = 100.0 # "Stamina": "Máximo"
+	data.stamina_wait_ms = 800 # "Stamina": "Espera para recuperar"
+	data.stamina_regen_per_s = 30.0 # "Stamina": "Recuperação"
 	return data
 
 
@@ -85,6 +103,11 @@ func test_movement_v0_holds_the_numbers_of_movimento_md() -> void:
 	assert_float(data.max_fall_speed_mps).is_equal_approx(design.max_fall_speed_mps, HAIR)
 	assert_int(data.coyote_ms).is_equal(design.coyote_ms)
 	assert_int(data.buffer_ms).is_equal(design.buffer_ms)
+	assert_float(data.double_jump_height_m).is_equal_approx(design.double_jump_height_m, HAIR)
+	assert_float(data.double_jump_cost).is_equal_approx(design.double_jump_cost, HAIR)
+	assert_float(data.stamina_max).is_equal_approx(design.stamina_max, HAIR)
+	assert_int(data.stamina_wait_ms).is_equal(design.stamina_wait_ms)
+	assert_float(data.stamina_regen_per_s).is_equal_approx(design.stamina_regen_per_s, HAIR)
 
 
 func test_movement_v0_passes_the_data_check() -> void:
@@ -120,6 +143,7 @@ func test_a_negative_time_is_rejected(
 		["jump_fall_ms"],
 		["coyote_ms"],
 		["buffer_ms"],
+		["stamina_wait_ms"],
 	],
 ) -> void:
 	var data := _design_data()
@@ -182,8 +206,11 @@ func test_a_negative_slope_is_rejected() -> void:
 	assert_array(data.validate()).has_size(1)
 
 
-# The other numbers that cannot be: a negative speed, height, fall cap or air control, and a
-# capsule without height or radius (movimento.md, "O corpo", "Chão" and "Pulo e ar").
+# The other numbers that cannot be: a negative speed, height, fall cap or air control, a
+# capsule without height or radius (movimento.md, "O corpo", "Chão" and "Pulo e ar"), and from
+# TASK-10.1 a double jump without height, a negative cost and a negative regen (movimento.md,
+# "Pulo e ar" and "Stamina"; the double jump's exit speed comes from its height, so zero is
+# no jump).
 func test_other_impossible_numbers_are_rejected(
 	field: String,
 	value: float,
@@ -196,6 +223,10 @@ func test_other_impossible_numbers_are_rejected(
 		["capsule_height_m", -1.8],
 		["capsule_radius_m", 0.0],
 		["capsule_radius_m", -0.35],
+		["double_jump_height_m", 0.0],
+		["double_jump_height_m", -1.0],
+		["double_jump_cost", -10.0],
+		["stamina_regen_per_s", -30.0],
 	],
 ) -> void:
 	var data := _design_data()
@@ -217,11 +248,96 @@ func test_every_impossible_number_gets_its_own_message() -> void:
 	assert_array(data.validate()).has_size(3)
 
 
-func test_six_negative_times_give_six_messages() -> void:
+func test_every_negative_time_gives_its_own_message() -> void:
 	var data := _design_data()
 	for field: String in TIME_FIELDS:
 		data.set(field, -1)
 	assert_array(data.validate()).has_size(TIME_FIELDS.size())
+
+
+# TASK-10.1, criterion 7: the wait may be 0 ms (no wait; nothing divides by it) and the regen
+# may be 0 points/s (the test fixtures freeze the bar that way, TASK-10.1 plan).
+func test_a_zero_stamina_wait_or_regen_is_allowed(
+	field: String,
+	value: Variant,
+	_test_parameters := [["stamina_wait_ms", 0], ["stamina_regen_per_s", 0.0]],
+) -> void:
+	var data := _design_data()
+	data.set(field, value)
+	assert_bool(data.get(field) == value).override_failure_message("%s is not a field" % field) \
+			.is_true()
+	assert_array(data.validate()).override_failure_message("%s = 0 must pass" % field).is_empty()
+
+
+# The cost must fit the bar: above the max it is rejected with a message naming the cost; at
+# the max (the limit) and at zero (none) it passes (TASK-10.1 plan: "não negativo e até
+# stamina_max").
+func test_a_double_jump_cost_above_the_stamina_max_is_rejected() -> void:
+	var data := _design_data()
+	data.double_jump_cost = data.stamina_max + 0.5
+	var errors := data.validate()
+	assert_array(errors).override_failure_message("cost above the max must be rejected") \
+			.has_size(1)
+	if errors.size() == 1:
+		assert_str(errors[0]).contains("double_jump_cost")
+
+
+func test_a_double_jump_cost_up_to_the_stamina_max_is_allowed(
+	cost: float,
+	_test_parameters := [[0.0], [10.0], [100.0]],
+) -> void:
+	var data := _design_data()
+	data.double_jump_cost = cost
+	assert_array(data.validate()).override_failure_message("cost %.1f must pass" % cost) \
+			.is_empty()
+
+
+# A bar with no points cannot pay anything: the max must be positive (movimento.md, "Stamina").
+# The cost is set to 0 so that only the max is wrong: exactly one message, naming it.
+func test_a_stamina_max_of_zero_is_rejected() -> void:
+	var data := _design_data()
+	data.double_jump_cost = 0.0
+	data.stamina_max = 0.0
+	var errors := data.validate()
+	assert_array(errors).override_failure_message("stamina_max = 0 must be rejected").has_size(1)
+	if errors.size() == 1:
+		assert_str(errors[0]).contains("stamina_max")
+
+
+# A negative max is rejected with a message naming it; whether a cost of 0 "above" a negative
+# max adds a second message is the implementer's call, so only the max's message is required.
+func test_a_negative_stamina_max_is_rejected() -> void:
+	var data := _design_data()
+	data.double_jump_cost = 0.0
+	data.stamina_max = -100.0
+	var errors := data.validate()
+	var named := false
+	for message: String in errors:
+		if message.contains("stamina_max"):
+			named = true
+	var unnamed := "no message names stamina_max, got: %s" % [errors]
+	assert_bool(named).override_failure_message(unnamed).is_true()
+
+
+# Many: the five new numbers wrong at once give five messages, each naming its field; with the
+# cost negative, no "cost above max" message can double up on the zero max.
+func test_five_impossible_new_numbers_give_five_messages_each_naming_its_field() -> void:
+	var data := _design_data()
+	for field: String in NEW_IMPOSSIBLE:
+		data.set(field, NEW_IMPOSSIBLE[field])
+		var set_message := "%s is not a field" % field
+		assert_bool(data.get(field) == NEW_IMPOSSIBLE[field]) \
+				.override_failure_message(set_message) \
+				.is_true()
+	var errors := data.validate()
+	assert_array(errors).has_size(NEW_IMPOSSIBLE.size())
+	for field: String in NEW_IMPOSSIBLE:
+		var named := false
+		for message: String in errors:
+			if message.contains(field):
+				named = true
+		var unnamed := "no message names %s, got: %s" % [field, errors]
+		assert_bool(named).override_failure_message(unnamed).is_true()
 
 
 # The gate prints the message: it must say something. Guarded, so a missing rejection fails on

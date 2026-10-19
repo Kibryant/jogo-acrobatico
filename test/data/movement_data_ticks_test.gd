@@ -206,6 +206,60 @@ func test_four_dividing_times_at_zero_ticks_at_30_only_give_four_messages() -> v
 		_assert_some_message_names(errors, field)
 
 
+# TASK-10.1, criterion 7: the wait of the stamina (800 ms, movimento.md, "Stamina") becomes
+# ticks at load with the same rule, nearest tick with ties up: 24 at 30 and 48 at 60, exact
+# multiples. The other rows are arithmetic, not design numbers: 825 ms is 24.75 -> 25 at 30 and
+# 49.5 -> 50 at 60 (tie up); 8 ms rounds to 0 at both rates; 17 ms is the smallest 1 tick at both.
+func test_the_stamina_wait_becomes_the_nearest_tick_with_ties_up(
+	ms: int,
+	tickrate: int,
+	expected: int,
+	_test_parameters := [
+		[800, 30, 24],
+		[800, 60, 48],
+		[825, 30, 25],
+		[825, 60, 50],
+		[8, 30, 0],
+		[8, 60, 0],
+		[17, 30, 1],
+		[17, 60, 1],
+	],
+) -> void:
+	var data := _v0_copy_with("stamina_wait_ms", ms)
+	var config := MovementConfig.create(data, tickrate)
+	var message := "stamina_wait_ticks for %d ms at %d ticks must be %d, found %d" % [
+		ms,
+		tickrate,
+		expected,
+		config.stamina_wait_ticks,
+	]
+	assert_int(config.stamina_wait_ticks).override_failure_message(message).is_equal(expected)
+	assert_int(config.stamina_wait_ticks).is_equal(Ticks.from_ms(ms, tickrate))
+
+
+# Nothing divides by the wait (movimento.md, "Stamina": a bar that waits 0 ticks just regains
+# at once), so a wait that rounds to 0 ticks passes, like the two windows of "Perdão".
+func test_a_stamina_wait_that_rounds_to_zero_ticks_is_allowed(
+	ms: int,
+	_test_parameters := [[1], [8], [16]],
+) -> void:
+	var data := _v0_copy_with("stamina_wait_ms", ms)
+	var why := "stamina_wait_ms = %d ms rounds to 0 ticks but nothing divides by it" % ms
+	assert_array(data.validate()).override_failure_message(why).is_empty()
+
+
+func test_the_stamina_wait_at_zero_ticks_adds_no_message_to_the_four() -> void:
+	var data := _v0_copy()
+	for field: String in DIVIDING_TIME_FIELDS:
+		data.set(field, LARGEST_ZERO_TICK_MS_AT_60)
+	data.stamina_wait_ms = LARGEST_ZERO_TICK_MS_AT_60
+	var errors := data.validate()
+	assert_array(errors).has_size(DIVIDING_TIME_FIELDS.size())
+	for message: String in errors:
+		var why := "stamina_wait_ms must not be rejected, got: %s" % message
+		assert_str(message).override_failure_message(why).not_contains("stamina_wait_ms")
+
+
 # The windows add nothing: all six times at 8 ms still give the four messages of the dividing
 # times, none for coyote or buffer.
 func test_the_windows_at_zero_ticks_add_no_message_to_the_four() -> void:

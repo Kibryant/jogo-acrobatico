@@ -16,6 +16,20 @@ const CAPSULE_RADIUS_M := 0.35 # movimento.md, "O corpo"
 const HAIR := 1e-9 # floating-point slack, not a design number
 const HALF_TICK_IN_MS_TIMES_RATE := 500 # |ticks * 1000 - ms * rate| <= 500 is half a tick
 
+# TASK-10.1, criterion 7 (movimento.md, "Pulo e ar" and "Stamina"). The double jump of 1.0 m
+# leaves at 6.10 m/s at 60 ticks and 5.68 at 30, by the same tick formula as the jump
+# (movimento.md, "No tick": sqrt(2 · g · tickrate · h) − g / 2; the plan's 6.096 and 5.678);
+# 800 ms of wait is 24 ticks at 30 and 48 at 60; 30 points per second is 1.0 per tick at 30 and
+# 0.5 at 60.
+const DOUBLE_JUMP_COST := 10.0 # movimento.md, "Pulo e ar": "Custo do pulo duplo"
+const STAMINA_MAX := 100.0 # movimento.md, "Stamina": "Máximo"
+const STAMINA_WAIT_MS := 800 # movimento.md, "Stamina": "Espera para recuperar"
+const STAMINA_REGEN_PER_S := 30.0 # movimento.md, "Stamina": "Recuperação"
+const DOUBLE_JUMP_SPEED_MPS: Dictionary[int, float] = { 30: 5.678, 60: 6.096 }
+const SPEED_TOLERANCE_MPS := 0.01 # the plan's tolerance for the derived speed, not a design number
+const STAMINA_WAIT_TICKS: Dictionary[int, int] = { 30: 24, 60: 48 }
+const STAMINA_REGEN_PER_TICK: Dictionary[int, float] = { 30: 1.0, 60: 0.5 }
+
 
 func _data() -> MovementData:
 	var resource: Resource = load(MOVEMENT_V0)
@@ -112,6 +126,74 @@ func test_the_capsule_is_1_8_m_tall_with_a_0_35_m_radius(
 	var config := MovementConfig.create(_data(), tickrate)
 	assert_float(config.capsule_height).is_equal_approx(CAPSULE_HEIGHT_M, HAIR)
 	assert_float(config.capsule_radius).is_equal_approx(CAPSULE_RADIUS_M, HAIR)
+
+
+# The exit speed of the double jump, derived for the tick like the jump's: lower than the
+# jump's, because its apex is lower (1.0 m against 1.2 m, movimento.md, "Pulo e ar").
+func test_the_double_jump_speed_is_derived_for_the_tick(
+	tickrate: int,
+	_test_parameters := [[30], [60]],
+) -> void:
+	var config := MovementConfig.create(_data(), tickrate)
+	var message := "double_jump_speed at %d ticks is %.4f m/s, the plan says %.3f within %.2f" % [
+		tickrate,
+		config.double_jump_speed,
+		DOUBLE_JUMP_SPEED_MPS[tickrate],
+		SPEED_TOLERANCE_MPS,
+	]
+	assert_float(config.double_jump_speed).override_failure_message(message).is_equal_approx(
+		DOUBLE_JUMP_SPEED_MPS[tickrate],
+		SPEED_TOLERANCE_MPS,
+	)
+	assert_float(config.double_jump_speed).is_less(config.jump_speed)
+
+
+func test_the_double_jump_cost_and_the_stamina_max_are_copied(
+	tickrate: int,
+	_test_parameters := [[30], [60]],
+) -> void:
+	var config := MovementConfig.create(_data(), tickrate)
+	assert_float(config.double_jump_cost).is_equal_approx(DOUBLE_JUMP_COST, HAIR)
+	assert_float(config.stamina_max).is_equal_approx(STAMINA_MAX, HAIR)
+
+
+func test_the_stamina_wait_becomes_48_ticks_at_60_and_24_at_30(
+	tickrate: int,
+	_test_parameters := [[30], [60]],
+) -> void:
+	var data := _data()
+	var config := MovementConfig.create(data, tickrate)
+	assert_int(data.stamina_wait_ms).is_equal(STAMINA_WAIT_MS)
+	_assert_ticks(
+		"stamina_wait_ticks",
+		config.stamina_wait_ticks,
+		STAMINA_WAIT_TICKS[tickrate],
+		tickrate,
+	)
+	assert_int(config.stamina_wait_ticks).is_equal(Ticks.from_ms(data.stamina_wait_ms, tickrate))
+	_assert_half_tick(
+		"stamina_wait_ticks",
+		config.stamina_wait_ticks,
+		data.stamina_wait_ms,
+		tickrate,
+	)
+
+
+func test_the_stamina_regen_is_0_5_per_tick_at_60_and_1_0_at_30(
+	tickrate: int,
+	_test_parameters := [[30], [60]],
+) -> void:
+	var data := _data()
+	var config := MovementConfig.create(data, tickrate)
+	assert_float(data.stamina_regen_per_s).is_equal_approx(STAMINA_REGEN_PER_S, HAIR)
+	assert_float(config.stamina_regen_per_tick).is_equal_approx(
+		STAMINA_REGEN_PER_TICK[tickrate],
+		HAIR,
+	)
+	assert_float(config.stamina_regen_per_tick).is_equal_approx(
+		data.stamina_regen_per_s / tickrate,
+		HAIR,
+	)
 
 
 func _assert_ticks(field: String, actual: int, expected: int, tickrate: int) -> void:

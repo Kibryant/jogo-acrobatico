@@ -29,6 +29,13 @@ albedo_color = Color(0.62, 0.64, 0.66, 1)
 material = SubResource("StandardMaterial3D_x52g8")
 size = Vector3(6, 1, 6)
 
+[sub_resource type="BoxShape3D" id="BoxShape3D_vao2m"]
+size = Vector3(6, 2, 6)
+
+[sub_resource type="BoxMesh" id="BoxMesh_vao2m"]
+material = SubResource("StandardMaterial3D_x52g8")
+size = Vector3(6, 2, 6)
+
 [sub_resource type="BoxShape3D" id="BoxShape3D_ts1j6"]
 size = Vector3(2, 1, 6)
 
@@ -123,22 +130,22 @@ shape = SubResource("BoxShape3D_macxf")
 mesh = SubResource("BoxMesh_gi188")
 
 [node name="PlataformaVaoA" type="StaticBody3D" parent="." unique_id=578453267]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -20, 0.5, 6)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -20, 1, 6)
 
 [node name="Collision" type="CollisionShape3D" parent="PlataformaVaoA" unique_id=855880982]
-shape = SubResource("BoxShape3D_8d55x")
+shape = SubResource("BoxShape3D_vao2m")
 
 [node name="Mesh" type="MeshInstance3D" parent="PlataformaVaoA" unique_id=479545921]
-mesh = SubResource("BoxMesh_8m4co")
+mesh = SubResource("BoxMesh_vao2m")
 
 [node name="PlataformaVaoB" type="StaticBody3D" parent="." unique_id=884688357]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -20, 0.5, -6)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -20, 1, -6)
 
 [node name="Collision" type="CollisionShape3D" parent="PlataformaVaoB" unique_id=305371471]
-shape = SubResource("BoxShape3D_8d55x")
+shape = SubResource("BoxShape3D_vao2m")
 
 [node name="Mesh" type="MeshInstance3D" parent="PlataformaVaoB" unique_id=722796823]
-mesh = SubResource("BoxMesh_8m4co")
+mesh = SubResource("BoxMesh_vao2m")
 
 [node name="SpawnPoints" type="Node3D" parent="." unique_id=1673873680]
 

@@ -5,8 +5,9 @@
 # jump climbs only the 1 m block, but in a row 4 m apart, each 1 m above the last, the blocks make
 # a staircase: a jump 3 to 6 ticks after leaving a block, late in the coyote window, climbs to the
 # next one (F-086; measured in game, docs/mudancas.md, 2026-10-17). West of the spawn points,
-# PlataformaVaoA and PlataformaVaoB, 6 x 6 m and 1 m tall, open a gap of 6 m between z = 3 and
-# z = -3 that only the double jump crosses (TASK-10.2; movimento.md, "Métricas de nível"), on free
+# PlataformaVaoA and PlataformaVaoB, 6 x 6 m and 2 m tall, open a gap of 6 m between z = 3 and
+# z = -3 that only the double jump crosses, and a fall into it costs the climb back by the double
+# jump (TASK-10.2; F-109; movimento.md, "Métricas de nível"), on free
 # floor, away from the reference route and the SyncTest's scenarios. Everything sits on
 # PhysicsLayers.WORLD, Godot's default layer. The floor's top is y = 0, so a spawn point at y = 0
 # stands on it.

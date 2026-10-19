@@ -1,8 +1,8 @@
 # Criterion 4 of TASK-10.2: the two platforms of the 6 m gap (movimento.md, "Métricas de nível"),
-# 6 x 1 x 6 m with their tops at 1 m, stand on free floor of the arena: unique names under Arena,
-# on the world's physics layer, a collision box equal to the mesh, and clear of the other bodies,
-# of the reference route and of the SyncTest's scenarios, so neither the reference nor the
-# SyncTest meets them.
+# 6 x 2 x 6 m with their tops at 2 m (F-109), stand on free floor of the arena: unique names
+# under Arena, on the world's physics layer, a collision box equal to the mesh, and clear of the
+# other bodies, of the reference route and of the SyncTest's scenarios, so neither the reference
+# nor the SyncTest meets them.
 extends GdUnitTestSuite
 
 const ARENA_SCENE := preload("res://arena/arena.tscn")
@@ -10,12 +10,13 @@ const ReferenceRun := preload("res://test/reference/reference_run.gd")
 
 ## Where each platform's centre stands (TASK-10.2, "Números v0 do Claude").
 const GAP_PLATFORMS: Dictionary[String, Vector3] = {
-	"PlataformaVaoA": Vector3(-20, 0.5, 6),
-	"PlataformaVaoB": Vector3(-20, 0.5, -6),
+	"PlataformaVaoA": Vector3(-20, 1, 6),
+	"PlataformaVaoB": Vector3(-20, 1, -6),
 }
-## m: each platform's box, and its top (TASK-10.2).
-const PLATFORM_SIZE := Vector3(6, 1, 6)
-const PLATFORM_TOP := 1.0
+## m: each platform's box, and its top: 2 m, so a fall into the gap costs the climb back by the
+## double jump (TASK-10.2; F-109).
+const PLATFORM_SIZE := Vector3(6, 2, 6)
+const PLATFORM_TOP := 2.0
 ## m: the gap between them, along z: above the ≈ 4.4 m of the jump and the coyote, below the
 ## ≈ 7 m of the double jump (movimento.md, "Métricas de nível").
 const GAP := 6.0
@@ -110,7 +111,7 @@ func test_each_gap_platform_is_a_world_box_whose_collision_matches_its_mesh() ->
 		assert_object(_grey_of(body)).is_same(grey)
 
 
-func test_the_two_platforms_open_a_6_m_gap_with_their_tops_at_1_m() -> void:
+func test_the_two_platforms_open_a_6_m_gap_with_their_tops_at_2_m() -> void:
 	var arena := _arena()
 	var a := _box(_body(arena, "PlataformaVaoA"))
 	var b := _box(_body(arena, "PlataformaVaoB"))

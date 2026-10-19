@@ -147,7 +147,7 @@ Cada número tem uma origem, e nem todos têm a mesma firmeza; a vitrine mostra 
 - **Altura, partindo do chão:** um bloco de 1 m se sobe com o pulo; um de 2 m, com o pulo duplo (alcance de ≈ 2,2 m). Com 3 m ou mais, só pela parede ou pelo gancho.
 - **Escada:** degraus de 1 m com 4 m de vão se sobem só com o pulo, se ele sair de 3 a 6 ticks depois de deixar o degrau, no fim da janela do coyote: o pulo atrasado. Na arena da TASK-9, o Arthur subiu assim os blocos de 1, 2 e 3 m (F-086 §1), e a medição no jogo está no `mudancas.md` (17/10/2026) e na vitrine, seção "A escada dos três blocos".
 - **Parede:** até ≈ 20 m de corrida (2,5 s a 8 m/s).
-- **O vão de 6 m da arena:** `PlataformaVaoA` e `PlataformaVaoB`, de 6 × 1 × 6 m com o topo a 1 m, ficam em x = −20 e deixam 6 m livres entre z = 3 e z = −3. O vão passa do pulo com o coyote (≈ 4,4 + 0,7 m) e fica abaixo do pulo duplo (≈ 7 m): só o pulo duplo cruza. Elas ficam em chão livre, fora do percurso da referência e dos cenários da SyncTest, e um teste de cena prova isso (TASK-10.2).
+- **O vão de 6 m da arena:** `PlataformaVaoA` e `PlataformaVaoB`, de 6 × 2 × 6 m com o topo a 2 m, ficam em x = −20 e deixam 6 m livres entre z = 3 e z = −3. O vão passa do pulo com o coyote (≈ 4,4 + 0,7 m) e fica abaixo do pulo duplo (≈ 7 m): só o pulo duplo cruza. Cair no vão é uma queda de 2 m, e voltar para cima pede o pulo duplo (alcance de ≈ 2,2 m); com 1 m, a queda não custava nada e o vão não se lia (F-108; F-109). Elas ficam em chão livre, fora do percurso da referência e dos cenários da SyncTest, e um teste de cena prova isso (TASK-10.2).
 
 ## O que o esqueleto andante usa (TASK-9)
 

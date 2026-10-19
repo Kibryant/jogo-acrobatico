@@ -4,7 +4,7 @@ title: 'A barra na tela e o vão de 6 m: o HUD, o Theme e as plataformas'
 status: In Progress
 assignee: []
 created_date: '2026-10-19 13:46'
-updated_date: '2026-10-19 17:37'
+updated_date: '2026-10-19 18:07'
 labels:
   - jogo
 milestone: m-1
@@ -29,7 +29,7 @@ Confirmadas pelo Arthur em 19/10/2026 (F-100 §1): o HUD traz o Theme único em 
 ### Números v0 do Claude
 Fechados pelo Claude (DEC-0017); você julga jogando.
 - A barra tem 300 × 12 px na base de 1080p, no canto inferior esquerdo, com o número ao lado e o modo em texto, porque o papel não tem pixel e a DEC-0031 §2 pede texto e forma além da cor; sem stamina para o pulo duplo, o número ganha um traço embaixo (forma, não cor). Vai para o `visual-e-audio.md`.
-- As plataformas: `PlataformaVaoA` em (−20; 0,5; 6) e `PlataformaVaoB` em (−20; 0,5; −6), de 6 × 1 × 6 m, topo a 1 m, com o vão de 6 m entre z = 3 e z = −3, em chão livre, longe dos cenários da SyncTest e do percurso da referência. O vão fica acima do pulo com coyote (≈ 4,4 + 0,7 m) e abaixo do pulo duplo (≈ 7 m). Vai para "Métricas de nível".
+- As plataformas: `PlataformaVaoA` em (−20; 0,5; 6) e `PlataformaVaoB` em (−20; 0,5; −6), de 6 × 2 × 6 m, topo a 2 m (F-109: com 1 m, cair no vão não custava nada e o Arthur não o achou, F-108), com o vão de 6 m entre z = 3 e z = −3, em chão livre, longe dos cenários da SyncTest e do percurso da referência. O vão fica acima do pulo com coyote (≈ 4,4 + 0,7 m) e abaixo do pulo duplo (≈ 7 m). Vai para "Métricas de nível".
 - O HUD só existe com tela: o servidor sem tela não o cria. Vai para a `visao-geral.md`.
 
 ### Fora do escopo
@@ -47,7 +47,7 @@ Fechados pelo Claude (DEC-0017); você julga jogando.
 - [ ] #1 Quando o Sozinho abre com tela, o HUD mostra a stamina como barra (300 × 12 px na base de 1080p, leitura v0 do Claude) e número, e o modo em texto, lidos do estado exibido a cada quadro por `Stamina.at` e nunca de um timer, nada só por cor; com menos de 10 de stamina, o custo do pulo duplo, o número muda de forma; sem tela, nenhum HUD é criado (F-051 §3.4; DEC-0031 §2 e §8; DEC-0022).
 - [ ] #2 Quando a primeira cena de interface nasce, ela usa o Theme único `ui/theme/game_theme.tres`, apontado por `gui/theme/custom` e guardado pelo teste de configurações; os textos da TASK-9 passam a usar o Theme; nenhuma cena de interface carrega fonte ou cor própria (DEC-0031 §8; F-006 §3).
 - [ ] #3 Quando o HUD mostra um texto, ele vem de uma chave de tradução, com pt-BR e en; uma chave sem tradução num dos dois idiomas reprova um teste (DEC-0031 §8).
-- [ ] #4 Quando a arena ganha `PlataformaVaoA` e `PlataformaVaoB` (6 × 1 × 6 m, topo a 1 m, vão de 6 m entre elas), elas ficam em chão livre, fora do percurso da referência e das áreas dos cenários, com nomes únicos sob `Arena` e colisão e malha do mesmo tamanho, e um teste de cena prova isso; os cinco cenários da SyncTest seguem verdes, e a referência mantém o hash `d53a533c…`, ou é regravada com o motivo no commit (F-086 §1; `movimento.md`, "Métricas de nível"; DEC-0027 §2, camada 4).
+- [ ] #4 Quando a arena ganha `PlataformaVaoA` e `PlataformaVaoB` (6 × 2 × 6 m, topo a 2 m, vão de 6 m entre elas; F-109), elas ficam em chão livre, fora do percurso da referência e das áreas dos cenários, com nomes únicos sob `Arena` e colisão e malha do mesmo tamanho, e um teste de cena prova isso; os cinco cenários da SyncTest seguem verdes, e a referência mantém o hash `d53a533c…`, ou é regravada com o motivo no commit (F-086 §1; `movimento.md`, "Métricas de nível"; DEC-0027 §2, camada 4).
 - [ ] #5 Quando o Arthur joga no Sozinho, ele cruza o vão de 6 m só com o pulo duplo, vê a barra cair 10 e encher de novo depois de 0,8 s, e o que ele sentiu vai para uma fonte (F-041; `movimento.md`, "Stamina").
 <!-- AC:END -->
 
@@ -76,7 +76,7 @@ Nenhuma regra nova do núcleo: tudo aqui é cena, interface e arena. Nomes de c�
 
 **As chaves de tradução**: cada texto novo vira uma constante e entra em `GameText.KEYS`, com a mensagem em `ui/translations/pt_BR.po` e `ui/translations/en.po`; um teste reprova uma chave de `KEYS` sem mensagem num dos dois idiomas.
 
-**As plataformas** (`arena/arena.tscn`): `PlataformaVaoA` em (−20; 0,5; 6) e `PlataformaVaoB` em (−20; 0,5; −6), dois `StaticBody3D` na camada `PhysicsLayers.WORLD`, com `BoxShape3D` de 6 × 1 × 6 m e malha do mesmo tamanho, no material cinza dos blocos. Um teste de cena prova os nomes únicos sob `Arena`, a colisão igual à malha e que elas ficam longe do percurso da referência e das áreas dos cenários da SyncTest (as coordenadas estão em `test/fighter/fighter_sync_test.gd` e `test/reference/reference_route.gd`).
+**As plataformas** (`arena/arena.tscn`): `PlataformaVaoA` em (−20; 1; 6) e `PlataformaVaoB` em (−20; 1; −6), dois `StaticBody3D` na camada `PhysicsLayers.WORLD`, com `BoxShape3D` de 6 × 2 × 6 m (o topo a 2 m, F-109) e malha do mesmo tamanho, no material cinza dos blocos. Um teste de cena prova os nomes únicos sob `Arena`, a colisão igual à malha e que elas ficam longe do percurso da referência e das áreas dos cenários da SyncTest (as coordenadas estão em `test/fighter/fighter_sync_test.gd` e `test/reference/reference_route.gd`).
 
 **Os testes do implementer:**
 - `test/ui/hud_test.gd`: um estado com `stamina_spent_tick` marcado mostra a largura e o número certos; abaixo do custo, o traço aparece; o `Match.watch` sem tela não cria HUD.

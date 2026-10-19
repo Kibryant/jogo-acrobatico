@@ -107,3 +107,4 @@ O que chegou ao projeto e como chegou. Uma fonte não muda: só mudam `status`, 
 | [F-101](F-101-plano-aprovado-da-task-10-1.md) | 2026-10-19 | O plano aprovado da TASK-10.1: a vaga do buffer, a posição no `before_move`, a stamina como valor mais carimbo e a SyncTest comparando o estado inteiro, com a salvaguarda de 1 mm |
 | [F-102](F-102-arthur-destrava-o-teste-de-segurar-o-pulo.md) | 2026-10-19 | O Arthur acerta que segurar a tecla é um pulo só e destrava o teste de "segurar o pulo" para o test-writer reescrever |
 | [F-103](F-103-arthur-libera-o-pr-rascunho-da-task-10-1.md) | 2026-10-19 | O Arthur libera subir a branch da TASK-10.1 e abrir o PR rascunho, para o CI provar a referência no Linux |
+| [F-104](F-104-arthur-joga-o-pulo-duplo.md) | 2026-10-19 | O Arthur joga o pulo duplo da TASK-10.1, acha o pulo gostoso, faz parkour e se diverte |

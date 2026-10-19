@@ -1,10 +1,10 @@
 ---
 id: TASK-10.1
 title: 'Pulo duplo e stamina: o primeiro gasto da barra'
-status: In Progress
+status: Done
 assignee: []
 created_date: '2026-10-19 13:45'
-updated_date: '2026-10-19 13:52'
+updated_date: '2026-10-19 15:23'
 labels:
   - jogo
 milestone: m-1
@@ -51,22 +51,22 @@ Fechados pelo Claude (DEC-0017), escritos no `movimento.md` com o seu ok antes d
 
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
-- [ ] #1 Quando o lutador aperta o pulo no ar, fora do coyote, com o pulo duplo ainda não usado no voo e pelo menos 10 de stamina (`double_jump_cost`), o núcleo faz o pulo duplo: o topo fica 1,0 m (`double_jump_height_m`) acima de onde ele apertou, com tolerância de 1 cm, a 30 e a 60 ticks; um segundo aperto no mesmo voo não pula de novo (`movimento.md`, "Pulo e ar"; leitura v0 do pulo duplo no tick).
-- [ ] #2 Quando o lutador já usou o pulo duplo no voo, ou tem menos de 10 de stamina, um aperto no ar espera na vaga e vira o pulo do chão se o pouso vier em até 150 ms (9 ticks a 60, 5 a 30); um tick além da janela não pula; com o pulo duplo disponível, o aperto sai na hora, mesmo a poucos ticks do pouso (`movimento.md`, "Pulo e ar" e "Perdão"; DEC-0016; leitura v0).
-- [ ] #3 Quando o lutador sai da beirada sem pular e aperta dentro dos 100 ms do coyote (6 ticks a 60, 3 a 30), sai o pulo cheio de 1,2 m e o pulo duplo continua disponível; quando aperta depois do coyote, sai o pulo duplo; tocar o chão renova o pulo duplo (`movimento.md`, "Pulo e ar": um por voo; "Perdão").
-- [ ] #4 Quando o pulo duplo sai com uma direção apontada, a velocidade horizontal inteira vira para essa direção, relativa à câmera, com o mesmo módulo; sem direção, ela não muda (`movimento.md`, "Pulo e ar": "Mantém a velocidade horizontal, sem ganhar").
-- [ ] #5 Quando o pulo duplo sai, a stamina cai 10; nos 800 ms seguintes (48 ticks a 60, 24 a 30) ela não recupera nada; depois recupera 30 por segundo (0,5 por tick a 60, 1,0 a 30) até 100, sem passar: vazia, ela enche em 200 ticks a 60 e 100 a 30 depois da espera (≈ 3,3 s de recuperação, 4,1 s contando a espera); com 9,5 de stamina o pulo duplo não sai, nada é pago e o aperto espera na vaga; com 10 exatos, sai e a barra fica em 0 (`movimento.md`, "Stamina").
-- [ ] #6 Quando um novo aperto de pulo chega com um aperto ainda guardado, o novo substitui o antigo: a vaga é uma só e a janela conta do último aperto (`movimento.md`, "Perdão": "Um buffer só, para todo comando"; DEC-0016).
-- [ ] #7 Quando um número novo do `movement_v0.tres` é impossível (altura do pulo duplo zero ou negativa, stamina máxima zero, custo maior que a máxima, espera ou recuperação negativas), a checagem dos dados reprova no portão com uma mensagem por número; quando a altura do pulo duplo muda numa cópia do Resource, o topo muda junto, sem tocar no código (TASK-10, critério 2; DEC-0004, regra 3).
-- [ ] #8 Quando a SyncTest roda o cenário do pulo duplo e o do pouso com o rollback de 7 ticks a cada tick, ela compara todos os campos gravados (inteiros, booleanos e nomes exatos; floats, vetores e a posição até 1e-6) e acha zero divergências; o cenário conta pelo menos 3 pulos duplos, 1 depois da beirada, 1 recusado por stamina e os 2 pulos guardados do pouso; esconder `:state:stamina_at_spend` ou `:state:double_jump_tick` da gravação faz ela acusar; a referência da TASK-9 é regravada com o motivo no commit, porque o aperto no ar do passo 513 do percurso passa a ser um pulo duplo, e o `frozen_movement.tres` ganha os números novos de propósito; o tempo do portão em silêncio fica anotado contra os 90 s (`rede.md` §8; DEC-0027 §1 e §3; F-094 §2).
+- [x] #1 Quando o lutador aperta o pulo no ar, fora do coyote, com o pulo duplo ainda não usado no voo e pelo menos 10 de stamina (`double_jump_cost`), o núcleo faz o pulo duplo: o topo fica 1,0 m (`double_jump_height_m`) acima de onde ele apertou, com tolerância de 1 cm, a 30 e a 60 ticks; um segundo aperto no mesmo voo não pula de novo (`movimento.md`, "Pulo e ar"; leitura v0 do pulo duplo no tick).
+- [x] #2 Quando o lutador já usou o pulo duplo no voo, ou tem menos de 10 de stamina, um aperto no ar espera na vaga e vira o pulo do chão se o pouso vier em até 150 ms (9 ticks a 60, 5 a 30); um tick além da janela não pula; com o pulo duplo disponível, o aperto sai na hora, mesmo a poucos ticks do pouso (`movimento.md`, "Pulo e ar" e "Perdão"; DEC-0016; leitura v0).
+- [x] #3 Quando o lutador sai da beirada sem pular e aperta dentro dos 100 ms do coyote (6 ticks a 60, 3 a 30), sai o pulo cheio de 1,2 m e o pulo duplo continua disponível; quando aperta depois do coyote, sai o pulo duplo; tocar o chão renova o pulo duplo (`movimento.md`, "Pulo e ar": um por voo; "Perdão").
+- [x] #4 Quando o pulo duplo sai com uma direção apontada, a velocidade horizontal inteira vira para essa direção, relativa à câmera, com o mesmo módulo; sem direção, ela não muda (`movimento.md`, "Pulo e ar": "Mantém a velocidade horizontal, sem ganhar").
+- [x] #5 Quando o pulo duplo sai, a stamina cai 10; nos 800 ms seguintes (48 ticks a 60, 24 a 30) ela não recupera nada; depois recupera 30 por segundo (0,5 por tick a 60, 1,0 a 30) até 100, sem passar: vazia, ela enche em 200 ticks a 60 e 100 a 30 depois da espera (≈ 3,3 s de recuperação, 4,1 s contando a espera); com 9,5 de stamina o pulo duplo não sai, nada é pago e o aperto espera na vaga; com 10 exatos, sai e a barra fica em 0 (`movimento.md`, "Stamina").
+- [x] #6 Quando um novo aperto de pulo chega com um aperto ainda guardado, o novo substitui o antigo: a vaga é uma só e a janela conta do último aperto (`movimento.md`, "Perdão": "Um buffer só, para todo comando"; DEC-0016).
+- [x] #7 Quando um número novo do `movement_v0.tres` é impossível (altura do pulo duplo zero ou negativa, stamina máxima zero, custo maior que a máxima, espera ou recuperação negativas), a checagem dos dados reprova no portão com uma mensagem por número; quando a altura do pulo duplo muda numa cópia do Resource, o topo muda junto, sem tocar no código (TASK-10, critério 2; DEC-0004, regra 3).
+- [x] #8 Quando a SyncTest roda o cenário do pulo duplo e o do pouso com o rollback de 7 ticks a cada tick, ela compara todos os campos gravados (inteiros, booleanos e nomes exatos; floats, vetores e a posição até 1e-6) e acha zero divergências; o cenário conta pelo menos 3 pulos duplos, 1 depois da beirada, 1 recusado por stamina e os 2 pulos guardados do pouso; esconder `:state:stamina_at_spend` ou `:state:double_jump_tick` da gravação faz ela acusar; a referência da TASK-9 é regravada com o motivo no commit, porque o aperto no ar do passo 513 do percurso passa a ser um pulo duplo, e o `frozen_movement.tres` ganha os números novos de propósito; o tempo do portão em silêncio fica anotado contra os 90 s (`rede.md` §8; DEC-0027 §1 e §3; F-094 §2).
 <!-- AC:END -->
 
 ## Definition of Done
 <!-- DOD:BEGIN -->
-- [ ] #1 Critérios de aceite verificados
-- [ ] #2 Teste automatizado para toda regra do núcleo (core/)
-- [ ] #3 Diário da sessão escrito e glossário atualizado
-- [ ] #4 Mudanças registradas em docs/mudancas.md
+- [x] #1 Critérios de aceite verificados
+- [x] #2 Teste automatizado para toda regra do núcleo (core/)
+- [x] #3 Diário da sessão escrito e glossário atualizado
+- [x] #4 Mudanças registradas em docs/mudancas.md
 <!-- DOD:END -->
 
 ## Implementation Plan
@@ -145,3 +145,9 @@ Subir o bloco de 2 m direto, com pulo e pulo duplo; apertar a poucos ticks do po
 ## Docs a atualizar
 Com o seu ok em modo de plano e uma linha no `mudancas.md` cada: `movimento.md` (as linhas do pulo duplo e da stamina; as leituras v0 em "Pulo e ar", "Stamina" e "Perdão"); `glossario.md` (Voo, Custo, Espera para recuperar, Recuperação, Stamina no último gasto, Vaga do buffer); `rede.md` §4 e §8 (estado inteiro até 1e-6; a rede em 1 mm); `visao-geral.md` (a vaga, o par da stamina, `double_jump_tick`, `before_move(position)`); `testes-e-entrega.md` (o observador, o tempo do portão); DEC-0039 com `substitui: DEC-0022` e a linha de aviso na DEC-0022; a vitrine "pulo duplo em ticks" (DEC-0019); o diário e o `registro.md`.
 <!-- SECTION:NOTES:END -->
+
+## Final Summary
+
+<!-- SECTION:FINAL_SUMMARY:BEGIN -->
+O pulo duplo (um por voo, 1,0 m, 6,10 m/s no tick), a stamina como valor mais carimbo (custo 10, 800 ms de espera, 30 por segundo) e a vaga do buffer da DEC-0039 estão no núcleo, com os testes de aceite escritos antes e travados. A SyncTest compara o estado inteiro, com erro zero nos cinco cenários e três venenos; a referência foi regravada e deu o mesmo hash no Linux do CI. O revisor aprovou os oito critérios; o portão levou 78 s em silêncio. O Arthur jogou e gostou do pulo (F-104). PR #9.
+<!-- SECTION:FINAL_SUMMARY:END -->

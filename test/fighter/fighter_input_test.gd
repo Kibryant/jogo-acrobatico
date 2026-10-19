@@ -9,6 +9,8 @@ const MATCH_SCENE := preload("res://match/match.tscn")
 const HAIR := 1e-9 # floating-point slack, not a design number
 const FORWARD := Vector2(0, 1)
 
+var _game_match: Match
+
 
 func before_test() -> void:
 	NetfoxTicks.reset()
@@ -21,13 +23,31 @@ func after_test() -> void:
 func _fighter_in_a_match() -> Fighter:
 	var node := MATCH_SCENE.instantiate()
 	assert(node is Match, "match.tscn must have a Match at its root")
-	var game_match: Match = auto_free(node)
-	add_child(game_match)
-	var fighter := game_match.spawn_fighter(0, multiplayer.get_unique_id())
+	_game_match = auto_free(node)
+	add_child(_game_match)
+	var fighter := _game_match.spawn_fighter(0, multiplayer.get_unique_id())
 	# netfox's deferred setup, then ticks inside a physics frame (test/support/netfox_ticks.gd).
 	await get_tree().process_frame
 	await get_tree().physics_frame
 	return fighter
+
+
+# The fighter this PC plays: the match puts its camera on it and the keyboard on its input
+# (Match.watch), which is what makes FighterInput read the devices. Still inside the physics frame.
+func _fighter_at_the_keyboard() -> Fighter:
+	var fighter := await _fighter_in_a_match()
+	_game_match.watch(fighter)
+	return fighter
+
+
+# The jump key as the operating system reports it: the InputMap's jump action is the physical
+# space key, keycode 32 (project.godot, [input]); echo marks the key repeat of a held key.
+static func _jump_key(echo: bool) -> InputEventKey:
+	var event := InputEventKey.new()
+	event.physical_keycode = KEY_SPACE
+	event.pressed = true
+	event.echo = echo
+	return event
 
 
 func test_the_tick_input_is_the_mean_move_and_the_last_yaw_of_the_frames() -> void:
@@ -44,8 +64,8 @@ func test_the_tick_input_is_the_mean_move_and_the_last_yaw_of_the_frames() -> vo
 
 
 # Pressed once, the jump leaves the floor on the first tick of the frame, and the second tick of
-# the same frame finds it taken: a press left over there would be stamped as a new one, waiting
-# in the buffer (Movement.before_move).
+# the same frame finds it taken: a press left over there would take the slot of the buffer as a
+# new one and fire the double jump (Movement.before_move; DEC-0039).
 func test_a_jump_press_counts_for_one_tick_when_a_frame_runs_two() -> void:
 	var fighter := await _fighter_in_a_match()
 	NetfoxTicks.run_loops(3)
@@ -53,7 +73,8 @@ func test_a_jump_press_counts_for_one_tick_when_a_frame_runs_two() -> void:
 	NetfoxTicks.run_loop(2)
 	assert_int(fighter.state.jumps_used).is_equal(1)
 	assert_int(fighter.state.mode).is_equal(FighterState.Mode.AIR)
-	assert_int(fighter.state.jump_pressed_tick).is_equal(FighterState.NEVER)
+	assert_str(String(fighter.state.buffered_command)).is_equal(String(FighterCommand.NONE))
+	assert_int(fighter.state.buffered_tick).is_equal(FighterState.NEVER)
 	assert_float(fighter.position.y).is_greater(0.0)
 
 
@@ -64,8 +85,39 @@ func test_a_jump_press_counts_for_one_tick_in_frames_of_one_tick() -> void:
 	NetfoxTicks.run_loop()
 	assert_int(fighter.state.jumps_used).is_equal(1)
 	NetfoxTicks.run_loop()
-	assert_int(fighter.state.jump_pressed_tick).is_equal(FighterState.NEVER)
+	assert_str(String(fighter.state.buffered_command)).is_equal(String(FighterCommand.NONE))
+	assert_int(fighter.state.buffered_tick).is_equal(FighterState.NEVER)
 	assert_bool(fighter.input.to_tick_input().jump).is_false()
+
+
+# Holding the jump key is one press (F-102 §1): the operating system repeats a held key as
+# InputEventKey events with echo = true, and those echoes are not new presses, so a press followed
+# by its echoes is one jump and no double jump. The events go through the viewport, the way the
+# window delivers them; a second real press in the air is the double jump (movimento.md, "Pulo e
+# ar"), which proves the path reaches the fighter and only the echo is ignored.
+func test_the_key_repeat_of_a_held_jump_key_is_not_a_second_press() -> void:
+	var fighter := await _fighter_at_the_keyboard()
+	NetfoxTicks.run_loops(3)
+	get_viewport().push_input(_jump_key(false))
+	NetfoxTicks.run_loop()
+	assert_int(fighter.state.jumps_used) \
+			.override_failure_message("the press through the viewport did not jump") \
+			.is_equal(1)
+	for _echo: int in 5:
+		get_viewport().push_input(_jump_key(true))
+		NetfoxTicks.run_loop()
+	assert_int(fighter.state.jumps_used) \
+			.override_failure_message("a key repeat counted as a second press") \
+			.is_equal(1)
+	assert_int(fighter.state.double_jump_tick).is_equal(FighterState.NEVER)
+	assert_str(String(fighter.state.buffered_command)).is_equal(String(FighterCommand.NONE))
+	assert_int(fighter.state.buffered_tick).is_equal(FighterState.NEVER)
+	assert_bool(fighter.input.to_tick_input().jump).is_false()
+	get_viewport().push_input(_jump_key(false))
+	NetfoxTicks.run_loop()
+	assert_int(fighter.state.jumps_used) \
+			.override_failure_message("a second real press in the air must be the double jump") \
+			.is_equal(2)
 
 
 # No press, no jump: the fighter stays on the floor through frames of two ticks.

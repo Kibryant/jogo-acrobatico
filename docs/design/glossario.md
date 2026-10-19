@@ -21,7 +21,7 @@ A linguagem ubíqua do jogo (DEC-0004, regra 5): o mesmo termo na conversa, no d
 | Estado do lutador | A caixa de regras do lutador: modo, carimbos e pulos usados. O netfox grava campo a campo, por valor | — | `FighterState` |
 | Modo | Em que situação o lutador está: no chão ou no ar e, na fase 1, na parede, no dash ou no gancho. Um por vez, com o tick em que começou | — | `mode`, `mode_since` |
 | Ação | O segundo modo, paralelo ao do movimento: o que o lutador faz com as mãos, como preparar um golpe ou bloquear. Fase 2 | — | `action`, `action_since` |
-| Carimbo de tick | O tick em que algo aconteceu, guardado no estado no lugar de uma contagem regressiva, como o "flash 12:30" no chat do LoL | tick | `*_tick`, como `jump_pressed_tick` |
+| Carimbo de tick | O tick em que algo aconteceu, guardado no estado no lugar de uma contagem regressiva, como o "flash 12:30" no chat do LoL | tick | `*_tick`, como `buffered_tick` e `stamina_spent_tick` |
 | Sanduíche do tick | O tick do lutador em três fatias: o núcleo decide, o motor move e colide, o núcleo confere | — | `before_move`, `move_and_slide`, `after_move` |
 | Plano do movimento | O que a primeira fatia do sanduíche devolve: o estado novo e a velocidade que o núcleo pede ao motor | — | `MovePlan` |
 | Fatos do movimento | O que o motor devolve depois de mover: se terminou no chão, a velocidade depois da colisão e, na fase 1, a parede | — | `MoveFacts` |
@@ -113,6 +113,12 @@ A linguagem ubíqua do jogo (DEC-0004, regra 5): o mesmo termo na conversa, no d
 | Snap do chão | O puxão do motor que, depois de mover, cola o corpo num chão que desce. Cobre a descida da rampa de 45° a 7 m/s: 0,121 m por tick a 60 | m | `floor_snap_length` |
 | Conservação de velocidade | A velocidade que passa de uma manobra para a outra | m/s | `momentum` |
 | Recarga | O tempo até uma manobra poder ser usada de novo | ms no design, ticks no código | `cooldown` |
+| Voo | Do momento em que o lutador sai do chão até tocar o chão de novo; começar uma corrida na parede abre um voo novo para o pulo duplo | — | `jumps_used`, `double_jump_tick` |
+| Custo | Quanto de stamina uma manobra gasta ao começar | pontos | `double_jump_cost`, `dash_cost` |
+| Espera para recuperar | O tempo sem gastar antes de a stamina voltar a subir | ms no design, ticks no código | `stamina_wait_ms` |
+| Recuperação | Quantos pontos por segundo a stamina volta depois da espera | pontos/s | `stamina_regen_per_s` |
+| Stamina no último gasto | O valor da barra logo depois do último gasto; com o carimbo do gasto, a barra se calcula pelo tick, sem contador | pontos | `stamina_at_spend`, `stamina_spent_tick` |
+| Vaga do buffer | O único lugar onde um comando apertado antes da hora espera; o último aperto ocupa a vaga (DEC-0039) | ticks | `buffered_command`, `buffered_tick` |
 
 ## Desenho
 

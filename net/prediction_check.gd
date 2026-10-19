@@ -1,13 +1,15 @@
 # Criterion 12 of TASK-9: whether the server confirmed what a client predicted for its own fighter
 # (DEC-0026 §2; rede.md §5). For each tick both computed, the client's first result is held
-# against the server's last one with the SyncTest's tolerance (rede.md §4): the position within
-# 1 mm, on_floor and mode equal. A tick that differs is one the server corrected: the player saw
-# the fighter in one place, and then the rollback moved it to another.
+# against the server's last one: the position within 1 mm, on_floor and mode equal (rede.md §4).
+# A tick that differs is one the server corrected: the player saw the fighter in one place, and
+# then the rollback moved it to another. The SyncTest of TASK-9 judged with the same 1 mm; since
+# TASK-10.1 it compares the whole state, to 1 µm, inside one process, and this check between two
+# processes keeps its 1 mm (F-101 §1).
 # Every tick from the client's first to its last counts; none is left out as a warm-up.
 class_name PredictionCheck
 extends RefCounted
 
-## m: the SyncTest's tolerance (rede.md §4).
+## m: how far the client's position may be from the server's (rede.md §4; F-101 §1).
 const TOLERANCE := 0.001
 ## How many corrected or missing ticks the summary describes.
 const SHOWN := 5
@@ -75,7 +77,7 @@ func _init(prediction: TickRecord, confirmation: TickRecord) -> void:
 			_miss(tick, "the server confirmed a tick the client never predicted")
 
 
-# The SyncTest's verdict (rede.md §4): the same position within 1 mm, the same floor and mode.
+# The verdict on one tick (rede.md §4): the same position within 1 mm, the same floor and mode.
 static func same(first: TickRecord.Sample, second: TickRecord.Sample) -> bool:
 	var close := first.position.distance_to(second.position) <= TOLERANCE
 	return close and first.on_floor == second.on_floor and first.mode == second.mode

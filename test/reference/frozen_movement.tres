@@ -4,7 +4,9 @@
 ; numbers of data/movement_v0.tres on 2026-10-18, which the reference never reads. Tuning the game
 ; changes movement_v0.tres and leaves the reference alone; only a code change moves its path.
 ; Change a number here only together with the code that needs it, and record the trace again
-; (bash tools/record_reference.sh), saying why in the commit message.
+; (bash tools/record_reference.sh), saying why in the commit message. The five numbers of the
+; double jump and the stamina came on purpose with the code that reads them, on 2026-10-19
+; (TASK-10.1, criterion 8).
 
 [ext_resource type="Script" path="res://data/movement_data.gd" id="1_yx5js"]
 
@@ -23,3 +25,8 @@ air_control_pct = 25.0
 max_fall_speed_mps = 30.0
 coyote_ms = 100
 buffer_ms = 150
+double_jump_height_m = 1.0
+double_jump_cost = 10.0
+stamina_max = 100.0
+stamina_wait_ms = 800
+stamina_regen_per_s = 30.0

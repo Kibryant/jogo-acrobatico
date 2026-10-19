@@ -2,8 +2,9 @@
 # sanduíche"): the core decides in Movement.before_move, this rig moves the body by
 # plan.velocity / tickrate against a flat floor at y = 0 and reports the MoveFacts, and the core
 # confers in Movement.after_move. No node and no physics engine (DEC-0004, rule 4): only the
-# public interface of core/fighter agreed in the TASK-9 plan. A ledge is the floor switched off:
-# the body then falls into the void, as off the edge of the arena.
+# public interface of core/fighter agreed in the TASK-9 and TASK-10.1 plans (DEC-0039: the
+# before_move receives the position, and the buffer is one slot). A ledge is the floor switched
+# off: the body then falls into the void, as off the edge of the arena.
 extends RefCounted
 
 const MOVEMENT_V0 := "res://data/movement_v0.tres"
@@ -23,7 +24,8 @@ var last_plan: MovePlan
 var last_facts: MoveFacts
 
 
-# A fighter at rest on the floor at first_tick, set field by field from the agreed interface.
+# A fighter at rest on the floor at first_tick, set field by field from the agreed interface:
+# an empty slot, no jump used, a bar never spent (TASK-10.1 plan).
 func _init(movement_config: MovementConfig, first_tick: int) -> void:
 	config = movement_config
 	tick = first_tick
@@ -32,9 +34,13 @@ func _init(movement_config: MovementConfig, first_tick: int) -> void:
 	state.mode_since = first_tick
 	state.on_floor = true
 	state.left_floor_tick = FighterState.NEVER
-	state.jump_pressed_tick = FighterState.NEVER
+	state.buffered_command = FighterCommand.NONE
+	state.buffered_tick = FighterState.NEVER
 	state.jumps_used = 0
 	state.facing_yaw = 0.0
+	state.stamina_at_spend = 0.0
+	state.stamina_spent_tick = FighterState.NEVER
+	state.double_jump_tick = FighterState.NEVER
 
 
 # The numbers of movement_v0.tres as the configuration of one tickrate, the way the Match makes
@@ -52,9 +58,15 @@ static func idle() -> TickInput:
 	return run(Vector2.ZERO)
 
 
-# The one-tick touch of the jump (TickInput.jump).
+# The one-tick touch of the jump (TickInput.jump), with no direction pointed.
 static func press_jump() -> TickInput:
-	var input := run(Vector2.ZERO)
+	return press_jump_toward(Vector2.ZERO)
+
+
+# The one-tick touch of the jump while pointing a direction: move.x goes right and move.y
+# forward, relative to yaw (TASK-9 plan).
+static func press_jump_toward(move: Vector2, yaw := 0.0) -> TickInput:
+	var input := run(move, yaw)
 	input.jump = true
 	return input
 
@@ -70,7 +82,7 @@ static func run(move: Vector2, yaw := 0.0) -> TickInput:
 
 # One tick of the sandwich. Returns the core's plan, also kept in last_plan.
 func step(input: TickInput) -> MovePlan:
-	var plan := Movement.before_move(state, velocity, input, config, tick)
+	var plan := Movement.before_move(state, position, velocity, input, config, tick)
 	var next := position + plan.velocity / float(config.tickrate)
 	var facts := MoveFacts.new()
 	if floor_on and plan.velocity.y <= 0.0 and next.y <= LANDING_HAIR:
@@ -96,3 +108,13 @@ func rest(ticks: int) -> void:
 
 func horizontal_speed() -> float:
 	return Vector2(velocity.x, velocity.z).length()
+
+
+func horizontal_velocity() -> Vector3:
+	return Vector3(velocity.x, 0.0, velocity.z)
+
+
+# The bar as the next tick to simulate reads it (movimento.md, "Stamina": the bar is computed
+# from the tick, never counted).
+func stamina() -> float:
+	return Stamina.at(state, config, tick)

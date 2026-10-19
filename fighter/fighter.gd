@@ -110,7 +110,8 @@ func _process(_delta: float) -> void:
 # The tick sandwich (visao-geral.md, "O tick por dentro"): netfox has restored the state and the
 # input of this tick, and the contours have run.
 func _rollback_tick(_delta: float, tick: int, _is_fresh: bool) -> void:
-	var plan := Movement.before_move(state, velocity, input.to_tick_input(), config, tick)
+	var tick_input := input.to_tick_input()
+	var plan := Movement.before_move(state, global_position, velocity, tick_input, config, tick)
 	# move_and_slide() moves by velocity times the frame's delta, and a tick is not a frame:
 	# physics_factor turns the move into exactly one tick (netfox's rollback-caveats.md). The
 	# velocity is divided back, so the state keeps m/s.

@@ -47,6 +47,7 @@
 | [DEC-0036](DEC-0036-fase-de-desenho-fechada-um-desenho-por-fase.md) | 2026-10-10 | A fase de desenho fechou: nenhum desenho de base novo; o desenho de jogo acontece um por fase, na abertura da fase, com a lista nomeada; o que aparecer no meio vira Q | aceita; completa a DEC-0012 e fecha a pergunta da F-035 e da F-082 |
 | [DEC-0037](DEC-0037-snap-de-reserva-do-contorno-d.md) | 2026-10-17 | O snap de reserva do contorno D: quando a sonda não acha o chão que o estado diz, o lutador chama o snap do motor | aceita; completa a DEC-0025 §2 |
 | [DEC-0038](DEC-0038-sessao-de-teste-com-o-simulador.md) | 2026-10-18 | A sessão de teste com o simulador de lag: um `override.cfg` temporário liga a conexão automática do netfox, e a `Main` usa a conexão do simulador | aceita; completa a DEC-0023 §7 |
+| [DEC-0039](DEC-0039-vaga-do-buffer-posicao-no-before-move-e-janela-inclusiva.md) | 2026-10-19 | A vaga do buffer, a posição no `before_move` e a janela inclusiva: a DEC-0022 muda só nisso | aceita; substitui a DEC-0022 só nisso (F-100 §1) |
 
 ## Propostas — ainda não são regra
 
@@ -62,3 +63,4 @@ Nenhuma proposta aberta.
 | [DEC-0004](DEC-0004-arquitetura-nucleo-puro-e-ddd-estrategico.md) | Só a frase "Som e VFX só tocam em tick novo, nunca na re-simulação" da regra 2. O resto da regra 2 e as outras regras continuam valendo | [DEC-0031](DEC-0031-tokens-de-leitura-e-base-da-interface.md) | 2026-10-08 |
 | [DEC-0026](DEC-0026-a-rede.md) | Só a frase do §2 que dá o atraso de visão pelo `get_last_known_state()`. O resto continua valendo | [DEC-0031](DEC-0031-tokens-de-leitura-e-base-da-interface.md) | 2026-10-08 |
 | [DEC-0028](DEC-0028-builds-versoes-e-fluxo-de-branch.md) | Só a frase "O push na main não gera build" do §2. O resto continua valendo | [DEC-0032](DEC-0032-hospedagem-do-servidor.md) | 2026-10-10 |
+| [DEC-0022](DEC-0022-arquitetura-detalhada.md) | Só o `jump_pressed_tick` como carimbo do buffer, a assinatura `before_move(state, velocity, input, config, tick)` e a janela estrita do buffer. O resto continua valendo | [DEC-0039](DEC-0039-vaga-do-buffer-posicao-no-before-move-e-janela-inclusiva.md) | 2026-10-19 |

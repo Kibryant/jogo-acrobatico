@@ -28,8 +28,9 @@ const FORWARD_RIGHT := Vector2(1, 1)
 const BACK_LEFT := Vector2(-1, -1)
 const BACK_RIGHT := Vector2(1, -1)
 
-# From each step on, the move held until the next entry. The comments say what the body does, as
-# recorded on 2026-10-18 with the frozen numbers (frozen_movement.tres).
+# From each step on, the move held until the next entry. The comments say what the body does with
+# the frozen numbers (frozen_movement.tres), as recorded on 2026-10-18 and again on 2026-10-19,
+# when the double jump came in (TASK-10.1): the path is the same up to step 499.
 const MOVES: Dictionary[int, Vector2] = {
 	0: STAND, # rests at the spawn point
 	20: FORWARD, # runs to 7 m/s
@@ -41,11 +42,13 @@ const MOVES: Dictionary[int, Vector2] = {
 	300: FORWARD, # toward the 1 m block; jumps at 360 and lands on it at 387
 	390: STAND, # stops on the 1 m block
 	405: RIGHT, # off its east edge at 421: the staircase jump at 425 lands on the 2 m block at 452
-	466: STAND, # stops on the 2 m block; hops at 480, presses again in the air at 513, and the
-	# buffer jumps at 519, on the first tick back on the block
-	560: BACK, # runs off the 2 m block at 579, without a jump, and lands on the floor at 600
+	466: STAND, # stops on the 2 m block; hops at 480 and double-jumps at the apex, at 500; the
+	# press at 537 waits in the slot, the double jump spent, and the buffer jumps at 543, on the
+	# first tick after landing back on the block at 542
+	560: BACK, # in the air of that jump, the air control pulls back; lands on the block at 581,
+	# runs off it at 590, without a jump, and lands on the floor at 612
 	600: BACK_LEFT,
-	640: BACK, # west of the platform, to z 5.4
+	640: BACK, # west of the platform, to z 4.3
 	715: RIGHT,
 	785: LEFT, # turns around at full speed; jumps at 835 while running
 	850: FORWARD_LEFT, # turns in the air, with air control; lands at 873
@@ -58,8 +61,9 @@ const MOVES: Dictionary[int, Vector2] = {
 	1160: STAND, # stops and rests to the end
 }
 
-# The steps that press jump, one tick each.
-const JUMPS: Array[int] = [146, 239, 360, 425, 480, 513, 835]
+# The steps that press jump, one tick each: on the floor, in the coyote window, at the apex for the
+# double jump (500), and in the air with the double jump spent, for the buffer (537).
+const JUMPS: Array[int] = [146, 239, 360, 425, 480, 500, 537, 835]
 
 
 # Where the bot pushes on step (x right, y forward): the move of the last entry at or before it.

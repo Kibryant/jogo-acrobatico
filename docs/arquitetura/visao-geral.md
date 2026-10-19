@@ -180,7 +180,7 @@ flowchart TB
   match --> hud["Hud<br/>só com tela: a stamina e o modo"]
 ```
 
-O **HUD** só existe com tela. O `Match.watch` o cria para o lutador de quem joga quando o `DisplayServer` não é o `headless`, a mesma conferência da `Main`; o servidor dedicado e as rodadas sem tela, como o portão, nunca o criam. A cada quadro ele lê o estado exibido e o tick do netfox e calcula a barra pelo `Stamina.at`, sem timer próprio, então um rollback que reescreve o estado reescreve a barra junto (DEC-0031 §2; TASK-10.2).
+O **HUD** só existe com tela. O `Match.watch` o cria para o lutador de quem joga quando o `DisplayServer` não é o `headless`, a mesma conferência da `Main`; o servidor dedicado e as rodadas sem tela, como o portão, nunca o criam. A cada quadro ele lê o estado exibido e o tick do netfox e calcula a barra pelo `Stamina.at`, sem timer próprio, então um rollback que reescreve o estado reescreve a barra junto (F-051 §3.4; TASK-10.2).
 
 Os caminhos do netfox, como `Input:jump` e `:state:mode`, seguem a árvore de cena, como as rotas de uma API. Mudar a árvore depois quebra todas as rotas juntas; por isso a árvore se decide agora.
 

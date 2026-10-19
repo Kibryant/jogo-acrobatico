@@ -4,7 +4,7 @@ title: 'A barra na tela e o vão de 6 m: o HUD, o Theme e as plataformas'
 status: In Progress
 assignee: []
 created_date: '2026-10-19 13:46'
-updated_date: '2026-10-19 16:55'
+updated_date: '2026-10-19 17:37'
 labels:
   - jogo
 milestone: m-1
@@ -18,7 +18,7 @@ ordinal: 13000
 
 <!-- SECTION:DESCRIPTION:BEGIN -->
 ### Por quê
-A stamina da TASK-10.1 existe só no estado; o jogador precisa vê-la para decidir o próximo pulo, e o HUD é lido do estado, nunca de um timer, sem informação só por cor (DEC-0031 §2). A primeira cena de interface traz o Theme único e as chaves de tradução (DEC-0031 §8), que a TASK-9 adiou de propósito; a tela de opções é a TASK-10.9, antes da v0.2.0 (F-100 §1). As duas plataformas abrem o vão de 6 m, que só o pulo duplo cruza ("Métricas de nível": acima dos ≈ 4,4 m do pulo, mais o coyote, e abaixo dos ≈ 7 m do pulo duplo). Esta filha saiu da TASK-10.1 para cada sessão caber no tamanho da TASK-9: lá as regras e a SyncTest, aqui a tela e a arena. A referência já ganhou o pulo duplo na TASK-10.1. Nenhuma regra nova do núcleo: o test-writer não roda (DEC-0009).
+A stamina da TASK-10.1 existe só no estado; o jogador precisa vê-la para decidir o próximo pulo, e o HUD é lido do estado, nunca de um timer (F-051 §3.4), sem informação só por cor (DEC-0031 §2). A primeira cena de interface traz o Theme único e as chaves de tradução (DEC-0031 §8), que a TASK-9 adiou de propósito; a tela de opções é a TASK-10.9, antes da v0.2.0 (F-100 §1). As duas plataformas abrem o vão de 6 m, que só o pulo duplo cruza ("Métricas de nível": acima dos ≈ 4,4 m do pulo, mais o coyote, e abaixo dos ≈ 7 m do pulo duplo). Esta filha saiu da TASK-10.1 para cada sessão caber no tamanho da TASK-9: lá as regras e a SyncTest, aqui a tela e a arena. A referência já ganhou o pulo duplo na TASK-10.1. Nenhuma regra nova do núcleo: o test-writer não roda (DEC-0009).
 
 ### Perguntas em aberto
 Nenhuma.
@@ -44,7 +44,7 @@ Fechados pelo Claude (DEC-0017); você julga jogando.
 
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
-- [ ] #1 Quando o Sozinho abre com tela, o HUD mostra a stamina como barra (300 × 12 px na base de 1080p, leitura v0 do Claude) e número, e o modo em texto, lidos do estado exibido a cada quadro por `Stamina.at` e nunca de um timer, nada só por cor; com menos de 10 de stamina, o custo do pulo duplo, o número muda de forma; sem tela, nenhum HUD é criado (DEC-0031 §2 e §8; DEC-0022).
+- [ ] #1 Quando o Sozinho abre com tela, o HUD mostra a stamina como barra (300 × 12 px na base de 1080p, leitura v0 do Claude) e número, e o modo em texto, lidos do estado exibido a cada quadro por `Stamina.at` e nunca de um timer, nada só por cor; com menos de 10 de stamina, o custo do pulo duplo, o número muda de forma; sem tela, nenhum HUD é criado (F-051 §3.4; DEC-0031 §2 e §8; DEC-0022).
 - [ ] #2 Quando a primeira cena de interface nasce, ela usa o Theme único `ui/theme/game_theme.tres`, apontado por `gui/theme/custom` e guardado pelo teste de configurações; os textos da TASK-9 passam a usar o Theme; nenhuma cena de interface carrega fonte ou cor própria (DEC-0031 §8; F-006 §3).
 - [ ] #3 Quando o HUD mostra um texto, ele vem de uma chave de tradução, com pt-BR e en; uma chave sem tradução num dos dois idiomas reprova um teste (DEC-0031 §8).
 - [ ] #4 Quando a arena ganha `PlataformaVaoA` e `PlataformaVaoB` (6 × 1 × 6 m, topo a 1 m, vão de 6 m entre elas), elas ficam em chão livre, fora do percurso da referência e das áreas dos cenários, com nomes únicos sob `Arena` e colisão e malha do mesmo tamanho, e um teste de cena prova isso; os cinco cenários da SyncTest seguem verdes, e a referência mantém o hash `d53a533c…`, ou é regravada com o motivo no commit (F-086 §1; `movimento.md`, "Métricas de nível"; DEC-0027 §2, camada 4).

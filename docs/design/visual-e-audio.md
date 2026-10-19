@@ -160,7 +160,7 @@ Som e efeito tocam uma vez por evento, pela chave (nó, tipo, id), quando o even
 
 | O quê | Como | Fonte |
 |---|---|---|
-| O Theme | Um só, em `gui/theme/custom`, criado com a primeira cena de interface, o HUD: `ui/theme/game_theme.tres`; tipos como seletores, itens como propriedades, variações como classes | F-051 §3.1 e §3.2; TASK-10.2 |
+| O Theme | Um só, em `gui/theme/custom`, criado com a primeira cena de interface, o HUD: `ui/theme/game_theme.tres`; tipos como seletores, itens como propriedades, variações como classes | F-051 §3.1 e §3.2; F-100 §1; TASK-10.2 |
 | A base | 1920 × 1080 com `canvas_items` e `expand`, guardada no teste de configurações; hoje valia 1152 × 648 | F-051 §3.3; F-054 §2 |
 | A escala | `content_scale_factor` nas opções, de 0,8 a 1,5 (v0) | F-051 §4.4 |
 | As teclas | Posição física, remapeáveis desde o primeiro dia, salvas em `user://`, com o rótulo do teclado ativo | F-051 §4.2 e §4.3 |
@@ -175,8 +175,8 @@ Leitura v0 do Claude, que o Arthur julga jogando (DEC-0017; TASK-10.2).
 
 - **A barra:** 300 × 12 px na base de 1080p, no canto inferior esquerdo. O papel não tem pixel; a medida é a da tela (TASK-10.2).
 - **O número:** ao lado da barra, em pontos inteiros, arredondado para baixo. O modo vem acima, em texto: "No chão" ou "No ar" (TASK-10.2).
-- **O traço:** abaixo do custo do pulo duplo, 10 pontos, o número ganha um traço embaixo. É forma, não cor (DEC-0031 §2; `movimento.md`, "Pulo e ar").
-- **De onde vem:** a barra se calcula do estado exibido a cada quadro, pelo valor e pelo carimbo da stamina. Nenhum timer, nenhum contador (DEC-0031 §2; F-051 §3.4; `movimento.md`, "Stamina").
+- **O traço:** abaixo do custo do pulo duplo, 10 pontos, o número ganha um traço de 2 px embaixo. É forma, não cor (DEC-0031 §2; `movimento.md`, "Pulo e ar").
+- **De onde vem:** a barra se calcula do estado exibido a cada quadro, pelo valor e pelo carimbo da stamina. Nenhum timer, nenhum contador (F-051 §3.4; `movimento.md`, "Stamina").
 - **Quem tem:** só o PC com tela; o servidor dedicado nunca cria o HUD (`arquitetura/visao-geral.md`, "As cenas").
 
 ### O Theme, o lugar das fontes (TASK-10.2)

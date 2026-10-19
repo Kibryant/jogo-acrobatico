@@ -116,3 +116,4 @@ O que chegou ao projeto e como chegou. Uma fonte não muda: só mudam `status`, 
 | [F-110](F-110-arthur-joga-o-vao-de-2-m.md) | 2026-10-19 | O Arthur joga o vão com as plataformas de 2 m, cruza com o pulo duplo e acha massa, sem novidade, porque já fazia isso nos blocos da escada |
 | [F-111](F-111-arthur-libera-o-merge-da-task-10-2-e-segue-para-a-task-10-3.md) | 2026-10-19 | O Arthur libera o merge do PR #10 com o CI verde e escolhe seguir para a TASK-10.3 na mesma sessão |
 | [F-112](F-112-arthur-abre-a-task-10-3.md) | 2026-10-19 | O Arthur abre a TASK-10.3: acerta que o replay guarda as teclas e a câmera e escolhe que o Sozinho grave sempre |
+| [F-113](F-113-arthur-libera-o-pr-rascunho-da-task-10-3.md) | 2026-10-19 | O Arthur libera subir a branch da TASK-10.3 e abrir o PR rascunho, depois de o PC desligar |

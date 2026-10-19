@@ -31,8 +31,18 @@ const CELL_SEPARATOR := ","
 const CONFIG_PREFIX := "config."
 ## netfox's pin (DEC-0023), part of the rules' fingerprint: updating netfox changes the rules.
 const NETFOX_PIN := "cf5189d"
-## The folders whose scripts move the body, every script below them (the plan of TASK-10.3).
-const RULES_FOLDERS: Array[String] = ["res://core", "res://fighter", "res://match", "res://arena"]
+## The folders whose scripts and scenes move the body, every file below them (the plan of
+## TASK-10.3): common/ holds the collision layers, and the scenes set the bodies up (review of
+## TASK-10.3).
+const RULES_FOLDERS: Array[String] = [
+	"res://core",
+	"res://fighter",
+	"res://match",
+	"res://arena",
+	"res://common",
+]
+## The files of RULES_FOLDERS that join the fingerprint; data/ joins with its scripts only.
+const RULES_EXTENSIONS: Array[String] = ["gd", "tscn"]
 ## The folder whose own scripts, and none below it, join the rules' fingerprint.
 const RULES_DATA_FOLDER := "res://data"
 
@@ -519,8 +529,8 @@ static func rules_fingerprint() -> String:
 		return _rules_fingerprint
 	var paths: Array[String] = []
 	for folder: String in RULES_FOLDERS:
-		_collect_scripts(folder, true, paths)
-	_collect_scripts(RULES_DATA_FOLDER, false, paths)
+		_collect_scripts(folder, true, paths, RULES_EXTENSIONS)
+	_collect_scripts(RULES_DATA_FOLDER, false, paths, ["gd"])
 	paths.sort()
 	var context := HashingContext.new()
 	context.start(HashingContext.HASH_SHA256)
@@ -570,16 +580,21 @@ static func unknown_arena_shapes(arena: Node) -> PackedStringArray:
 	return unknown
 
 
-static func _collect_scripts(folder: String, below: bool, paths: Array[String]) -> void:
+static func _collect_scripts(
+	folder: String,
+	below: bool,
+	paths: Array[String],
+	extensions: Array[String],
+) -> void:
 	var directory := DirAccess.open(folder)
 	if directory == null:
 		return
 	for file: String in directory.get_files():
-		if file.get_extension() == "gd":
+		if extensions.has(file.get_extension()):
 			paths.append(folder.path_join(file))
 	if below:
 		for child: String in directory.get_directories():
-			_collect_scripts(folder.path_join(child), true, paths)
+			_collect_scripts(folder.path_join(child), true, paths, extensions)
 
 
 static func _descendants(node: Node) -> Array[Node]:

@@ -68,6 +68,20 @@ func test_the_stamps_are_the_fields_named_tick_or_since() -> void:
 		assert_bool(StateTrace.is_stamp(field)).override_failure_message(field).is_false()
 
 
+# Every int field of the state is classified on purpose: a stamp, counted from the first tick in
+# the trace, or a count or an enum, written as it is. A new int field with another name fails
+# here, not as a silent mismatch between the window and the headless player (review of TASK-10.3).
+func test_every_int_field_of_the_state_is_a_stamp_or_listed_as_not_one() -> void:
+	var not_stamps: Array[String] = ["mode", "jumps_used"]
+	var state := FighterState.new()
+	for field: String in ReplayFile.script_fields(state):
+		if typeof(state.get(field)) != TYPE_INT:
+			continue
+		var classified := StateTrace.is_stamp(field) or not_stamps.has(field)
+		var message := "%s is neither a stamp nor listed as not one" % field
+		assert_bool(classified).override_failure_message(message).is_true()
+
+
 func test_ticks_and_stamps_count_from_the_first_tick_and_never_stays_never() -> void:
 	var fighter := _fighter()
 	fighter.velocity = Vector3(0.0, -1.0 / 3.0, 7.0)

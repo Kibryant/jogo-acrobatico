@@ -332,6 +332,7 @@ A cena de entrada olha como o jogo foi aberto, como um `main.ts` que lê o `proc
 | 4 | O cliente sem tela foi recusado: é outra build |
 | 5 | O cliente sem tela foi recusado: a sala estava cheia |
 | 6 | O servidor não conseguiu abrir a porta, em geral porque outro programa a usa |
+| 7 | O `--watch` recusou o arquivo de replay: outro formato, outros ticks, outra arena ou configuração, ou outra build sem `--force` (TASK-10.3) |
 
 **Os números v0 de engenharia da parte 2.** Não são números de design (DEC-0017): são do Claude, e cada um tem um porquê.
 

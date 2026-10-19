@@ -105,3 +105,4 @@ O que chegou ao projeto e como chegou. Uma fonte não muda: só mudam `status`, 
 | [F-099](F-099-arthur-libera-a-release-v0-1-0.md) | 2026-10-19 | O Arthur lê as notas da release v0.1.0 e libera a publicação |
 | [F-100](F-100-arthur-abre-a-fase-1.md) | 2026-10-19 | O Arthur abre a Fase 1: escolhe a ordem das filhas da TASK-10, fecha as três escolhas da TASK-12 com os padrões e passa a conferência do modo como dado na segunda tentativa |
 | [F-101](F-101-plano-aprovado-da-task-10-1.md) | 2026-10-19 | O plano aprovado da TASK-10.1: a vaga do buffer, a posição no `before_move`, a stamina como valor mais carimbo e a SyncTest comparando o estado inteiro, com a salvaguarda de 1 mm |
+| [F-102](F-102-arthur-destrava-o-teste-de-segurar-o-pulo.md) | 2026-10-19 | O Arthur acerta que segurar a tecla é um pulo só e destrava o teste de "segurar o pulo" para o test-writer reescrever |

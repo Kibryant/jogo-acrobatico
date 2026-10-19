@@ -1,6 +1,6 @@
 ---
-revisado_em: 2026-10-18
-fontes: [F-001, F-005, F-007, F-023, F-024, F-025, F-026, F-027, F-028, F-029, F-030, F-032, F-033, F-034, F-036, F-042, F-044, F-046, F-073, F-084, F-085, F-087, F-088, F-089, F-091, F-092, F-093, F-095, F-097]
+revisado_em: 2026-10-19
+fontes: [F-001, F-005, F-007, F-023, F-024, F-025, F-026, F-027, F-028, F-029, F-030, F-032, F-033, F-034, F-036, F-042, F-044, F-046, F-073, F-084, F-085, F-087, F-088, F-089, F-091, F-092, F-093, F-095, F-097, F-101]
 ---
 
 # Rede
@@ -8,6 +8,7 @@ fontes: [F-001, F-005, F-007, F-023, F-024, F-025, F-026, F-027, F-028, F-029, F
 Estado atual: o Desenho 3 (TASK-5) fechado, com as DEC-0023 a DEC-0026, a DEC-0037 e a DEC-0038. A parte 1 do esqueleto andante (TASK-9) pôs o lutador no tick do netfox, no modo Sozinho, com a SyncTest no portão. A parte 2 pôs a rede de verdade: o servidor dedicado e os clientes da `Main` (§9), e a corrida de 30 s a ping 100 sem nenhum tick corrigido (§10).
 
 - A parte 3 do esqueleto andante levou o servidor para a build e para o contêiner do CI, testado em todo push da main e em todo PR (TASK-9; DEC-0032 §1; §10).
+- A TASK-10.1 trouxe o pulo duplo e a stamina, e a SyncTest passou a comparar o estado inteiro (§4).
 - A compensação e a detecção do golpe nascem com a espada: local na fase 2, em rede na fase 3 (F-023 §3).
 - A versão visual e interativa deste documento é a vitrine [A rede por dentro](https://claude.ai/artifact/Sb4Q5e4M16UymdoaR9UAzp), privada (DEC-0019), na versão 9.
 
@@ -149,10 +150,14 @@ O teste é mais duro que a rede: ele força o rollback a cada tick. As mediçõe
 **O float:** com o frame sem limite, o contorno D deu erro máximo de 0,000000 m. O resíduo do `physics_factor` fica abaixo de 1 µm nesta máquina (F-025 §5).
 
 **A prova permanente:** a SyncTest está no portão desde a TASK-9 (`test/fighter/fighter_sync_test.gd`; DEC-0004, regra 4).
-- Ela roda a partida de verdade no Sozinho, com um rollback de 7 ticks a cada tick, nas cenas da rampa de 45°, da beirada, do pouso e do empurrão.
+- Ela roda a partida de verdade no Sozinho, com um rollback de 7 ticks a cada tick, nas cenas da rampa de 45°, da beirada, do pouso, do empurrão e do pulo duplo (TASK-10.1).
 - Avança os ticks à mão, pelo ajudante `test/support/netfox_ticks.gd`, como a suíte do netfox (`test/network-mocks.gd`). Pelo relógio do netfox, cada cenário custaria o tempo de jogo dele (F-042 §1; DEC-0027 §3).
-- As quatro cenas dão zero divergência em uns 2,5 s, e o tempo aparece em toda rodada do portão, sem trava (F-087 §1).
-- Um autoteste tira o `on_floor` do que o netfox grava e exige que ela acuse.
+- **O que ela compara:** desde a TASK-10.1, o estado inteiro. São a posição, a velocidade e todo campo do `FighterState`, achado por reflexão na classe, e não pela lista do que o netfox grava. Inteiros, booleanos, enums e nomes têm de ser iguais; floats e vetores, até 0,000001 (1 µm na posição). Na TASK-9, eram só a posição até 1 mm, o `on_floor` e o `mode` (TASK-10.1, critério 8; F-101 §1).
+- **O erro medido:** zero exato na posição e na velocidade, nas cinco cenas, impresso em notação científica no resumo de cada uma. A salvaguarda da F-101, voltar a posição para 1 mm se as cenas da TASK-9 passassem de 1 µm, não precisou entrar (TASK-10.1, rodada B).
+- **A conferência da rede continua em 1 mm** (`net/prediction_check.gd`; §10): ela compara dois processos, o cliente e o servidor, e não o mesmo tick refeito num processo só (F-101 §1).
+- **A cena do pulo duplo:** dois lutadores numa cópia do `movement_v0.tres` com a barra de 25 e sem recuperação, que vai de 25 a 15, a 5 e recusa o terceiro aperto (DEC-0004, regra 3). Um sobe o bloco de 2 m com o pulo e o pulo duplo no topo, faz um pulo duplo no tick seguinte a um pulo e tem o terceiro recusado. O outro sai da beirada sem pular e faz o pulo duplo depois do coyote. O pouso ganhou um pulo duplo no topo de cada salto, para o aperto perto do chão continuar indo para a vaga (TASK-10.1, critério 8; DEC-0039).
+- As cinco cenas dão zero divergência em 3,9 s, no portão em silêncio, e o tempo aparece em toda rodada do portão, sem trava (F-087 §1).
+- Três autotestes tiram um campo do que o netfox grava e exigem que ela acuse: o `on_floor`, o `stamina_at_spend` e o `double_jump_tick`. Os dois últimos só acusam porque ela compara o estado inteiro: com a comparação da TASK-9, o campo esquecido passaria calado (TASK-10.1).
 - Na beirada, ela achou a cápsula apoiada na quina, que a sonda do Desenho 3 não via (DEC-0037).
 
 ## 5. O oponente no passado (DEC-0026 §2)
@@ -271,6 +276,8 @@ O modelo bate com o que o Arthur fez a 60 ticks: 72 % sem lag e 13 % com ping 10
 
 - **O movimento da fase 1 nasce no tick do netfox.** É jogado no modo "Sozinho" da `Main`, o par offline do Godot: o PC do jogador é o servidor dele mesmo, sem rede, sem rollback e sem o custo de refazer. A sonda rodou assim (F-025 §1).
 - **A SyncTest no CI** cobre cada manobra nova, parede, gancho e dash, no dia em que ela nasce. É o jeito de achar estado escondido enquanto ele ainda é pequeno: o Mortal Kombat precisou mexer fundo na engine porque adaptou o rollback depois (F-007 §2).
+  - O pulo duplo e a stamina foram os primeiros, na TASK-10.1: a cena do pulo duplo e os dois venenos da §4.
+  - Desde a TASK-10.1, ela compara o estado inteiro (§4): um campo novo do `FighterState` entra na comparação no dia em que existe, sem ninguém lembrar de pôr.
 - **De tempos em tempos,** o mesmo movimento roda com 2 clientes e o simulador do netfox, para ver a correção com lag. É o `tools/net_run.sh` (§10).
 
 ## 9. A Main (DEC-0026 §6)
@@ -415,7 +422,7 @@ O `tools/net_run.sh [ping]` roda um servidor sem tela e dois clientes sem tela c
 
 - O bot corre de lado, 2 s para cada lado, e pula no primeiro tick de cada trecho. Ele só produz input (DEC-0022).
 - Cada cliente grava o que previu para o próprio lutador, tick a tick: o primeiro resultado de cada tick. O servidor grava o que confirmou: o último.
-- O `tools/net_run_check.gd` junta os registros e confere cada tick com a tolerância da SyncTest: a posição a até 1 mm, e o `on_floor` e o `mode` iguais (§4).
+- O `tools/net_run_check.gd` junta os registros e confere cada tick com a tolerância da SyncTest da TASK-9: a posição a até 1 mm, e o `on_floor` e o `mode` iguais. A SyncTest passou a comparar o estado inteiro na TASK-10.1, e esta conferência ficou em 1 mm (§4; F-101 §1).
 
 | Corrida | Cliente 1 | Cliente 2 | Menor distância entre os dois |
 |---|---|---|---|

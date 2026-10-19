@@ -99,10 +99,10 @@ class Result:
 
 
 # What the run went through, counted on every tick: the route claims to run, stop, turn, jump,
-# land, use the platform and its ledge with a coyote jump, climb the 1 m and the 2 m blocks, press
-# into a wall and never go near the ramp (reference_route.gd). A trace equal to the stored one
-# proves all of it again, but a trace recorded again after a code change must still cover it:
-# missing() says what it lost.
+# double-jump, land, use the platform and its ledge with a coyote jump, climb the 1 m and the 2 m
+# blocks, press into a wall and never go near the ramp (reference_route.gd). A trace equal to the
+# stored one proves all of it again, but a trace recorded again after a code change must still
+# cover it: missing() says what it lost.
 class Paths:
 	## m/s: below this the body is not at full speed (floating-point slack).
 	const SPEED_SLACK := 0.001
@@ -121,13 +121,15 @@ class Paths:
 	# The least each counter must reach for the route to cover what it claims: one of each, but
 	# full speed in all eight headings, the two turnarounds at full speed of steps 785 and 885, and
 	# the two coyote jumps, off the platform's ledge and off the 1 m block onto the 2 m one (F-086).
-	# ramp_ticks must stay at 0.
+	# The double jump spends the flight's one, so the press after it waits in the slot for the
+	# buffered jump (TASK-10.1). ramp_ticks must stay at 0.
 	const LEAST: Dictionary[String, int] = {
 		"stops": 1,
 		"headings": 8,
 		"turnarounds": 2,
 		"floor_jumps": 1,
 		"coyote_jumps": 2,
+		"double_jumps": 1,
 		"buffered_jumps": 1,
 		"landings": 1,
 		"ledge_drops": 1,
@@ -146,6 +148,7 @@ class Paths:
 		"turnarounds": 0,
 		"floor_jumps": 0,
 		"coyote_jumps": 0,
+		"double_jumps": 0,
 		"buffered_jumps": 0,
 		"landings": 0,
 		"ledge_drops": 0,
@@ -186,7 +189,12 @@ class Paths:
 				counts["turnarounds"] += 1
 			_last_full_speed = velocity
 		counts["headings"] = _headings.size()
-		if after.jumps_used > before.jumps_used:
+		# The double jump stamps its tick, and only the floor clears the stamp (DEC-0031: the key
+		# of its event). It raises jumps_used too, but it is no jump of the floor or the coyote.
+		var stamped := after.double_jump_tick != FighterState.NEVER
+		if stamped and before.double_jump_tick == FighterState.NEVER:
+			counts["double_jumps"] += 1
+		elif after.jumps_used > before.jumps_used:
 			if not before.on_floor:
 				counts["coyote_jumps"] += 1
 			else:

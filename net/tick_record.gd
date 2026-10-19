@@ -1,8 +1,9 @@
 # What one game computed for its fighters, tick by tick (TASK-9, criterion 12): for each fighter,
 # by its node name, which is its route in netfox on every peer, and for each tick, where the body
-# ended the tick and what the rules said about the floor, the fields the SyncTest compares
-# (rede.md §4). A client keeps its first result for its own fighter, what its player saw; the
-# server keeps its last one, what it confirmed (TickRecorder); PredictionCheck compares the two.
+# ended the tick and what the rules said about the floor, the fields the SyncTest of TASK-9
+# compared (rede.md §4). A client keeps its first result for its own fighter, what its player
+# saw; the server keeps its last one, what it confirmed (TickRecorder); PredictionCheck compares
+# the two.
 # As text, a header and one line per state, so the record outlives the game that wrote it. It
 # knows no node, so tools/net_run_check.gd reads it outside the game.
 class_name TickRecord
@@ -21,7 +22,7 @@ var _names: Array[String] = []
 var _states: Dictionary[Vector2i, Sample] = { }
 
 
-# The fields the SyncTest compares, at the end of one tick.
+# The fields the check compares, at the end of one tick.
 class Sample:
 	var position: Vector3
 	var on_floor: bool

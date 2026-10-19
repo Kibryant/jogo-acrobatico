@@ -156,7 +156,7 @@ O teste é mais duro que a rede: ele força o rollback a cada tick. As mediçõe
 - **O erro medido:** zero exato na posição e na velocidade, nas cinco cenas, impresso em notação científica no resumo de cada uma. A salvaguarda da F-101, voltar a posição para 1 mm se as cenas da TASK-9 passassem de 1 µm, não precisou entrar (TASK-10.1, rodada B).
 - **A conferência da rede continua em 1 mm** (`net/prediction_check.gd`; §10): ela compara dois processos, o cliente e o servidor, e não o mesmo tick refeito num processo só (F-101 §1).
 - **A cena do pulo duplo:** dois lutadores numa cópia do `movement_v0.tres` com a barra de 25 e sem recuperação, que vai de 25 a 15, a 5 e recusa o terceiro aperto (DEC-0004, regra 3). Um sobe o bloco de 2 m com o pulo e o pulo duplo no topo, faz um pulo duplo no tick seguinte a um pulo e tem o terceiro recusado. O outro sai da beirada sem pular e faz o pulo duplo depois do coyote. O pouso ganhou um pulo duplo no topo de cada salto, para o aperto perto do chão continuar indo para a vaga (TASK-10.1, critério 8; DEC-0039).
-- As cinco cenas dão zero divergência em 3,9 s, no portão em silêncio, e o tempo aparece em toda rodada do portão, sem trava (F-087 §1).
+- As cinco cenas dão zero divergência em 3,9 a 4,3 s no portão em silêncio, e em 1,7 s no Linux do CI, e o tempo aparece em toda rodada do portão, sem trava (F-087 §1).
 - Três autotestes tiram um campo do que o netfox grava e exigem que ela acuse: o `on_floor`, o `stamina_at_spend` e o `double_jump_tick`. Os dois últimos só acusam porque ela compara o estado inteiro: com a comparação da TASK-9, o campo esquecido passaria calado (TASK-10.1).
 - Na beirada, ela achou a cápsula apoiada na quina, que a sonda do Desenho 3 não via (DEC-0037).
 

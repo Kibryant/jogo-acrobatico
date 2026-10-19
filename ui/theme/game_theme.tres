@@ -1,0 +1,25 @@
+[gd_resource type="Theme" format=3]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_bar_back"]
+bg_color = Color(0, 0, 0, 0.55)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_bar_fill"]
+bg_color = Color(0.92, 0.92, 0.92, 1)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_low_mark"]
+bg_color = Color(0.92, 0.92, 0.92, 1)
+
+[resource]
+default_font_size = 16
+Label/colors/font_color = Color(0.92, 0.92, 0.92, 1)
+Label/colors/font_outline_color = Color(0, 0, 0, 1)
+Label/constants/outline_size = 4
+HudMargin/base_type = &"MarginContainer"
+HudMargin/constants/margin_left = 24
+HudMargin/constants/margin_bottom = 24
+StaminaBarBack/base_type = &"Panel"
+StaminaBarBack/styles/panel = SubResource("StyleBoxFlat_bar_back")
+StaminaBarFill/base_type = &"Panel"
+StaminaBarFill/styles/panel = SubResource("StyleBoxFlat_bar_fill")
+StaminaLowMark/base_type = &"Panel"
+StaminaLowMark/styles/panel = SubResource("StyleBoxFlat_low_mark")

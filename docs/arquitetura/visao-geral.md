@@ -177,7 +177,10 @@ flowchart TB
   match --> arena["Arena<br/>blocos de 1, 2 e 3 m; pontos de nascimento"]
   match --> fighters["Fighter × N<br/>2 no 1v1, 16 no 8v8"]
   match --> cam["CameraRig<br/>só para o lutador de quem joga"]
+  match --> hud["Hud<br/>só com tela: a stamina e o modo"]
 ```
+
+O **HUD** só existe com tela. O `Match.watch` o cria para o lutador de quem joga quando o `DisplayServer` não é o `headless`, a mesma conferência da `Main`; o servidor dedicado e as rodadas sem tela, como o portão, nunca o criam. A cada quadro ele lê o estado exibido e o tick do netfox e calcula a barra pelo `Stamina.at`, sem timer próprio, então um rollback que reescreve o estado reescreve a barra junto (F-051 §3.4; TASK-10.2).
 
 Os caminhos do netfox, como `Input:jump` e `:state:mode`, seguem a árvore de cena, como as rotas de uma API. Mudar a árvore depois quebra todas as rotas juntas; por isso a árvore se decide agora.
 
@@ -199,7 +202,7 @@ arena/          a arena e os blocos
 match/          a partida
 main/           a Main, os argumentos, o arquivo de parada e a medição de fps
 net/            o aperto de mão, a sala e o gravador da corrida de 30 s
-ui/             os textos da tela, por chave de tradução
+ui/             o HUD, o Theme único e os textos da tela, por chave de tradução
 test/           espelha o código: test/core/fighter/...; a referência em test/reference/
 tools/          o portão, as checagens e os scripts de rede, de build e de release
 ```

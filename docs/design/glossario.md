@@ -1,6 +1,6 @@
 ---
-revisado_em: 2026-10-18
-fontes: [F-001, F-002, F-005, F-007, F-012, F-013, F-020, F-021, F-025, F-026, F-028, F-030, F-032, F-038, F-039, F-044, F-045, F-046, F-050, F-051, F-052, F-053, F-056, F-058, F-066, F-068, F-069, F-070, F-073, F-078, F-079, F-081, F-083, F-085, F-086, F-087, F-088, F-090, F-091, F-093, F-094, F-095, F-097]
+revisado_em: 2026-10-19
+fontes: [F-001, F-002, F-005, F-007, F-012, F-013, F-020, F-021, F-025, F-026, F-028, F-030, F-032, F-038, F-039, F-044, F-045, F-046, F-050, F-051, F-052, F-053, F-056, F-058, F-066, F-068, F-069, F-070, F-073, F-078, F-079, F-081, F-083, F-085, F-086, F-087, F-088, F-090, F-091, F-093, F-094, F-095, F-097, F-100]
 ---
 
 # Glossário
@@ -181,7 +181,9 @@ A linguagem ubíqua do jogo (DEC-0004, regra 5): o mesmo termo na conversa, no d
 | Clipe | Uma animação com nome, como "golpe leve". Entra in place, com marcas de início e fim do ativo, e tem o tempo reajustado pelo estado, fase a fase (F-052 §6) | ms no design, ticks no código | `Animation` |
 | Root motion | O clipe carrega o deslocamento do corpo. Aqui nunca move o lutador: o deslocamento vem do núcleo, e o clipe entra in place (F-007; F-052 §6.3) | — | `root_motion_track` |
 | Casco invertido | O contorno feito com uma segunda casca da malha, um pouco maior e só com as faces de trás. Funciona no Compatibility (F-051 §2.5) | — | `grow`, `next_pass` |
-| Theme | A folha de estilo da interface do Godot: os tipos de tema são os seletores, os itens são as propriedades, as variações são as classes e o override local é o style inline (F-051 §3.1) | — | `Theme` |
+| Theme | A folha de estilo da interface do Godot: os tipos de tema são os seletores, os itens são as propriedades, as variações são as classes e o override local é o style inline (F-051 §3.1). O jogo tem um só, o lugar das fontes, dos tamanhos e das cores da tela (DEC-0031 §8; TASK-10.2) | px na base de 1080p | `Theme`, `ui/theme/game_theme.tres` |
+| HUD | O que a tela desenha por cima do jogo para quem joga: hoje a barra de stamina, o número e o modo. Lê o estado exibido a cada quadro e nunca conta o tempo; só existe com tela, e repete com forma o que a cor diz (F-051 §3.4; DEC-0031 §2; TASK-10.2) | px na base de 1080p | `Hud` |
+| Chave de tradução | O ID de um texto da tela, como `HUD_MODE_AIR`: o código mostra a chave, e o arquivo de cada idioma dá a frase. Como o i18n de um app web (DEC-0031 §8) | — | `GameText`, `ui/translations/*.po` |
 | Bus de som | Um canal de mixagem com volume e efeitos próprios, como um canal de uma mesa de som. O bus "leitura" abaixa os outros para o aviso do golpe nunca ser mascarado (F-051 §5.2; F-053 §4) | dB | `AudioServer` |
 | Redistribuir | Passar adiante uma cópia do arquivo. Um repositório público redistribui tudo o que tem dentro, para cada pessoa que clona; por isso só entra asset cuja licença deixa redistribuir, pago ou grátis (F-058) | — | — |
 | Projeto aberto | Código público com uma licença que deixa outros usarem, mudarem e mandarem PR. O mantenedor decide o que entra no merge, como no próprio Godot (F-058) | — | — |

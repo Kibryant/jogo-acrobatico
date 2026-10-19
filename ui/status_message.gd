@@ -1,7 +1,8 @@
 # The line of text a client shows over the game: connecting, refused, the server gone (TASK-9,
 # criteria 10 and 11). It holds a key of GameText, and the Label shows its message in the
-# player's language, since a Label translates a text that is a key. A plain Label with the
-# default font for now: the Theme arrives with the first interface scene (DEC-0031 §8).
+# player's language, since a Label translates a text that is a key. Its font, size and colour
+# come from the one Theme of the project, ui/theme/game_theme.tres, and never from the Label
+# itself (DEC-0031 §8; TASK-10.2).
 class_name StatusMessage
 extends CanvasLayer
 

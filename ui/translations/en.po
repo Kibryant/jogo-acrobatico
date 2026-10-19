@@ -26,3 +26,11 @@ msgstr "The server did not respond. Check the address and whether it is running.
 # The server ended the session: its stop file, or the connection dropped.
 msgid "NET_SERVER_CLOSED"
 msgstr "The server closed the match."
+
+# The HUD's mode of the fighter: standing, running or stopping on the floor (TASK-10.2).
+msgid "HUD_MODE_GROUND"
+msgstr "On the ground"
+
+# The HUD's mode of the fighter: from leaving the floor to touching it again (TASK-10.2).
+msgid "HUD_MODE_AIR"
+msgstr "In the air"

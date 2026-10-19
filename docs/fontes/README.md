@@ -108,3 +108,9 @@ O que chegou ao projeto e como chegou. Uma fonte não muda: só mudam `status`, 
 | [F-102](F-102-arthur-destrava-o-teste-de-segurar-o-pulo.md) | 2026-10-19 | O Arthur acerta que segurar a tecla é um pulo só e destrava o teste de "segurar o pulo" para o test-writer reescrever |
 | [F-103](F-103-arthur-libera-o-pr-rascunho-da-task-10-1.md) | 2026-10-19 | O Arthur libera subir a branch da TASK-10.1 e abrir o PR rascunho, para o CI provar a referência no Linux |
 | [F-104](F-104-arthur-joga-o-pulo-duplo.md) | 2026-10-19 | O Arthur joga o pulo duplo da TASK-10.1, acha o pulo gostoso, faz parkour e se diverte |
+| [F-105](F-105-arthur-libera-o-merge-da-task-10-1-e-segue-para-a-task-10-2.md) | 2026-10-19 | O Arthur libera o merge do PR #9 com o CI verde e escolhe seguir para a TASK-10.2 na mesma sessão |
+| [F-106](F-106-arthur-acerta-que-o-hud-se-calcula-do-estado.md) | 2026-10-19 | O Arthur acerta que a barra de stamina se calcula do estado exibido a cada quadro, na abertura da TASK-10.2 |
+| [F-107](F-107-arthur-libera-o-pr-rascunho-da-task-10-2.md) | 2026-10-19 | O Arthur libera subir a branch da TASK-10.2 e abrir o PR rascunho |
+| [F-108](F-108-arthur-joga-o-hud-e-nao-acha-o-vao.md) | 2026-10-19 | O Arthur joga a TASK-10.2, gosta da barra, que reage rápido, e não acha o vão de 6 m |
+| [F-109](F-109-arthur-sobe-as-plataformas-do-vao-para-2-m.md) | 2026-10-19 | O Arthur escolhe subir as plataformas do vão para 2 m, para cair no vão custar a volta pelo pulo duplo |
+| [F-110](F-110-arthur-joga-o-vao-de-2-m.md) | 2026-10-19 | O Arthur joga o vão com as plataformas de 2 m, cruza com o pulo duplo e acha massa, sem novidade, porque já fazia isso nos blocos da escada |

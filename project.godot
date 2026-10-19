@@ -52,6 +52,10 @@ window/stretch/aspect="expand"
 
 enabled=PackedStringArray("res://addons/gdUnit4/plugin.cfg", "res://addons/netfox/plugin.cfg", "res://addons/netfox.extras/plugin.cfg", "res://addons/netfox.internals/plugin.cfg")
 
+[gui]
+
+theme/custom="res://ui/theme/game_theme.tres"
+
 [input]
 
 move_forward={

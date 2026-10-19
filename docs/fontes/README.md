@@ -109,3 +109,4 @@ O que chegou ao projeto e como chegou. Uma fonte não muda: só mudam `status`, 
 | [F-103](F-103-arthur-libera-o-pr-rascunho-da-task-10-1.md) | 2026-10-19 | O Arthur libera subir a branch da TASK-10.1 e abrir o PR rascunho, para o CI provar a referência no Linux |
 | [F-104](F-104-arthur-joga-o-pulo-duplo.md) | 2026-10-19 | O Arthur joga o pulo duplo da TASK-10.1, acha o pulo gostoso, faz parkour e se diverte |
 | [F-105](F-105-arthur-libera-o-merge-da-task-10-1-e-segue-para-a-task-10-2.md) | 2026-10-19 | O Arthur libera o merge do PR #9 com o CI verde e escolhe seguir para a TASK-10.2 na mesma sessão |
+| [F-106](F-106-arthur-acerta-que-o-hud-se-calcula-do-estado.md) | 2026-10-19 | O Arthur acerta que a barra de stamina se calcula do estado exibido a cada quadro, na abertura da TASK-10.2 |

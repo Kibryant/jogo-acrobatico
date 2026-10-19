@@ -1,10 +1,10 @@
 ---
 id: TASK-10.2
 title: 'A barra na tela e o vão de 6 m: o HUD, o Theme e as plataformas'
-status: Ready
+status: In Progress
 assignee: []
 created_date: '2026-10-19 13:46'
-updated_date: '2026-10-19 16:28'
+updated_date: '2026-10-19 16:55'
 labels:
   - jogo
 milestone: m-1
@@ -58,6 +58,42 @@ Fechados pelo Claude (DEC-0017); você julga jogando.
 - [ ] #3 Diário da sessão escrito e glossário atualizado
 - [ ] #4 Mudanças registradas em docs/mudancas.md
 <!-- DOD:END -->
+
+## Implementation Plan
+
+<!-- SECTION:PLAN:BEGIN -->
+## O plano (para o implementer; sem test-writer, DEC-0009)
+
+Nenhuma regra nova do núcleo: tudo aqui é cena, interface e arena. Nomes de código em inglês (DEC-0008).
+
+**O HUD** (`ui/hud.gd`, `class_name Hud extends CanvasLayer`, montado em código como o `StatusMessage`, ou numa cena `ui/hud.tscn`):
+- `func follow(fighter: Fighter, config: MovementConfig) -> void`; no `_process`, lê o `fighter.state` exibido e o `NetworkTime.tick`, calcula `Stamina.at(state, config, tick)` e ajusta a largura da barra, o número e o modo. Sem `Timer`, sem contador próprio (DEC-0031 §2; F-106).
+- A barra: 300 × 12 px na base de 1920 × 1080 (a escala `canvas_items` já está no `project.godot`), no canto inferior esquerdo; o número ao lado, inteiro; o modo em texto (`GROUND`/`AIR` viram chaves de tradução, por exemplo `HUD_MODE_GROUND` e `HUD_MODE_AIR`).
+- Abaixo do custo do pulo duplo (`config.double_jump_cost`), o número ganha um traço embaixo: forma, não cor (DEC-0031 §2).
+- Quem cria: o `Match.watch(fighter)`, só com tela (`DisplayServer.get_name() != "headless"`, como a `Main` já faz); o servidor sem tela nunca cria o HUD.
+
+**O Theme** (`ui/theme/game_theme.tres`): a fonte e os tamanhos dos textos da tela; o `StatusMessage` e o HUD passam a usá-lo; nenhuma cena de interface carrega fonte ou cor própria. O `project.godot` ganha `gui/theme/custom = "res://ui/theme/game_theme.tres"`, com o motivo no commit (DEC-0031 §8), e o `test/project_settings_test.gd` ganha a linha que o guarda.
+
+**As chaves de tradução**: cada texto novo vira uma constante e entra em `GameText.KEYS`, com a mensagem em `ui/translations/pt_BR.po` e `ui/translations/en.po`; um teste reprova uma chave de `KEYS` sem mensagem num dos dois idiomas.
+
+**As plataformas** (`arena/arena.tscn`): `PlataformaVaoA` em (−20; 0,5; 6) e `PlataformaVaoB` em (−20; 0,5; −6), dois `StaticBody3D` na camada `PhysicsLayers.WORLD`, com `BoxShape3D` de 6 × 1 × 6 m e malha do mesmo tamanho, no material cinza dos blocos. Um teste de cena prova os nomes únicos sob `Arena`, a colisão igual à malha e que elas ficam longe do percurso da referência e das áreas dos cenários da SyncTest (as coordenadas estão em `test/fighter/fighter_sync_test.gd` e `test/reference/reference_route.gd`).
+
+**Os testes do implementer:**
+- `test/ui/hud_test.gd`: um estado com `stamina_spent_tick` marcado mostra a largura e o número certos; abaixo do custo, o traço aparece; o `Match.watch` sem tela não cria HUD.
+- A linha do `gui/theme/custom` no teste de configurações.
+- O teste das chaves nos dois idiomas.
+- O teste de cena das plataformas.
+- A SyncTest e a referência seguem verdes; se o hash `d53a533c…` mudar, a referência é regravada com o motivo no commit.
+
+**Os docs** (com o plano aprovado, uma linha no `mudancas.md`): `visual-e-audio.md` (a barra em px; o Theme como o lugar das fontes); `movimento.md`, "Métricas de nível" (o vão de 6 m e as plataformas); `glossario.md` (HUD; Theme); `visao-geral.md` (o HUD só com tela).
+
+**Rodadas:** A (o HUD, o Theme, as chaves e os testes); B (as plataformas, os docs e o teste à mão).
+
+| Agente | Modelo | Effort | Por quê |
+|---|---|---|---|
+| implementer | Opus 5.5 | high | cena e interface, sem regra do núcleo |
+| reviewer | Fable | high | a DEC-0031 §2 e §8 se quebram em silêncio |
+<!-- SECTION:PLAN:END -->
 
 ## Implementation Notes
 

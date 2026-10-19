@@ -113,6 +113,12 @@ A linguagem ubíqua do jogo (DEC-0004, regra 5): o mesmo termo na conversa, no d
 | Snap do chão | O puxão do motor que, depois de mover, cola o corpo num chão que desce. Cobre a descida da rampa de 45° a 7 m/s: 0,121 m por tick a 60 | m | `floor_snap_length` |
 | Conservação de velocidade | A velocidade que passa de uma manobra para a outra | m/s | `momentum` |
 | Recarga | O tempo até uma manobra poder ser usada de novo | ms no design, ticks no código | `cooldown` |
+| Voo | Do momento em que o lutador sai do chão até tocar o chão de novo; começar uma corrida na parede abre um voo novo para o pulo duplo | — | `jumps_used`, `double_jump_tick` |
+| Custo | Quanto de stamina uma manobra gasta ao começar | pontos | `double_jump_cost`, `dash_cost` |
+| Espera para recuperar | O tempo sem gastar antes de a stamina voltar a subir | ms no design, ticks no código | `stamina_wait_ms` |
+| Recuperação | Quantos pontos por segundo a stamina volta depois da espera | pontos/s | `stamina_regen_per_s` |
+| Stamina no último gasto | O valor da barra logo depois do último gasto; com o carimbo do gasto, a barra se calcula pelo tick, sem contador | pontos | `stamina_at_spend`, `stamina_spent_tick` |
+| Vaga do buffer | O único lugar onde um comando apertado antes da hora espera; o último aperto ocupa a vaga (DEC-0039) | ticks | `buffered_command`, `buffered_tick` |
 
 ## Desenho
 

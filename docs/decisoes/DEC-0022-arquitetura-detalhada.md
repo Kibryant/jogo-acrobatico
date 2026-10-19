@@ -6,10 +6,10 @@ status: aceita
 decidido_por: Arthur
 fontes: [F-005, F-007, F-018, F-020, F-021]
 substitui: DEC-0004, só a frase sobre a RewindableStateMachine
-substituida_por: DEC-0025, só a hipótese 3 (o on_floor no estado no lugar do movimento extra de velocidade zero)
+substituida_por: DEC-0025, só a hipótese 3 (o on_floor no estado no lugar do movimento extra de velocidade zero); DEC-0039, só o jump_pressed_tick, a assinatura do before_move e a janela estrita do buffer
 ---
 
-> ⚠️ Em parte substituída por DEC-0025 em 2026-10-04: a hipótese 3, o `on_floor` no estado no lugar do movimento extra de velocidade zero, não é a regra atual. O `on_floor` continua no estado, com o contorno D. O resto desta DEC continua valendo.
+> ⚠️ Em parte substituída por DEC-0025 em 2026-10-04: a hipótese 3, o `on_floor` no estado no lugar do movimento extra de velocidade zero, não é a regra atual. O `on_floor` continua no estado, com o contorno D. ⚠️ Em parte substituída por DEC-0039 em 2026-10-19: o `jump_pressed_tick` virou a vaga do buffer (`buffered_command` e `buffered_tick`), o `before_move` recebe a posição e a janela do buffer é inclusiva. O resto desta DEC continua valendo.
 
 # DEC-0022 — Arquitetura detalhada: o estado em quatro caixas, a máquina de estados no núcleo, o tick em sanduíche, as cenas, zero autoloads nossos, as pastas e o acesso inseguro como erro
 

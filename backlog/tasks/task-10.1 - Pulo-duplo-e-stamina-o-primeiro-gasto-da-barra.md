@@ -1,10 +1,10 @@
 ---
 id: TASK-10.1
 title: 'Pulo duplo e stamina: o primeiro gasto da barra'
-status: Ready
+status: In Progress
 assignee: []
 created_date: '2026-10-19 13:45'
-updated_date: '2026-10-19 13:47'
+updated_date: '2026-10-19 13:52'
 labels:
   - jogo
 milestone: m-1
@@ -68,6 +68,42 @@ Fechados pelo Claude (DEC-0017), escritos no `movimento.md` com o seu ok antes d
 - [ ] #3 Diário da sessão escrito e glossário atualizado
 - [ ] #4 Mudanças registradas em docs/mudancas.md
 <!-- DOD:END -->
+
+## Implementation Plan
+
+<!-- SECTION:PLAN:BEGIN -->
+## A interface pública combinada (para o test-writer e o implementer)
+
+Concretiza o blueprint da fase 1 (as notas desta task) e a DEC-0039. Nomes de código em inglês (DEC-0008). Os números vêm do `movimento.md` ("Pulo e ar", "Stamina", "Perdão"), com as leituras v0 do Claude já escritas lá (F-100).
+
+**Estado** (`core/fighter/fighter_state.gd`): sai o `jump_pressed_tick`; entram `buffered_command: StringName = &""`, `buffered_tick: int = NEVER`, `stamina_at_spend: float = 0.0`, `stamina_spent_tick: int = NEVER` e `double_jump_tick: int = NEVER`; o `jumps_used` vai de 0 a 2. Cada campo novo ganha uma linha no `copy()`, um caminho no `state_properties` do `fighter.tscn` (`:state:buffered_command`, `:state:buffered_tick`, `:state:stamina_at_spend`, `:state:stamina_spent_tick`, `:state:double_jump_tick`) e um valor inicial no `MovementRig._init`.
+
+**Comandos** (`core/fighter/fighter_command.gd`, `class_name FighterCommand`): `const NONE := &""`, `const JUMP := &"jump"`.
+
+**Stamina** (`core/fighter/stamina.gd`, `class_name Stamina`): `static func at(state: FighterState, config: MovementConfig, tick: int) -> float` devolve `config.stamina_max` enquanto `stamina_spent_tick == NEVER`; senão `minf(config.stamina_max, state.stamina_at_spend + maxi(0, tick - state.stamina_spent_tick - config.stamina_wait_ticks) * config.stamina_regen_per_tick)`. `static func spend(next: FighterState, config: MovementConfig, tick: int, cost: float) -> void` grava `stamina_at_spend = at(next, config, tick) - cost` e `stamina_spent_tick = tick`.
+
+**Dados** (`MovementData`, `movement_v0.tres` e `test/reference/frozen_movement.tres`): `double_jump_height_m: float = 1.0` (positivo), `double_jump_cost: float = 10.0` (não negativo e até `stamina_max`), `stamina_max: float = 100.0` (positivo), `stamina_wait_ms: int = 800` (tempo; pode ser 0), `stamina_regen_per_s: float = 30.0` (não negativo; 0 nas cópias de teste); uma mensagem do `validate()` por número impossível. **Configuração** (`MovementConfig`): `double_jump_speed` pela mesma fórmula do `jump_speed` (6,096 m/s a 60 e 5,678 a 30), `double_jump_cost` e `stamina_max` copiados, `stamina_wait_ticks` (48 a 60, 24 a 30), `stamina_regen_per_tick = stamina_regen_per_s / tickrate` (0,5 a 60, 1,0 a 30).
+
+**Movimento**: `static func before_move(state: FighterState, _position: Vector3, velocity: Vector3, input: TickInput, config: MovementConfig, tick: int) -> MovePlan`; o `after_move` não muda; o `Fighter` passa a `global_position`.
+
+**As convenções em que os testes se apoiam:**
+- Dentro do `before_move`: copia o estado; `facing_yaw = input.yaw`; um aperto escreve a vaga (`JUMP`, `tick`), substituindo o que havia; o movimento por modo; depois a vaga dispara se estiver viva (`tick - buffered_tick <= config.buffer_ticks`, inclusive) e legal, e esvazia (`NONE`, `NEVER`); um aperto vivo e ilegal fica na vaga.
+- Pulo do chão: `jumps_used == 0` e (`mode == GROUND` com `on_floor`, ou `tick - left_floor_tick <= coyote_ticks`); `velocity.y = jump_speed`; `jumps_used = 1`.
+- Pulo duplo: `jumps_used == 1`, ou `jumps_used == 0` no ar depois do coyote; e `Stamina.at(...) >= double_jump_cost`. Então `velocity.y = double_jump_speed` (o tick do aperto é o passo 1; o topo chega no passo `rise_ticks`), `jumps_used = 2`, `double_jump_tick = tick`, `Stamina.spend(...)`. A horizontal: com direção, `direction * horizontal.length()`, com `direction = (Basis(Vector3.UP, input.yaw) * Vector3(input.move.x, 0, -input.move.y)).normalized()`; sem direção, não muda; sem ganho de controle no ar nesse tick.
+- No `after_move`, ao pousar: `jumps_used = 0` e `double_jump_tick = NEVER`.
+- Yaw 0 olha para −Z; carimbos, nunca contagens; todo número literal de teste nomeia o campo da configuração de onde vem.
+
+**Quem testa o quê:** o test-writer escreve os critérios 1 a 7, cego à implementação (`test/core/fighter/movement_double_jump_test.gd`, `test/core/fighter/stamina_test.gd` e as linhas novas do `test/data/movement_data_test.gd`), e reescreve os seis testes da TASK-9 cuja expectativa muda (`test/core/fighter/movement_jump_test.gd`, por volta das linhas 342, 377, 398, 409, 418 e 435: um aperto no ar passa a dar o pulo duplo, e as leituras do `jump_pressed_tick` viram a vaga); tudo travado. O implementer escreve o critério 8: o `SyncObserver.Sample` sobre todo caminho do `state_properties` por `get_indexed` (exato para int, bool e StringName; 1e-6 para float e Vector3; a conferência da rede em `net/prediction_check.gd` continua em 1 mm), o cenário "pulo duplo" numa cópia `duplicate()` validada dos dados (`stamina_max = 25.0`, `stamina_regen_per_s = 0.0`: 25 → 15 → 5 → recusado; pulo e pulo duplo até o bloco de 2 m; um pulo duplo no tick seguinte a um pulo; um depois da beirada), os contadores (`double_jumps >= 3`, `ledge_double_jumps >= 1`, `refused_double_jumps >= 1`, `landings >= 3`, divergências 0), o HopBot do pouso mantendo `buffered_jumps == 2` e ganhando `double_jumps >= 2`, dois testes de veneno no padrão `_stop_recording`, a referência regravada (`bash tools/record_reference.sh`, com o motivo no commit) e o tempo do portão em silêncio.
+
+**Rodadas:** A (núcleo, dados, DEC-0039 e a medida do portão); B (observador, cenário, venenos, referência, docs); C (consertos da revisão e o playtest).
+
+| Agente | Modelo | Effort | Por quê |
+|---|---|---|---|
+| test-writer | Fable | high | regras cegas com a conta de ticks a 30 e a 60 |
+| implementer | Opus 5.5 | xhigh | o núcleo e o observador numa sessão só; Fable da 4ª rodada |
+| reviewer | Fable | high | cada critério com prova, os seis testes reescritos |
+| explorer | Sonnet | high | só se as linhas da TASK-9 tiverem mudado de lugar |
+<!-- SECTION:PLAN:END -->
 
 ## Implementation Notes
 

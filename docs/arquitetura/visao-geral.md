@@ -1,11 +1,11 @@
 ---
-revisado_em: 2026-10-08
-fontes: [F-002, F-005, F-006, F-007, F-018, F-020, F-021, F-022, F-024, F-025, F-026, F-030, F-032, F-033, F-039, F-049]
+revisado_em: 2026-10-19
+fontes: [F-002, F-005, F-006, F-007, F-018, F-020, F-021, F-022, F-024, F-025, F-026, F-030, F-032, F-033, F-039, F-049, F-100]
 ---
 
 # Visão geral
 
-Estado atual: as DECs aceitas até 04/10/2026. O Desenho 2 (TASK-4) está detalhado na DEC-0022, e o Desenho 3 (TASK-5) nas DEC-0023 a DEC-0026, com o detalhe da rede no [`rede.md`](rede.md). Nenhum código de jogo existe ainda: o primeiro é o esqueleto andante (TASK-9). A versão visual e interativa deste documento é o artefato [O tick por dentro](https://claude.ai/artifact/EJCYbVj6oCZcim765nDH8B), privado (DEC-0019); a da rede é a vitrine [A rede por dentro](https://claude.ai/artifact/Sb4Q5e4M16UymdoaR9UAzp).
+Estado atual: as DECs aceitas até 19/10/2026. O Desenho 2 (TASK-4) está detalhado na DEC-0022, e o Desenho 3 (TASK-5) nas DEC-0023 a DEC-0026, com o detalhe da rede no [`rede.md`](rede.md). O esqueleto andante (TASK-9) existe desde a v0.1.0, e a fase 1 começa pela TASK-10.1, com a interface da fase combinada na DEC-0039. A versão visual e interativa deste documento é o artefato [O tick por dentro](https://claude.ai/artifact/EJCYbVj6oCZcim765nDH8B), privado (DEC-0019); a da rede é a vitrine [A rede por dentro](https://claude.ai/artifact/Sb4Q5e4M16UymdoaR9UAzp).
 
 ## As camadas
 
@@ -77,7 +77,7 @@ Tudo o que a regra lê ou escreve num tick precisa estar numa caixa que o netfox
 flowchart LR
   subgraph fighter["Nó Fighter (CharacterBody3D)"]
     corpo["Corpo<br/>position, velocity"]
-    regras["Regras: FighterState<br/>mode, mode_since, on_floor,<br/>left_floor_tick, jump_pressed_tick,<br/>jumps_used, facing_yaw"]
+    regras["Regras: FighterState<br/>mode, mode_since, on_floor,<br/>left_floor_tick, buffered_command, buffered_tick,<br/>stamina_at_spend, stamina_spent_tick, double_jump_tick,<br/>jumps_used, facing_yaw"]
   end
   input["Nó Input (do dono: jogador ou bot)<br/>move, yaw, jump"]
   config["MovementConfig<br/>imutável, em ticks"]
@@ -91,11 +91,11 @@ flowchart LR
 | Caixa | Onde mora | O que guarda no esqueleto andante | Por que ali |
 |---|---|---|---|
 | Corpo | Nó `Fighter` | `position` (Vector3), `velocity` (Vector3, m/s) | O netfox restaura todos os corpos juntos antes de cada tick re-simulado, e um lutador colide com o outro na posição daquele tick |
-| Regras | `FighterState`, um objeto só de valores | `mode`, `mode_since` (tick), `on_floor`, `left_floor_tick`, `jump_pressed_tick`, `jumps_used`, `facing_yaw` (rad) | O núcleo puro recebe e devolve esse tipo; o netfox grava campo a campo, por valor |
+| Regras | `FighterState`, um objeto só de valores | `mode`, `mode_since` (tick), `on_floor`, `left_floor_tick`, `buffered_command` e `buffered_tick` (a vaga do buffer, DEC-0039), `stamina_at_spend` e `stamina_spent_tick` (a stamina como valor mais carimbo), `double_jump_tick`, `jumps_used`, `facing_yaw` (rad) | O núcleo puro recebe e devolve esse tipo; o netfox grava campo a campo, por valor |
 | Input | Nó `Input` (script `FighterInput`) | `move` (Vector2, relativo à câmera, até 1), `yaw` (rad), `jump` (um toque) | O bot preenche as mesmas três coisas; a regra não sabe quem aperta (DEC-0004) |
 | Configuração | `MovementConfig`, fora do estado | Os números do `movimento.md` em ticks e a física derivada para o tick | Nunca muda na partida, então não precisa voltar no tempo |
 
-- **Fase 1, esboçado:** `stamina`, `stamina_spent_tick`, `dash_ready_tick`, `grapple_ready_tick`, `grapple_point`, `wall_normal` e a última parede; os modos WALL_RUN, DASH e GRAPPLE; no input, `dash` e `grapple`.
+- **Fase 1, combinado no plano da TASK-10 (F-100):** a vaga do buffer, a stamina como valor mais carimbo e o `double_jump_tick` (TASK-10.1); `dash_tick` e `dash_direction` com o modo DASH (TASK-10.4); `wall_normal`, `wall_id` (o caminho do colisor relativo à arena, nunca um id do motor) e `wall_jump_tick` com o modo WALL_RUN (TASK-10.5); `grapple_fired_tick`, `grapple_point` e `grapple_end_tick` com o modo GRAPPLE (TASK-10.6); `slide_off_dir` (TASK-10.7). No input, `dash`, `grapple` e `pitch`. Os carimbos de fim substituem os `*_ready_tick` do esboço antigo: a recarga conta do fim da manobra.
 - **Fase 2, só o nome:** `action`, `action_since` e o golpe por ID, nunca o Resource (F-007 §5).
 
 ## O tick por dentro: o sanduíche (DEC-0022; contornos da DEC-0025)
@@ -116,7 +116,7 @@ Os dois contornos são código do nó, porque tocam o motor, e foram provados pe
 - **O contorno D** alinha o "estava no chão" que o `move_and_slide()` guarda sozinho, com um micro-movimento de sonda no primeiro tick de cada rollback. Sem ele, o pouso e a rampa saem diferentes ao refazer.
 
 ```
-before_move(state, velocity, input, config, tick) -> MovePlan    # puro: decide
+before_move(state, position, velocity, input, config, tick) -> MovePlan    # puro: decide (a posição desde a DEC-0039)
 move_and_slide()                                                  # motor: move e colide
 after_move(state, facts, config, tick) -> FighterState            # puro: confere
 ```
@@ -147,7 +147,7 @@ stateDiagram-v2
 
 ## O tempo e a física no estado (DEC-0022)
 
-- **Carimbo, não contagem:** o estado guarda o tick em que algo aconteceu (`jump_pressed_tick = 1040`), como o "flash 12:30" no chat do LoL. A regra calcula `tick - jump_pressed_tick < buffer_ticks`. O netfox só manda o que mudou, porque o diff de estado vem ligado (`netfox/rollback/enable_diff_states` em `addons/netfox/netfox.gd`, commit `cf5189d`), e o carimbo muda uma vez.
+- **Carimbo, não contagem:** o estado guarda o tick em que algo aconteceu (`buffered_tick = 1040`), como o "flash 12:30" no chat do LoL. A regra calcula `tick - buffered_tick <= buffer_ticks` (a janela é inclusiva, DEC-0039). O netfox só manda o que mudou, porque o diff de estado vem ligado (`netfox/rollback/enable_diff_states` em `addons/netfox/netfox.gd`, commit `cf5189d`), e o carimbo muda uma vez.
 - **Ms para tick:** o tick mais próximo, e o empate sobe. Um teste falha se o erro passar de meio tick.
 
 | Tempo do design | A 30 ticks | A 60 ticks |

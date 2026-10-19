@@ -1,6 +1,6 @@
 ---
-revisado_em: 2026-10-17
-fontes: [F-001, F-012, F-013, F-015, F-084, F-086, F-088]
+revisado_em: 2026-10-19
+fontes: [F-001, F-012, F-013, F-015, F-084, F-086, F-088, F-100]
 ---
 
 # Movimento
@@ -62,19 +62,21 @@ Cada número tem uma origem, e nem todos têm a mesma firmeza; a vitrine mostra 
 | Pulo variável | não | — | Soltar o botão cedo não encurta o pulo |
 | Pulo duplo | sim, um por voo | — | Decisão do Arthur (F-015 §1) |
 | Altura do pulo duplo | 1,0 | m | Com a gravidade de subida: ≈ 6,26 m/s e ≈ 320 ms até o topo |
-| Direção do pulo duplo | vira para onde o jogador aponta | — | Mantém a velocidade horizontal, sem ganhar |
+| Direção do pulo duplo | vira para onde o jogador aponta | — | Mantém a velocidade horizontal, sem ganhar. Sem direção apontada, mantém a direção e o módulo: leitura v0 do Claude (DEC-0017; TASK-10.1) |
+| Aperto no ar com o pulo duplo disponível | sai na hora | — | Mesmo a poucos ticks do pouso; o aperto guardado para o pouso só vale com o pulo duplo gasto ou sem stamina. Leitura v0 do Claude, que o Arthur julga jogando na TASK-10.1 (F-100 §1) |
+| Aperto depois do coyote, sem ter pulado | é o pulo duplo | — | Sair da beirada sem pular ainda dá ao voo o seu pulo no ar: um por voo. Dentro do coyote, sai o pulo cheio de 1,2 m. Leitura v0 do Claude (TASK-10.1) |
 | Renovação do pulo duplo | ao tocar o chão ou começar uma corrida na parede | — | |
 | Custo do pulo duplo | 10 | pontos de stamina | |
 | Dano de queda | não | — | Decisão do Arthur (F-015 §1); a explicação no mundo do jogo é a Q-13 |
 
-**No tick:** o código refaz a conta para o tick de 16,7 ms. A subida, 350 ms, vira 21 ticks, e o topo cai em 1,2 m. A descida, 280 ms, vira 17 ticks (283 ms). Por isso a saída do chão fica em 6,69 m/s e a gravidade de descida em 29,9 m/s², e não nos 6,86 m/s e 30,6 m/s² da conta lisa (TASK-9, critério 2; a vitrine, seção "O pulo em ticks").
+**No tick:** o código refaz a conta para o tick de 16,7 ms. A subida, 350 ms, vira 21 ticks, e o topo cai em 1,2 m. A descida, 280 ms, vira 17 ticks (283 ms). Por isso a saída do chão fica em 6,69 m/s e a gravidade de descida em 29,9 m/s², e não nos 6,86 m/s e 30,6 m/s² da conta lisa (TASK-9, critério 2; a vitrine, seção "O pulo em ticks"). O pulo duplo, 1,0 m, sai a 6,10 m/s a 60 ticks (o topo a 0,9999 m no 19º tick) e a 5,68 a 30, pela mesma conta: `sqrt(2 · g · tickrate · h) − g / 2`, com `g` a gravidade de subida por tick; a conta lisa daria 6,26 m/s e um topo abaixo de 1,0 m (leitura v0 do Claude, TASK-10.1; a vitrine ganha a seção "O pulo duplo em ticks" quando a filha fechar).
 
 ## Perdão
 
 | Número | Valor | Unidade | Nota |
 |---|---|---|---|
 | Coyote time | 100 | ms | Ainda pula logo depois de sair da beirada |
-| Buffer de input | 150 | ms | Um buffer só, para todo comando (DEC-0016) |
+| Buffer de input | 150 | ms | Um buffer só, para todo comando (DEC-0016): uma vaga, e o último aperto vence; um aperto que ainda não pode sair espera na vaga pelos 150 ms (DEC-0039; leitura v0 do Claude, TASK-10.1). No mesmo tick, o pulo vence o dash, que vence o gancho (vale quando eles existirem, TASK-10.4 e TASK-10.6) |
 
 ## Corrida na parede
 
@@ -122,8 +124,10 @@ Cada número tem uma origem, e nem todos têm a mesma firmeza; a vitrine mostra 
 |---|---|---|---|
 | Máximo | 100 | pontos | Os custos do combate v0 vão de 8 a 25 (`combate.md`) |
 | Espera para recuperar | 800 | ms sem gastar | |
-| Recuperação | 30 | pontos/s | Vazia, enche em ≈ 3,3 s |
+| Recuperação | 30 | pontos/s | Vazia, enche em ≈ 3,3 s depois da espera (4,1 s contando os 800 ms) |
 | O que gasta | pulo duplo e dash, além do combate | — | Correr, pular, a parede e o gancho não gastam |
+| Como se guarda | o valor logo depois do último gasto, mais o carimbo do gasto | — | A barra se calcula pelo tick: `min(100, valor + 0,5 · max(0, tick − carimbo − 48))` a 60 ticks; carimbo, nunca contagem (DEC-0022). Leitura v0 do Claude (TASK-10.1) |
+| Sem stamina suficiente | a manobra não sai | — | Nada é pago, e o aperto espera na vaga do buffer pelos 150 ms. Leitura v0 do Claude (TASK-10.1) |
 
 ## Câmera
 
@@ -146,7 +150,7 @@ Cada número tem uma origem, e nem todos têm a mesma firmeza; a vitrine mostra 
 
 ## O que o esqueleto andante usa (TASK-9)
 
-O corpo, o chão, o pulo simples, o perdão e a câmera. Pulo duplo, parede, dash, gancho e stamina ficam para a fase 1 (TASK-10).
+O corpo, o chão, o pulo simples, o perdão e a câmera. Pulo duplo, parede, dash, gancho e stamina entram na fase 1 pelas filhas da TASK-10, a começar pelo pulo duplo e pela stamina na TASK-10.1 (F-100).
 
 ## Fora do v0
 

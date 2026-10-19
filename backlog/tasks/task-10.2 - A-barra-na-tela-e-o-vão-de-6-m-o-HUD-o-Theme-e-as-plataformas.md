@@ -1,9 +1,10 @@
 ---
 id: TASK-10.2
 title: 'A barra na tela e o vão de 6 m: o HUD, o Theme e as plataformas'
-status: To Refine
+status: Ready
 assignee: []
 created_date: '2026-10-19 13:46'
+updated_date: '2026-10-19 16:28'
 labels:
   - jogo
 milestone: m-1
@@ -17,37 +18,36 @@ ordinal: 13000
 
 <!-- SECTION:DESCRIPTION:BEGIN -->
 ### Por quê
-A stamina da TASK-10.1 existe só no estado; o jogador precisa vê-la para decidir o próximo pulo, e o HUD é lido do estado, nunca de um timer, sem informação só por cor (DEC-0031 §2). A primeira cena de interface traz o Theme único (DEC-0031 §8), que a TASK-9 adiou de propósito. As duas plataformas abrem o vão de 6 m, que só o pulo duplo cruza ("Métricas de nível": acima dos ≈ 4,4 m do pulo com coyote, abaixo dos ≈ 7 m do pulo duplo), e a referência ganha um aperto no topo do pulo para o pulo duplo entrar no rastro que o CI confere (DEC-0027 §2, camada 4). Esta filha saiu da TASK-10.1 para cada sessão caber no tamanho da TASK-9: lá as regras e a SyncTest, aqui a tela e a arena. Nenhuma regra nova do núcleo: o test-writer não roda.
+A stamina da TASK-10.1 existe só no estado; o jogador precisa vê-la para decidir o próximo pulo, e o HUD é lido do estado, nunca de um timer, sem informação só por cor (DEC-0031 §2). A primeira cena de interface traz o Theme único e as chaves de tradução (DEC-0031 §8), que a TASK-9 adiou de propósito; a tela de opções é a TASK-10.9, antes da v0.2.0 (F-100 §1). As duas plataformas abrem o vão de 6 m, que só o pulo duplo cruza ("Métricas de nível": acima dos ≈ 4,4 m do pulo, mais o coyote, e abaixo dos ≈ 7 m do pulo duplo). Esta filha saiu da TASK-10.1 para cada sessão caber no tamanho da TASK-9: lá as regras e a SyncTest, aqui a tela e a arena. A referência já ganhou o pulo duplo na TASK-10.1. Nenhuma regra nova do núcleo: o test-writer não roda (DEC-0009).
 
 ### Perguntas em aberto
 Nenhuma.
 
-### Escolhas a confirmar
-1. O HUD traz o Theme único em `ui/theme/game_theme.tres`, apontado por `gui/theme/custom` no `project.godot` (guardado pelo teste de configurações), e a tela de opções vira a Q-32, uma task pequena antes de outra pessoa jogar. Padrão: sim, porque a DEC-0031 §8 diz que o Theme nasce com a primeira cena de interface, e a tela de opções não muda o que você joga agora.
-2. A referência é regravada com um aperto no topo do pulo (`route.trace` novo, `LEAST` com `double_jumps: 1`), com o motivo no commit. Padrão: sim, porque o pulo duplo precisa estar no rastro que o Windows e o Linux comparam; deixar a rota só com pulos do chão deixaria o pulo duplo fora da camada 4 até a TASK-10.8.
+### Escolhas confirmadas
+Confirmadas pelo Arthur em 19/10/2026 (F-100 §1): o HUD traz o Theme único em `ui/theme/game_theme.tres`, apontado por `gui/theme/custom` no `project.godot` e guardado pelo teste de configurações, e as chaves de tradução; a tela de opções, com as teclas remapeáveis e a escala, é a TASK-10.9. Na pergunta, o Theme vinha com a TASK-10.1; ele passou para esta filha junto com o HUD, na divisão das filhas.
 
 ### Números v0 do Claude
 Fechados pelo Claude (DEC-0017); você julga jogando.
-- A barra tem 300 × 12 px na base de 1080p, canto inferior esquerdo, com o número ao lado e o modo em texto, porque o papel não tem pixel e a DEC-0031 §2 pede texto e forma além da cor; sem stamina para o pulo duplo, o número ganha um traço embaixo (forma, não cor). Vai para o `visual-e-audio.md`.
-- As plataformas: `PlataformaVaoA` em (−20, 0,5, 6) e `PlataformaVaoB` em (−20, 0,5, −6), 6 × 1 × 6 m, topo a 1 m, vão de 6 m entre z = 3 e z = −3, em chão livre (o conteúdo de hoje fica em x −10..10, z −14..9), porque o vão fica acima do pulo com coyote (≈ 4,4 + 0,7 m, margem de ≈ 0,5 m) e abaixo do pulo duplo. Vai para "Métricas de nível".
-- O HUD só existe com tela: o servidor sem tela não o cria. Vai para o `visao-geral.md`.
+- A barra tem 300 × 12 px na base de 1080p, no canto inferior esquerdo, com o número ao lado e o modo em texto, porque o papel não tem pixel e a DEC-0031 §2 pede texto e forma além da cor; sem stamina para o pulo duplo, o número ganha um traço embaixo (forma, não cor). Vai para o `visual-e-audio.md`.
+- As plataformas: `PlataformaVaoA` em (−20; 0,5; 6) e `PlataformaVaoB` em (−20; 0,5; −6), de 6 × 1 × 6 m, topo a 1 m, com o vão de 6 m entre z = 3 e z = −3, em chão livre, longe dos cenários da SyncTest e do percurso da referência. O vão fica acima do pulo com coyote (≈ 4,4 + 0,7 m) e abaixo do pulo duplo (≈ 7 m). Vai para "Métricas de nível".
+- O HUD só existe com tela: o servidor sem tela não o cria. Vai para a `visao-geral.md`.
 
 ### Fora do escopo
-- A tela de opções e o remapeamento das teclas (Q-32).
-- O arco de recarga do dash e a mira do gancho no HUD (TASK-10.4 e TASK-10.6). Som (DEC-0029). Qualquer regra do núcleo.
+- A tela de opções e o remapeamento das teclas (TASK-10.9).
+- A recarga do dash e a mira do gancho no HUD (TASK-10.4 e TASK-10.6). Som (Q-32; DEC-0029). Qualquer regra do núcleo.
 
 ### O que você vai aprender
-- Um HUD que não mente: por que a barra se calcula do estado exibido a cada quadro, e o que aconteceria com um timer durante um rollback.
+- Um HUD que não mente: a barra se calcula do estado exibido a cada quadro, e um timer próprio se perderia num rollback.
 - O Theme do Godot como as variáveis de CSS de um site: um lugar para a fonte e as cores, e nenhuma cena com número solto.
-- Por que a referência muda de propósito, e por que o commit precisa dizer o motivo.
+- As chaves de tradução: o texto da tela mora num arquivo por idioma, como o i18n de um app web.
 <!-- SECTION:DESCRIPTION:END -->
 
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
-- [ ] #1 Quando o Sozinho abre com tela, o HUD mostra a stamina como barra (300 × 12 px na base de 1080p, leitura v0 do Claude) e número, e o modo em texto, lidos do estado exibido a cada quadro por `Stamina.at` e nunca de um timer, nada só por cor; sem stamina para o pulo duplo, o número muda de forma; sem tela, nenhum HUD é criado (DEC-0031 §2 e §8; DEC-0022).
+- [ ] #1 Quando o Sozinho abre com tela, o HUD mostra a stamina como barra (300 × 12 px na base de 1080p, leitura v0 do Claude) e número, e o modo em texto, lidos do estado exibido a cada quadro por `Stamina.at` e nunca de um timer, nada só por cor; com menos de 10 de stamina, o custo do pulo duplo, o número muda de forma; sem tela, nenhum HUD é criado (DEC-0031 §2 e §8; DEC-0022).
 - [ ] #2 Quando a primeira cena de interface nasce, ela usa o Theme único `ui/theme/game_theme.tres`, apontado por `gui/theme/custom` e guardado pelo teste de configurações; os textos da TASK-9 passam a usar o Theme; nenhuma cena de interface carrega fonte ou cor própria (DEC-0031 §8; F-006 §3).
-- [ ] #3 Quando a arena ganha `PlataformaVaoA` e `PlataformaVaoB` (6 × 1 × 6 m, topo a 1 m, vão de 6 m entre elas), elas ficam em chão livre, fora do percurso da referência e das áreas dos cenários, com nomes únicos sob `Arena` e colisão e malha do mesmo tamanho, e um teste de cena prova isso; os cenários da SyncTest seguem verdes (F-086 §1; `movimento.md`, "Métricas de nível").
-- [ ] #4 Quando a referência ganha um aperto no topo do pulo, o `route.trace` é regravado por `bash tools/record_reference.sh`, o commit diz por quê, `LEAST` ganha `double_jumps: 1`, e o hash bate no portão deste PC e no CI no Linux (DEC-0027 §2, camada 4; F-094 §2).
+- [ ] #3 Quando o HUD mostra um texto, ele vem de uma chave de tradução, com pt-BR e en; uma chave sem tradução num dos dois idiomas reprova um teste (DEC-0031 §8).
+- [ ] #4 Quando a arena ganha `PlataformaVaoA` e `PlataformaVaoB` (6 × 1 × 6 m, topo a 1 m, vão de 6 m entre elas), elas ficam em chão livre, fora do percurso da referência e das áreas dos cenários, com nomes únicos sob `Arena` e colisão e malha do mesmo tamanho, e um teste de cena prova isso; os cinco cenários da SyncTest seguem verdes, e a referência mantém o hash `d53a533c…`, ou é regravada com o motivo no commit (F-086 §1; `movimento.md`, "Métricas de nível"; DEC-0027 §2, camada 4).
 - [ ] #5 Quando o Arthur joga no Sozinho, ele cruza o vão de 6 m só com o pulo duplo, vê a barra cair 10 e encher de novo depois de 0,8 s, e o que ele sentiu vai para uma fonte (F-041; `movimento.md`, "Stamina").
 <!-- AC:END -->
 

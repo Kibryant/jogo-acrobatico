@@ -44,6 +44,18 @@ const CHECKED_TICKRATES: Array[int] = [30, 60]
 ## A press in the air is kept this long before landing (movimento.md, "Perdão").
 @export var buffer_ms: int
 
+@export_group("Double jump and stamina")
+## Above the press, with the rise gravity of the jump (movimento.md, "Pulo e ar").
+@export var double_jump_height_m: float
+## Stamina points (movimento.md, "Pulo e ar": "Custo do pulo duplo").
+@export var double_jump_cost: float
+## Stamina points of a full bar (movimento.md, "Stamina").
+@export var stamina_max: float
+## After a spend, the bar regains nothing this long (movimento.md, "Stamina").
+@export var stamina_wait_ms: int
+## Points per second after the wait (movimento.md, "Stamina").
+@export var stamina_regen_per_s: float
+
 
 # The data check, layer 3 of DEC-0027 §2: one message per impossible number, empty when every
 # number can be. The gate runs it over every movement .tres under data/
@@ -70,6 +82,23 @@ func validate() -> PackedStringArray:
 		_positive_error("max_fall_speed_mps", max_fall_speed_mps, "nothing could fall"),
 		_not_negative_error("run_speed_mps", run_speed_mps, "a speed cannot be negative"),
 		_not_negative_error("air_control_pct", air_control_pct, "air control cannot be negative"),
+		# The double jump's exit speed derives from its height, so zero is no jump; a bar
+		# without points pays nothing (movimento.md, "Pulo e ar" and "Stamina").
+		_positive_error(
+			"double_jump_height_m",
+			double_jump_height_m,
+			"its exit speed derives from it",
+		),
+		_positive_error("stamina_max", stamina_max, "a bar without points pays nothing"),
+		_cost_error("double_jump_cost", double_jump_cost),
+		# Nothing divides by the wait: zero regains at once. A regen of zero freezes the bar, as
+		# the test fixtures do.
+		_time_error("stamina_wait_ms", stamina_wait_ms, false),
+		_not_negative_error(
+			"stamina_regen_per_s",
+			stamina_regen_per_s,
+			"a regen cannot be negative",
+		),
 	]
 	var errors := PackedStringArray()
 	for message: String in checks:
@@ -113,4 +142,17 @@ static func _positive_error(field: String, value: float, why: String) -> String:
 static func _not_negative_error(field: String, value: float, why: String) -> String:
 	if value < 0.0:
 		return "%s is %s: %s" % [field, value, why]
+	return ""
+
+
+# A cost is not negative and fits a full bar: above stamina_max the maneuver could never come
+# out. A max that is not positive has its own message, and against it the cost says nothing more.
+func _cost_error(field: String, cost: float) -> String:
+	if cost < 0.0:
+		return "%s is %s: a cost cannot be negative" % [field, cost]
+	if stamina_max > 0.0 and cost > stamina_max:
+		return (
+			"%s is %s: above stamina_max, %s, a full bar could never pay it"
+			% [field, cost, stamina_max]
+		)
 	return ""

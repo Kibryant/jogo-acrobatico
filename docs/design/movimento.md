@@ -69,7 +69,7 @@ Cada número tem uma origem, e nem todos têm a mesma firmeza; a vitrine mostra 
 | Custo do pulo duplo | 10 | pontos de stamina | |
 | Dano de queda | não | — | Decisão do Arthur (F-015 §1); a explicação no mundo do jogo é a Q-13 |
 
-**No tick:** o código refaz a conta para o tick de 16,7 ms. A subida, 350 ms, vira 21 ticks, e o topo cai em 1,2 m. A descida, 280 ms, vira 17 ticks (283 ms). Por isso a saída do chão fica em 6,69 m/s e a gravidade de descida em 29,9 m/s², e não nos 6,86 m/s e 30,6 m/s² da conta lisa (TASK-9, critério 2; a vitrine, seção "O pulo em ticks"). O pulo duplo, 1,0 m, sai a 6,10 m/s a 60 ticks (o topo a 0,9999 m no 19º tick) e a 5,68 a 30, pela mesma conta: `sqrt(2 · g · tickrate · h) − g / 2`, com `g` a gravidade de subida por tick; a conta lisa daria 6,26 m/s e um topo abaixo de 1,0 m (leitura v0 do Claude, TASK-10.1; a vitrine ganha a seção "O pulo duplo em ticks" quando a filha fechar).
+**No tick:** o código refaz a conta para o tick de 16,7 ms. A subida, 350 ms, vira 21 ticks, e o topo cai em 1,2 m. A descida, 280 ms, vira 17 ticks (283 ms). Por isso a saída do chão fica em 6,69 m/s e a gravidade de descida em 29,9 m/s², e não nos 6,86 m/s e 30,6 m/s² da conta lisa (TASK-9, critério 2; a vitrine, seção "O pulo em ticks"). O pulo duplo, 1,0 m, sai a 6,10 m/s a 60 ticks (o topo a 0,9999 m no 19º tick) e a 5,68 a 30, pela mesma conta: `sqrt(2 · g · tickrate · h) − g / 2`, com `g` a gravidade de subida por tick; a conta lisa daria 6,26 m/s e passaria do topo, 1,05 m a 60 e 1,10 m a 30, porque o tick do aperto andaria com a velocidade inteira de saída (leitura v0 do Claude, TASK-10.1; a vitrine ganha a seção "O pulo duplo em ticks" quando a filha fechar).
 
 ## Perdão
 

@@ -44,8 +44,8 @@ func test_the_tick_input_is_the_mean_move_and_the_last_yaw_of_the_frames() -> vo
 
 
 # Pressed once, the jump leaves the floor on the first tick of the frame, and the second tick of
-# the same frame finds it taken: a press left over there would be stamped as a new one, waiting
-# in the buffer (Movement.before_move).
+# the same frame finds it taken: a press left over there would take the slot of the buffer as a
+# new one and fire the double jump (Movement.before_move; DEC-0039).
 func test_a_jump_press_counts_for_one_tick_when_a_frame_runs_two() -> void:
 	var fighter := await _fighter_in_a_match()
 	NetfoxTicks.run_loops(3)
@@ -53,7 +53,8 @@ func test_a_jump_press_counts_for_one_tick_when_a_frame_runs_two() -> void:
 	NetfoxTicks.run_loop(2)
 	assert_int(fighter.state.jumps_used).is_equal(1)
 	assert_int(fighter.state.mode).is_equal(FighterState.Mode.AIR)
-	assert_int(fighter.state.jump_pressed_tick).is_equal(FighterState.NEVER)
+	assert_str(String(fighter.state.buffered_command)).is_equal(String(FighterCommand.NONE))
+	assert_int(fighter.state.buffered_tick).is_equal(FighterState.NEVER)
 	assert_float(fighter.position.y).is_greater(0.0)
 
 
@@ -64,7 +65,8 @@ func test_a_jump_press_counts_for_one_tick_in_frames_of_one_tick() -> void:
 	NetfoxTicks.run_loop()
 	assert_int(fighter.state.jumps_used).is_equal(1)
 	NetfoxTicks.run_loop()
-	assert_int(fighter.state.jump_pressed_tick).is_equal(FighterState.NEVER)
+	assert_str(String(fighter.state.buffered_command)).is_equal(String(FighterCommand.NONE))
+	assert_int(fighter.state.buffered_tick).is_equal(FighterState.NEVER)
 	assert_bool(fighter.input.to_tick_input().jump).is_false()
 
 

@@ -22,12 +22,23 @@ var mode_since := NEVER
 var on_floor := true
 # The tick whose after_move first saw the body off the floor; the coyote counts from it.
 var left_floor_tick := NEVER
-# The tick of the last jump press still waiting; the jump consumes it back to NEVER.
-var jump_pressed_tick := NEVER
-# Jumps since the floor: the jump adds one, the floor renews it.
+# The slot of the buffer, one for every command (movimento.md, "Perdão"; DEC-0039): the command
+# of the last press still waiting and its tick. A new press takes the slot; the command that
+# fires, or a press whose window closed, leaves it empty (FighterCommand.NONE and NEVER).
+var buffered_command: StringName = FighterCommand.NONE
+var buffered_tick := NEVER
+# Jumps since the floor, 0 to 2: the jump makes it 1, the double jump 2, the floor renews it.
 var jumps_used := 0
 # Where the body looks, in rad: the camera's yaw (movimento.md, "Princípios").
 var facing_yaw := 0.0
+# The stamina as a value and a stamp (movimento.md, "Stamina": "Como se guarda"): the bar right
+# after the last spend and the tick of that spend. Stamina.at computes the bar from the tick;
+# never spent, the bar is full.
+var stamina_at_spend := 0.0
+var stamina_spent_tick := NEVER
+# The tick of the double jump of this flight; the floor clears it. The key its visual signal
+# will play by, once per event (DEC-0031; TASK-10.4).
+var double_jump_tick := NEVER
 
 
 # An equal and independent state: the rules change the copy, never the state they receive.
@@ -37,7 +48,11 @@ func copy() -> FighterState:
 	other.mode_since = mode_since
 	other.on_floor = on_floor
 	other.left_floor_tick = left_floor_tick
-	other.jump_pressed_tick = jump_pressed_tick
+	other.buffered_command = buffered_command
+	other.buffered_tick = buffered_tick
 	other.jumps_used = jumps_used
 	other.facing_yaw = facing_yaw
+	other.stamina_at_spend = stamina_at_spend
+	other.stamina_spent_tick = stamina_spent_tick
+	other.double_jump_tick = double_jump_tick
 	return other

@@ -14,6 +14,8 @@ var rise_ticks: int
 var fall_ticks: int
 var coyote_ticks: int
 var buffer_ticks: int
+# After a spend, the bar regains nothing for this many ticks (movimento.md, "Stamina").
+var stamina_wait_ticks: int
 
 var run_speed: float # m/s
 var max_fall_speed: float # m/s
@@ -33,6 +35,14 @@ var rise_gravity_per_tick: float
 var fall_gravity_per_tick: float
 # The vertical speed of the press tick, in m/s.
 var jump_speed: float
+# The vertical speed of the double jump's press tick, in m/s, under the same rise gravity.
+var double_jump_speed: float
+
+# The stamina (movimento.md, "Pulo e ar" and "Stamina"), in points.
+var double_jump_cost: float
+var stamina_max: float
+# Points regained on each tick after the wait.
+var stamina_regen_per_tick: float
 
 
 # The jump is two parabolas sampled on the ticks: the body is at the apex, jump_height_m up, at
@@ -73,4 +83,19 @@ static func create(data: MovementData, tickrate: int) -> MovementConfig:
 	config.rise_gravity_per_tick = double_height_rate / (config.rise_ticks * config.rise_ticks)
 	config.fall_gravity_per_tick = double_height_rate / (config.fall_ticks * config.fall_ticks)
 	config.jump_speed = config.rise_gravity_per_tick * (config.rise_ticks - 0.5)
+
+	# The double jump rises under the same gravity g per tick (movimento.md, "No tick"). Leaving
+	# at v, the body is (n * v - g * n * (n - 1) / 2) / tickrate up after n ticks, which over a
+	# continuous n peaks at n = v / g + 1/2 with (v + g / 2)² / (2 * g * tickrate). Setting that
+	# peak to h gives v = sqrt(2 * g * tickrate * h) - g / 2: the jump's own g * (rise_ticks - 1/2)
+	# solves the same equation, with the peak on a whole tick. The double jump's peak falls between
+	# ticks, so its apex comes a hair low: 0.9999 m on the 19th tick at 60 and 0.99998 m on the
+	# 10th at 30. The smooth sqrt(2 * g * tickrate * h), 6.26 m/s at 60, would overshoot by 5 cm.
+	var rise := config.rise_gravity_per_tick
+	config.double_jump_speed = sqrt(2.0 * rise * tickrate * data.double_jump_height_m) - rise / 2.0
+
+	config.stamina_wait_ticks = Ticks.from_ms(data.stamina_wait_ms, tickrate)
+	config.double_jump_cost = data.double_jump_cost
+	config.stamina_max = data.stamina_max
+	config.stamina_regen_per_tick = data.stamina_regen_per_s / tickrate
 	return config

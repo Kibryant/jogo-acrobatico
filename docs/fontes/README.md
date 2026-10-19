@@ -114,3 +114,5 @@ O que chegou ao projeto e como chegou. Uma fonte não muda: só mudam `status`, 
 | [F-108](F-108-arthur-joga-o-hud-e-nao-acha-o-vao.md) | 2026-10-19 | O Arthur joga a TASK-10.2, gosta da barra, que reage rápido, e não acha o vão de 6 m |
 | [F-109](F-109-arthur-sobe-as-plataformas-do-vao-para-2-m.md) | 2026-10-19 | O Arthur escolhe subir as plataformas do vão para 2 m, para cair no vão custar a volta pelo pulo duplo |
 | [F-110](F-110-arthur-joga-o-vao-de-2-m.md) | 2026-10-19 | O Arthur joga o vão com as plataformas de 2 m, cruza com o pulo duplo e acha massa, sem novidade, porque já fazia isso nos blocos da escada |
+| [F-111](F-111-arthur-libera-o-merge-da-task-10-2-e-segue-para-a-task-10-3.md) | 2026-10-19 | O Arthur libera o merge do PR #10 com o CI verde e escolhe seguir para a TASK-10.3 na mesma sessão |
+| [F-112](F-112-arthur-abre-a-task-10-3.md) | 2026-10-19 | O Arthur abre a TASK-10.3: acerta que o replay guarda as teclas e a câmera e escolhe que o Sozinho grave sempre |

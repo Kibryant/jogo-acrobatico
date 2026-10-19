@@ -1,10 +1,10 @@
 ---
 id: TASK-10.3
 title: 'Gravador de replay por inputs: a jogada refeita sem tela'
-status: Ready
+status: In Progress
 assignee: []
 created_date: '2026-10-19 13:46'
-updated_date: '2026-10-19 19:01'
+updated_date: '2026-10-19 19:02'
 labels:
   - jogo
 milestone: m-1
@@ -65,6 +65,41 @@ Fechados pelo Claude (DEC-0017); escritos no `testes-e-entrega.md` §4 nesta fil
 - [ ] #3 Diário da sessão escrito e glossário atualizado
 - [ ] #4 Mudanças registradas em docs/mudancas.md
 <!-- DOD:END -->
+
+## Implementation Plan
+
+<!-- SECTION:PLAN:BEGIN -->
+## O plano (para o implementer; sem test-writer, DEC-0009)
+
+Nenhuma regra nova do núcleo. O rascunho em inglês das notas desta task é o detalhe; aqui ficam as decisões e os dois consertos da crítica de completude.
+
+**O arquivo, formato v1** (`replay/replay_file.gd`, `ReplayFile`, `FORMAT := 1`): texto UTF-8 com `\n`. O cabeçalho em `chave=valor`: formato, versão e commit (`BuildStamp`), a impressão das regras, o motor, a plataforma, os ticks por segundo, `physics_ticks_per_second`, `sync_to_physics`, `max_ticks_per_frame`, `input_delay`, a arena e a impressão dela, a semente (0), a configuração inteira (um campo do `MovementData` por linha, tipado), os lutadores, o primeiro tick e as colunas declaradas por nome e tipo; depois `---` e uma linha por tick e lutador: o tick absoluto, o tamanho do laço, o lutador, o input (os floats como os 8 bytes do double em 16 dígitos hexadecimais) e a coluna `check`.
+
+**A impressão das regras** (conserto): o sha256 do texto dos scripts que movem o corpo (`core/`, `fighter/`, `match/`, `arena/`, `data/*.gd`, em ordem de caminho) mais a fixação do netfox `cf5189d`, calculado dos arquivos quando o jogo roda do código-fonte; vazio na build exportada, onde o commit identifica a build. O tocador só compara quando as duas existem. Nada muda no `tools/stamp_build.sh` nem no CI.
+
+**O gravador** (`replay/replay_recorder.gd`, `ReplayRecorder`, um Node): no `NetworkRollback.after_process_tick`, para cada lutador vivo com o input daquele tick, anota o input; `FileAccess.flush()` a cada 60 ticks; o arquivo `sozinho-AAAAMMDD-HHMMSS.replay` em `user://replays/`, os 20 mais novos guardados, o caminho completo no log (F-112 §2). O `LaunchOptions` ganha `--replay=`, `--replay-dir=`, `--no-replay`, `--watch=` e `--trace=`, só no Sozinho; o `test/main/main_test.gd` passa `--no-replay`, e o portão nunca escreve em `user://replays/`.
+
+**A entrada na reprodução**: o `FighterInput` continua o único que escreve a caixa de input; `FighterInput.play_rows(source)` faz o `_on_after_tick` tomar a linha gravada no lugar do amostrador, sem passar pelo `limit_length` nem pela média; um teste prova que a caixa sai igual à linha.
+
+**O tocador sem tela** (`tools/replay_play.tscn`, `ReplayRun`, no molde do `ReferenceRun`): a partida de verdade pelo `Match`, com o `MovementData` do cabeçalho, laço a laço como foi gravado, com o relógio começando no primeiro tick gravado pelo ajudante dos testes (a exceção da DEC-0027); emite o rastro do estado inteiro e o sha256; `bash tools/replay.sh ARQUIVO [--force] [--watch [--max-fps N]] [--readable=SAÍDA] [--trace=SAÍDA]`.
+
+**O rastro** (conserto; `replay/state_trace.gd`, `StateTrace`): uma linha por tick e lutador, com os ticks e os carimbos do estado contados a partir do primeiro tick gravado (o `NEVER` fica `NEVER`), para o `--watch`, que roda com o relógio de verdade e começa noutro tick, ser comparável; `first_difference(a, b)` diz o tick, o lutador, a coluna e os dois valores.
+
+**O `--watch`**: um Sozinho com o relógio de verdade, o input do arquivo, a câmera no lutador e o texto de fim por chave de tradução; ele não escreve no relógio do netfox (código do jogo, fora da exceção da DEC-0027) e anota o tamanho de cada laço que rodou, para o resumo dizer se uma diferença caiu num laço de tamanho diferente do gravado.
+
+**Os testes** (`test/replay/`, uns 600 ticks, com o tempo impresso): a ida e volta com precondição (yaw diferente de zero, moves fora de {-1, 0, 1}, um laço de 2 ticks, pulos duplos); o float bit a bit (`1.0/3.0`, `-0.0`, `PI`, `1e-300`, uma média de float32); a célula malformada recusada, nunca lida como 0; o cabeçalho; as recusas que dizem o campo; a coluna que falta só com `--force`; a última linha cortada; o salto de tick; a rotação dos 20 numa pasta temporária; as guardas do `Engine.time_scale` e do CR da referência.
+
+**A medição** (critério 5): uma gravação tocada pelo `--watch --trace` a 30, 60 e 144 quadros por segundo contra o `replay.sh`. Se os rastros diferirem, os números vão ao Arthur antes da TASK-10.4, e o `sync_to_physics` só muda numa DEC nova, no modo de plano.
+
+**Os docs** (uma linha no `mudancas.md`): o `testes-e-entrega.md` §4 reescrito (o formato, o tocador, os limites, `user://replays/`, o tamanho) e o §12 com o `tools/replay.sh`; o `rede.md` §8 ("todo replay de bug vai com o arquivo"); o glossário (gravador, arquivo, laço de ticks, tocador, rastro, impressão do estado, impressão das regras, colunas declaradas).
+
+**Rodadas:** A (o arquivo, o gravador, o tocador e os testes); B (o `--watch`, a medição, o script e os docs); C (o teste à mão).
+
+| Agente | Modelo | Effort | Por quê |
+|---|---|---|---|
+| implementer | Opus 5.5 | xhigh | o formato, a entrada e o tocador numa sessão |
+| reviewer | Fable | high | determinismo pede prova, não leitura |
+<!-- SECTION:PLAN:END -->
 
 ## Implementation Notes
 

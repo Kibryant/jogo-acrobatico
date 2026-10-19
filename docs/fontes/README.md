@@ -113,3 +113,4 @@ O que chegou ao projeto e como chegou. Uma fonte não muda: só mudam `status`, 
 | [F-107](F-107-arthur-libera-o-pr-rascunho-da-task-10-2.md) | 2026-10-19 | O Arthur libera subir a branch da TASK-10.2 e abrir o PR rascunho |
 | [F-108](F-108-arthur-joga-o-hud-e-nao-acha-o-vao.md) | 2026-10-19 | O Arthur joga a TASK-10.2, gosta da barra, que reage rápido, e não acha o vão de 6 m |
 | [F-109](F-109-arthur-sobe-as-plataformas-do-vao-para-2-m.md) | 2026-10-19 | O Arthur escolhe subir as plataformas do vão para 2 m, para cair no vão custar a volta pelo pulo duplo |
+| [F-110](F-110-arthur-joga-o-vao-de-2-m.md) | 2026-10-19 | O Arthur joga o vão com as plataformas de 2 m, cruza com o pulo duplo e acha massa, sem novidade, porque já fazia isso nos blocos da escada |

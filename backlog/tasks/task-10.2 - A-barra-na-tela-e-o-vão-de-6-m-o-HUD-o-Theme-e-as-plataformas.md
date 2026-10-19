@@ -1,10 +1,10 @@
 ---
 id: TASK-10.2
 title: 'A barra na tela e o vão de 6 m: o HUD, o Theme e as plataformas'
-status: In Progress
+status: Done
 assignee: []
 created_date: '2026-10-19 13:46'
-updated_date: '2026-10-19 18:07'
+updated_date: '2026-10-19 18:15'
 labels:
   - jogo
 milestone: m-1
@@ -44,19 +44,19 @@ Fechados pelo Claude (DEC-0017); você julga jogando.
 
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
-- [ ] #1 Quando o Sozinho abre com tela, o HUD mostra a stamina como barra (300 × 12 px na base de 1080p, leitura v0 do Claude) e número, e o modo em texto, lidos do estado exibido a cada quadro por `Stamina.at` e nunca de um timer, nada só por cor; com menos de 10 de stamina, o custo do pulo duplo, o número muda de forma; sem tela, nenhum HUD é criado (F-051 §3.4; DEC-0031 §2 e §8; DEC-0022).
-- [ ] #2 Quando a primeira cena de interface nasce, ela usa o Theme único `ui/theme/game_theme.tres`, apontado por `gui/theme/custom` e guardado pelo teste de configurações; os textos da TASK-9 passam a usar o Theme; nenhuma cena de interface carrega fonte ou cor própria (DEC-0031 §8; F-006 §3).
-- [ ] #3 Quando o HUD mostra um texto, ele vem de uma chave de tradução, com pt-BR e en; uma chave sem tradução num dos dois idiomas reprova um teste (DEC-0031 §8).
-- [ ] #4 Quando a arena ganha `PlataformaVaoA` e `PlataformaVaoB` (6 × 2 × 6 m, topo a 2 m, vão de 6 m entre elas; F-109), elas ficam em chão livre, fora do percurso da referência e das áreas dos cenários, com nomes únicos sob `Arena` e colisão e malha do mesmo tamanho, e um teste de cena prova isso; os cinco cenários da SyncTest seguem verdes, e a referência mantém o hash `d53a533c…`, ou é regravada com o motivo no commit (F-086 §1; `movimento.md`, "Métricas de nível"; DEC-0027 §2, camada 4).
-- [ ] #5 Quando o Arthur joga no Sozinho, ele cruza o vão de 6 m só com o pulo duplo, vê a barra cair 10 e encher de novo depois de 0,8 s, e o que ele sentiu vai para uma fonte (F-041; `movimento.md`, "Stamina").
+- [x] #1 Quando o Sozinho abre com tela, o HUD mostra a stamina como barra (300 × 12 px na base de 1080p, leitura v0 do Claude) e número, e o modo em texto, lidos do estado exibido a cada quadro por `Stamina.at` e nunca de um timer, nada só por cor; com menos de 10 de stamina, o custo do pulo duplo, o número muda de forma; sem tela, nenhum HUD é criado (F-051 §3.4; DEC-0031 §2 e §8; DEC-0022).
+- [x] #2 Quando a primeira cena de interface nasce, ela usa o Theme único `ui/theme/game_theme.tres`, apontado por `gui/theme/custom` e guardado pelo teste de configurações; os textos da TASK-9 passam a usar o Theme; nenhuma cena de interface carrega fonte ou cor própria (DEC-0031 §8; F-006 §3).
+- [x] #3 Quando o HUD mostra um texto, ele vem de uma chave de tradução, com pt-BR e en; uma chave sem tradução num dos dois idiomas reprova um teste (DEC-0031 §8).
+- [x] #4 Quando a arena ganha `PlataformaVaoA` e `PlataformaVaoB` (6 × 2 × 6 m, topo a 2 m, vão de 6 m entre elas; F-109), elas ficam em chão livre, fora do percurso da referência e das áreas dos cenários, com nomes únicos sob `Arena` e colisão e malha do mesmo tamanho, e um teste de cena prova isso; os cinco cenários da SyncTest seguem verdes, e a referência mantém o hash `d53a533c…`, ou é regravada com o motivo no commit (F-086 §1; `movimento.md`, "Métricas de nível"; DEC-0027 §2, camada 4).
+- [x] #5 Quando o Arthur joga no Sozinho, ele cruza o vão de 6 m só com o pulo duplo, vê a barra cair 10 e encher de novo depois de 0,8 s, e o que ele sentiu vai para uma fonte (F-041; `movimento.md`, "Stamina").
 <!-- AC:END -->
 
 ## Definition of Done
 <!-- DOD:BEGIN -->
-- [ ] #1 Critérios de aceite verificados
-- [ ] #2 Teste automatizado para toda regra do núcleo (core/)
-- [ ] #3 Diário da sessão escrito e glossário atualizado
-- [ ] #4 Mudanças registradas em docs/mudancas.md
+- [x] #1 Critérios de aceite verificados
+- [x] #2 Teste automatizado para toda regra do núcleo (core/)
+- [x] #3 Diário da sessão escrito e glossário atualizado
+- [x] #4 Mudanças registradas em docs/mudancas.md
 <!-- DOD:END -->
 
 ## Implementation Plan
@@ -130,3 +130,9 @@ Cruzar o vão só com o pulo: não chega. Com pulo e pulo duplo: chega com folga
 ## Docs a atualizar
 Com o seu ok e uma linha no `mudancas.md` cada: `visual-e-audio.md` (a barra em px; o Theme como o lugar das fontes); `movimento.md` "Métricas de nível" (o vão e as plataformas); `glossario.md` (HUD); `visao-geral.md` (o HUD só com tela); `pendencias.md` (Q-32); `testes-e-entrega.md` §3 (a referência com o pulo duplo); a vitrine com o vão (DEC-0019); o diário e o `registro.md`.
 <!-- SECTION:NOTES:END -->
+
+## Final Summary
+
+<!-- SECTION:FINAL_SUMMARY:BEGIN -->
+O HUD mostra a stamina no canto inferior esquerdo (a barra de 300 × 12 px, o número e o modo), calculado do estado exibido a cada quadro, sem timer (F-051 §3.4), com o traço de 2 px abaixo de 10 (DEC-0031 §2). O Theme único em gui/theme/custom e as chaves de tradução do HUD, com pt-BR e en (DEC-0031 §8). As plataformas do vão de 6 m subiram para 2 m depois do primeiro teste à mão (F-108; F-109). A referência manteve o hash d53a533c. O revisor pediu duas correções de citação, feitas. O Arthur gostou da barra e achou o vão massa, sem novidade (F-110). Sem regra nova do núcleo: o item 2 da DoD não se aplica. PR #10.
+<!-- SECTION:FINAL_SUMMARY:END -->

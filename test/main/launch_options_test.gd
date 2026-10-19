@@ -276,3 +276,73 @@ func test_arguments_that_do_not_fit_together_are_errors() -> void:
 		var message := "%s must be refused with one message" % [arguments]
 		var errors := _parse(arguments).errors
 		assert_int(errors.size()).override_failure_message(message).is_equal(1)
+
+
+# TASK-10.3, criterion 1 (F-112 §2): Sozinho records a replay, always, in user://replays/ unless
+# --replay names the file, --replay-dir the folder, or --no-replay turns it off; --watch plays one
+# in a window instead and records none. The server and the clients record no replay.
+func test_sozinho_records_a_replay_unless_told_where_or_not_to() -> void:
+	var always := _parse([], EDITOR_BUILD, WITH_SCREEN)
+	assert_bool(always.records_replay()).is_true()
+	assert_str(always.replay).is_empty()
+	assert_str(always.replay_dir).is_empty()
+	var named := _parse(["--replay=bug.replay"], EDITOR_BUILD, WITH_SCREEN)
+	assert_array(named.errors).is_empty()
+	assert_bool(named.records_replay()).is_true()
+	assert_str(named.replay).is_equal("bug.replay")
+	var folder := _parse(["--replay-dir=replays"])
+	assert_array(folder.errors).is_empty()
+	assert_bool(folder.records_replay()).is_true()
+	assert_str(folder.replay_dir).is_equal("replays")
+	var off := _parse(["--no-replay"])
+	assert_array(off.errors).is_empty()
+	assert_bool(off.no_replay).is_true()
+	assert_bool(off.records_replay()).is_false()
+	var watched := _parse(
+		["--watch=bug.replay", "--force", "--trace=bug.trace"],
+		EDITOR_BUILD,
+		WITH_SCREEN,
+	)
+	assert_array(watched.errors).is_empty()
+	assert_str(watched.watch).is_equal("bug.replay")
+	assert_bool(watched.force).is_true()
+	assert_str(watched.trace).is_equal("bug.trace")
+	assert_bool(watched.records_replay()).is_false()
+	for arguments: Array in [["--server"], ["--connect=127.0.0.1"]]:
+		assert_bool(_parse(arguments).records_replay()).is_false()
+
+
+# TASK-10.3: the replay's arguments that do not fit are refused with one message each, and the
+# Main exits with 2 on them (Main.EXIT_USAGE).
+func test_replay_arguments_that_do_not_fit_are_errors() -> void:
+	var cases: Array[Array] = [
+		["--server", "--no-replay"],
+		["--server", "--replay=x.replay"],
+		["--connect=127.0.0.1", "--replay-dir=replays"],
+		["--connect=127.0.0.1", "--watch=x.replay"],
+		["--replay=x.replay", "--replay-dir=replays"],
+		["--no-replay", "--replay=x.replay"],
+		["--no-replay", "--replay-dir=replays"],
+		["--no-replay=yes"],
+		["--replay"],
+		["--replay-dir="],
+		["--watch=x.replay"],
+		["--trace=x.trace"],
+		["--force"],
+	]
+	for arguments: Array in cases:
+		var message := "%s must be refused with one message" % [arguments]
+		var errors := _parse(arguments).errors
+		assert_int(errors.size()).override_failure_message(message).is_equal(1)
+	var windowed: Array[Array] = [
+		["--watch=x.replay", "--replay=y.replay"],
+		["--watch=x.replay", "--no-replay"],
+		["--watch=x.replay", "--measure-fps=fps.json"],
+		["--watch"],
+		["--trace=x.trace", "--force"],
+	]
+	for arguments: Array in windowed:
+		var message := "%s must be refused, with a screen too" % [arguments]
+		var errors := _parse(arguments, EDITOR_BUILD, WITH_SCREEN).errors
+		assert_array(errors).override_failure_message(message).is_not_empty()
+	assert_str(_parse(["--watch=x.replay"]).errors[0]).contains("it needs a screen")

@@ -4,12 +4,19 @@
 # 2026-10-07). Ending the session stops the clock before the match goes, the clean exit the probe
 # lacked (F-026 §4). The server and client modes need two processes; tools/net_check.sh runs them
 # (TASK-9, part 2).
+# Sozinho records a replay of every session in user://replays/ (TASK-10.3; F-112 §2), and the gate
+# never writes there: these tests open the Main with --no-replay, or with --replay-dir in a
+# temporary folder, and tools/run_tests.sh checks the folder after the run.
 extends GdUnitTestSuite
 
 const NetfoxTicks := preload("res://test/support/netfox_ticks.gd")
 const MAIN_SCENE := preload("res://main/main.tscn")
 const SPAWN_A := Vector3(-6, 0, 9) # arena.tscn: SpawnA
 const HAIR := 1e-4
+## s of wall clock Sozinho plays before the session ends: netfox's real clock runs ticks in it.
+const PLAY_S := 0.3
+
+var _folder := ""
 
 
 func before_test() -> void:
@@ -19,6 +26,21 @@ func before_test() -> void:
 func after_test() -> void:
 	NetfoxTicks.reset()
 	get_tree().auto_accept_quit = true
+	if not _folder.is_empty():
+		for file: String in DirAccess.get_files_at(_folder):
+			DirAccess.remove_absolute(_folder.path_join(file))
+		DirAccess.remove_absolute(_folder)
+		_folder = ""
+
+
+# The Main as the game opens it, with these arguments after "--".
+func _main(arguments: Array[String]) -> Main:
+	var node: Node = auto_free(MAIN_SCENE.instantiate())
+	assert(node is Main, "main.tscn must have a Main at its root")
+	var main := node as Main
+	main.arguments = PackedStringArray(arguments)
+	add_child(main)
+	return main
 
 
 func test_no_argument_means_sozinho() -> void:
@@ -41,12 +63,10 @@ func test_an_unknown_argument_exits_with_a_code_other_than_zero() -> void:
 	assert_int(Main.EXIT_USAGE).is_not_equal(0)
 
 
-# The test runner passes no argument after "--", so the Main opens as the game does with none.
+# The Main opens as the game does with no argument but --no-replay, which only keeps the gate out
+# of user://replays/.
 func test_with_no_argument_the_main_plays_sozinho() -> void:
-	var node: Node = auto_free(MAIN_SCENE.instantiate())
-	assert(node is Main, "main.tscn must have a Main at its root")
-	var main := node as Main
-	add_child(main)
+	var main := _main(["--no-replay"])
 	await get_tree().process_frame
 	assert_bool(multiplayer.multiplayer_peer is OfflineMultiplayerPeer).is_true()
 	assert_bool(NetworkTime.is_initial_sync_done()).is_true()
@@ -60,10 +80,7 @@ func test_with_no_argument_the_main_plays_sozinho() -> void:
 
 
 func test_ending_the_session_stops_the_clock_and_frees_the_match() -> void:
-	var node: Node = auto_free(MAIN_SCENE.instantiate())
-	assert(node is Main, "main.tscn must have a Main at its root")
-	var main := node as Main
-	add_child(main)
+	var main := _main(["--no-replay"])
 	await get_tree().process_frame
 	var game_match := main.current_match
 	main.end_session()
@@ -71,3 +88,28 @@ func test_ending_the_session_stops_the_clock_and_frees_the_match() -> void:
 	assert_object(main.current_match).is_null()
 	await get_tree().process_frame
 	assert_bool(is_instance_valid(game_match)).is_false()
+
+
+# TASK-10.3, criterion 1: Sozinho records the session from its fighter's first tick, on netfox's
+# real clock, in the folder --replay-dir names, and ending the session saves the file, a replay
+# the player can read; the log names it with the whole path.
+func test_sozinho_records_its_session_in_the_replay_folder() -> void:
+	_folder = OS.get_temp_dir().path_join("jogo-acrobatico-main-test-%d" % Time.get_ticks_usec())
+	var main := _main(["--replay-dir=%s" % _folder])
+	await get_tree().process_frame
+	var fighter := main.current_match.fighters[0]
+	var first_tick: int = fighter.synchronizer.spawn_tick
+	await get_tree().create_timer(PLAY_S).timeout
+	main.end_session()
+	var files := DirAccess.get_files_at(_folder)
+	assert_int(files.size()).is_equal(1)
+	assert_str(files[0]).starts_with(ReplayRecorder.FILE_PREFIX).ends_with(".replay")
+	var replay := ReplayFile.open(_folder.path_join(files[0]))
+	assert_array(replay.errors).is_empty()
+	assert_array(replay.warnings).is_empty()
+	assert_int(replay.first_tick()).is_equal(first_tick)
+	assert_int(replay.fighter_count()).is_equal(1)
+	# netfox's real clock ran ticks in PLAY_S, and every one of them is in the file.
+	assert_int(replay.tick_count()).is_greater(0)
+	var last := replay.rows[replay.rows.size() - 1]
+	assert_int(last.tick - first_tick + 1).is_equal(replay.tick_count())

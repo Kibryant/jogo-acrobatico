@@ -36,6 +36,15 @@ static func run_loops(loops: int, ticks_per_loop := 1) -> void:
 		run_loop(ticks_per_loop)
 
 
+# Puts netfox's clock on tick between two loops, through the same private field run_loop()
+# advances (TASK-10.3): a replay plays from its first recorded tick, and a jump of the recorded
+# clock, a stall of over a second (NetworkTime._loop), plays as the same jump. Only the tests and
+# the tools use it; the game never writes netfox's clock.
+static func set_tick(tick: int) -> void:
+	# gdlint-ignore-next-line private-access
+	NetworkTime._tick = tick
+
+
 # Clears netfox's clock and every history between tests: NetworkTime.stop() resets the tick and
 # the rollback, history, synchronization and simulation servers.
 static func reset() -> void:

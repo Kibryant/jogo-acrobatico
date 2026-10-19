@@ -1,6 +1,6 @@
 ---
 revisado_em: 2026-10-19
-fontes: [F-001, F-005, F-007, F-023, F-024, F-025, F-026, F-027, F-028, F-029, F-030, F-032, F-033, F-034, F-036, F-042, F-044, F-046, F-073, F-084, F-085, F-087, F-088, F-089, F-091, F-092, F-093, F-095, F-097, F-101]
+fontes: [F-001, F-005, F-007, F-023, F-024, F-025, F-026, F-027, F-028, F-029, F-030, F-032, F-033, F-034, F-036, F-042, F-044, F-046, F-073, F-084, F-085, F-087, F-088, F-089, F-091, F-092, F-093, F-095, F-097, F-101, F-112]
 ---
 
 # Rede
@@ -279,6 +279,8 @@ O modelo bate com o que o Arthur fez a 60 ticks: 72 % sem lag e 13 % com ping 10
   - O pulo duplo e a stamina foram os primeiros, na TASK-10.1: a cena do pulo duplo e os dois venenos da §4.
   - Desde a TASK-10.1, ela compara o estado inteiro (§4): um campo novo do `FighterState` entra na comparação no dia em que existe, sem ninguém lembrar de pôr.
 - **De tempos em tempos,** o mesmo movimento roda com 2 clientes e o simulador do netfox, para ver a correção com lag. É o `tools/net_run.sh` (§10).
+- **Todo replay de bug vai com o arquivo.** O Sozinho grava cada sessão em `user://replays/`, e o log diz onde (TASK-10.3; `testes-e-entrega.md` §4). Quando o Arthur achar um bug jogando, o arquivo vai junto, e o Claude refaz sem tela com o `tools/replay.sh` (F-044 §1).
+  - O ao vivo roda os ticks no `_process`, e o tocador sem tela, num quadro de física. Hoje os dois se separam no último bit de um float, em micrômetros (`testes-e-entrega.md` §4, a medição). A escolha do `sync_to_physics` volta ao Arthur antes da TASK-10.4.
 
 ## 9. A Main (DEC-0026 §6)
 

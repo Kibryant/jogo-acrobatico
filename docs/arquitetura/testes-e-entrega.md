@@ -1,6 +1,6 @@
 ---
 revisado_em: 2026-10-19
-fontes: [F-007, F-009, F-010, F-021, F-038, F-039, F-040, F-041, F-042, F-043, F-044, F-045, F-046, F-047, F-048, F-049, F-085, F-087, F-088, F-091, F-093, F-094, F-095, F-097, F-098, F-101]
+fontes: [F-007, F-009, F-010, F-021, F-038, F-039, F-040, F-041, F-042, F-043, F-044, F-045, F-046, F-047, F-048, F-049, F-085, F-087, F-088, F-091, F-093, F-094, F-095, F-097, F-098, F-101, F-112]
 ---
 
 # Testes e entrega
@@ -9,7 +9,7 @@ Estado atual: o Desenho 4 (TASK-6) fechado, com as DEC-0027 e DEC-0028. A parte 
 
 - O portão, os canários e os hooks do Claude Code já rodam.
 - A especificação, a checagem dos dados e a SyncTest nasceram na parte 1 da TASK-9; o aperto de mão, na parte 2; a referência, os jobs de build e de release e a imagem do servidor, na parte 3.
-- O gravador do replay nasce na fase 1 (TASK-10).
+- O gravador do replay nasceu na TASK-10.3, com o tocador sem tela e o `--watch` (§4).
 - A versão visual e interativa deste documento é a vitrine [A esteira por dentro](https://claude.ai/artifact/L9FpEtDFoyGJYWLSR6TFA1), privada (DEC-0019).
 
 ## 1. A esteira
@@ -55,6 +55,7 @@ Os tempos são os da rodada B depois dos consertos (F-049 §5). O total foi 31,3
 | 2. A SyncTest | Estado escondido: refazer um tick dá outro resultado em qualquer campo do estado (DEC-0025; TASK-10.1) | portão | TASK-9, com os ticks à mão; o estado inteiro na TASK-10.1 | pelo relógio, ~6 s por cenário de 5 s (F-042 §1); à mão, as quatro cenas em uns 2,5 s (F-087 §1), e as cinco da TASK-10.1 em 3,9 a 4,3 s |
 | 3. A checagem dos dados | Um número impossível num `.tres` | portão | com o primeiro `.tres` de design (F-048) | sem medida |
 | 4. A referência | Uma mudança de código que muda o movimento sem querer; o snapshot do Jest | portão e CI | TASK-9, parte 3; regravada na TASK-10.1, com o pulo duplo | 1.200 ticks em uns 0,7 a 1,4 s neste PC e 0,14 s no Linux do CI, com a partida de verdade e o netfox; a sonda, sem os dois, fazia em 11 a 13 ms (F-042 §3) |
+| O replay por inputs | Uma jogada que o tocador sem tela não refaz igual: a gravação, o arquivo e a refeita, byte a byte (§4) | portão, e à mão pelo `tools/replay.sh` | TASK-10.3 | 600 ticks gravados em uns 0,42 s e tocados em uns 0,3 s, neste PC |
 | 5. A rede à mão | A sensação com lag | o Arthur, pelo `tools/play_online.sh` | TASK-9, parte 2 (F-091), e de tempos em tempos (DEC-0026) | o tempo dele, e o que ele sentiu (F-041) |
 | As checagens com processos | O servidor e os clientes de verdade: as portas, o aperto de mão, a sala, o arquivo de parada, os códigos de saída e a previsão conferida com o servidor | à mão, fora do portão: `tools/net_check.sh` e `tools/net_run.sh` | TASK-9, parte 2 | 32 s e 36 s na revisão da parte 2 |
 | A guarda das configurações | Uma configuração decidida que voltou atrás | portão | desde o Desenho 2 | dentro dos testes |
@@ -73,7 +74,7 @@ Os tempos são os da rodada B depois dos consertos (F-049 §5). O total foi 31,3
 - **Os venenos:** tirar o `on_floor`, o `stamina_at_spend` ou o `double_jump_tick` do que o netfox grava faz a SyncTest acusar. Os dois últimos são a prova de que ela compara o estado inteiro: com a comparação antiga, passariam calados (TASK-10.1).
 
 **A referência (golden master).**
-- É um percurso fixo de bot, de 1.200 ticks, na arena de verdade, no Sozinho, com os ticks à mão (`test/reference/`). O percurso é uma tabela no teste. O gravador de replay continua na fase 1.
+- É um percurso fixo de bot, de 1.200 ticks, na arena de verdade, no Sozinho, com os ticks à mão (`test/reference/`). O percurso é uma tabela no teste, e não um arquivo de replay: o gravador, que nasceu na TASK-10.3, grava o Sozinho de quem joga (§4).
 - O teste guarda o rastro do caminho, com a posição em 9 casas e o chão de cada tick, e confere o sha256 no portão, no Windows, e no CI, no Linux. Os dois deram o mesmo, `b73cccbc…` (PR #8). Quando difere, ele mostra o primeiro tick diferente.
 - **Regravada na TASK-10.1** (critério 8): o aperto no ar do passo 513 virou pulo duplo. O percurso ganhou um aperto no topo do salto do passo 480, o pulo duplo, e o aperto da vaga passou do passo 513 para o 537, porque o pulo duplo alonga o voo. O caminho é o mesmo até o passo 499, e o rastro novo é `d53a533c…`. Ele cobre um pulo duplo a mais, segue sem rampa e com o yaw 0, e a prova no Linux espera o push (F-101 §1).
 - O percurso olha sempre para a mesma direção e não passa pela rampa, porque seno e cosseno podem diferir no último bit entre os dois sistemas, e a sonda só provou o caminho sem eles (F-042 §5). A SyncTest segue cobrindo a rampa.
@@ -84,24 +85,90 @@ Os tempos são os da rodada B depois dos consertos (F-049 §5). O total foi 31,3
 
 ## 4. O replay por inputs (DEC-0027 §5)
 
-É event sourcing: guarda o input de cada tick, e não o vídeo. Para assistir, o jogo roda a partida de novo.
+É event sourcing: guarda o input de cada tick, e não o vídeo, como o Redux DevTools, que refaz a tela pelas actions. Para assistir, o jogo roda a partida de novo. Nasceu na TASK-10.3.
 
-- **O que entra no arquivo:**
-  - um cabeçalho com formato, versão, commit, plataforma, ticks por segundo, arena, semente e configuração (F-044 §2);
-  - o input que o servidor aplicou em cada tick.
-- **O que precisa ser verdade desde já** (F-044 §2):
-  - todo sorteio tem semente e mora no estado;
-  - o núcleo não lê relógio (DEC-0004);
-  - a build carrega a versão.
-- **Só reproduz na mesma build.** A mesma tecla, com outra regra, leva o boneco a outro lugar. Na sonda, com o pulo trocado de 1,2 para 0,6 m, as duas jogadas do Arthur se separaram exatamente no tick do primeiro pulo e chegaram a 15 m de distância (F-042 §4).
-- **Na mesma build, ele se repete byte a byte:** com e sem janela, num laço ou um tick por quadro, em processos diferentes (F-042 §3).
-- **No Windows e no Linux:** os seis replays deram o mesmo sha256 (F-042 §5). Vale para a cápsula de hoje; seno, cosseno e física com vários corpos não passaram por essa prova. Se um dia divergirem, a referência vale só no Linux (DEC-0011; F-048).
-- **O tamanho:** uns 4 bytes por tick em texto, com dois campos (F-042 §2). Com o input completo da fase 3 (`rede.md` §3), seriam uns 19 bytes por lutador por tick, sem compressão: `move` 8, `yaw` 4, `pitch` 4, os dez botões 2 e o `view_lag` 1 (estimativa do agente).
-- **Quando a gravação começa:** na fase 1, para o Claude refazer sem tela o pulo exato em que o Arthur achou um bug (F-044 §1).
-- **Para que mais serve:**
-  - a referência (§3);
-  - rever denúncia contra trapaça (Q-19);
-  - o fantasma do percurso cronometrado e o replay que marca o erro (`visao.md`).
+**O gravador** (`replay/replay_recorder.gd`):
+- O Sozinho grava toda sessão, sempre, em `user://replays/`, guardando os 20 arquivos mais novos (F-112 §2). No Windows, a pasta é `%APPDATA%\Godot\app_userdata\Jogo Acrobático\replays\`, e o log diz o caminho completo de cada arquivo, `sozinho-AAAAMMDD-HHMMSS.replay`.
+- `--replay=CAMINHO` grava num arquivo, `--replay-dir=PASTA` em outra pasta, e `--no-replay` desliga. O cliente e o servidor não gravam na v1.
+- Ele salva a cada segundo (`FileAccess.flush` a cada 60 ticks): um fechamento brusco perde no máximo o último segundo. O teste lê o arquivo com o gravador ainda aberto, o que um fechamento brusco deixaria no disco, e o arquivo toca (leitura v0 do Claude, TASK-10.3).
+- Ele só lê: escuta o `after_process_tick` do netfox, como o `TickRecorder`, e anota o input que o netfox restaurou para aquele tick.
+
+**O portão nunca escreve em `user://replays/`** (critério 1 da TASK-10.3). Os testes da `Main` passam `--no-replay`, e os do gravador gravam numa pasta temporária. Depois de cada rodada, o `tools/run_tests.sh` reprova se achar ali um arquivo mais novo que ela; um teste diz onde a pasta fica nesta máquina. A prova: tirar o `--no-replay` de um teste da `Main` reprovou a rodada, com o arquivo nomeado.
+
+**O arquivo, formato 1** (`replay/replay_file.gd`):
+- Texto em UTF-8, com `\n`. O cabeçalho vem em linhas `chave=valor`: formato, versão, commit, impressão das regras, motor, plataforma, ticks por segundo, `physics_ticks_per_second`, `sync_to_physics`, `max_ticks_per_frame`, `input_delay`, a arena e a impressão dela, a semente, a configuração inteira, os lutadores, o primeiro tick e as colunas declaradas (F-044 §2).
+- A configuração vai inteira, um campo do `MovementData` por linha, tipado (`config.jump_height_m:f64=...`). O tocador toca com esses números mesmo depois de um ajuste no `.tres`.
+- Depois do `---`, uma linha por tick e lutador: o tick absoluto do netfox, o tamanho do laço que o rodou, o lutador, o input (`move.x`, `move.y`, `yaw`, `jump`) e a coluna `check`.
+- **Os floats vão como os 8 bytes do double, em 16 dígitos hexadecimais.** O `%.9f` perde bits perto de π, e um yaw de mouse nunca é redondo (F-042 §3). Uma célula que não tem exatamente 16 dígitos hexadecimais minúsculos é recusada antes de ser lida, nunca lida como 0. Os bools vão como 0 e 1; um texto, como os bytes UTF-8 em hexadecimal.
+- **As colunas declaradas** saem do `TickInput` por reflexão, e o leitor acha cada uma pelo nome: um campo novo do input entra no arquivo sozinho.
+- **A impressão das regras** é o sha256 dos scripts que movem o corpo (`core/`, `fighter/`, `match/`, `arena/` e os `.gd` de `data/`) mais a fixação do netfox, `cf5189d`. É calculada dos arquivos quando o jogo roda do código-fonte, como o Arthur joga; na build exportada fica vazia, porque o commit já diz qual é. O tocador só compara quando as duas existem.
+- **A impressão da arena** é o sha256 de toda `CollisionShape3D` da arena (caminho, tamanho da caixa e posição) e dos pontos de nascimento. Uma forma que não seja caixa a deixa vazia, e o arquivo é recusado até ela ganhar nome no código.
+- **A impressão do estado**, a coluna `check`, são 8 dígitos do sha256 da linha do rastro de estado depois de cada tick ao vivo.
+
+**O tocador sem tela** (`bash tools/replay.sh ARQUIVO`):
+- Ele roda a partida de verdade pela `Match`, no Sozinho, com os números do cabeçalho, laço a laço como foi gravado.
+- O relógio do netfox começa no primeiro tick gravado, pelo ajudante dos testes (`test/support/netfox_ticks.gd`, a exceção da DEC-0027 §3). Um salto do relógio gravado, depois de um travamento de mais de 1 s, é tocado como o mesmo salto.
+- A entrada de cada tick é a linha gravada, exatamente: o `FighterInput` continua o único que escreve a caixa, sem a média nem o `limit_length` do amostrador.
+- Ele imprime os ticks, o sha256 do rastro de estado e o primeiro tick em que o estado se separa da coluna `check`. `--trace=SAÍDA` escreve o rastro, `--readable=SAÍDA` uma cópia do arquivo em decimal, que nenhum tocador toca, e `--force` toca um arquivo de outra build.
+- **O rastro de estado** tem uma linha por tick e lutador, com o estado inteiro: a posição, a velocidade e todo campo do `FighterState`, por reflexão. Os ticks e os carimbos do estado contam a partir do primeiro tick gravado, e o `NEVER` fica `NEVER`.
+- No portão, um teste grava uma corrida de 600 ticks com yaw e move fracionários, laços de 2 e 3 ticks e 8 pulos duplos, prova essa precondição e prova que a refeita dá o mesmo rastro byte a byte, duas vezes com o mesmo sha256. Gravar levou uns 0,42 s, e tocar, uns 0,3 s.
+
+**O que o tocador recusa** (critério 7 da TASK-10.3; F-042 §4):
+
+| Caso | O que acontece |
+|---|---|
+| Outro formato, outros ticks por segundo, outra arena, outra configuração de física ou de relógio; uma coluna desconhecida; uma linha quebrada; uma célula malformada; fim de linha CR | Recusa e diz o campo; nem o `--force` toca |
+| Outra versão, outro commit, outro motor, outra impressão das regras ou da arena; uma coluna de input que falta; um campo da configuração que falta ou que a build não conhece | Recusa e diz qual; com `--force`, toca, e a coluna que falta recebe o valor padrão do `TickInput` com um aviso que a nomeia |
+| Outra plataforma; a última linha ou o último laço cortados | Avisa: descarta o pedaço cortado e toca o resto |
+
+**O `--watch`** (`bash tools/replay.sh ARQUIVO --watch [--max-fps N]`):
+- É o jogo no Sozinho, com o relógio de verdade, a entrada do arquivo, a câmera no lutador, o HUD e o texto de fim, por chave de tradução.
+- Ele nunca escreve no relógio do netfox, que é código de jogo. Toca as linhas em ordem, a partir do próprio primeiro tick, e um salto do relógio gravado vira ticks seguidos ali.
+- Ele anota o tamanho de cada laço que rodou. Com `--trace=SAÍDA`, ele escreve o rastro e os laços ao lado (`SAÍDA.loops`) e fecha; o tocador sem tela toca o mesmo arquivo e diz se os dois rastros batem ou onde se separam.
+- `--max-fps N` limita os quadros a N, com o vsync desligado para o limite valer acima dos 60 Hz da tela.
+
+**A medição do critério 5 (19/10/2026, neste PC).**
+- O arquivo é a corrida do teste do portão, gravada sem tela pelo `bash tools/replay.sh --sample=ARQUIVO`: 600 ticks.
+- A CPU estava entre 46% e 64% ocupada por outros programas. A tela é de 60 Hz.
+
+| Quem tocou | Igual ao sem tela? | Primeiro tick diferente | Laço ali (janela / gravado) | Maior distância na posição |
+|---|---|---|---|---|
+| Sem tela, duas vezes | Sim, sha256 `312cbd75…` nas duas, igual ao da gravação | — | — | 0 |
+| Janela, 30 quadros por segundo | Não | 3, a velocidade em x | 2 / 2, o mesmo tamanho | 3,1 µm |
+| Janela, 60 | Não | 13, a posição em y | 1 / 2 | 2,4 µm |
+| Janela, 144 | Não | 6, a posição em x | 1 / 3 | 2,0 µm |
+
+- Em todas, a diferença começa no último bit de um float de 32 bits e fica em micrômetros nos 600 ticks.
+- Nenhum campo discreto se separou: chão, modo, pulos usados e carimbos ficaram iguais em todo tick.
+- Duas janelas a 60 também saíram diferentes entre si.
+- **A causa provável:** no jogo, os ticks rodam no `_process`. Ali, o `physics_factor` vale o tempo do tick dividido pelo do quadro, e o `move_and_slide()` usa o tempo daquele quadro. O tocador sem tela roda dentro de um quadro de física, onde o fator vale exatamente 1 (`network-time.gd`). Duas medidas apontam para isso:
+  - a 30 quadros, o laço tinha o mesmo tamanho do gravado, e o rastro se separou assim mesmo;
+  - no portão, o mesmo `ReplayWatch`, rodando dentro de um quadro de física, a partir do tick 37 e em laços de 1 tick, refaz byte a byte a gravação feita do tick 1000 em laços de 1 a 3. Nem o tick de começo nem o tamanho do laço separam o rastro; o tempo do quadro do `_process`, sim.
+- **O que isso quer dizer:** o tocador sem tela refaz o arquivo e a si mesmo byte a byte, mas não o que a janela calculou. Um bug que dependa de um micrômetro pode aparecer ao vivo e não no replay.
+- A escolha do `sync_to_physics` volta ao Arthur com estes números antes da TASK-10.4, e uma mudança, se vier, é uma DEC nova (F-025 §5; F-112, contexto).
+
+**O tamanho:**
+- 71 bytes por tick e lutador, com os floats em hexadecimal, mais uns 1,2 KB de cabeçalho.
+- Dá uns 250 KB por minuto de jogo e 3,8 MB a cada 15 minutos. Os 20 arquivos, se todos tivessem 15 minutos, somariam 77 MB.
+- A sonda, com dois campos em texto, gastava uns 4 bytes por tick (F-042 §2).
+
+**Só reproduz na mesma build.**
+- A mesma tecla, com outra regra, leva o boneco a outro lugar.
+- Na sonda, com o pulo trocado de 1,2 para 0,6 m, as duas jogadas do Arthur se separaram exatamente no tick do primeiro pulo e chegaram a 15 m de distância (F-042 §4).
+- No portão, um cabeçalho com outra altura de pulo separa a refeita da coluna `check` no tick do primeiro pulo.
+
+**No Windows e no Linux:** os seis replays da sonda deram o mesmo sha256 (F-042 §5). Vale para a cápsula de hoje; seno, cosseno e física com vários corpos não passaram por essa prova. Se um dia divergirem, a referência vale só no Linux (DEC-0011; F-048).
+
+**O que precisa continuar verdade** (F-044 §2):
+- todo sorteio tem semente e mora no estado; a semente do cabeçalho é 0, porque nada sorteia ainda;
+- o núcleo não lê relógio (DEC-0004);
+- a build carrega a versão.
+
+**Para que mais serve:**
+- reproduzir sem tela o bug que o Arthur achar jogando: o arquivo vai junto (F-044 §1; `rede.md` §8);
+- a referência (§3);
+- rever denúncia contra trapaça (Q-19);
+- o fantasma do percurso cronometrado e o replay que marca o erro (`visao.md`), na fase 2.
 
 ## 5. Os ambientes (DEC-0028 §5)
 
@@ -191,7 +258,7 @@ O plano Free não impõe nada disso: o pre-push continua sendo a trava, e o CI n
 
 - **O tempo do portão:** na TASK-9, ele levou de 61 a 114 s neste PC, conforme o PC estava quieto ou ocupado, contra o limite de 90 s do pre-push (DEC-0027). Os passos que mais pesam são o import e os testes; a referência soma uns 1,1 s.
   - Na TASK-10.1, medido em silêncio: 72 s na rodada A, 76 s na rodada B e 78 s no fechamento, com os testes em uns 34 s, contra os 90 s (DEC-0027 §1). Com o PC ocupado, o revisor mediu 103 s e 116 s, com a SyncTest de 4 s subindo para 6 a 11 s: o pre-push de quem trabalha com outra coisa aberta pode passar do limite. A divisão do CI da DEC-0027 §4 ainda não precisou entrar.
-- **TASK-10, a fase 1:** o gravador do replay.
+- **O `sync_to_physics`:** o ao vivo e o sem tela se separam no último bit (§4, a medição); a escolha volta ao Arthur antes da TASK-10.4.
 - **Q-20:** a assinatura do `.exe`, antes de alguém de fora testar.
 - **Canários** para o formato, o lint, as travas, o import e o log limpo, se um furo aparecer ali.
 - **Um job do CI fora do pre-push,** quando uma camada não couber nos 90 s.
@@ -216,6 +283,7 @@ O inventário que o `AGENTS.md` resumia (veio para cá no fechamento do Desenho 
   - `tools/release.sh [--dry-run] TAG`: a release da tag, ou o ensaio dela;
   - `tools/server_image_check.sh`: a imagem do servidor. Aqui ele precisa do Docker Desktop aberto, que é pesado; o CI o roda em todo PR;
   - `tools/record_reference.sh`: regrava a referência;
+  - `tools/replay.sh ARQUIVO [--force] [--readable=SAÍDA] [--trace=SAÍDA]`: refaz um replay sem tela; com `--watch [--max-fps N]`, com janela; com `--sample=SAÍDA`, grava a corrida do teste do portão (§4);
   - `tools/measure_fps.sh`: a medição de fps, com a build em tela cheia por uns 2 minutos e o PC livre (F-095).
 - O `node` 24 e o `python` 3.14 servem scripts de apoio e os hooks, nunca o portão (F-016 §2); `python`, nunca `python3`, que aqui é um atalho da Store.
 - As sondas ficam fora do repositório, em pastas ao lado dele (`../netfox-sonda`, `../assets-sonda`, `../git-sonda`).

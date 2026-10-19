@@ -1,6 +1,7 @@
 # The entry scene (DEC-0026 §6; rede.md §9): it reads how the game was opened, like a main.ts
 # reading process.argv, and starts that mode:
-# - no argument: Sozinho, Godot's offline peer, where this PC is its own server (rede.md §8);
+# - no argument: Sozinho, Godot's offline peer, where this PC is its own server (rede.md §8), which
+#   records the session as a replay (ReplayRecorder; TASK-10.3), and plays one with --watch;
 # - --server, or the build exported as a dedicated server: the server, without a screen or a
 #   fighter of its own, which gives a fighter to each player the handshake accepts;
 # - --connect=host:port: a client, which plays its own fighter and mirrors the others; with --bot,
@@ -37,6 +38,9 @@ const EXIT_UPDATE_REQUIRED := 4
 const EXIT_ROOM_FULL := 5
 ## The server could not open its port, usually because another program holds it.
 const EXIT_PORT_UNAVAILABLE := 6
+## --watch cannot play its file: another format, tickrate or arena, a broken file, or another build
+## without --force (ReplayFile; TASK-10.3).
+const EXIT_REPLAY_REFUSED := 7
 ## Frames the Main waits for netfox's network simulator to connect the game: it does so one frame
 ## after it starts (network-simulator.gd), and the Main started in between.
 const SIMULATOR_FRAMES := 10
@@ -61,6 +65,16 @@ const USAGE := """Usage, with the game's arguments after "--":
                            no frame limit; once this game's fighter plays, 2 s of warm-up, then
                            the frames are timed for 60 s, written to PATH as JSON, and the game
                            quits with 0 (tools/measure_fps.sh).
+Sozinho records every session as a replay in user://replays/, keeping the newest 20, and says
+where in its log:
+  --replay=PATH            record the replay to PATH instead.
+  --replay-dir=DIR         record it in DIR instead, keeping the newest 20 there.
+  --no-replay              record none.
+  --watch=FILE             with a screen: play the replay FILE in Sozinho, the camera on its
+                           fighter, instead of the keyboard and the mouse; it records none.
+    --force                play a replay of another build anyway.
+    --trace=PATH           write the state of every tick it played to PATH, and the size of each
+                           tick loop to PATH.loops, then quit (tools/replay.sh compares it).
 The build exported as a dedicated server runs the server and takes --port, --stop-file and
 --record. With netfox's network simulator on (netfox/autoconnect/enabled, from an override.cfg),
 the simulator connects the game and the address in the arguments must be its own."""
@@ -69,6 +83,8 @@ the simulator connects the game and the address in the arguments must be its own
 var current_match: Match
 ## How the game was opened.
 var options: LaunchOptions
+## The arguments after "--" the Main reads when it enters the tree; a test sets them before.
+var arguments := OS.get_cmdline_user_args()
 
 var _status: StatusMessage
 # Kept here: SceneMultiplayer holds their callbacks without keeping them alive.
@@ -81,11 +97,15 @@ var _client_phase := ClientPhase.CONNECTING
 var _recorder: TickRecorder
 # The frame rate measurement of --measure-fps; null without it, and once the session ends.
 var _meter: FpsMeter
+# Sozinho's replay recorder; null when it records none, and once the session ends.
+var _replay: ReplayRecorder
+# The replay a window plays with --watch; null without it.
+var _watch: ReplayWatch
 
 
 func _ready() -> void:
 	options = LaunchOptions.parse(
-		OS.get_cmdline_user_args(),
+		arguments,
 		OS.has_feature("dedicated_server"),
 		DisplayServer.get_name() != "headless",
 		SimulatorLink.current(),
@@ -112,7 +132,10 @@ func _ready() -> void:
 		LaunchOptions.Mode.CLIENT:
 			await start_client()
 		_:
-			await start_solo()
+			if options.watch.is_empty():
+				await start_solo()
+			else:
+				await start_watch()
 
 
 func _notification(what: int) -> void:
@@ -128,8 +151,44 @@ func start_solo() -> void:
 	var started: int = await NetworkTime.start()
 	assert(started == OK, "netfox's clock did not start: %s" % error_string(started))
 	_start_match()
-	current_match.watch(current_match.spawn_fighter(0, multiplayer.get_unique_id()))
+	var fighter := current_match.spawn_fighter(0, multiplayer.get_unique_id())
+	current_match.watch(fighter)
+	if options.records_replay():
+		_start_replay(fighter)
 	_measure_from_now()
+
+
+# --watch (TASK-10.3): Sozinho on the real clock with the movement numbers of the file, its fighters
+# fed by its rows instead of the keyboard, and a camera that follows the first one. A file this
+# game cannot play is refused in the log, and the game quits.
+func start_watch() -> void:
+	var replay := ReplayFile.open(options.watch)
+	if replay.errors.is_empty():
+		replay.judge(ReplayFile.this_build())
+	_log("sozinho: plays the replay %s" % ProjectSettings.globalize_path(options.watch))
+	for message: String in replay.messages(options.force):
+		_log("sozinho: replay: %s" % message)
+	if not replay.playable(options.force):
+		_quit(EXIT_REPLAY_REFUSED)
+		return
+	var started: int = await NetworkTime.start()
+	assert(started == OK, "netfox's clock did not start: %s" % error_string(started))
+	_start_match(replay.movement_data())
+	var fighters: Array[Fighter] = []
+	for slot: int in replay.fighter_count():
+		var fighter := current_match.spawn_fighter(slot, multiplayer.get_unique_id())
+		var first_tick: int = fighter.synchronizer.spawn_tick
+		fighter.input.play_rows(ReplaySource.in_order(replay, slot, first_tick))
+		fighters.append(fighter)
+	var first: int = fighters[0].synchronizer.spawn_tick
+	_watch = ReplayWatch.new(replay, fighters, first)
+	_watch.camera = current_match.view(fighters[0])
+	_watch.finished.connect(_on_replay_watched)
+	add_child(_watch)
+	_log(
+		"sozinho: %d ticks to play, from tick %d of this clock (tick %d of the recording)"
+		% [replay.tick_count(), first, replay.first_tick()],
+	)
 
 
 # The dedicated server (DEC-0026 §6): a match with the arena and no fighter until a player
@@ -220,6 +279,7 @@ func start_client() -> void:
 # client that ends its own session is not told afterwards that the server closed it.
 func end_session() -> void:
 	_client_phase = ClientPhase.ENDED
+	_close_replay()
 	NetworkTime.stop()
 	_save_record()
 	_stop_measuring()
@@ -379,11 +439,70 @@ func _remove_fighter(slot: int) -> void:
 	current_match.remove_fighter(slot)
 
 
-func _start_match() -> void:
+# The match of the session; movement_data, when given, replaces movement_v0.tres, as a replay's
+# numbers do.
+func _start_match(movement_data: MovementData = null) -> void:
 	var node := MATCH_SCENE.instantiate()
 	assert(node is Match, "match.tscn must have a Match at its root")
 	current_match = node as Match
+	current_match.movement_data = movement_data
 	add_child(current_match)
+
+
+# Sozinho records the session as a replay (TASK-10.3; F-112 §2): in user://replays/, in
+# --replay-dir, or in --replay's file, from the fighter's first tick; the log says where, with the
+# whole path.
+func _start_replay(fighter: Fighter) -> void:
+	_replay = ReplayRecorder.new()
+	if not options.replay_dir.is_empty():
+		_replay.directory = options.replay_dir
+	add_child(_replay)
+	var error := _replay.start(current_match, [fighter], options.replay)
+	if error != OK:
+		var where := options.replay if not options.replay.is_empty() else _replay.directory
+		push_error("cannot record the replay in %s: %s" % [where, error_string(error)])
+		_replay.queue_free()
+		_replay = null
+		return
+	var kept := ""
+	if options.replay.is_empty():
+		kept = " (the newest %d kept there)" % ReplayRecorder.KEEP
+	_log(
+		"sozinho: records the replay to %s%s" % [ProjectSettings.globalize_path(_replay.path), kept]
+	)
+
+
+# The session ends: the replay's last rows go to the disk.
+func _close_replay() -> void:
+	if _replay == null:
+		return
+	_replay.close()
+	_log(
+		"sozinho: replay of %d ticks saved to %s"
+		% [_replay.rows_written, ProjectSettings.globalize_path(_replay.path)],
+	)
+	_replay.queue_free()
+	_replay = null
+
+
+# Every row of --watch has played: the window says so; with --trace, it writes what it played and
+# the game quits, so tools/replay.sh can compare it.
+func _on_replay_watched() -> void:
+	for line: String in _watch.summary():
+		_log("sozinho: watch: %s" % line)
+	_status = StatusMessage.new()
+	add_child(_status)
+	_show(GameText.REPLAY_ENDED)
+	if options.trace.is_empty():
+		return
+	var error := _watch.save_trace(options.trace)
+	if error != OK:
+		push_error("cannot write the trace to %s: %s" % [options.trace, error_string(error)])
+		_quit(EXIT_REPLAY_REFUSED)
+		return
+	var written := ProjectSettings.globalize_path(options.trace)
+	_log("sozinho: watch: trace written to %s, the loops to %s.loops" % [written, written])
+	_quit(OK)
 
 
 # --half: the window takes the left or the right half of its screen's usable area, the layout of

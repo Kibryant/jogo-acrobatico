@@ -34,3 +34,7 @@ msgstr "No chão"
 # The HUD's mode of the fighter: from leaving the floor to touching it again (TASK-10.2).
 msgid "HUD_MODE_AIR"
 msgstr "No ar"
+
+# Every tick of the replay played in the window has played (--watch; TASK-10.3).
+msgid "REPLAY_ENDED"
+msgstr "Fim do replay. Feche a janela para sair."

@@ -139,11 +139,16 @@ func remove_fighter(slot: int) -> void:
 func watch(fighter: Fighter) -> CameraRig:
 	_follow(fighter, true)
 	fighter.input.use_devices(camera_rig)
-	if hud == null and has_screen():
-		hud = Hud.new()
-		add_child(hud)
-	if hud != null:
-		hud.follow(fighter, config)
+	_show_hud(fighter)
+	return camera_rig
+
+
+# A camera that only follows fighter, with the HUD when there is a screen, for a replay that plays
+# it instead of this PC's keyboard and mouse (TASK-10.3): the mouse stays free, and whoever plays
+# the replay turns the camera to where the fighter looks.
+func view(fighter: Fighter) -> CameraRig:
+	_follow(fighter, false)
+	_show_hud(fighter)
 	return camera_rig
 
 
@@ -171,6 +176,14 @@ func let_bot_play(fighter: Fighter) -> BotPlayer:
 
 func _on_tick_loop_start() -> void:
 	_loop_first_tick = NetworkTime.tick
+
+
+func _show_hud(fighter: Fighter) -> void:
+	if hud == null and has_screen():
+		hud = Hud.new()
+		add_child(hud)
+	if hud != null:
+		hud.follow(fighter, config)
 
 
 # A camera on fighter, looking where it looks; with takes_mouse, the mouse turns it.

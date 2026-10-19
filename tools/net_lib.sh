@@ -8,15 +8,6 @@ declare -A pids=()
 # Options for Godot itself on every headless start, after --headless; none by default.
 godot_options=()
 
-# Paths for Godot: a Windows path on Git Bash, the same path elsewhere.
-native_path() {
-	if command -v cygpath >/dev/null 2>&1; then
-		cygpath -m "$1"
-	else
-		echo "$1"
-	fi
-}
-
 now_ms() {
 	date +%s%3N
 }

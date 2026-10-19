@@ -30,6 +30,15 @@ refuse_override_cfg() {
 	fi
 }
 
+# Paths for Godot: a Windows path on Git Bash, the same path elsewhere.
+native_path() {
+	if command -v cygpath >/dev/null 2>&1; then
+		cygpath -m "$1"
+	else
+		echo "$1"
+	fi
+}
+
 # Lists the project's own GDScript files, tracked or new, without third-party addons and without
 # the gate's canaries, which are broken on purpose and checked by the gate itself (TASK-6).
 own_gd_files() {

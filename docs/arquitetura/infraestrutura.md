@@ -43,7 +43,7 @@ O orçamento do estudo, de R$ 3 a 7 mil por ano, cobre uns 50 jogadores ao mesmo
 | CPU de um 1v1 a 60 ticks no data center | mediana 13,9% de um núcleo | F-073 §3 |
 | CPU do mesmo servidor no contêiner daqui | mediana 21,5% de um núcleo | F-073 §2 |
 | Memória no contêiner daqui | 43 MB | F-073 §2 |
-| Imagem | 222 MB; pronta em 1,2 a 1,6 s | F-073 §1 e §2 |
+| Imagem | 222 MB na sonda, pronta em 1,2 a 1,6 s (F-073 §1 e §2); a do jogo, no CI, 153 MB, pronta em 0,45 s | F-073 §1 e §2; PR #8 (`rede.md` §10) |
 | Saída do servidor | uns 16 kB/s para os dois clientes | F-073 §2 e §3 |
 | Ping desta casa até São Paulo | 24 a 26 ms; 37 ms no jogo, estável | F-070; F-073 §3 e §5 |
 | `docker stop` | saída 143: o Godot não trata o SIGTERM | F-073 §2 |

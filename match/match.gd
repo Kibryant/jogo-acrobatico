@@ -15,6 +15,10 @@ const NO_TICK := -1
 ## spawn_fighter() without a node name: the match names the fighter.
 const ANY_NAME := ""
 
+## The movement numbers in the units of the paper. Set before the match enters the tree, they
+## replace movement_v0.tres, which is then never loaded: the reference test plays its frozen copy
+## this way (TASK-9, part 3). Left null, the match loads movement_v0.tres.
+var movement_data: MovementData
 ## The movement numbers in ticks, shared by every fighter of the match.
 var config: MovementConfig
 var camera_data: CameraData
@@ -37,7 +41,12 @@ var _watched: Fighter
 
 
 func _ready() -> void:
-	var movement_data := _load_movement_data()
+	if movement_data == null:
+		movement_data = _load_movement_data()
+	assert(
+		movement_data.validate().is_empty(),
+		"%s: %s" % [movement_data.resource_path, movement_data.validate()],
+	)
 	config = MovementConfig.create(movement_data, NetworkTime.tickrate)
 	camera_data = _load_camera_data()
 	var node := ARENA_SCENE.instantiate()
@@ -168,9 +177,7 @@ func _simulate_every_tick_of_the_loop() -> void:
 static func _load_movement_data() -> MovementData:
 	var resource: Resource = load(MOVEMENT_DATA_PATH)
 	assert(resource is MovementData, "%s must load as a MovementData" % MOVEMENT_DATA_PATH)
-	var data := resource as MovementData
-	assert(data.validate().is_empty(), "%s: %s" % [MOVEMENT_DATA_PATH, data.validate()])
-	return data
+	return resource as MovementData
 
 
 static func _load_camera_data() -> CameraData:

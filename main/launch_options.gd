@@ -6,7 +6,8 @@
 # - --server [--port=N] [--stop-file=PATH] [--record=PATH], or the build exported as a dedicated
 #   server: the server, which runs without a screen;
 # - --connect=HOST[:PORT] [--bot] [--record=PATH]: a client, played by a person or by the bot.
-# With a screen, --half=left or --half=right puts the window on that half of the screen.
+# With a screen, --half=left or --half=right puts the window on that half of the screen, and
+# --measure-fps=PATH measures the frame rate in fullscreen once the game's own fighter plays.
 # When netfox's network simulator connects the game (SimulatorLink), the address is its own: an
 # address in the arguments that differs is refused, and so is Sozinho, which has no network.
 # An argument this build does not know, or one that does not fit the mode, is an error: a typo
@@ -30,8 +31,9 @@ const STOP_FILE := "stop-file"
 const BOT := "bot"
 const RECORD := "record"
 const HALF := "half"
+const MEASURE_FPS := "measure-fps"
 ## The arguments this build knows, by name.
-const KNOWN: Array[String] = [SERVER, PORT, CONNECT, STOP_FILE, BOT, RECORD, HALF]
+const KNOWN: Array[String] = [SERVER, PORT, CONNECT, STOP_FILE, BOT, RECORD, HALF, MEASURE_FPS]
 ## The ones that take no value.
 const FLAGS: Array[String] = [SERVER, BOT]
 ## The values of --half.
@@ -52,6 +54,9 @@ var record := ""
 ## The half of the screen the window takes, "left" or "right", so tools/play_online.sh shows two
 ## games side by side; empty to leave the window where Godot opens it.
 var half := ""
+## The file where the game writes, as JSON, its frame rate over a minute in fullscreen (FpsMeter;
+## TASK-9, criterion 17); empty when it does not measure.
+var measure_fps := ""
 ## netfox's network simulator, when it connects the game; null otherwise.
 var simulator: SimulatorLink
 ## One line per problem with the arguments; the game opens only when there is none.
@@ -146,6 +151,13 @@ func _read_mode(
 			errors.append("--half places a window: it needs a screen")
 		else:
 			half = given[HALF]
+	if given.has(MEASURE_FPS):
+		if not has_screen or mode == Mode.SERVER:
+			errors.append("--measure-fps measures the frames of a window: it needs a screen")
+		elif given.has(HALF):
+			errors.append("--measure-fps takes the whole screen: it does not go with --half")
+		else:
+			measure_fps = given[MEASURE_FPS]
 	if simulator != null:
 		_check_simulator_address()
 

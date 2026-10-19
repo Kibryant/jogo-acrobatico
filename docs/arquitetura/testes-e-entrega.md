@@ -1,14 +1,14 @@
 ---
 revisado_em: 2026-10-18
-fontes: [F-007, F-009, F-010, F-021, F-038, F-039, F-040, F-041, F-042, F-043, F-044, F-045, F-046, F-047, F-048, F-049, F-085, F-087, F-088, F-091, F-093]
+fontes: [F-007, F-009, F-010, F-021, F-038, F-039, F-040, F-041, F-042, F-043, F-044, F-045, F-046, F-047, F-048, F-049, F-085, F-087, F-088, F-091, F-093, F-094, F-095, F-097, F-098]
 ---
 
 # Testes e entrega
 
-Estado atual: o Desenho 4 (TASK-6) fechado, com as DEC-0027 e DEC-0028. A parte 1 do esqueleto andante (TASK-9) trouxe o primeiro código de jogo; a parte 2, a rede e os scripts que a provam com processos de verdade.
+Estado atual: o Desenho 4 (TASK-6) fechado, com as DEC-0027 e DEC-0028. A parte 1 do esqueleto andante (TASK-9) trouxe o primeiro código de jogo; a parte 2, a rede e os scripts que a provam com processos de verdade; a parte 3, a esteira: as builds e a release no CI, a imagem do servidor e a referência.
 
 - O portão, os canários e os hooks do Claude Code já rodam.
-- A especificação, a checagem dos dados e a SyncTest nasceram na parte 1 da TASK-9, e o aperto de mão, na parte 2. A referência e o job de build vêm na parte 3.
+- A especificação, a checagem dos dados e a SyncTest nasceram na parte 1 da TASK-9; o aperto de mão, na parte 2; a referência, os jobs de build e de release e a imagem do servidor, na parte 3.
 - O gravador do replay nasce na fase 1 (TASK-10).
 - A versão visual e interativa deste documento é a vitrine [A esteira por dentro](https://claude.ai/artifact/L9FpEtDFoyGJYWLSR6TFA1), privada (DEC-0019).
 
@@ -21,8 +21,8 @@ O caminho de uma mudança até o jogo na mão de quem joga, com uma checagem em 
 | O Claude edita | Os hooks: a trava do teste de aceite e o formatador (§9) | 0,2 a 0,8 s por hook; um `.gd` passa pelos dois (F-049 §6) |
 | `git commit` | O pre-commit: gitleaks, formato e pureza | de 0,8 a 2,9 s nos commits, quase tudo o gitleaks (F-049 §2), de um teto de 15 (DEC-0027) |
 | `git push` | O pre-push: o portão inteiro (§2) | 31 s, de um teto de 90 (F-049 §5) |
-| O CI no GitHub | O gitleaks no histórico e o mesmo portão; no PR e na tag, as duas builds | 21 a 29 s só com o portão, antes da rodada 1 (F-038, contexto); o job de export, de 57 a 83 s (F-045 §3) |
-| A build | O cliente Windows e o servidor Linux (§6) | Nasce na TASK-9 |
+| O CI no GitHub | O gitleaks no histórico e o mesmo portão; no PR e na tag, as duas builds e o teste de fumaça; no push da main e no PR, a imagem do servidor; na tag, a release (§6) | no PR #8, o job do portão em 22 s, o de export em 48 a 57 s e o da imagem em 47 a 58 s |
+| A build | O cliente Windows e o servidor Linux (§6) | o export dos dois em segundos, dentro do job de export |
 | Quem joga | A versão certa, conferida na conexão (§7) | Desde a parte 2 da TASK-9 (`rede.md` §9) |
 
 ## 2. O portão (DEC-0027 §1)
@@ -54,12 +54,13 @@ Os tempos são os da rodada B depois dos consertos (F-049 §5). O total foi 31,3
 | 1. A especificação | A regra do núcleo diferente do papel; o teste de unidade do Jest para função pura | portão | TASK-9 | sem medida |
 | 2. A SyncTest | Estado escondido: refazer um tick dá outro resultado (DEC-0025) | portão | TASK-9, com os ticks à mão | pelo relógio, ~6 s por cenário de 5 s (F-042 §1); à mão, as quatro cenas em uns 2,5 s (F-087 §1) |
 | 3. A checagem dos dados | Um número impossível num `.tres` | portão | com o primeiro `.tres` de design (F-048) | sem medida |
-| 4. O replay como referência | Uma mudança de código que muda o movimento sem querer; o snapshot do Jest | portão e CI | TASK-9 | 1.200 ticks em 11 a 13 ms (F-042 §3) |
+| 4. A referência | Uma mudança de código que muda o movimento sem querer; o snapshot do Jest | portão e CI | TASK-9, parte 3 | 1.200 ticks em uns 0,9 a 1,4 s neste PC e 0,14 s no Linux do CI, com a partida de verdade e o netfox; a sonda, sem os dois, fazia em 11 a 13 ms (F-042 §3) |
 | 5. A rede à mão | A sensação com lag | o Arthur, pelo `tools/play_online.sh` | TASK-9, parte 2 (F-091), e de tempos em tempos (DEC-0026) | o tempo dele, e o que ele sentiu (F-041) |
 | As checagens com processos | O servidor e os clientes de verdade: as portas, o aperto de mão, a sala, o arquivo de parada, os códigos de saída e a previsão conferida com o servidor | à mão, fora do portão: `tools/net_check.sh` e `tools/net_run.sh` | TASK-9, parte 2 | 32 s e 36 s na revisão da parte 2 |
 | A guarda das configurações | Uma configuração decidida que voltou atrás | portão | desde o Desenho 2 | dentro dos testes |
 | Compilar tudo e os canários | §2 | portão | rodada 1 (F-039) | ~4 s e menos de 1 s (F-049 §5) |
-| O teste de fumaça da build | O servidor exportado não sobe, ou não fecha com código 0 | CI | TASK-9, com a Main (F-048) | sem medida; na sonda, ele subiu e fechou com código 0 (F-045 §3) |
+| O teste de fumaça da build | O servidor exportado não sobe, não traz o carimbo do commit, ou não fecha com código 0 | CI, no job de export (`tools/smoke_test_server.sh`) | TASK-9, parte 3 | no PR #8, o servidor escutou 208 ms depois de subir e fechou pelo arquivo de parada em 1,1 s |
+| A imagem do servidor | A imagem Docker não sobe, o aperto de mão falha, outra build entra, ou o servidor não fecha com 0 | CI, no push da main e no PR, fora do portão (DEC-0032 §1; `tools/server_image_check.sh`) | TASK-9, parte 3 | 25 s de checagem; a imagem tem 153 MB e fica pronta em 0,45 s (PR #8) |
 
 **A SyncTest com os ticks à mão.**
 - Pelo relógio do netfox, cada cenário custa o tempo de jogo dele, e o `--fixed-fps` não acelera (F-042 §1).
@@ -70,9 +71,11 @@ Os tempos são os da rodada B depois dos consertos (F-049 §5). O total foi 31,3
 - O tempo das quatro cenas aparece em toda rodada do portão, sem trava: uns 2,5 s com o PC quieto, até o triplo com o PC ocupado (F-087 §1).
 
 **A referência (golden master).**
-- É um percurso de bot gravado como replay, com o hash do caminho conferido no portão, no Windows, e no CI, no Linux.
-- Ela usa uma cópia congelada dos números do movimento, só do teste. O ajuste fino do jogo não quebra a referência; só uma mudança de código quebra.
-- Regravar é um comando, como o `jest -u`, e o commit diz por quê (F-044 §2).
+- É um percurso fixo de bot, de 1.200 ticks, na arena de verdade, no Sozinho, com os ticks à mão (`test/reference/`). O percurso é uma tabela no teste. O gravador de replay continua na fase 1.
+- O teste guarda o rastro do caminho, com a posição em 9 casas e o chão de cada tick, e confere o sha256 no portão, no Windows, e no CI, no Linux. Os dois deram o mesmo, `b73cccbc…` (PR #8). Quando difere, ele mostra o primeiro tick diferente.
+- O percurso olha sempre para a mesma direção e não passa pela rampa, porque seno e cosseno podem diferir no último bit entre os dois sistemas, e a sonda só provou o caminho sem eles (F-042 §5). A SyncTest segue cobrindo a rampa.
+- Ela usa uma cópia congelada dos números do movimento, só do teste. O ajuste fino do jogo não quebra a referência; só uma mudança de código quebra. Se ela reprovar sem uma mudança de movimento de propósito, o primeiro passo é investigar (F-094 §2).
+- Regravar é um comando, `bash tools/record_reference.sh`, como o `jest -u`, e o commit diz por quê (F-044 §2).
 
 **O que não cabe nos 90 s** vira um job do CI fora do pre-push, com uma DEC nova (DEC-0027 §4).
 
@@ -102,7 +105,7 @@ Os tempos são os da rodada B depois dos consertos (F-049 §5). O total foi 31,3
 | Ambiente | O que roda ali |
 |---|---|
 | O PC do Arthur | O editor, o portão local e as sondas, fora do repositório (`../netfox-sonda`, `../replay-sonda`, `../export-sonda`) |
-| O CI no GitHub (Linux, `ubuntu-24.04`) | O portão; no PR e na tag, as duas builds |
+| O CI no GitHub (Linux, `ubuntu-24.04`) | O portão; no PR e na tag, as duas builds; no push da main e no PR, a imagem do servidor; na tag, a release |
 | A build de teste | O artefato do PR, por 3 dias, ou a release da tag |
 | O servidor de verdade | Desenho 6 (TASK-8) |
 
@@ -118,7 +121,8 @@ O endereço do servidor vem dos argumentos da Main (DEC-0026).
 | Servidor Linux | Linux, x86_64 | PCK embutido; servidor dedicado, com a feature tag `dedicated_server` e sem a parte visual (F-047 §1.6) | 74 MB (F-045 §2) |
 
 - **O que fica fora:** `test/*`, `addons/gdUnit4/*`, `tools/*` e `reports/*`. Neste PC, o pacote do jogo teve 163 arquivos (~216 kB), sem nenhum desses (F-045 §2). No CI, o conteúdo do pacote não foi listado.
-- **Hoje a build não roda nada:** falta a Main, que nasce na TASK-9. A sonda usou uma cena própria, que imprimia a versão e o commit (F-045 §2).
+- **A build roda o jogo inteiro:** sem argumento, o Sozinho; com `--server`, ou exportada como servidor dedicado, o servidor; com `--connect`, o cliente (`rede.md` §9).
+- **O job de export** (`.github/workflows/ci.yml`; `tools/export_builds.sh`): carimba o commit (`tools/stamp_build.sh`), importa antes de exportar, exporta os dois presets, confere que cada arquivo está inteiro e roda o teste de fumaça do servidor. No PR, ele exporta o commit da branch, que é o que o carimbo nomeia, e não o commit temporário de merge do GitHub.
 - **Os templates:**
   - neste PC, só os de Windows e Linux, baixados pelo editor: 344 MB no disco, contra 1,28 GB do pacote inteiro (F-045 §1);
   - no CI, o `setup-godot` baixa o pacote inteiro, em 51 s, ou restaura do cache em 30 s (F-045 §3; F-047 §1.4).
@@ -126,16 +130,17 @@ O endereço do servidor vem dos argumentos da Main (DEC-0026).
 **Quando a build sai:**
 - **No PR,** guardada por 3 dias.
 - **Na tag `v0.y.z`,** como release.
-- **Nunca no push da main** (F-046 §1).
+- **No push da main, nenhuma build fica guardada** (F-046 §1). O job da imagem exporta o servidor só para testá-lo, e não guarda nada (DEC-0032 §1).
 
 **A conta da cota:**
 - o plano Free dá 2.000 minutos de CI por mês e 500 MB para artefatos, divididos com os pacotes; o artefato fica 90 dias se ninguém disser outra coisa (F-047 §1.1);
 - uma dupla de builds compactada pesa 68,4 MB (F-045 §3); três PRs abertos ocupam uns 200 MB (3 × 68,4);
 - o arquivo de uma release não entra nessa conta, até onde a documentação diz, mas isso não está confirmado (F-047 §1.1);
-- o job de export levou de 57 a 83 s (F-045 §3).
+- o job de export da sonda levou de 57 a 83 s (F-045 §3); o da TASK-9, de 48 a 57 s, e a dupla de builds compactada, 68,5 MB (PR #8).
 
 **Os riscos do export:**
-- **O #123712:** o Godot cai ao sair depois de exportar no Linux, com código 134. Não apareceu em quatro exports, dois neste PC e dois no CI (F-045 §2 e §3; F-047 §1.6). Se aparecer no job da TASK-9, ele confere o artefato e o teste de fumaça, e não só o código de saída.
+- **O #123712:** o Godot cai ao sair depois de exportar no Linux, com código 134. Não apareceu em quatro exports da sonda, dois neste PC e dois no CI (F-045 §2 e §3; F-047 §1.6). O job da TASK-9 registra o código de saída, mas quem decide é o arquivo da build, que precisa estar inteiro e terminar com a assinatura do pacote, e o teste de fumaça (`tools/export_builds.sh`; `tools/build_lib.sh`).
+- **O erro conhecido do servidor de release:** depois que um cliente usou RPCs, o servidor Linux exportado imprime, ao fechar a conexão, uma linha `ERROR: Attempt to disconnect a nonexistent connection … Signal: 'tree_exited', callable: ''.` por nó. É um bug do Godot 4.7.2 que só a build de release do Linux mostra (Godot #123751, fechado como "não planejado"); nada muda para quem joga. Só o job da imagem deixa essa linha exata de fora e a conta no relatório; o teste de fumaça segue reprovando qualquer `ERROR` (F-097).
 - **O #1324 do gdUnit4:** derruba o primeiro export feito sem a pasta `.godot`. O import roda antes do export, e o gdUnit4 fica fora do pacote (F-047 §1.6).
 
 ## 7. As versões (DEC-0028 §3)
@@ -145,7 +150,8 @@ O endereço do servidor vem dos argumentos da Main (DEC-0026).
 - **O `z` sobe a cada build que sai com tag** para alguém jogar (F-046 §2).
 - **Onde mora:** `application/config/version` no `project.godot`. Até o esqueleto andante, vale `0.0.0`. Quem sobe é o Claude, no commit da tag, com o ok do Arthur (F-048).
 - **O commit carimbado:** o CI escreve os 7 primeiros caracteres em `application/config/commit` na hora do export (F-045 §3), e o `.exe` feito no Linux leu o carimbo neste PC (F-045 §4).
-- **A tag e as notas:** a tag `v0.y.z` vira uma release privada no GitHub, com as duas builds e notas em português tiradas do diário (F-046 §2).
+- **A tag e as notas:** a tag `v0.y.z` vira uma release pública no GitHub (DEC-0033), com as duas builds e notas em português tiradas do diário (F-046 §2). As notas ficam em `docs/releases/v0.y.z.md`. O job da release é o único com permissão de escrita e só roda na tag; ele recusa a tag que não bate com a versão do `project.godot` e a que não tem notas (`tools/release.sh`). Em todo PR, ele ensaia sem publicar.
+- **A primeira release** é a v0.1.0, que fecha o esqueleto andante (TASK-9, critério 18).
 - **O aperto de mão:** o cliente manda versão e commit ao conectar, e o servidor recusa os diferentes. No rollback, os dois precisam rodar a mesma regra (DEC-0026). O replay leva o mesmo carimbo (§4).
 
 ## 8. O fluxo de branch e o worktree (DEC-0028 §4)
@@ -180,10 +186,7 @@ O plano Free não impõe nada disso: o pre-push continua sendo a trava, e o CI n
 
 ## 11. O que fica para depois
 
-- **TASK-9, parte 3:**
-  - a referência;
-  - o job de build no PR e na tag, e o teste de fumaça da imagem do servidor;
-  - o 0.1.0 com a tag `v0.1.0`.
+- **O tempo do portão:** na TASK-9, ele levou de 61 a 114 s neste PC, conforme o PC estava quieto ou ocupado, contra o limite de 90 s do pre-push (DEC-0027). Os passos que mais pesam são o import e os testes; a referência soma uns 1,1 s.
 - **TASK-10, a fase 1:** o gravador do replay.
 - **Q-20:** a assinatura do `.exe`, antes de alguém de fora testar.
 - **Canários** para o formato, o lint, as travas, o import e o log limpo, se um furo aparecer ali.
@@ -202,5 +205,13 @@ O inventário que o `AGENTS.md` resumia (veio para cá no fechamento do Desenho 
   - `tools/play_online.sh [ping]`: o teste à mão.
 
   Os dois últimos ligam o simulador do netfox por um `override.cfg` temporário, e o portão recusa rodar com ele na raiz (DEC-0038; `rede.md` §10).
+- Os scripts da esteira (TASK-9, parte 3), que o CI roda e que também rodam aqui:
+  - `tools/stamp_build.sh COMMIT`: o carimbo do commit, só no CI. O teste de configurações reprova um `project.godot` com carimbo esquecido;
+  - `tools/export_builds.sh [client] [server]`: o import e o export dos presets;
+  - `tools/smoke_test_server.sh`: o teste de fumaça do servidor exportado;
+  - `tools/release.sh [--dry-run] TAG`: a release da tag, ou o ensaio dela;
+  - `tools/server_image_check.sh`: a imagem do servidor. Aqui ele precisa do Docker Desktop aberto, que é pesado; o CI o roda em todo PR;
+  - `tools/record_reference.sh`: regrava a referência;
+  - `tools/measure_fps.sh`: a medição de fps, com a build em tela cheia por uns 2 minutos e o PC livre (F-095).
 - O `node` 24 e o `python` 3.14 servem scripts de apoio e os hooks, nunca o portão (F-016 §2); `python`, nunca `python3`, que aqui é um atalho da Store.
 - As sondas ficam fora do repositório, em pastas ao lado dele (`../netfox-sonda`, `../assets-sonda`, `../git-sonda`).

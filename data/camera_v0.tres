@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="CameraData" format=3]
+[gd_resource type="Resource" script_class="CameraData" format=3 uid="uid://bisuic01c2d08"]
 
 [ext_resource type="Script" path="res://data/camera_data.gd" id="1_x8qlq"]
 

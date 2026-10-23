@@ -669,12 +669,11 @@ func test_a_wall_of_at_least_80_degrees_accepts_the_run_and_a_lower_one_refuses_
 # The design's threshold for the normal: cos 80° is 0,1736 (movimento.md, "Parede válida").
 func test_the_valid_wall_threshold_is_cos_80_degrees() -> void:
 	assert_float(cos(deg_to_rad(WALL_MIN_INCLINE_DEG))).is_equal_approx(WALL_MAX_NORMAL_Y, 1e-4)
-	assert_float(absf(_inclined_normal(WALL_MIN_INCLINE_DEG + LIMIT_STEP_DEG).y)).is_less(
-		WALL_MAX_NORMAL_Y
-	)
-	assert_float(absf(_inclined_normal(WALL_MIN_INCLINE_DEG - 0.001).y)).is_greater(
-		WALL_MAX_NORMAL_Y
-	)
+	# The limit normals of the entry test sit on either side of the exact cosine, not of the
+	# design's four-decimal rounding (F-130).
+	var exact := cos(deg_to_rad(WALL_MIN_INCLINE_DEG))
+	assert_float(absf(_inclined_normal(WALL_MIN_INCLINE_DEG + LIMIT_STEP_DEG).y)).is_less(exact)
+	assert_float(absf(_inclined_normal(WALL_MIN_INCLINE_DEG - 0.001).y)).is_greater(exact)
 
 
 # From the floor the wall starts nothing: running beside it at 7 m/s, in contact every tick,

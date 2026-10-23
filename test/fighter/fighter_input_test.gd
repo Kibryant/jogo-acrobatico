@@ -135,3 +135,55 @@ func test_without_a_press_the_fighter_never_jumps() -> void:
 	NetfoxTicks.run_loops(30, 2)
 	assert_int(fighter.state.jumps_used).is_equal(0)
 	assert_bool(fighter.state.on_floor).is_true()
+
+
+# The dash key as the operating system reports it: the InputMap's dash action is the physical
+# left Shift (project.godot, [input]; movimento.md, "Dash": "Tecla"), and the right Shift has the
+# same physical keycode at another location.
+static func _shift_key(location: KeyLocation, echo: bool) -> InputEventKey:
+	var event := InputEventKey.new()
+	event.physical_keycode = KEY_SHIFT
+	event.location = location
+	event.shift_pressed = true
+	event.pressed = true
+	event.echo = echo
+	return event
+
+
+# TASK-10.4: pressed once, the dash starts on the first tick of the frame, and the second tick of
+# the same frame finds it taken, so the slot of the buffer stays empty (DEC-0039).
+func test_a_dash_press_counts_for_one_tick_when_a_frame_runs_two() -> void:
+	var fighter := await _fighter_in_a_match()
+	NetfoxTicks.run_loops(3)
+	var press_tick := NetworkTime.tick
+	fighter.input.press_dash()
+	NetfoxTicks.run_loop(2)
+	assert_int(fighter.state.mode).is_equal(FighterState.Mode.DASH)
+	assert_int(fighter.state.dash_tick).is_equal(press_tick)
+	assert_str(String(fighter.state.buffered_command)).is_equal(String(FighterCommand.NONE))
+	assert_bool(fighter.input.to_tick_input().dash).is_false()
+
+
+# The left Shift through the viewport starts the dash; its key repeat is no second press, so
+# nothing waits in the slot, and the right Shift does nothing (TASK-10.4, choice 2, F-121).
+func test_the_left_shift_dashes_once_and_its_key_repeat_is_not_a_second_press() -> void:
+	var fighter := await _fighter_at_the_keyboard()
+	NetfoxTicks.run_loops(3)
+	get_viewport().push_input(_shift_key(KEY_LOCATION_RIGHT, false))
+	NetfoxTicks.run_loop()
+	assert_int(fighter.state.dash_tick) \
+			.override_failure_message("the right Shift dashed") \
+			.is_equal(FighterState.NEVER)
+	var press_tick := NetworkTime.tick
+	get_viewport().push_input(_shift_key(KEY_LOCATION_LEFT, false))
+	NetfoxTicks.run_loop()
+	assert_int(fighter.state.dash_tick) \
+			.override_failure_message("the left Shift through the viewport did not dash") \
+			.is_equal(press_tick)
+	for _echo: int in 5:
+		get_viewport().push_input(_shift_key(KEY_LOCATION_LEFT, true))
+		NetfoxTicks.run_loop()
+	assert_str(String(fighter.state.buffered_command)) \
+			.override_failure_message("a key repeat counted as a second press") \
+			.is_equal(String(FighterCommand.NONE))
+	assert_int(fighter.state.dash_tick).is_equal(press_tick)

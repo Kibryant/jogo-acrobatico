@@ -123,3 +123,9 @@ O que chegou ao projeto e como chegou. Uma fonte não muda: só mudam `status`, 
 | [F-117](F-117-arthur-aprova-ligar-o-sync-to-physics.md) | 2026-10-23 | O Arthur acerta por que a janela se separava e aprova ligar o `sync_to_physics` no plan mode |
 | [F-118](F-118-arthur-joga-com-o-tick-no-passo-de-fisica.md) | 2026-10-23 | O Arthur joga com o tick no passo de física e sente a câmera lisa e as teclas normais |
 | [F-119](F-119-arthur-assiste-ao-replay-igual-e-libera-o-pr.md) | 2026-10-23 | O Arthur assiste ao replay igual em todo tick e libera subir a branch `sync-to-physics` e abrir o PR |
+| [F-120](F-120-arthur-libera-o-merge-do-sync-to-physics-e-segue-para-a-task-10-4.md) | 2026-10-23 | O Arthur libera o merge do PR #12 e escolhe seguir para a TASK-10.4 na mesma sessão |
+| [F-121](F-121-arthur-abre-a-task-10-4.md) | 2026-10-23 | O Arthur abre a TASK-10.4: acerta o dash comprometido, escolhe o Shift esquerdo e nenhum corte pelo pulo no v0 |
+| [F-122](F-122-arthur-aprova-o-plano-do-dash.md) | 2026-10-23 | O Arthur aprova o plano da TASK-10.4, o dash, no plan mode: a DEC-0041, o snap de 0,338 m, os sinais por chave e os números v0 |
+| [F-123](F-123-arthur-joga-o-dash-e-pergunta-pelo-dash-no-ar.md) | 2026-10-23 | O Arthur joga o dash, acha muito foda o dash e os sinais, e pergunta se faz sentido um dash no ar, como acha que tem no GunZ |
+| [F-124](F-124-arthur-deixa-o-dash-no-ar-para-a-task-10-8-e-fecha-a-q-33.md) | 2026-10-23 | O Arthur acerta por que o ar tem uma carta só, deixa o dash no ar para a TASK-10.8 e fecha a Q-33: com o dash, a barra pesou |
+| [F-125](F-125-arthur-libera-push-e-merge-da-task-10-4.md) | 2026-10-23 | O Arthur libera subir a branch da TASK-10.4, abrir o PR e fazer o merge |

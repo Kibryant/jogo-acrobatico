@@ -3,15 +3,17 @@
 # impossible number, movement_v0.tres passes it, and the scan below runs it over every
 # MovementData under res://data/, so a bad file committed later fails here. The baseline numbers
 # come from docs/design/movimento.md, cited by section. TASK-10.1, criterion 7, adds the double
-# jump and the stamina (movimento.md, "Pulo e ar" and "Stamina").
+# jump and the stamina (movimento.md, "Pulo e ar" and "Stamina"); TASK-10.4 adds the dash
+# (movimento.md, "Dash").
 extends GdUnitTestSuite
 
 const MOVEMENT_V0 := "res://data/movement_v0.tres"
 const DATA_DIR := "res://data"
 const HAIR := 1e-9 # floating-point slack, not a design number
 
-# The six times of the skeleton (movimento.md, "Chão", "Pulo e ar" and "Perdão") and the wait
-# of the stamina ("Stamina") as MovementData fields (TASK-9 and TASK-10.1 plans).
+# The six times of the skeleton (movimento.md, "Chão", "Pulo e ar" and "Perdão"), the wait of
+# the stamina ("Stamina") and the duration and cooldown of the dash ("Dash") as MovementData
+# fields (TASK-9, TASK-10.1 and TASK-10.4 plans).
 const TIME_FIELDS: Array[String] = [
 	"accel_time_ms",
 	"stop_time_ms",
@@ -20,7 +22,21 @@ const TIME_FIELDS: Array[String] = [
 	"coyote_ms",
 	"buffer_ms",
 	"stamina_wait_ms",
+	"dash_ms",
+	"dash_cooldown_ms",
 ]
+
+# The five numbers of the dash (movimento.md, "Dash"), each with one value that cannot be: a
+# distance of zero (the speed derives from it), a duration that rounds to 0 ticks (the speed
+# divides by it), a negative exit speed, a negative cooldown and a negative cost. The distance,
+# the exit speed and the cost are floats; the duration and the cooldown are times.
+const DASH_IMPOSSIBLE: Dictionary[String, Variant] = {
+	"dash_distance_m": 0.0,
+	"dash_ms": 0,
+	"dash_exit_speed_mps": -7.0,
+	"dash_cooldown_ms": -1,
+	"dash_cost": -15.0,
+}
 
 # The five numbers of TASK-10.1 (movimento.md, "Pulo e ar" and "Stamina"), each with one value
 # that cannot be: a height of zero, a max of zero, a negative cost, a negative wait and a
@@ -56,6 +72,11 @@ func _design_data() -> MovementData:
 	data.stamina_max = 100.0 # "Stamina": "Máximo"
 	data.stamina_wait_ms = 800 # "Stamina": "Espera para recuperar"
 	data.stamina_regen_per_s = 30.0 # "Stamina": "Recuperação"
+	data.dash_distance_m = 4.0 # "Dash": "Distância"
+	data.dash_ms = 200 # "Dash": "Duração"
+	data.dash_exit_speed_mps = 7.0 # "Dash": "Velocidade na saída"
+	data.dash_cooldown_ms = 400 # "Dash": "Recarga"
+	data.dash_cost = 15.0 # "Dash": "Custo"
 	return data
 
 
@@ -108,6 +129,11 @@ func test_movement_v0_holds_the_numbers_of_movimento_md() -> void:
 	assert_float(data.stamina_max).is_equal_approx(design.stamina_max, HAIR)
 	assert_int(data.stamina_wait_ms).is_equal(design.stamina_wait_ms)
 	assert_float(data.stamina_regen_per_s).is_equal_approx(design.stamina_regen_per_s, HAIR)
+	assert_float(data.dash_distance_m).is_equal_approx(design.dash_distance_m, HAIR)
+	assert_int(data.dash_ms).is_equal(design.dash_ms)
+	assert_float(data.dash_exit_speed_mps).is_equal_approx(design.dash_exit_speed_mps, HAIR)
+	assert_int(data.dash_cooldown_ms).is_equal(design.dash_cooldown_ms)
+	assert_float(data.dash_cost).is_equal_approx(design.dash_cost, HAIR)
 
 
 func test_movement_v0_passes_the_data_check() -> void:
@@ -144,6 +170,8 @@ func test_a_negative_time_is_rejected(
 		["coyote_ms"],
 		["buffer_ms"],
 		["stamina_wait_ms"],
+		["dash_ms"],
+		["dash_cooldown_ms"],
 	],
 ) -> void:
 	var data := _design_data()
@@ -156,10 +184,17 @@ func test_a_negative_time_is_rejected(
 
 # Acceleration is speed / time, deceleration is speed / time, and the jump's gravity and exit
 # speed come from the rise and fall times (movimento.md, the "Deriva" notes of "Chão" and "Pulo
-# e ar"): zero there divides by zero.
+# e ar"): zero there divides by zero. The dash's speed is its distance over its duration
+# (movimento.md, "Dash": "Deriva a velocidade"), TASK-10.4.
 func test_a_zero_time_where_the_rule_divides_is_rejected(
 	field: String,
-	_test_parameters := [["accel_time_ms"], ["stop_time_ms"], ["jump_rise_ms"], ["jump_fall_ms"]],
+	_test_parameters := [
+		["accel_time_ms"],
+		["stop_time_ms"],
+		["jump_rise_ms"],
+		["jump_fall_ms"],
+		["dash_ms"],
+	],
 ) -> void:
 	var data := _design_data()
 	data.set(field, 0)
@@ -227,6 +262,10 @@ func test_other_impossible_numbers_are_rejected(
 		["double_jump_height_m", -1.0],
 		["double_jump_cost", -10.0],
 		["stamina_regen_per_s", -30.0],
+		["dash_distance_m", 0.0],
+		["dash_distance_m", -4.0],
+		["dash_exit_speed_mps", -7.0],
+		["dash_cost", -15.0],
 	],
 ) -> void:
 	var data := _design_data()
@@ -332,6 +371,89 @@ func test_five_impossible_new_numbers_give_five_messages_each_naming_its_field()
 	var errors := data.validate()
 	assert_array(errors).has_size(NEW_IMPOSSIBLE.size())
 	for field: String in NEW_IMPOSSIBLE:
+		var named := false
+		for message: String in errors:
+			if message.contains(field):
+				named = true
+		var unnamed := "no message names %s, got: %s" % [field, errors]
+		assert_bool(named).override_failure_message(unnamed).is_true()
+
+
+# TASK-10.4: nothing divides by the cooldown of the dash (movimento.md, "Dash": "Recarga"), so
+# 0 ms is a legitimate "no cooldown", like the two windows of "Perdão".
+func test_a_zero_dash_cooldown_is_allowed() -> void:
+	var data := _design_data()
+	data.dash_cooldown_ms = 0
+	assert_array(data.validate()).override_failure_message("dash_cooldown_ms = 0 must pass") \
+			.is_empty()
+
+
+# TASK-10.4: the exit speed may be 0 (the dash stops dead) and the cost may be 0 (a free dash),
+# both legitimate; only negatives are impossible (TASK-10.4 plan: "not negative").
+func test_a_zero_dash_exit_speed_or_cost_is_allowed(
+	field: String,
+	_test_parameters := [["dash_exit_speed_mps"], ["dash_cost"]],
+) -> void:
+	var data := _design_data()
+	data.set(field, 0.0)
+	assert_float(data.get(field)).override_failure_message("%s is not a field" % field).is_equal(
+		0.0
+	)
+	assert_array(data.validate()).override_failure_message("%s = 0 must pass" % field).is_empty()
+
+
+# TASK-10.4: the cost of the dash must fit the bar, like the double jump's (TASK-10.4 plan: "not
+# negative, <= stamina_max"): above the max it is rejected with a message naming it; at the max
+# (the limit) and at the design's 15 it passes.
+func test_a_dash_cost_above_the_stamina_max_is_rejected() -> void:
+	var data := _design_data()
+	data.dash_cost = data.stamina_max + 0.5
+	var errors := data.validate()
+	assert_array(errors).override_failure_message("dash cost above the max must be rejected") \
+			.has_size(1)
+	if errors.size() == 1:
+		assert_str(errors[0]).contains("dash_cost")
+
+
+func test_a_dash_cost_up_to_the_stamina_max_is_allowed(
+	cost: float,
+	_test_parameters := [[0.0], [15.0], [100.0]],
+) -> void:
+	var data := _design_data()
+	data.dash_cost = cost
+	assert_array(data.validate()).override_failure_message("dash cost %.1f must pass" % cost) \
+			.is_empty()
+
+
+# Both costs above the max at once: one message each, naming its own field.
+func test_both_costs_above_the_stamina_max_give_two_messages() -> void:
+	var data := _design_data()
+	data.double_jump_cost = data.stamina_max + 1.0
+	data.dash_cost = data.stamina_max + 1.0
+	var errors := data.validate()
+	assert_array(errors).has_size(2)
+	for field: String in ["double_jump_cost", "dash_cost"]:
+		var named := false
+		for message: String in errors:
+			if message.contains(field):
+				named = true
+		assert_bool(named).override_failure_message("no message names %s: %s" % [field, errors]) \
+				.is_true()
+
+
+# Many: the five dash numbers wrong at once give five messages, each naming its field; with
+# the cost negative, no "cost above max" message can double up.
+func test_five_impossible_dash_numbers_give_five_messages_each_naming_its_field() -> void:
+	var data := _design_data()
+	for field: String in DASH_IMPOSSIBLE:
+		data.set(field, DASH_IMPOSSIBLE[field])
+		var set_message := "%s is not a field" % field
+		assert_bool(data.get(field) == DASH_IMPOSSIBLE[field]) \
+				.override_failure_message(set_message) \
+				.is_true()
+	var errors := data.validate()
+	assert_array(errors).has_size(DASH_IMPOSSIBLE.size())
+	for field: String in DASH_IMPOSSIBLE:
 		var named := false
 		for message: String in errors:
 			if message.contains(field):

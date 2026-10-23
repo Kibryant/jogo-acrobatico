@@ -36,14 +36,20 @@ func _init(trace_first_tick: int) -> void:
 
 
 # The names of the columns, after tick and fighter: the body's vectors as .x, .y and .z, then
-# every field of FighterState.
+# every field of FighterState, a vector of the state as .x, .y and .z too (dash_direction,
+# TASK-10.4), one name per cell _cell writes.
 static func state_columns() -> PackedStringArray:
 	var names := PackedStringArray()
 	for field: String in BODY:
 		for axis: String in ["x", "y", "z"]:
 			names.append("%s.%s" % [field, axis])
-	for field: String in ReplayFile.script_fields(FighterState.new()):
-		names.append(field)
+	var state := FighterState.new()
+	for field: String in ReplayFile.script_fields(state):
+		if typeof(state.get(field)) == TYPE_VECTOR3:
+			for axis: String in ["x", "y", "z"]:
+				names.append("%s.%s" % [field, axis])
+		else:
+			names.append(field)
 	return names
 
 

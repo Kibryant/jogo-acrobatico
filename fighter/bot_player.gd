@@ -1,9 +1,9 @@
 # A bot that plays a fighter on this PC instead of the keyboard and the mouse (TASK-9, part 2): the
 # test player of the network runs, launched with --bot, not the game's bots of later phases, which
-# run on the server (DEC-0022). It only produces input, through the two calls the devices use too
-# (FighterInput.sample_frame and press_jump), and never writes state: what it presses comes from
-# its BotRoute, counted from the tick it began. It reads neither the keyboard nor the mouse, so a
-# player can use another window beside its own.
+# run on the server (DEC-0022). It only produces input, through the calls the devices use too
+# (FighterInput.sample_frame, press_jump and press_dash, TASK-10.4), and never writes state: what
+# it presses comes from its BotRoute, counted from the tick it began. It reads neither the
+# keyboard nor the mouse, so a player can use another window beside its own.
 class_name BotPlayer
 extends Node
 
@@ -47,8 +47,11 @@ func _push_for_the_next_loop() -> void:
 	input.sample_frame(route.move_at(NetworkTime.tick - start_tick), _yaw)
 
 
-# The jump is a one-touch command (DEC-0026 §1): pressed right before its own tick, it counts on
-# that tick only, even in a loop of several ticks, since FighterInput takes it after the tick.
+# The jump and the dash are one-touch commands (DEC-0026 §1): pressed right before their own tick,
+# they count on that tick only, even in a loop of several ticks, since FighterInput takes them
+# after the tick.
 func _press_on_its_tick(_delta: float, tick: int) -> void:
 	if route.jumps_at(tick - start_tick):
 		input.press_jump()
+	if route.dashes_at(tick - start_tick):
+		input.press_dash()

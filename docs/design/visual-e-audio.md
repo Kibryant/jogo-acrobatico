@@ -1,6 +1,6 @@
 ---
-revisado_em: 2026-10-19
-fontes: [F-050, F-051, F-052, F-053, F-054, F-056, F-058, F-059, F-061, F-062, F-063, F-100]
+revisado_em: 2026-10-23
+fontes: [F-050, F-051, F-052, F-053, F-054, F-056, F-058, F-059, F-061, F-062, F-063, F-100, F-121, F-122]
 ---
 
 # Visual e áudio
@@ -185,6 +185,20 @@ Leitura v0 do Claude, que o Arthur julga jogando (DEC-0017; TASK-10.2).
 - A fonte é a padrão do Godot, em 16 px na base de 1080p, o tamanho que os textos da TASK-9 já tinham. O texto ganha um contorno escuro de 4 px, para se ler sobre os blocos claros. A margem do canto é de 24 px. Leitura v0 do Claude (DEC-0017; TASK-10.2).
 - As cores do HUD são branco e preto: a barra cheia em branco sobre um fundo preto translúcido. Nenhuma cor de token (DEC-0031 §1 e §3).
 - Cada texto da tela é uma chave de tradução, com pt-BR e en. Um teste reprova a chave sem mensagem num dos dois idiomas (DEC-0031 §8).
+
+### O dash na tela (TASK-10.4)
+
+Leituras v0 do Claude, que o Arthur julga jogando (DEC-0017; TASK-10.4).
+
+- **A tecla:** o dash é o Shift esquerdo, por posição física; o Shift direito não faz nada. O toque duplo na direção, como no GunZ, fica para depois, se o Arthur pedir (F-121; `project.godot`, `[input]`).
+- **O modo:** o HUD diz "No dash" ("Dashing" em inglês) nos 200 ms do dash, além de "No chão" e "No ar" (TASK-10.4).
+- **O arco da recarga:** acima do modo, um anel de 24 × 24 px na base de 1080p, com 4 px de espessura: o arco branco sobre o anel preto translúcido, as cores e a espessura do Theme (`DashCooldownArc`). Ele começa cheio no tick do dash e esvazia, no sentido horário a partir do topo, até o próximo poder sair: 600 ms, os 200 do dash mais os 400 da recarga (`movimento.md`, "Dash"). Ao lado, os décimos de segundo que faltam, arredondados para cima, para nunca dizer 0 enquanto espera: de "0,6 s" a "0,1 s", com a vírgula em pt-BR e o ponto em en, pela chave `HUD_DASH_COOLDOWN`. Com o dash livre, os dois somem, e a linha guarda a altura, para o resto não pular. Tudo se calcula do `dash_tick` e do tick, sem timer (F-051 §3.4).
+- **Os sinais das manobras:** só visuais no v0; o som espera um pacote com licença (DEC-0029; Q-32).
+  - **O rastro do dash:** a caixa do espaço que a cápsula varreu, da largura do diâmetro e da altura da cápsula, do ponto em que o dash apareceu até o corpo. Ela segue o corpo enquanto o dash dura e some em 200 ms, a duração do próprio dash.
+  - **A baforada do pulo duplo:** um disco fino sob os pés, onde o pulo duplo saiu, que cresce do raio da cápsula até 3 raios e some na subida do pulo, 350 ms.
+  - Os dois são translúcidos, a 40 %, sem luz, e usam o tom neutro do próprio lutador: o cinza claro de quem joga, o escuro do outro. Nenhum usa cor de token, nem o branco do flash da reação (DEC-0031 §1 e §3).
+  - Tocam uma vez por chave (lutador, tipo, carimbo), quando aparecem pela primeira vez no estado exibido, e nunca na re-simulação (DEC-0031 §6). Sem tela, como no servidor dedicado e no portão, contam e não desenham.
+- **A régua do dash:** faixas de 0,1 × 0,01 × 2 m a cada 4 m, a distância do dash, em x de −10 a 30 e em z de 14 a 16, ao sul dos pontos de nascimento, no cinza dos blocos. São só malha, sem colisão, e ficam fora do percurso da referência e das cenas da SyncTest (TASK-10.4).
 
 ## Em aberto
 

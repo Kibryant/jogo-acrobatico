@@ -8,7 +8,9 @@
 # forgets, a field netfox does not record or a flag the engine keeps, shows up as a divergence.
 # Four scenarios go where the engine keeps state of its own (DEC-0025): the 45° ramp, the ledge,
 # the landing and two fighters pushing each other on the ground; the fifth goes through the double
-# jump and the stamina (TASK-10.1). Each prints a summary line that proves its paths ran.
+# jump and the stamina (TASK-10.1), and the sixth through the dash (TASK-10.4, criterion 6). Each
+# prints a summary line that proves its paths ran. The pulo duplo and the dash also check the
+# cues of the maneuvers: played once per event, as many as the events (DEC-0031 §6).
 extends GdUnitTestSuite
 
 const NetfoxTicks := preload("res://test/support/netfox_ticks.gd")
@@ -93,10 +95,32 @@ const HALF_BLOCK := 1.5
 const PAST_COYOTE := 2
 const PULO_DUPLO_LOOPS := 195
 
+# Dash: two fighters on a copy of movement_v0.tres whose bar holds 20 points (TASK-10.4 plan), so
+# a dash of 15 leaves at most 5 and the bar pays the next one only 68 ticks later, after the 48 of
+# the wait and 20 of regen (movimento.md, "Stamina"): a refusal by the bar is easy, and the 36
+# ticks of the cooldown always end first. The rampeiro starts on the platform and dashes east over
+# the crest and down the ramp, runs back up, dashes west off the ledge, then hops and presses the
+# dash just before landing: the dash waits in the slot and comes out on the first tick on the
+# floor. The paredeiro dashes into Block2m's face (z = -10) and slides to a stop, presses during
+# the cooldown and again with the bar short, both refused; then dashes on the plane with a jump
+# pressed near the end, which comes out on the first tick after it; and once landed, presses the
+# dash 3 ticks before the bar can pay, a press the slot keeps until it does (movimento.md, "Dash",
+# "Perdão" and "Stamina").
+const DASH_STARTS: Array[Vector3] = [Vector3(4.5, 1, 1.5), Vector3(-1, 0, -7)]
+const DASH_BAR := 20.0
+# The rampeiro dashes off the west ledge from where it stops once past this x on the platform.
+const LEDGE_DASH_FROM_X := 1.8
+# Ticks before the end of the dash the jump is pressed: inside the buffer, so it fires at the end.
+const JUMP_BEFORE_EXIT := 3
+# Ticks before the bar can pay that the paredeiro presses the dash it keeps in the slot.
+const BAR_AHEAD := 3
+const DASH_LOOPS := 300
+
 # The self-tests need only the start of a scenario: the first hop of the pouso, the walker's
-# double jump of the pulo duplo.
+# double jump of the pulo duplo, the paredeiro's first dash.
 const SELF_TEST_LOOPS := 90
 const DOUBLE_JUMP_SELF_TEST_LOOPS := 60
+const DASH_SELF_TEST_LOOPS := 40
 
 # The first tick of the run and the tick of the fighters' first recorded state.
 var _first_tick := 0
@@ -113,21 +137,22 @@ func after_test() -> void:
 	NetfoxTicks.reset()
 
 
-func test_the_five_scenarios_resimulate_with_zero_divergence() -> void:
+func test_the_six_scenarios_resimulate_with_zero_divergence() -> void:
 	var started := Time.get_ticks_msec()
 	var rampa := await _rampa()
 	var beirada := await _beirada()
 	var pouso := await _pouso(POUSO_LOOPS)
 	var empurrao := await _empurrao()
 	var pulo_duplo := await _pulo_duplo(PULO_DUPLO_LOOPS)
+	var dash := await _dash(DASH_LOOPS)
 	var spent := Time.get_ticks_msec() - started
 	# The budget is for Arthur's PC at rest (TASK-9, choice 6): the gate prints the time on every
 	# run, and the reviewer checks it on a quiet run. A busy PC took up to three times as long, so
 	# a ceiling here would turn the gate red for nothing; Arthur chose to show it (F-087 §1).
 	var budget := "budget %d ms on Arthur's PC at rest" % BUDGET_MS
-	print("SyncTest, the five scenarios together: %d ms (%s)" % [spent, budget])
+	print("SyncTest, the six scenarios together: %d ms (%s)" % [spent, budget])
 
-	for observer: SyncObserver in [rampa, beirada, pouso, empurrao, pulo_duplo]:
+	for observer: SyncObserver in [rampa, beirada, pouso, empurrao, pulo_duplo, dash]:
 		var message := "%s diverged:\n%s" % [observer.scenario, "\n".join(observer.shown)]
 		assert_int(observer.mismatches).override_failure_message(message).is_equal(0)
 
@@ -157,6 +182,23 @@ func test_the_five_scenarios_resimulate_with_zero_divergence() -> void:
 	assert_int(pulo_duplo.paths["refused_double_jumps"]).is_greater_equal(1)
 	assert_int(pulo_duplo.paths["block_2m_climbs"]).is_greater_equal(1)
 	assert_int(pulo_duplo.landings).is_greater_equal(3)
+	# One cue per double jump, never again in the resimulations (DEC-0031 §6).
+	_assert_cues(pulo_duplo, pulo_duplo.paths["double_jumps"])
+
+	# Criterion 6 of TASK-10.4: the dash on the plane, down the ramp with no tick in the air, into
+	# a wall, off the ledge, kept in the slot in the air and for the bar, refused in the cooldown
+	# and by the bar, and a jump at its end; every bot went through its whole script.
+	assert_int(dash.paths["dashes"]).is_greater_equal(5)
+	assert_int(dash.paths["ramp_dash_ticks"]).is_greater(0)
+	assert_int(dash.paths["ramp_dash_air_ticks"]).is_equal(0)
+	assert_int(dash.paths["ledge_dashes"]).is_greater_equal(1)
+	assert_int(dash.paths["blocked_dashes"]).is_greater_equal(1)
+	assert_int(dash.paths["buffered_dashes"]).is_greater_equal(2)
+	assert_int(dash.paths["refused_cooldown"]).is_greater_equal(1)
+	assert_int(dash.paths["refused_stamina"]).is_greater_equal(1)
+	assert_int(dash.paths["jumps_after_dash"]).is_greater_equal(1)
+	assert_int(dash.paths["bots_done"]).is_equal(DASH_STARTS.size())
+	_assert_cues(dash, dash.paths["dashes"])
 
 
 # The SyncTest's own canary: with on_floor out of what netfox records for the fighter, a rollback
@@ -180,6 +222,27 @@ func test_the_stamina_netfox_does_not_record_makes_the_sync_test_diverge() -> vo
 # recording, a rollback across the double jump brings the stamp back on the ticks before it.
 func test_the_double_jump_tick_netfox_does_not_record_makes_the_sync_test_diverge() -> void:
 	var observer := await _pulo_duplo(DOUBLE_JUMP_SELF_TEST_LOOPS, ":state:double_jump_tick")
+	assert_int(observer.mismatches).is_greater(0)
+
+
+# As many cues as events, and as many events as maneuvers; the cues are read before the match goes.
+func _assert_cues(observer: SyncObserver, maneuvers: int) -> void:
+	var cues := "%s: %d cues presented, %d events, %d maneuvers" % [
+		observer.scenario,
+		observer.paths["cues_presented"],
+		observer.paths["cue_events"],
+		maneuvers,
+	]
+	assert_int(observer.paths["cues_presented"]).override_failure_message(cues).is_equal(
+		observer.paths["cue_events"]
+	)
+	assert_int(observer.paths["cue_events"]).override_failure_message(cues).is_equal(maneuvers)
+
+
+# The dash's stamp, the key its cue plays by and what its cooldown reads: out of the recording, a
+# rollback across the dash brings the stamp back on the ticks before it (TASK-10.4, criterion 6).
+func test_the_dash_tick_netfox_does_not_record_makes_the_sync_test_diverge() -> void:
+	var observer := await _dash(DASH_SELF_TEST_LOOPS, ":state:dash_tick")
 	assert_int(observer.mismatches).is_greater(0)
 
 
@@ -285,7 +348,40 @@ func _pulo_duplo(loops: int, hidden := "") -> SyncObserver:
 	for flight: Flights in flights:
 		flight.add_to(observer.paths)
 	observer.paths["block_2m_climbs"] = climber.block_climbs
+	_add_cues(observer, game_match)
 	return _finish(observer, game_match)
+
+
+func _dash(loops: int, hidden := "") -> SyncObserver:
+	var game_match := await _match_with(DASH_STARTS, hidden, _dash_bar())
+	var config := game_match.config
+	var bots: Array[DashBot] = [
+		RampLedgeBot.new(game_match.fighters[0], config),
+		WallBot.new(game_match.fighters[1], config),
+	]
+	var dashes: Array[Dashes] = []
+	for fighter: Fighter in game_match.fighters:
+		dashes.append(Dashes.new(fighter, config))
+	var observer := _start(game_match, "dash" if hidden.is_empty() else "dash without " + hidden)
+	for _loop: int in loops:
+		for bot: DashBot in bots:
+			bot.drive()
+		NetfoxTicks.run_loop()
+		for path: Dashes in dashes:
+			path.observe()
+	for path: Dashes in dashes:
+		path.add_to(observer.paths)
+	observer.paths["bots_done"] = 0
+	for bot: DashBot in bots:
+		observer.paths["bots_done"] += 1 if bot.done() else 0
+	_add_cues(observer, game_match)
+	return _finish(observer, game_match)
+
+
+# The cues of the match, read before it goes.
+func _add_cues(observer: SyncObserver, game_match: Match) -> void:
+	observer.paths["cues_presented"] = game_match.cues.presented
+	observer.paths["cue_events"] = game_match.cues.events
 
 
 # The movement numbers of the pulo duplo: a copy of movement_v0.tres with a bar of SHORT_BAR points
@@ -300,6 +396,19 @@ func _short_bar() -> MovementData:
 	data.stamina_max = SHORT_BAR
 	data.stamina_regen_per_s = NO_REGEN
 	assert_array(data.validate()).override_failure_message("the short bar").is_empty()
+	return data
+
+
+# The movement numbers of the dash: a copy of movement_v0.tres with a bar of DASH_BAR points,
+# checked like any design data (TASK-10.4 plan).
+func _dash_bar() -> MovementData:
+	var resource: Resource = load(Match.MOVEMENT_DATA_PATH)
+	assert(resource is MovementData, "%s must load as a MovementData" % Match.MOVEMENT_DATA_PATH)
+	var copy := resource.duplicate()
+	assert(copy is MovementData, "a copy of a MovementData is a MovementData")
+	var data := copy as MovementData
+	data.stamina_max = DASH_BAR
+	assert_array(data.validate()).override_failure_message("the dash's bar").is_empty()
 	return data
 
 
@@ -668,3 +777,282 @@ class Flights:
 		var unused := not state.on_floor and state.jumps_used < 2
 		var short := Stamina.at(state, _config, tick) < _config.double_jump_cost
 		return kept and unused and short
+
+
+# A scripted player of the dash: the Bot's calls plus the dash's press, and what the rules let it
+# do on a coming tick, read from the state on screen as a player reads the HUD.
+class DashBot:
+	extends Bot
+
+	var _config: MovementConfig
+	var _floor_ticks := 0
+
+
+	func _init(played: Fighter, config: MovementConfig) -> void:
+		super(played)
+		_config = config
+
+
+	func drive() -> void:
+		pass
+
+
+	func done() -> bool:
+		return false
+
+
+	func _track_floor() -> void:
+		_floor_ticks = _floor_ticks + 1 if fighter.state.on_floor else 0
+
+
+	# True when a dash pressed `ticks` ticks after the next one would come out then, as far as the
+	# cooldown and the bar say; the floor is the script's to see.
+	func _legal_in(ticks: int) -> bool:
+		var tick := NetworkTime.tick + ticks
+		var state := fighter.state
+		var period := _config.dash_ticks + _config.dash_cooldown_ticks
+		var free := tick - state.dash_tick >= period
+		return free and Stamina.at(state, _config, tick) >= _config.dash_cost
+
+
+	func _dashing() -> bool:
+		return fighter.state.mode == FighterState.Mode.DASH
+
+
+# Dashes east over the crest and down the ramp, runs back up onto the platform, dashes west off
+# the ledge, then hops and presses the dash just before landing.
+class RampLedgeBot:
+	extends DashBot
+
+	enum Step {
+		STAND,
+		RAMP_DASH,
+		BACK,
+		LEDGE_DASH,
+		FALL,
+		HOP,
+		AIR_DASH,
+		DONE,
+	}
+
+	var _step := Step.STAND
+
+
+	func done() -> bool:
+		return _step == Step.DONE
+
+
+	func drive() -> void:
+		_track_floor()
+		var state := fighter.state
+		var where := fighter.position
+		var high := where.y > HALF_PLATFORM
+		var heading := Vector3.ZERO
+		match _step:
+			Step.STAND:
+				if _floor_ticks > REST_TICKS:
+					heading = Vector3.RIGHT
+					fighter.input.press_dash()
+					_step = Step.RAMP_DASH
+			Step.RAMP_DASH:
+				if not _dashing() and state.on_floor:
+					_step = Step.BACK
+			Step.BACK:
+				heading = Vector3.LEFT
+				if high and where.x < LEDGE_DASH_FROM_X:
+					_step = Step.LEDGE_DASH
+			Step.LEDGE_DASH:
+				if _legal_in(0):
+					heading = Vector3.LEFT
+					fighter.input.press_dash()
+					_step = Step.FALL
+			Step.FALL:
+				var landed := state.on_floor and not high and not _dashing()
+				if landed and _floor_ticks > REST_TICKS and _legal_in(0):
+					fighter.input.press_jump()
+					_step = Step.HOP
+			Step.HOP:
+				var falling := not state.on_floor and fighter.velocity.y < 0.0
+				if falling and where.y < BUFFER_PRESS_HEIGHT:
+					heading = Vector3.LEFT
+					fighter.input.press_dash()
+					_step = Step.AIR_DASH
+			Step.AIR_DASH:
+				# The dash takes the direction of the tick it comes out on.
+				heading = Vector3.LEFT
+				if _dashing():
+					_step = Step.DONE
+		run(heading)
+
+
+# Dashes into Block2m's face, presses in the cooldown and with the bar short, dashes on the plane
+# with a jump near its end, and once landed presses the dash a little before the bar can pay.
+class WallBot:
+	extends DashBot
+
+	enum Step {
+		STAND,
+		WALL_DASH,
+		COOLDOWN,
+		WAIT_BAR,
+		PLANE_DASH,
+		FLIGHT,
+		BUFFERED,
+		DONE,
+	}
+
+	var _step := Step.STAND
+
+
+	func done() -> bool:
+		return _step == Step.DONE
+
+
+	func drive() -> void:
+		_track_floor()
+		var state := fighter.state
+		var heading := Vector3.ZERO
+		match _step:
+			Step.STAND:
+				if _floor_ticks > REST_TICKS:
+					heading = Vector3.FORWARD
+					fighter.input.press_dash()
+					_step = Step.WALL_DASH
+			Step.WALL_DASH:
+				if not _dashing():
+					# The first tick after the dash: a press the cooldown refuses.
+					fighter.input.press_dash()
+					_step = Step.COOLDOWN
+			Step.COOLDOWN:
+				var period := _config.dash_ticks + _config.dash_cooldown_ticks
+				if NetworkTime.tick - state.dash_tick >= period:
+					# The cooldown is over, and the bar of 5 cannot pay: a press the bar refuses.
+					fighter.input.press_dash()
+					_step = Step.WAIT_BAR
+			Step.WAIT_BAR:
+				if _legal_in(0):
+					heading = Vector3.BACK
+					fighter.input.press_dash()
+					_step = Step.PLANE_DASH
+			Step.PLANE_DASH:
+				var exit_tick := state.dash_tick + _config.dash_ticks
+				if _dashing() and NetworkTime.tick == exit_tick - JUMP_BEFORE_EXIT:
+					fighter.input.press_jump()
+				elif state.jumps_used == 1:
+					_step = Step.FLIGHT
+			Step.FLIGHT:
+				var rested := state.on_floor and _floor_ticks > REST_TICKS
+				if rested and _legal_in(BAR_AHEAD):
+					heading = Vector3.FORWARD
+					fighter.input.press_dash()
+					_step = Step.BUFFERED
+			Step.BUFFERED:
+				# The dash takes the direction of the tick it comes out on.
+				heading = Vector3.FORWARD
+				if _dashing():
+					_step = Step.DONE
+		run(heading)
+
+
+# Counts the dash's paths of one fighter in its fresh states, after every loop, like Flights: the
+# state on screen is the result of the tick the loop simulated for the first time.
+class Dashes:
+	## Dashes started.
+	var dashes := 0
+	## Dashes that came out of the slot: pressed earlier and kept until they could.
+	var buffered_dashes := 0
+	## Presses on the ground kept in the slot because of the cooldown, or of the bar.
+	var refused_cooldown := 0
+	var refused_stamina := 0
+	## Dash ticks on the ramp's floor, and dash ticks in the air at its crest or foot.
+	var ramp_dash_ticks := 0
+	var ramp_dash_air_ticks := 0
+	## Dashes that left the floor away from the ramp: off a ledge.
+	var ledge_dashes := 0
+	## Dashes a wall stopped on the floor, below half the dash speed after the engine's move.
+	var blocked_dashes := 0
+	## Jumps that came out on the first tick after a dash.
+	var jumps_after_dash := 0
+
+	var _fighter: Fighter
+	var _config: MovementConfig
+	var _before: FighterState
+	var _ledge_stamp := FighterState.NEVER
+	var _blocked_stamp := FighterState.NEVER
+
+
+	func _init(watched: Fighter, config: MovementConfig) -> void:
+		_fighter = watched
+		_config = config
+		_before = watched.state.copy()
+
+
+	func observe() -> void:
+		var state := _fighter.state
+		var tick := NetworkTime.tick - 1
+		var dashing := state.mode == FighterState.Mode.DASH
+		if dashing and state.dash_tick == tick:
+			dashes += 1
+			if _before.buffered_command == FighterCommand.DASH:
+				buffered_dashes += 1
+		_refusals(state, tick)
+		if dashing:
+			_dash_tick(state)
+		var jumped := state.jumps_used == 1 and _before.jumps_used == 0
+		if jumped and tick == state.dash_tick + _config.dash_ticks:
+			jumps_after_dash += 1
+		_before = state.copy()
+
+
+	# Adds this fighter's counters to a scenario's paths, summed over its fighters.
+	func add_to(paths: Dictionary[String, int]) -> void:
+		var mine: Dictionary[String, int] = {
+			"dashes": dashes,
+			"ramp_dash_ticks": ramp_dash_ticks,
+			"ramp_dash_air_ticks": ramp_dash_air_ticks,
+			"ledge_dashes": ledge_dashes,
+			"blocked_dashes": blocked_dashes,
+			"buffered_dashes": buffered_dashes,
+			"refused_cooldown": refused_cooldown,
+			"refused_stamina": refused_stamina,
+			"jumps_after_dash": jumps_after_dash,
+		}
+		for path: String in mine:
+			if not paths.has(path):
+				paths[path] = 0
+			paths[path] += mine[path]
+
+
+	# A press of this tick kept in the slot on the ground: the only reasons are the cooldown and
+	# the bar (movimento.md, "Dash" and "Stamina": nothing is paid and the press waits).
+	func _refusals(state: FighterState, tick: int) -> void:
+		var kept := state.buffered_command == FighterCommand.DASH and state.buffered_tick == tick
+		if not kept or not state.on_floor or state.mode != FighterState.Mode.GROUND:
+			return
+		if tick - state.dash_tick < _config.dash_ticks + _config.dash_cooldown_ticks:
+			refused_cooldown += 1
+		elif Stamina.at(state, _config, tick) < _config.dash_cost:
+			refused_stamina += 1
+
+
+	func _dash_tick(state: FighterState) -> void:
+		var where := _fighter.position
+		var across := absf(where.z) < SyncObserver.RAMP_HALF_WIDTH
+		var on_ramp := where.x > SyncObserver.RAMP_FROM_X and where.x < SyncObserver.RAMP_TO_X
+		var near_ramp := (
+			where.x > SyncObserver.RAMP_FROM_X - HALF_PLATFORM
+			and where.x < SyncObserver.RAMP_TO_X + HALF_PLATFORM
+		)
+		if across and near_ramp:
+			if state.on_floor and on_ramp:
+				ramp_dash_ticks += 1
+			elif not state.on_floor:
+				ramp_dash_air_ticks += 1
+		elif not state.on_floor and _ledge_stamp != state.dash_tick:
+			_ledge_stamp = state.dash_tick
+			ledge_dashes += 1
+		var speed := Vector2(_fighter.velocity.x, _fighter.velocity.z).length()
+		var stopped := state.on_floor and speed < _config.dash_speed / 2.0
+		if stopped and _blocked_stamp != state.dash_tick:
+			_blocked_stamp = state.dash_tick
+			blocked_dashes += 1

@@ -8,9 +8,11 @@
 # PlataformaVaoA and PlataformaVaoB, 6 x 6 m and 2 m tall, open a gap of 6 m between z = 3 and
 # z = -3 that only the double jump crosses, and a fall into it costs the climb back by the double
 # jump (TASK-10.2; F-109; movimento.md, "Métricas de nível"), on free
-# floor, away from the reference route and the SyncTest's scenarios. Everything sits on
-# PhysicsLayers.WORLD, Godot's default layer. The floor's top is y = 0, so a spawn point at y = 0
-# stands on it.
+# floor, away from the reference route and the SyncTest's scenarios. South of the spawn points,
+# RéguaDoDash marks the floor every 4 m, a dash's length (movimento.md, "Dash"), from x = -10 to
+# x = 30: strips only seen, never collided with, to count a dash by eye (TASK-10.4). Everything
+# sits on PhysicsLayers.WORLD, Godot's default layer. The floor's top is y = 0, so a spawn point
+# at y = 0 stands on it.
 class_name Arena
 extends Node3D
 

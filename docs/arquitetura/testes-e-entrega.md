@@ -1,6 +1,6 @@
 ---
-revisado_em: 2026-10-19
-fontes: [F-007, F-009, F-010, F-021, F-038, F-039, F-040, F-041, F-042, F-043, F-044, F-045, F-046, F-047, F-048, F-049, F-085, F-087, F-088, F-091, F-093, F-094, F-095, F-097, F-098, F-101, F-112]
+revisado_em: 2026-10-23
+fontes: [F-007, F-009, F-010, F-021, F-038, F-039, F-040, F-041, F-042, F-043, F-044, F-045, F-046, F-047, F-048, F-049, F-085, F-087, F-088, F-091, F-093, F-094, F-095, F-097, F-098, F-101, F-112, F-121, F-122]
 ---
 
 # Testes e entrega
@@ -52,9 +52,9 @@ Os tempos são os da rodada B depois dos consertos (F-049 §5). O total foi 31,3
 | Camada | Pega o quê | Onde roda | Nasce | Quanto gasta |
 |---|---|---|---|---|
 | 1. A especificação | A regra do núcleo diferente do papel; o teste de unidade do Jest para função pura | portão | TASK-9 | sem medida |
-| 2. A SyncTest | Estado escondido: refazer um tick dá outro resultado em qualquer campo do estado (DEC-0025; TASK-10.1) | portão | TASK-9, com os ticks à mão; o estado inteiro na TASK-10.1 | pelo relógio, ~6 s por cenário de 5 s (F-042 §1); à mão, as quatro cenas em uns 2,5 s (F-087 §1), e as cinco da TASK-10.1 em 3,9 a 4,3 s |
+| 2. A SyncTest | Estado escondido: refazer um tick dá outro resultado em qualquer campo do estado (DEC-0025; TASK-10.1) | portão | TASK-9, com os ticks à mão; o estado inteiro na TASK-10.1 | pelo relógio, ~6 s por cenário de 5 s (F-042 §1); à mão, as quatro cenas em uns 2,5 s (F-087 §1), as cinco da TASK-10.1 em 3,9 a 4,3 s, e as seis da TASK-10.4, com o dash, em uns 4,1 s |
 | 3. A checagem dos dados | Um número impossível num `.tres` | portão | com o primeiro `.tres` de design (F-048) | sem medida |
-| 4. A referência | Uma mudança de código que muda o movimento sem querer; o snapshot do Jest | portão e CI | TASK-9, parte 3; regravada na TASK-10.1, com o pulo duplo | 1.200 ticks em uns 0,7 a 1,4 s neste PC e 0,14 s no Linux do CI, com a partida de verdade e o netfox; a sonda, sem os dois, fazia em 11 a 13 ms (F-042 §3) |
+| 4. A referência | Uma mudança de código que muda o movimento sem querer; o snapshot do Jest | portão e CI | TASK-9, parte 3; regravada na TASK-10.1, com o pulo duplo, e na TASK-10.4, com o snap do dash | 1.200 ticks em uns 0,7 a 1,4 s neste PC e 0,14 s no Linux do CI, com a partida de verdade e o netfox; a sonda, sem os dois, fazia em 11 a 13 ms (F-042 §3) |
 | O replay por inputs | Uma jogada que o tocador sem tela não refaz igual: a gravação, o arquivo e a refeita, byte a byte (§4) | portão, e à mão pelo `tools/replay.sh` | TASK-10.3 | 600 ticks gravados em uns 0,42 s e tocados em uns 0,3 s, neste PC |
 | 5. A rede à mão | A sensação com lag | o Arthur, pelo `tools/play_online.sh` | TASK-9, parte 2 (F-091), e de tempos em tempos (DEC-0026) | o tempo dele, e o que ele sentiu (F-041) |
 | As checagens com processos | O servidor e os clientes de verdade: as portas, o aperto de mão, a sala, o arquivo de parada, os códigos de saída e a previsão conferida com o servidor | à mão, fora do portão: `tools/net_check.sh` e `tools/net_run.sh` | TASK-9, parte 2 | 32 s e 36 s na revisão da parte 2 |
@@ -69,17 +69,23 @@ Os tempos são os da rodada B depois dos consertos (F-049 §5). O total foi 31,3
 - É a exceção escrita à regra de testar só por interface pública. O netfox está fixado no `cf5189d` (DEC-0023), e atualizá-lo já é uma DEC nova, com a SyncTest refeita (F-044 §2).
 - O ajudante `test/support/netfox_ticks.gd` faz isso para toda suíte que roda o netfox, e não só para a SyncTest: o lutador, a entrada, a rampa, a partida e a Main. As 4 chamadas privadas dele declaram a exceção ao linter, linha a linha, com o ok do Arthur (F-085 §1; F-088 §1).
 - Os ticks rodam dentro de um frame de física: ali o `physics_factor` do netfox vale 1, e o `move_and_slide()` anda o passo fixo da física, então um tick anda exatamente um tick.
-- O tempo das cenas aparece em toda rodada do portão, sem trava: uns 2,5 s para as quatro da TASK-9 com o PC quieto, até o triplo com o PC ocupado (F-087 §1); 3,9 a 4,3 s para as cinco da TASK-10.1, no portão em silêncio.
+- O tempo das cenas aparece em toda rodada do portão, sem trava: uns 2,5 s para as quatro da TASK-9 com o PC quieto, até o triplo com o PC ocupado (F-087 §1); 3,9 a 4,3 s para as cinco da TASK-10.1, no portão em silêncio; uns 4,1 s para as seis da TASK-10.4.
 - **O estado inteiro** (TASK-10.1, critério 8; F-101 §1): o observador, `test/support/sync_observer.gd`, compara a posição, a velocidade e todo campo do `FighterState`, achado por reflexão na classe, além do "todo campo gravado" do plano: um campo escondido do netfox continua comparado, e o teste de veneno o vê (TASK-10.1, rodada B). Inteiros, booleanos, enums e nomes têm de ser iguais; floats e vetores, até 1 µm. É trocar um `expect` de três campos por um `toEqual` do objeto inteiro. O erro medido foi zero exato nas cinco cenas, e a conferência da rede ficou em 1 mm (`rede.md` §4).
-- **Os venenos:** tirar o `on_floor`, o `stamina_at_spend` ou o `double_jump_tick` do que o netfox grava faz a SyncTest acusar. Os dois últimos são a prova de que ela compara o estado inteiro: com a comparação antiga, passariam calados (TASK-10.1).
+- **Os venenos:** tirar o `on_floor`, o `stamina_at_spend`, o `double_jump_tick` ou o `dash_tick` (TASK-10.4) do que o netfox grava faz a SyncTest acusar. Os três últimos são a prova de que ela compara o estado inteiro: com a comparação antiga, passariam calados (TASK-10.1).
+- **A cena do dash** (TASK-10.4, critério 6): o dash no plano, descendo a rampa sem tick no ar, contra a parede, saindo da beirada, guardado no ar e guardado pela barra, recusado na recarga e pela barra, e um pulo no fim. O resumo traz os contadores, e o portão exige cada um: `dashes=6 ramp_dash_ticks=4 ramp_dash_air_ticks=0 ledge_dashes=1 blocked_dashes=1 buffered_dashes=2 refused_cooldown=1 refused_stamina=2 jumps_after_dash=1`, com zero divergência. A barra de 20 da cena faz a recarga acabar sempre antes da barra (`rede.md` §4).
+- **Os sinais das manobras:** nas cenas do pulo duplo e do dash, os sinais apresentados têm de ser iguais aos eventos, e os eventos às manobras (DEC-0031 §6; TASK-10.4, critério 5). Um teste próprio, `test/fighter/maneuver_cues_test.gd`, confere que o sinal toca uma vez por chave, que o rollback de 7 ticks não o toca de novo e que, com tela, o rastro e a baforada aparecem e somem sozinhos.
+- **O teste da rampa no motor** (`test/fighter/fighter_slope_test.gd`; TASK-10.4, critério 4): um dash do alto de um bloco, pela crista, desce a rampa de 45° no chão em todos os 12 ticks com o snap de 0,338 m; com o snap da TASK-9, de 0,121 m, a mesma arrancada sai do chão em 9 dos 12.
 
 **A referência (golden master).**
 - É um percurso fixo de bot, de 1.200 ticks, na arena de verdade, no Sozinho, com os ticks à mão (`test/reference/`). O percurso é uma tabela no teste, e não um arquivo de replay: o gravador, que nasceu na TASK-10.3, grava o Sozinho de quem joga (§4).
 - O teste guarda o rastro do caminho, com a posição em 9 casas e o chão de cada tick, e confere o sha256 no portão, no Windows, e no CI, no Linux. Os dois deram o mesmo, `b73cccbc…` (PR #8). Quando difere, ele mostra o primeiro tick diferente.
 - **Regravada na TASK-10.1** (critério 8): o aperto no ar do passo 513 virou pulo duplo. O percurso ganhou um aperto no topo do salto do passo 480, o pulo duplo, e o aperto da vaga passou do passo 513 para o 537, porque o pulo duplo alonga o voo. O caminho é o mesmo até o passo 499, e o rastro novo é `d53a533c…`. Ele cobre um pulo duplo a mais, segue sem rampa e com o yaw 0, e a prova no Linux espera o push (F-101 §1).
+- **Regravada na TASK-10.4:** o snap do chão passou de 0,121 para 0,338 m, para o dash descer a rampa. A cápsula que sai da quina da plataforma, apoiada na base redonda, desce um pouco mais pela quina: o caminho se separa no tick 233 (y 0,999071 contra 0,998995) e chega no máximo a 1,2 mm, no tick 1154. O percurso cobre o mesmo, com os mesmos contadores, e não aperta o dash; o rastro novo é `3a877934…`, e a prova no Linux espera o push.
 - O percurso olha sempre para a mesma direção e não passa pela rampa, porque seno e cosseno podem diferir no último bit entre os dois sistemas, e a sonda só provou o caminho sem eles (F-042 §5). A SyncTest segue cobrindo a rampa.
 - Ela usa uma cópia congelada dos números do movimento, só do teste. O ajuste fino do jogo não quebra a referência; só uma mudança de código quebra. Se ela reprovar sem uma mudança de movimento de propósito, o primeiro passo é investigar (F-094 §2).
 - Regravar é um comando, `bash tools/record_reference.sh`, como o `jest -u`, e o commit diz por quê (F-044 §2).
+
+**A física na thread principal.** O `physics/3d/run_on_separate_thread` fica em `false`, o padrão do Godot, e o teste de configurações guarda. O rollback refaz vários `move_and_slide()` por passo de física, um por tick refeito, e uma thread separada só ajudaria com física pesada. A pergunta volta na medição com 16 bots (DEC-0004, regra 6). O motivo antigo, o laço de ticks no `_process`, deixou de valer com a DEC-0040 (F-122).
 
 **O que não cabe nos 90 s** vira um job do CI fora do pre-push, com uma DEC nova (DEC-0027 §4).
 
@@ -102,9 +108,9 @@ Os tempos são os da rodada B depois dos consertos (F-049 §5). O total foi 31,3
 **O arquivo, formato 1** (`replay/replay_file.gd`):
 - Texto em UTF-8, com `\n`. O cabeçalho vem em linhas `chave=valor`: formato, versão, commit, impressão das regras, motor, plataforma, ticks por segundo, `physics_ticks_per_second`, `sync_to_physics`, `max_ticks_per_frame`, `input_delay`, a arena e a impressão dela, a semente, a configuração inteira, os lutadores, o primeiro tick e as colunas declaradas (F-044 §2).
 - A configuração vai inteira, um campo do `MovementData` por linha, tipado (`config.jump_height_m:f64=...`). O tocador toca com esses números mesmo depois de um ajuste no `.tres`.
-- Depois do `---`, uma linha por tick e lutador: o tick absoluto do netfox, o tamanho do laço que o rodou, o lutador, o input (`move.x`, `move.y`, `yaw`, `jump`) e a coluna `check`.
+- Depois do `---`, uma linha por tick e lutador: o tick absoluto do netfox, o tamanho do laço que o rodou, o lutador, o input (`move.x`, `move.y`, `yaw`, `jump` e, desde a TASK-10.4, `dash`) e a coluna `check`.
 - **Os floats vão como os 8 bytes do double, em 16 dígitos hexadecimais.** O `%.9f` perde bits perto de π, e um yaw de mouse nunca é redondo (F-042 §3). Uma célula que não tem exatamente 16 dígitos hexadecimais minúsculos é recusada antes de ser lida, nunca lida como 0. Os bools vão como 0 e 1; um texto, como os bytes UTF-8 em hexadecimal.
-- **As colunas declaradas** saem do `TickInput` por reflexão, e o leitor acha cada uma pelo nome: um campo novo do input entra no arquivo sozinho.
+- **As colunas declaradas** saem do `TickInput` por reflexão, e o leitor acha cada uma pelo nome: um campo novo do input entra no arquivo sozinho. O `dash` entrou assim na TASK-10.4, e um arquivo gravado antes dele toca só com `--force`, com o `dash` falso em todo tick.
 - **A impressão das regras** é o sha256 dos scripts e das cenas que movem o corpo (`core/`, `fighter/`, `match/`, `arena/` e `common/`, com as camadas de colisão, mais os `.gd` de `data/`) mais a fixação do netfox, `cf5189d`. É calculada dos arquivos quando o jogo roda do código-fonte, como o Arthur joga; na build exportada fica vazia, porque o commit já diz qual é. O tocador só compara quando as duas existem.
 - **A impressão da arena** é o sha256 de toda `CollisionShape3D` da arena (caminho, tamanho da caixa e posição) e dos pontos de nascimento. Uma forma que não seja caixa a deixa vazia, e o arquivo é recusado até ela ganhar nome no código.
 - **A impressão do estado**, a coluna `check`, são 8 dígitos do sha256 da linha do rastro de estado depois de cada tick ao vivo.
@@ -114,8 +120,8 @@ Os tempos são os da rodada B depois dos consertos (F-049 §5). O total foi 31,3
 - O relógio do netfox começa no primeiro tick gravado, pelo ajudante dos testes (`test/support/netfox_ticks.gd`, a exceção da DEC-0027 §3). Um salto do relógio gravado, depois de um travamento de mais de 1 s, é tocado como o mesmo salto.
 - A entrada de cada tick é a linha gravada, exatamente: o `FighterInput` continua o único que escreve a caixa, sem a média nem o `limit_length` do amostrador.
 - Ele imprime os ticks, o sha256 do rastro de estado e o primeiro tick em que o estado se separa da coluna `check`. `--trace=SAÍDA` escreve o rastro, `--readable=SAÍDA` uma cópia do arquivo em decimal, que nenhum tocador toca, e `--force` toca um arquivo de outra build.
-- **O rastro de estado** tem uma linha por tick e lutador, com o estado inteiro: a posição, a velocidade e todo campo do `FighterState`, por reflexão. Os ticks e os carimbos do estado contam a partir do primeiro tick gravado, e o `NEVER` fica `NEVER`.
-- No portão, um teste grava uma corrida de 600 ticks com yaw e move fracionários, laços de 2 e 3 ticks e 8 pulos duplos, prova essa precondição e prova que a refeita dá o mesmo rastro byte a byte, duas vezes com o mesmo sha256. Gravar levou uns 0,42 s, e tocar, uns 0,3 s.
+- **O rastro de estado** tem uma linha por tick e lutador, com o estado inteiro: a posição, a velocidade e todo campo do `FighterState`, por reflexão. Um vetor do estado, como o `dash_direction`, vira três colunas, `.x`, `.y` e `.z`, como a posição, e o cabeçalho tem um nome por célula (TASK-10.4). Os ticks e os carimbos do estado contam a partir do primeiro tick gravado, e o `NEVER` fica `NEVER`.
+- No portão, um teste grava uma corrida de 600 ticks com yaw e move fracionários, laços de 2 e 3 ticks, 8 pulos duplos e, desde a TASK-10.4, 4 dashes, prova essa precondição e prova que a refeita dá o mesmo rastro byte a byte, duas vezes com o mesmo sha256. Gravar levou uns 0,42 s, e tocar, uns 0,3 s.
 
 **O que o tocador recusa** (critério 7 da TASK-10.3; F-042 §4):
 
@@ -261,7 +267,8 @@ O plano Free não impõe nada disso: o pre-push continua sendo a trava, e o CI n
 ## 11. O que fica para depois
 
 - **O tempo do portão:** na TASK-9, ele levou de 61 a 114 s neste PC, conforme o PC estava quieto ou ocupado, contra o limite de 90 s do pre-push (DEC-0027). Os passos que mais pesam são o import e os testes; a referência soma uns 1,1 s.
-  - Na TASK-10.1, medido em silêncio: 72 s na rodada A, 76 s na rodada B e 78 s no fechamento, com os testes em uns 34 s, contra os 90 s (DEC-0027 §1). Com o PC ocupado, o revisor mediu 103 s e 116 s, com a SyncTest de 4 s subindo para 6 a 11 s: o pre-push de quem trabalha com outra coisa aberta pode passar do limite. A divisão do CI da DEC-0027 §4 ainda não precisou entrar.
+  - Na TASK-10.1, medido em silêncio: 72 s na rodada A, 76 s na rodada B e 78 s no fechamento, com os testes em uns 34 s, contra os 90 s (DEC-0027 §1).
+  - Na TASK-10.4: 165 s na rodada A, com o PC ocupado (os testes em 134 s), e 113 s na rodada B, com o PC quieto (os testes em 79 s). Passa dos 90 s do pre-push nos dois; a divisão do CI da DEC-0027 §4 volta ao Arthur como DEC se ficar assim. Com o PC ocupado, o revisor mediu 103 s e 116 s, com a SyncTest de 4 s subindo para 6 a 11 s: o pre-push de quem trabalha com outra coisa aberta pode passar do limite. A divisão do CI da DEC-0027 §4 ainda não precisou entrar.
 - **Q-20:** a assinatura do `.exe`, antes de alguém de fora testar.
 - **Canários** para o formato, o lint, as travas, o import e o log limpo, se um furo aparecer ali.
 - **Um job do CI fora do pre-push,** quando uma camada não couber nos 90 s.

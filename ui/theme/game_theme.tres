@@ -23,3 +23,7 @@ StaminaBarFill/base_type = &"Panel"
 StaminaBarFill/styles/panel = SubResource("StyleBoxFlat_bar_fill")
 StaminaLowMark/base_type = &"Panel"
 StaminaLowMark/styles/panel = SubResource("StyleBoxFlat_low_mark")
+DashCooldownArc/base_type = &"Control"
+DashCooldownArc/colors/arc_color = Color(0.92, 0.92, 0.92, 1)
+DashCooldownArc/colors/track_color = Color(0, 0, 0, 0.55)
+DashCooldownArc/constants/thickness = 4

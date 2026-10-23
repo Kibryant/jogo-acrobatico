@@ -48,8 +48,24 @@ func test_every_field_of_the_state_is_a_column() -> void:
 	assert_str(names[1]).is_equal("fighter")
 	for field: String in ["position.x", "position.y", "position.z", "velocity.x", "velocity.z"]:
 		assert_bool(names.has(field)).override_failure_message("no %s" % field).is_true()
-	for field: String in ReplayFile.script_fields(FighterState.new()):
-		assert_bool(names.has(field)).override_failure_message("no %s" % field).is_true()
+	var state := FighterState.new()
+	for field: String in ReplayFile.script_fields(state):
+		var expected: Array[String] = [field]
+		if typeof(state.get(field)) == TYPE_VECTOR3:
+			expected = ["%s.x" % field, "%s.y" % field, "%s.z" % field]
+		for column: String in expected:
+			assert_bool(names.has(column)).override_failure_message("no %s" % column).is_true()
+
+
+# One name per cell: a vector of the state (dash_direction, TASK-10.4) writes three cells, so it
+# has three names, and where two traces part names the right column.
+func test_the_header_names_every_cell_of_a_line() -> void:
+	var line := StateTrace.line_of(_fighter(), 0, FIRST, FIRST)
+	var names := StateTrace.header().split(",")
+	assert_int(names.size()).is_equal(line.split(",").size())
+	var cells := _cells(line)
+	assert_str(cells["dash_direction.z"]).is_equal(ReplayFile.f64_cell(0.0))
+	assert_str(cells["dash_tick"]).is_equal(str(FighterState.NEVER))
 
 
 # The stamps are the fields named *_tick or *_since (glossario.md, "Carimbo de tick"); a count, as
@@ -61,6 +77,7 @@ func test_the_stamps_are_the_fields_named_tick_or_since() -> void:
 		"buffered_tick",
 		"stamina_spent_tick",
 		"double_jump_tick",
+		"dash_tick",
 	]
 	for field: String in stamps:
 		assert_bool(StateTrace.is_stamp(field)).override_failure_message(field).is_true()

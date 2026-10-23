@@ -2,8 +2,9 @@
 # the gate's tests play it again, and `bash tools/replay.sh --sample=FILE` writes it for the
 # --watch measurements. It records what makes a replay hard to get right: a yaw that turns by a
 # number with many digits on every loop, moves that are the mean of 2 or 3 different frames, so
-# never -1, 0 or 1, tick loops of 1, 2 and 3 ticks, as frames at 60, 30 and 20 fps, and jumps with
-# a double jump at the top. Optionally the clock jumps once, as netfox's does after a stall.
+# never -1, 0 or 1, tick loops of 1, 2 and 3 ticks, as frames at 60, 30 and 20 fps, jumps with a
+# double jump at the top and, from TASK-10.4, a dash between two jumps, so the file's dash column
+# holds presses (criterion 6). Optionally the clock jumps once, as netfox's does after a stall.
 # The run is the reference's (test/reference/reference_run.gd): the real Match in Sozinho, in a
 # SubViewport with its own physics world, with netfox's ticks by hand inside a physics frame
 # (test/support/netfox_ticks.gd), starting on FIRST_TICK.
@@ -36,6 +37,9 @@ const TURN := 0.0123456789
 ## about 14 ticks after the jump, before its apex: the double jump.
 const PRESS_EVERY := 45
 const DOUBLE_AFTER := 9
+## DASH_AFTER loops after each jump, about 47 ticks, a press of the dash: on the floor again after
+## the double jump's landing, or kept in the slot for it.
+const DASH_AFTER := 30
 ## Ticks the clock jumps by, when it jumps.
 const CLOCK_JUMP := 30
 
@@ -48,6 +52,8 @@ class Result:
 	var trace: StateTrace
 	## Double jumps the fighter made.
 	var double_jumps := 0
+	## Dashes the fighter made.
+	var dashes := 0
 	## Ticks and loops run, and µs of wall clock for them.
 	var ticks := 0
 	var loops := 0
@@ -86,12 +92,17 @@ func record(host: Node, path: String, ticks := TICKS, jump_before_loop := -1) ->
 			fighter.input.sample_frame(move, yaw_of(loop))
 		if presses_at(loop):
 			fighter.input.press_jump()
+		if dashes_at(loop):
+			fighter.input.press_dash()
 		var size := mini(LOOPS[loop % LOOPS.size()], ticks - result.ticks)
 		var stamp := fighter.state.double_jump_tick
+		var dash_stamp := fighter.state.dash_tick
 		NetfoxTicks.run_loop(size)
 		var stamped := fighter.state.double_jump_tick
 		if stamped != stamp and stamped != FighterState.NEVER:
 			result.double_jumps += 1
+		if fighter.state.dash_tick != dash_stamp:
+			result.dashes += 1
 		result.ticks += size
 		result.loops += 1
 	result.record_usec = Time.get_ticks_usec() - started_usec
@@ -119,3 +130,7 @@ static func yaw_of(loop: int) -> float:
 static func presses_at(loop: int) -> bool:
 	var phase := loop % PRESS_EVERY
 	return loop > 0 and (phase == 0 or phase == DOUBLE_AFTER)
+
+
+static func dashes_at(loop: int) -> bool:
+	return loop > 0 and loop % PRESS_EVERY == DASH_AFTER

@@ -64,6 +64,10 @@ size = Vector3(4, 3, 4)
 material = SubResource("StandardMaterial3D_x52g8")
 size = Vector3(4, 3, 4)
 
+[sub_resource type="BoxMesh" id="BoxMesh_regua"]
+material = SubResource("StandardMaterial3D_x52g8")
+size = Vector3(0.1, 0.01, 2)
+
 [node name="Arena" type="Node3D" unique_id=450802812]
 script = ExtResource("1_dkqtx")
 
@@ -146,6 +150,52 @@ shape = SubResource("BoxShape3D_vao2m")
 
 [node name="Mesh" type="MeshInstance3D" parent="PlataformaVaoB" unique_id=722796823]
 mesh = SubResource("BoxMesh_vao2m")
+
+[node name="RéguaDoDash" type="Node3D" parent="." unique_id=141947930]
+
+[node name="Marca0" type="MeshInstance3D" parent="RéguaDoDash" unique_id=1972313008]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -10, 0.01, 15)
+mesh = SubResource("BoxMesh_regua")
+
+[node name="Marca1" type="MeshInstance3D" parent="RéguaDoDash" unique_id=524928628]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -6, 0.01, 15)
+mesh = SubResource("BoxMesh_regua")
+
+[node name="Marca2" type="MeshInstance3D" parent="RéguaDoDash" unique_id=1671754654]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2, 0.01, 15)
+mesh = SubResource("BoxMesh_regua")
+
+[node name="Marca3" type="MeshInstance3D" parent="RéguaDoDash" unique_id=1755125925]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2, 0.01, 15)
+mesh = SubResource("BoxMesh_regua")
+
+[node name="Marca4" type="MeshInstance3D" parent="RéguaDoDash" unique_id=588815395]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 6, 0.01, 15)
+mesh = SubResource("BoxMesh_regua")
+
+[node name="Marca5" type="MeshInstance3D" parent="RéguaDoDash" unique_id=939728866]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 10, 0.01, 15)
+mesh = SubResource("BoxMesh_regua")
+
+[node name="Marca6" type="MeshInstance3D" parent="RéguaDoDash" unique_id=810049002]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 14, 0.01, 15)
+mesh = SubResource("BoxMesh_regua")
+
+[node name="Marca7" type="MeshInstance3D" parent="RéguaDoDash" unique_id=114481355]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 18, 0.01, 15)
+mesh = SubResource("BoxMesh_regua")
+
+[node name="Marca8" type="MeshInstance3D" parent="RéguaDoDash" unique_id=1632896641]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 22, 0.01, 15)
+mesh = SubResource("BoxMesh_regua")
+
+[node name="Marca9" type="MeshInstance3D" parent="RéguaDoDash" unique_id=368677733]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 26, 0.01, 15)
+mesh = SubResource("BoxMesh_regua")
+
+[node name="Marca10" type="MeshInstance3D" parent="RéguaDoDash" unique_id=1832395278]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 30, 0.01, 15)
+mesh = SubResource("BoxMesh_regua")
 
 [node name="SpawnPoints" type="Node3D" parent="." unique_id=1673873680]
 

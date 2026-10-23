@@ -1,5 +1,6 @@
 # Criteria 1 to 3 of TASK-10.2: the HUD shows the stamina as a bar and a number, and the mode as
-# text, computed from the fighter's state and the tick, never from a timer (DEC-0031 §2); below
+# text, computed from the fighter's state and the tick, never from a timer (DEC-0031 §2); and from
+# criterion 7 of TASK-10.4, the dash's cooldown as an arc with the tenths of a second left; below
 # the cost of the double jump the number gains an underline, a shape and not a colour; its look
 # comes from the one Theme and its words from translation keys (DEC-0031 §8); and a PC without a
 # screen never makes one. The tests run headless, as the gate does, so they drive the HUD by hand
@@ -20,10 +21,12 @@ const LEFT_AFTER_SPEND := 37.0
 
 var _match: Match
 var _fighter: Fighter
+var _locale_before := ""
 
 
 func before_test() -> void:
 	NetfoxTicks.reset()
+	_locale_before = TranslationServer.get_locale()
 	var node := MATCH_SCENE.instantiate()
 	assert(node is Match, "match.tscn must have a Match at its root")
 	_match = auto_free(node)
@@ -33,6 +36,7 @@ func before_test() -> void:
 
 
 func after_test() -> void:
+	TranslationServer.set_locale(_locale_before)
 	NetfoxTicks.reset()
 
 
@@ -190,3 +194,48 @@ func test_without_a_screen_watch_creates_no_hud() -> void:
 	assert_object(_match.hud).is_null()
 	for node: Node in _match.find_children("*", "CanvasLayer", true, false):
 		assert_bool(node is Hud).override_failure_message("a Hud under the Match").is_false()
+
+
+# Criterion 7 of TASK-10.4: from the dash's start until the next may start, 200 ms of dash and
+# 400 ms of cooldown (movimento.md, "Dash": "Recarga"), the arc shrinks from the full circle and
+# the text counts the tenths of a second left, rounded up, in the decimals of each language; both
+# come from the stamp and the tick, so an earlier tick shows its own value again, as after a
+# rollback, and nothing shows before the first dash or once the next is ready.
+func test_the_dash_cooldown_shows_as_an_arc_with_the_tenths_left() -> void:
+	GameText.install()
+	TranslationServer.set_locale("en")
+	var config := _match.config
+	var period := config.dash_ticks + config.dash_cooldown_ticks
+	var hud := _hud()
+	hud.show_at(SPENT_AT)
+	assert_bool(hud.shows_dash_cooldown()).override_failure_message("before any dash").is_false()
+
+	_fighter.state.dash_tick = SPENT_AT
+	_fighter.state.mode = FighterState.Mode.DASH
+	var cases: Dictionary[int, String] = {
+		0: "0.6 s", # 36 ticks at 60: 600 ms
+		1: "0.6 s", # 35 ticks: 583 ms, rounded up
+		12: "0.4 s", # the dash is over, 24 ticks of cooldown left
+		30: "0.1 s", # 6 ticks: 100 ms
+		period - 1: "0.1 s", # 1 tick: 17 ms, still waiting
+	}
+	for after: int in cases:
+		hud.show_at(SPENT_AT + after)
+		var where := "%d ticks after the dash" % after
+		assert_bool(hud.shows_dash_cooldown()).override_failure_message(where).is_true()
+		assert_str(hud.shown_dash_cooldown()).override_failure_message(where).is_equal(cases[after])
+		var share := float(period - after) / period
+		assert_float(hud.dash_cooldown_share()).is_equal_approx(share, HAIR)
+	TranslationServer.set_locale("pt_BR")
+	hud.show_at(SPENT_AT + 12)
+	assert_str(hud.shown_dash_cooldown()).is_equal("0,4 s")
+
+	# Ready on the tick the next dash may start, and after it.
+	_fighter.state.mode = FighterState.Mode.GROUND
+	for after: int in [period, period + 100]:
+		hud.show_at(SPENT_AT + after)
+		assert_bool(hud.shows_dash_cooldown()).is_false()
+	# Back to a tick of the cooldown, as a rollback would show it.
+	hud.show_at(SPENT_AT + 30)
+	assert_bool(hud.shows_dash_cooldown()).is_true()
+	assert_str(hud.shown_dash_cooldown()).is_equal("0,1 s")

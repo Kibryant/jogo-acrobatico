@@ -18,7 +18,7 @@ const OTHER_TONE := Color(0.16, 0.16, 0.18)
 # 60 ticks, and the body goes back right after.
 const FLOOR_PROBE_SPEED := 0.05
 
-## The input box, recorded by netfox as Input:move, Input:yaw and Input:jump.
+## The input box, recorded by netfox as Input:move, Input:yaw, Input:jump and Input:dash.
 @export var input: FighterInput
 ## netfox's node that records the boxes on every tick and sends them over the network.
 @export var synchronizer: RollbackSynchronizer
@@ -33,25 +33,37 @@ const FLOOR_PROBE_SPEED := 0.05
 var config: MovementConfig
 ## The rules box, recorded by netfox field by field (":state:mode" and the others; DEC-0022).
 var state := FighterState.new()
+## The neutral tone the body is painted in, OWN_TONE or OTHER_TONE; its maneuver cues take it too
+## (ManeuverCues), so no cue wears a colour of the combat tokens (DEC-0031).
+var tone := OTHER_TONE
 
 # Contour D waits for the first tick of each rollback loop (DEC-0025 §2).
 var _engine_floor_pending := false
 
 
-# The engine's floor snap must catch a body running at full speed down the steepest floor: in one
-# tick it moves run_speed / tickrate across, and a slope of floor_max_angle falls tan(angle) times
-# that, 7 / 60 * tan(45°) = 0.1167 m at 60 ticks and 0.2333 m at 30. On top of the drop, the
-# engine keeps a body up to one safe margin off the floor and its downward cast stops one margin
-# short, both along the floor's normal: two margins / cos(angle) upright, and a third keeps the
-# worst case off the edge. At 60 ticks on 45° that is 0.1167 + 0.0042 = 0.121 m. Measured by hand
-# on the crest of a 45° ramp with the rig of test/fighter/fighter_slope_test.gd, 0.1187 m loses
-# the floor and 0.1197 m holds; the test itself runs the full snap and half of it. A shorter snap
-# throws the body off the ramp; a longer one would glue it to drops that should be ledges, and the
-# arena's only drop, the 1 m ledge, is far longer.
+# The engine's floor snap must catch a body at the fastest ground speed down the steepest floor:
+# the dash, 20 m/s, faster than the run's 7 (movimento.md, "Dash": "Descendo a rampa de 45°";
+# TASK-10.4). In one tick the body moves speed / tickrate across, and a slope of floor_max_angle
+# falls tan(angle) times that: 20 / 60 * tan(45°) = 0.3333 m at 60 ticks and 0.6667 m at 30. On
+# top of the drop, the engine keeps a body up to one safe margin off the floor and its downward
+# cast stops one margin short, both along the floor's normal: two margins / cos(angle) upright,
+# and a third keeps the worst case off the edge. At 60 ticks on 45° that is 0.3333 + 0.0042 =
+# 0.338 m, against the 0.121 m the run alone needed (TASK-9). For the run, measured by hand on the
+# crest of a 45° ramp with the rig of test/fighter/fighter_slope_test.gd, 0.1187 m lost the floor
+# and 0.1197 m held; that test runs the dash down the ramp with this snap and with the run's. A
+# shorter snap throws the body off the ramp; a longer one glues it to drops that should be ledges:
+# a step down of up to 0.338 m is now floor, and the arena's only drop, the 1 m ledge, is far
+# longer (F-122).
 static func floor_snap_for(movement_config: MovementConfig, margin: float) -> float:
+	var fastest := maxf(movement_config.run_speed, movement_config.dash_speed)
+	return snap_for_speed(movement_config, margin, fastest)
+
+
+# The snap that catches a body crossing the steepest floor at speed m/s, as above.
+static func snap_for_speed(movement_config: MovementConfig, margin: float, speed: float) -> float:
 	var angle := movement_config.floor_max_angle
 	assert(angle < PI / 2.0, "a floor of 90 degrees has no snap: it is a wall")
-	var across_per_tick := movement_config.run_speed / movement_config.tickrate
+	var across_per_tick := speed / movement_config.tickrate
 	return across_per_tick * tan(angle) + 3.0 * margin / cos(angle)
 
 
@@ -81,7 +93,8 @@ func setup(
 	# warning (netfox's dense-snapshot-serializer.gd).
 	synchronizer.visibility_filter.default_visibility = false
 	_shape_capsule()
-	_paint(OWN_TONE if own else OTHER_TONE)
+	tone = OWN_TONE if own else OTHER_TONE
+	_paint(tone)
 
 
 # From now on the server sends this fighter's state to peer, which mirrors the fighter.

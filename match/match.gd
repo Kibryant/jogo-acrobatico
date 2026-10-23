@@ -32,6 +32,9 @@ var camera_rig: CameraRig
 var hud: Hud
 ## The bot that plays on this PC; null unless let_bot_play().
 var bot: BotPlayer
+## The cues of every fighter's maneuvers, played once per event (DEC-0031 §6; TASK-10.4). They
+## draw only with a screen, and count everywhere.
+var cues: ManeuverCues
 
 # The first tick of netfox's current tick loop.
 var _loop_first_tick := 0
@@ -56,6 +59,8 @@ func _ready() -> void:
 	assert(node is Arena, "arena.tscn must have an Arena at its root")
 	arena = node as Arena
 	add_child(arena)
+	cues = ManeuverCues.new(config, has_screen())
+	add_child(cues)
 
 
 func _enter_tree() -> void:
@@ -102,6 +107,7 @@ func spawn_fighter(
 	add_child(fighter)
 	fighters.append(fighter)
 	_by_slot[slot] = fighter
+	cues.watch(fighter)
 	return fighter
 
 
@@ -121,6 +127,7 @@ func remove_fighter(slot: int) -> void:
 		return
 	_by_slot.erase(slot)
 	fighters.erase(fighter)
+	cues.forget(fighter)
 	if fighter == _watched:
 		camera_rig.queue_free()
 		camera_rig = null

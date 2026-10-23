@@ -56,6 +56,18 @@ const CHECKED_TICKRATES: Array[int] = [30, 60]
 ## Points per second after the wait (movimento.md, "Stamina").
 @export var stamina_regen_per_s: float
 
+@export_group("Dash")
+## Covered over the dash's duration, from the floor (movimento.md, "Dash": "Distância").
+@export var dash_distance_m: float
+## From the press to the end; the speed derives from it (movimento.md, "Dash": "Duração").
+@export var dash_ms: int
+## The horizontal speed right after the dash, in its direction (movimento.md, "Dash").
+@export var dash_exit_speed_mps: float
+## From the end of a dash until the next may start (movimento.md, "Dash": "Recarga").
+@export var dash_cooldown_ms: int
+## Stamina points, paid when the dash starts (movimento.md, "Dash": "Custo").
+@export var dash_cost: float
+
 
 # The data check, layer 3 of DEC-0027 §2: one message per impossible number, empty when every
 # number can be. The gate runs it over every movement .tres under data/
@@ -99,6 +111,19 @@ func validate() -> PackedStringArray:
 			stamina_regen_per_s,
 			"a regen cannot be negative",
 		),
+		# The dash's speed is its distance over its duration (movimento.md, "Dash": "Deriva a
+		# velocidade"), so both must be there; nothing divides by the cooldown, and zero is a
+		# legitimate "no cooldown". An exit speed of zero stops the body dead, and a cost of zero
+		# is a free dash.
+		_positive_error("dash_distance_m", dash_distance_m, "the dash's speed derives from it"),
+		_time_error("dash_ms", dash_ms, true),
+		_not_negative_error(
+			"dash_exit_speed_mps",
+			dash_exit_speed_mps,
+			"a speed cannot be negative",
+		),
+		_time_error("dash_cooldown_ms", dash_cooldown_ms, false),
+		_cost_error("dash_cost", dash_cost),
 	]
 	var errors := PackedStringArray()
 	for message: String in checks:

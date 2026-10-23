@@ -13,6 +13,17 @@ const FORWARD := Vector2(0, 1)
 const TOWARD_PLUS_X := -PI / 2 # the yaw that looks down +X: yaw 0 looks down -Z
 const THICKNESS := 1.0 # m, of the test slabs
 const GAP := 0.02 # m: a fighter placed on a slope starts this far above it
+const RUN_SPEED_MPS := 7.0 # movimento.md, "Chão"
+const DASH_DISTANCE_M := 4.0 # movimento.md, "Dash": "Distância"
+# A parameter that keeps the game's own snap (Fighter.floor_snap_for) instead of a share of another.
+const GAME_SNAP := -1.0
+# m: the top of the block the ramp starts from, tall enough that the whole dash runs down the
+# ramp, which reaches the floor 5 m past its crest.
+const DASH_RAMP_HEIGHT := 5.0
+# m: the dash starts this far before the crest, on the flat top, and crosses it on its third tick.
+const DASH_FROM_CREST := 0.8
+# Ticks the fighter stands before the press, so it rests on the block like a spawned one.
+const STAND_TICKS := 5
 
 
 func before_test() -> void:
@@ -163,13 +174,13 @@ func test_running_into_a_46_degree_ramp_does_not_climb_it() -> void:
 
 
 # Downhill at full speed, the floor drops 0.117 m a tick under the fighter at 60 ticks, and the
-# engine's snap, derived for that in Fighter.floor_snap_for, keeps it on the floor all the way
-# down. Half that snap is the counter-test: the same run then leaves the floor, so the snap is
-# what holds it.
+# game's snap, which covers the dash's 0.333 m (Fighter.floor_snap_for), keeps it on the floor all
+# the way down. Half the snap the run alone needs, Fighter.snap_for_speed at the run speed, is the
+# counter-test: the same run then leaves the floor, so the snap is what holds it.
 func test_running_down_a_45_degree_ramp_at_full_speed_stays_on_the_floor(
-	snap_scale: float,
+	run_snap_share: float,
 	stays_on_floor: bool,
-	_test_parameters := [[1.0, true], [0.5, false]],
+	_test_parameters := [[GAME_SNAP, true], [0.5, false]],
 ) -> void:
 	var height := 3.0
 	var world := _world()
@@ -177,7 +188,9 @@ func test_running_down_a_45_degree_ramp_at_full_speed_stays_on_the_floor(
 	_box(world, Vector3(-4, height / 2.0, 0), Vector3(8, height, 6), 0.0)
 	_ramp(world, Vector3(0, height, 0), 6.0, -45.0)
 	var fighter := await _fighter_in(world, Vector3(-6, height, 0))
-	fighter.floor_snap_length *= snap_scale
+	if run_snap_share != GAME_SNAP:
+		var run_snap := Fighter.snap_for_speed(_config(), fighter.safe_margin, RUN_SPEED_MPS)
+		fighter.floor_snap_length = run_snap * run_snap_share
 	var trace := _run(fighter, 90, FORWARD)
 	var off_floor: Array[String] = []
 	var slowest_on_the_ramp := INF
@@ -194,5 +207,59 @@ func test_running_down_a_45_degree_ramp_at_full_speed_stays_on_the_floor(
 		assert_array(off_floor).is_empty()
 		# Down the whole ramp at the run speed of movimento.md, "Chão".
 		assert_float(slowest_on_the_ramp).is_equal_approx(7.0, 1e-3)
+	else:
+		assert_array(off_floor).is_not_empty()
+
+
+# Criterion 4 of TASK-10.4: a dash from the flat top over the crest and down the 45° ramp keeps the
+# fighter on the floor on every tick, 20 m/s across, 0.333 m of drop a tick at 60 (movimento.md,
+# "Dash": "Descendo a rampa de 45°"). With the snap of TASK-9, sized for the run's 7 m/s, the same
+# dash leaves the floor: the snap that covers the dash is what holds it.
+func test_a_dash_down_the_45_degree_ramp_stays_on_the_floor_only_with_the_dash_snap(
+	run_snap: bool,
+	stays_on_floor: bool,
+	_test_parameters := [[false, true], [true, false]],
+) -> void:
+	var world := _world()
+	_floor(world)
+	_box(world, Vector3(-4, DASH_RAMP_HEIGHT / 2.0, 0), Vector3(8, DASH_RAMP_HEIGHT, 6), 0.0)
+	_ramp(world, Vector3(0, DASH_RAMP_HEIGHT, 0), 8.0, -45.0)
+	var start := Vector3(-DASH_FROM_CREST, DASH_RAMP_HEIGHT, 0)
+	var fighter := await _fighter_in(world, start)
+	var config := _config()
+	if run_snap:
+		fighter.floor_snap_length = Fighter.snap_for_speed(
+			config,
+			fighter.safe_margin,
+			RUN_SPEED_MPS,
+		)
+	_run(fighter, STAND_TICKS, Vector2.ZERO)
+	var press_tick := NetworkTime.tick
+	fighter.input.press_dash()
+	var trace := _run(fighter, config.dash_ticks, FORWARD)
+	var off_floor: Array[String] = []
+	for row: Dictionary in trace:
+		var mode: FighterState.Mode = row["mode"]
+		assert_int(mode).is_equal(FighterState.Mode.DASH)
+		if not row["on_floor"]:
+			off_floor.append("step %d at %s" % [row["step"], row["position"]])
+	assert_int(fighter.state.dash_tick).is_equal(press_tick)
+	var end: Vector3 = trace[-1]["position"]
+	print(
+		(
+			"Dash down the 45° ramp, snap %.4f m: %d of %d ticks off the floor, end %s"
+			% [fighter.floor_snap_length, off_floor.size(), trace.size(), end]
+		)
+	)
+	if stays_on_floor:
+		assert_array(off_floor).is_empty()
+		# 4 m across, 3.2 of them down the ramp.
+		assert_float(end.x - start.x).is_equal_approx(DASH_DISTANCE_M, 0.01)
+		# The crest is at x = 0, so the surface under the feet is as far down as they went along;
+		# the round bottom touches a 45° floor a little ahead, so the feet stand r / cos(45°) - r
+		# above it.
+		var radius := config.capsule_radius
+		var resting := radius / cos(deg_to_rad(45.0)) - radius
+		assert_float(end.y).is_equal_approx(DASH_RAMP_HEIGHT - end.x + resting, 0.01)
 	else:
 		assert_array(off_floor).is_not_empty()

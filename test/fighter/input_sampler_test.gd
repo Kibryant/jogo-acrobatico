@@ -97,3 +97,24 @@ func test_a_press_waits_across_frames_for_its_tick() -> void:
 	sampler.take_move()
 	sampler.add_frame(FORWARD, 0.0)
 	assert_bool(sampler.take_jump()).is_true()
+
+
+# TASK-10.4: the dash is a one-touch command like the jump, kept apart from it.
+func test_a_dash_press_is_taken_once() -> void:
+	var sampler := InputSampler.new()
+	sampler.press_dash()
+	sampler.press_dash()
+	assert_bool(sampler.take_dash()).is_true()
+	assert_bool(sampler.take_dash()).is_false()
+
+
+func test_the_dash_and_the_jump_are_taken_apart() -> void:
+	var sampler := InputSampler.new()
+	sampler.press_dash()
+	assert_bool(sampler.take_jump()).is_false()
+	sampler.add_frame(FORWARD, 0.0)
+	sampler.take_move()
+	assert_bool(sampler.take_dash()).is_true()
+	sampler.press_jump()
+	assert_bool(sampler.take_dash()).is_false()
+	assert_bool(sampler.take_jump()).is_true()

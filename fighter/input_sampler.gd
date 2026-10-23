@@ -6,8 +6,8 @@
 #   tick a key changes (TASK-9 plan, Claude's v0 readings);
 # - yaw is the last sample: a mean of angles breaks where they wrap at 180 degrees, and the last
 #   sample is where the camera looks now (TASK-9, choice 1);
-# - jump is a one-touch command kept between frames and taken once, so a press counts for at most
-#   one tick even when a frame runs two (netfox's one-off-input.gd).
+# - jump and dash are one-touch commands kept between frames and taken once, so a press counts for
+#   at most one tick even when a frame runs two (netfox's one-off-input.gd).
 # No node and no engine input here: FighterInput feeds it, from the devices or from a bot.
 class_name InputSampler
 extends RefCounted
@@ -16,6 +16,7 @@ var _move_sum := Vector2.ZERO
 var _move_samples := 0
 var _yaw: float
 var _jump_pressed := false
+var _dash_pressed := false
 
 
 # start_yaw is the yaw before any sample: where the fighter looks at its spawn point.
@@ -34,6 +35,11 @@ func add_frame(move: Vector2, yaw: float) -> void:
 # One press of the jump, kept until take_jump().
 func press_jump() -> void:
 	_jump_pressed = true
+
+
+# One press of the dash, kept until take_dash().
+func press_dash() -> void:
+	_dash_pressed = true
 
 
 # The mean of the move samples since the last call, which starts a new tick's samples. Zero when
@@ -56,4 +62,11 @@ func last_yaw() -> float:
 func take_jump() -> bool:
 	var pressed := _jump_pressed
 	_jump_pressed = false
+	return pressed
+
+
+# True once per press, like take_jump().
+func take_dash() -> bool:
+	var pressed := _dash_pressed
+	_dash_pressed = false
 	return pressed

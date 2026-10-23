@@ -39,8 +39,8 @@ func _match_with_fighters(count: int) -> Match:
 
 
 # The keys held and pressed on the bot's window reach nothing: every tick takes the route's move,
-# the move of its loop's first tick, as netfox gathers once per loop, and the route's jump on its
-# own tick, even inside a loop of two ticks.
+# the move of its loop's first tick, as netfox gathers once per loop, and the route's jump and dash
+# on their own ticks, even inside a loop of two ticks.
 func test_the_bot_fills_the_input_tick_by_tick_and_leaves_the_keyboard_alone() -> void:
 	var game_match := await _match_with_fighters(1)
 	var fighter := game_match.fighters[0]
@@ -82,13 +82,17 @@ func test_the_bot_fills_the_input_tick_by_tick_and_leaves_the_keyboard_alone() -
 			wrong.append("step %d: move %s" % [step, seen.moves[tick]])
 		if seen.jumps[tick] != bot.route.jumps_at(step):
 			wrong.append("step %d: jump %s" % [step, seen.jumps[tick]])
+		if seen.dashes[tick] != bot.route.dashes_at(step):
+			wrong.append("step %d: dash %s" % [step, seen.dashes[tick]])
 	assert_int(seen.moves.size()).is_equal(leg + 4)
 	assert_array(wrong).is_empty()
+	# The dash of the first leg came out, along the bot's line (TASK-10.4).
+	assert_int(fighter.state.dash_tick).is_equal(bot.start_tick + bot.route.dash_at_ticks)
 
 
 # Each bot runs along its own line, the one through its spawn point across the line between the
-# two, so they stay 10 m apart; each jumps once per leg, and the only thing either one touches is
-# the floor.
+# two, so they stay 10 m apart; each jumps and dashes once per leg, and the only thing either one
+# touches is the floor.
 func test_two_bots_play_their_routes_without_touching_anything_but_the_floor() -> void:
 	var game_match := await _match_with_fighters(2)
 	var first := game_match.fighters[0]
@@ -105,6 +109,7 @@ func test_two_bots_play_their_routes_without_touching_anything_but_the_floor() -
 	var floor_body := game_match.arena.get_node(^"Floor")
 	var lines: Array[float] = [first.position.z, second.position.z]
 	var takeoffs: Array[int] = [0, 0]
+	var dashes: Array[int] = [0, 0]
 	var was_on_floor: Array[bool] = [true, true]
 	var closest := INF
 	var wrong: Array[String] = []
@@ -120,6 +125,8 @@ func test_two_bots_play_their_routes_without_touching_anything_but_the_floor() -
 				)
 			if was_on_floor[index] and not fighter.state.on_floor:
 				takeoffs[index] += 1
+			if fighter.state.dash_tick == NetworkTime.tick - 1:
+				dashes[index] += 1
 			was_on_floor[index] = fighter.state.on_floor
 			for slide: int in fighter.get_slide_collision_count():
 				var collider := fighter.get_slide_collision(slide).get_collider()
@@ -129,6 +136,8 @@ func test_two_bots_play_their_routes_without_touching_anything_but_the_floor() -
 	assert_array(wrong).is_empty()
 	assert_int(takeoffs[0]).is_equal(LEGS)
 	assert_int(takeoffs[1]).is_equal(LEGS)
+	assert_int(dashes[0]).is_equal(LEGS)
+	assert_int(dashes[1]).is_equal(LEGS)
 	assert_float(closest).is_greater(2.0 * game_match.config.capsule_radius)
 
 
@@ -138,6 +147,7 @@ func test_two_bots_play_their_routes_without_touching_anything_but_the_floor() -
 class InputLog:
 	var moves: Dictionary[int, Vector2] = { }
 	var jumps: Dictionary[int, bool] = { }
+	var dashes: Dictionary[int, bool] = { }
 	var loop_first: Dictionary[int, int] = { }
 
 	var _input: FighterInput
@@ -155,4 +165,5 @@ class InputLog:
 	func note(_delta: float, tick: int) -> void:
 		moves[tick] = _input.move
 		jumps[tick] = _input.jump
+		dashes[tick] = _input.dash
 		loop_first[tick] = _first

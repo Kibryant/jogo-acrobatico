@@ -1,6 +1,6 @@
 # What the owner of a fighter wants in one tick, the input box (visao-geral.md, "O estado em
-# quatro caixas"). A player and a bot fill the same three fields: the rules never know who
-# presses (DEC-0004).
+# quatro caixas"). A player and a bot fill the same fields: the rules never know who presses
+# (DEC-0004).
 class_name TickInput
 extends RefCounted
 
@@ -10,3 +10,5 @@ var move := Vector2.ZERO
 var yaw := 0.0
 # A one-tick touch: true only on the tick of the press (DEC-0026 §1).
 var jump := false
+# A one-tick touch too, like the jump (TASK-10.4).
+var dash := false

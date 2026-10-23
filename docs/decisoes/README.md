@@ -49,6 +49,7 @@
 | [DEC-0038](DEC-0038-sessao-de-teste-com-o-simulador.md) | 2026-10-18 | A sessão de teste com o simulador de lag: um `override.cfg` temporário liga a conexão automática do netfox, e a `Main` usa a conexão do simulador | aceita; completa a DEC-0023 §7 |
 | [DEC-0039](DEC-0039-vaga-do-buffer-posicao-no-before-move-e-janela-inclusiva.md) | 2026-10-19 | A vaga do buffer, a posição no `before_move` e a janela inclusiva: a DEC-0022 muda só nisso | aceita; substitui a DEC-0022 só nisso (F-100 §1) |
 | [DEC-0040](DEC-0040-o-tick-no-passo-de-fisica.md) | 2026-10-23 | O tick no passo de física: o `sync_to_physics` do netfox ligado, para a janela, o jogo ao vivo e o replay sem tela darem os mesmos bits em qualquer fps | aceita (F-117) |
+| [DEC-0041](DEC-0041-troca-de-modo-por-comando.md) | 2026-10-23 | A troca de modo por comando no `before_move`: a DEC-0022 muda só nisso | aceita; substitui a DEC-0022 só nisso (F-122) |
 
 ## Propostas — ainda não são regra
 
@@ -65,3 +66,4 @@ Nenhuma proposta aberta.
 | [DEC-0026](DEC-0026-a-rede.md) | Só a frase do §2 que dá o atraso de visão pelo `get_last_known_state()`. O resto continua valendo | [DEC-0031](DEC-0031-tokens-de-leitura-e-base-da-interface.md) | 2026-10-08 |
 | [DEC-0028](DEC-0028-builds-versoes-e-fluxo-de-branch.md) | Só a frase "O push na main não gera build" do §2. O resto continua valendo | [DEC-0032](DEC-0032-hospedagem-do-servidor.md) | 2026-10-10 |
 | [DEC-0022](DEC-0022-arquitetura-detalhada.md) | Só o `jump_pressed_tick` como carimbo do buffer, a assinatura `before_move(state, velocity, input, config, tick)` e a janela estrita do buffer. O resto continua valendo | [DEC-0039](DEC-0039-vaga-do-buffer-posicao-no-before-move-e-janela-inclusiva.md) | 2026-10-19 |
+| [DEC-0022](DEC-0022-arquitetura-detalhada.md) | Só a frase de que o `after_move` é quem atualiza o modo: o `before_move` troca por comando, e o `after_move` por contato, fora de um modo comprometido. O resto continua valendo | [DEC-0041](DEC-0041-troca-de-modo-por-comando.md) | 2026-10-23 |

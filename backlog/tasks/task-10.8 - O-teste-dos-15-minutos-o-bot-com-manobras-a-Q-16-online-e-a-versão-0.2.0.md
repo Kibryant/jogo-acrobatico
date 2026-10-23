@@ -4,7 +4,7 @@ title: 'O teste dos 15 minutos: o bot com manobras, a Q-16 online e a versão 0.
 status: To Refine
 assignee: []
 created_date: '2026-10-19 13:47'
-updated_date: '2026-10-19 13:47'
+updated_date: '2026-10-23 14:20'
 labels:
   - jogo
 milestone: m-1
@@ -90,4 +90,6 @@ Primeiro a Q-16: `bash tools/play_online.sh 100`, subir na cabeça do bot, decid
 
 ## Docs a atualizar
 Com o seu ok e uma linha no `mudancas.md` cada: `movimento.md` (os números ajustados e o resultado do teste da fase); `rede.md` §10 (as manobras do bot e os números da corrida); `pendencias.md` (Q-16 e Q-07 datadas); a DEC da Q-16 e o índice; `roteiro.md` (a fase 1 fechada e o portão da fase 2); `docs/releases/v0.2.0.md`; a vitrine com os números finais, no mesmo link (DEC-0019); o diário e o `registro.md`; a TASK-10 fechada com os dois critérios marcados.
+
+Q-34 (F-123; F-124): no teste dos 15 minutos, o Arthur julga se o ar ainda pede um dash no ar depois da parede e do gancho. Se pedir, uma DEC muda o pilar "compromisso no ar".
 <!-- SECTION:NOTES:END -->

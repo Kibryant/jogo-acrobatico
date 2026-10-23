@@ -1,7 +1,7 @@
 ---
 id: TASK-10.5
 title: 'Corrida na parede e pulo da parede: a assinatura do jogo'
-status: Ready
+status: In Progress
 assignee: []
 created_date: '2026-10-19 13:46'
 updated_date: '2026-10-23 14:55'

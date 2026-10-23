@@ -1,8 +1,8 @@
 # Guards the project settings decided in DEC-0002, DEC-0005, DEC-0022, DEC-0023, DEC-0024,
 # DEC-0026 (and the Main scene of TASK-9), DEC-0028 (the version, and the commit stamped only at
-# export), DEC-0030 (MSAA) and DEC-0031 (the interface base, the one Theme and the physical keys),
-# and the log flush of TASK-9 (F-073 §2). A failure here means project.godot changed: read the
-# DEC before "fixing" the test.
+# export), DEC-0030 (MSAA), DEC-0031 (the interface base, the one Theme and the physical keys) and
+# DEC-0040 (the tick in the physics step), and the log flush of TASK-9 (F-073 §2). A failure here
+# means project.godot changed: read the DEC before "fixing" the test.
 extends GdUnitTestSuite
 
 # DEC-0026 §6: the game opens on the Main, which picks the mode from the arguments.
@@ -151,6 +151,14 @@ func test_netfox_plugins_are_enabled() -> void:
 func test_netfox_ticks_60_times_per_second() -> void:
 	var tickrate: int = ProjectSettings.get_setting("netfox/time/tickrate", 30)
 	assert_int(tickrate).is_equal(60)
+
+
+# DEC-0040: the tick runs in the fixed physics step, so physics_factor is exactly 1 and the window,
+# the live game and the headless replay give the same bits at any frame rate. netfox's own default
+# is false.
+func test_netfox_ticks_in_the_physics_step() -> void:
+	var sync_to_physics: bool = ProjectSettings.get_setting("netfox/time/sync_to_physics", false)
+	assert_bool(sync_to_physics).is_true()
 
 
 # The netfox settings below are read with netfox's own default as the fallback, because the editor

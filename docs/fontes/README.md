@@ -119,3 +119,5 @@ O que chegou ao projeto e como chegou. Uma fonte não muda: só mudam `status`, 
 | [F-113](F-113-arthur-libera-o-pr-rascunho-da-task-10-3.md) | 2026-10-19 | O Arthur libera subir a branch da TASK-10.3 e abrir o PR rascunho, depois de o PC desligar |
 | [F-114](F-114-arthur-assiste-ao-replay-e-ve-pulo-duplo-infinito.md) | 2026-10-23 | O Arthur assiste ao replay com o `--watch`, acha massa e conta que parece ter pulo duplo infinito: a barra zera e volta a 10 a tempo do próximo voo |
 | [F-115](F-115-arthur-libera-o-merge-da-task-10-3-e-deixa-a-stamina-para-o-dash.md) | 2026-10-23 | O Arthur acerta por que a barra não segura o pulo duplo, deixa a Q-33 para o dash e libera o merge do PR #11 com o CI verde |
+| [F-116](F-116-arthur-abre-a-rodada-do-sync-to-physics.md) | 2026-10-23 | O Arthur abre a rodada do `sync_to_physics`, antes da TASK-10.4 |
+| [F-117](F-117-arthur-aprova-ligar-o-sync-to-physics.md) | 2026-10-23 | O Arthur acerta por que a janela se separava e aprova ligar o `sync_to_physics` no plan mode |

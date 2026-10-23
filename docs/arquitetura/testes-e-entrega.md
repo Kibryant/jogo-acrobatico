@@ -141,11 +141,11 @@ Os tempos são os da rodada B depois dos consertos (F-049 §5). O total foi 31,3
 - Em todas, a diferença começa no último bit de um float de 32 bits e fica em micrômetros nos 600 ticks.
 - Nenhum campo discreto se separou: chão, modo, pulos usados e carimbos ficaram iguais em todo tick.
 - Duas janelas a 60 também saíram diferentes entre si.
-- **A causa provável:** no jogo, os ticks rodam no `_process`. Ali, o `physics_factor` vale o tempo do tick dividido pelo do quadro, e o `move_and_slide()` usa o tempo daquele quadro. O tocador sem tela roda dentro de um quadro de física, onde o fator vale exatamente 1 (`network-time.gd`). Duas medidas apontam para isso:
+- **A causa provável:** no jogo, os ticks rodavam no `_process` (até a DEC-0040). Ali, o `physics_factor` vale o tempo do tick dividido pelo do quadro, e o `move_and_slide()` usa o tempo daquele quadro. O tocador sem tela roda dentro de um quadro de física, onde o fator vale exatamente 1 (`network-time.gd`). Duas medidas apontam para isso:
   - a 30 quadros, o laço tinha o mesmo tamanho do gravado, e o rastro se separou assim mesmo;
   - no portão, o mesmo `ReplayWatch`, rodando dentro de um quadro de física, a partir do tick 37 e em laços de 1 tick, refaz byte a byte a gravação feita do tick 1000 em laços de 1 a 3. Nem o tick de começo nem o tamanho do laço separam o rastro; o tempo do quadro do `_process`, sim.
 - **O que isso quer dizer:** o tocador sem tela refaz o arquivo e a si mesmo byte a byte, mas não o que a janela calculou. Um bug que dependa de um micrômetro pode aparecer ao vivo e não no replay.
-- A escolha do `sync_to_physics` volta ao Arthur com estes números antes da TASK-10.4, e uma mudança, se vier, é uma DEC nova (F-025 §5; F-112, contexto).
+- A escolha do `sync_to_physics` voltou ao Arthur com estes números antes da TASK-10.4 (F-025 §5; F-112, contexto). A sonda de 23/10 confirmou a causa com o replay de 11 180 ticks dele: desligado, a janela se separa entre o tick 342 e o 408, com até 5 a 13 µm, a 30, 60 e 144 fps; ligado, sai igual byte a byte em todos. O Arthur ligou o `sync_to_physics` (DEC-0040; F-117).
 
 **O tamanho:**
 - 71 bytes por tick e lutador, com os floats em hexadecimal, mais uns 1,2 KB de cabeçalho.
@@ -258,7 +258,6 @@ O plano Free não impõe nada disso: o pre-push continua sendo a trava, e o CI n
 
 - **O tempo do portão:** na TASK-9, ele levou de 61 a 114 s neste PC, conforme o PC estava quieto ou ocupado, contra o limite de 90 s do pre-push (DEC-0027). Os passos que mais pesam são o import e os testes; a referência soma uns 1,1 s.
   - Na TASK-10.1, medido em silêncio: 72 s na rodada A, 76 s na rodada B e 78 s no fechamento, com os testes em uns 34 s, contra os 90 s (DEC-0027 §1). Com o PC ocupado, o revisor mediu 103 s e 116 s, com a SyncTest de 4 s subindo para 6 a 11 s: o pre-push de quem trabalha com outra coisa aberta pode passar do limite. A divisão do CI da DEC-0027 §4 ainda não precisou entrar.
-- **O `sync_to_physics`:** o ao vivo e o sem tela se separam no último bit (§4, a medição); a escolha volta ao Arthur antes da TASK-10.4.
 - **Q-20:** a assinatura do `.exe`, antes de alguém de fora testar.
 - **Canários** para o formato, o lint, as travas, o import e o log limpo, se um furo aparecer ali.
 - **Um job do CI fora do pre-push,** quando uma camada não couber nos 90 s.

@@ -64,7 +64,7 @@ O input é o pedido do jogador para o tick, como o corpo de uma requisição: o 
 
 | Campo | O que é | Desde |
 |---|---|---|
-| `move` | Para onde andar, até 1, relativo à câmera; a média das amostras dos frames do tick, o padrão do netfox para entrada contínua | esqueleto andante |
+| `move` | Para onde andar, até 1, relativo à câmera; a média das amostras dos frames do tick, o padrão do netfox para entrada contínua. Desde a DEC-0040, o teclado dá uma amostra por passo de física, e a média é de uma amostra num tick normal | esqueleto andante |
 | `yaw` | Para onde a câmera olha; a última amostra dos frames do tick | esqueleto andante |
 | `jump` | Um toque | esqueleto andante |
 | `pitch` | A mira na vertical, para o gancho | fase 1 |
@@ -280,7 +280,7 @@ O modelo bate com o que o Arthur fez a 60 ticks: 72 % sem lag e 13 % com ping 10
   - Desde a TASK-10.1, ela compara o estado inteiro (§4): um campo novo do `FighterState` entra na comparação no dia em que existe, sem ninguém lembrar de pôr.
 - **De tempos em tempos,** o mesmo movimento roda com 2 clientes e o simulador do netfox, para ver a correção com lag. É o `tools/net_run.sh` (§10).
 - **Todo replay de bug vai com o arquivo.** O Sozinho grava cada sessão em `user://replays/`, e o log diz onde (TASK-10.3; `testes-e-entrega.md` §4). Quando o Arthur achar um bug jogando, o arquivo vai junto, e o Claude refaz sem tela com o `tools/replay.sh` (F-044 §1).
-  - O ao vivo roda os ticks no `_process`, e o tocador sem tela, num quadro de física. Hoje os dois se separam no último bit de um float, em micrômetros (`testes-e-entrega.md` §4, a medição). A escolha do `sync_to_physics` volta ao Arthur antes da TASK-10.4.
+  - O jogo ao vivo e o tocador sem tela rodam os ticks no passo de física, e os dois dão os mesmos bits em qualquer fps (DEC-0040). Com os ticks no `_process`, eles se separavam no último bit de um float, em micrômetros (`testes-e-entrega.md` §4, a medição).
 
 ## 9. A Main (DEC-0026 §6)
 

@@ -23,6 +23,7 @@ const LOW_MARK_TYPE := &"StaminaLowMark"
 const MODE_KEYS: Dictionary[int, StringName] = {
 	FighterState.Mode.GROUND: GameText.HUD_MODE_GROUND,
 	FighterState.Mode.AIR: GameText.HUD_MODE_AIR,
+	FighterState.Mode.DASH: GameText.HUD_MODE_DASH,
 }
 
 # The fighter whose displayed state the HUD shows, and the numbers of its match; null until

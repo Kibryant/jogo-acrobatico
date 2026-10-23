@@ -1,17 +1,19 @@
-# The input box of a fighter (visao-geral.md, "O estado em quatro caixas"): move, yaw and jump,
-# which netfox records for every tick through "Input:move", "Input:yaw" and "Input:jump". Whoever
-# owns the fighter fills them through the same two calls, sample_frame() and press_jump(): this
-# PC's keyboard and mouse after use_devices(), or a bot, so the rules never know who presses
-# (DEC-0004). How the frames become the input of a tick is the InputSampler's job (DEC-0026 §1).
+# The input box of a fighter (visao-geral.md, "O estado em quatro caixas"): move, yaw, jump and
+# dash, which netfox records for every tick through "Input:move", "Input:yaw", "Input:jump" and
+# "Input:dash". Whoever owns the fighter fills them through the same calls, sample_frame(),
+# press_jump() and press_dash(): this PC's keyboard and mouse after use_devices(), or a bot, so the
+# rules never know who presses (DEC-0004). How the frames become the input of a tick is the
+# InputSampler's job (DEC-0026 §1).
 # A replay takes the place of all of them through play_rows() (TASK-10.3): each tick's box is then
 # the recorded row, and this script stays the only one that writes the box.
 class_name FighterInput
 extends BaseNetInput
 
-# The three fields netfox records and restores. The core reads them as a TickInput.
+# The fields netfox records and restores. The core reads them as a TickInput.
 var move := Vector2.ZERO
 var yaw := 0.0
 var jump := false
+var dash := false
 
 var _sampler := InputSampler.new()
 # The camera of whoever plays this fighter on this PC; null when nobody here does.
@@ -34,8 +36,8 @@ func _ready() -> void:
 
 
 # netfox emits after_tick and then records the input of that tick (NetworkTime._loop), so the
-# jump set in _on_after_tick is the jump of this tick, and the next tick of the same loop finds
-# it taken.
+# jump and the dash set in _on_after_tick are those of this tick, and the next tick of the same
+# loop finds them taken.
 func _enter_tree() -> void:
 	NetworkTime.after_tick.connect(_on_after_tick)
 
@@ -74,12 +76,18 @@ func press_jump() -> void:
 	_sampler.press_jump()
 
 
+# One press of the dash, a one-touch command like the jump (DEC-0026 §1).
+func press_dash() -> void:
+	_sampler.press_dash()
+
+
 # The input of the tick being simulated, as the core reads it.
 func to_tick_input() -> TickInput:
 	var tick_input := TickInput.new()
 	tick_input.move = move
 	tick_input.yaw = yaw
 	tick_input.jump = jump
+	tick_input.dash = dash
 	return tick_input
 
 
@@ -91,9 +99,15 @@ func _physics_process(_delta: float) -> void:
 	sample_frame(keys, _camera.yaw)
 
 
+# A held key repeats as echo events, which is_action_pressed leaves out: a hold is one press.
 func _unhandled_input(event: InputEvent) -> void:
-	if _camera != null and event.is_action_pressed(&"jump"):
+	if _camera == null:
+		return
+	if event.is_action_pressed(&"jump"):
 		press_jump()
+	# The left Shift, by physical position (project.godot, [input]; movimento.md, "Dash": "Tecla").
+	if event.is_action_pressed(&"dash"):
+		press_dash()
 
 
 # netfox calls this once per tick loop, before its ticks, on the owner's peer (BaseNetInput). A
@@ -106,12 +120,13 @@ func _gather() -> void:
 
 
 # netfox records the box of tick right after this (NetworkTime._loop), so what is set here is the
-# input of tick: the sampler's jump, or the whole row of a replay.
+# input of tick: the sampler's jump and dash, or the whole row of a replay.
 func _on_after_tick(_delta: float, tick: int) -> void:
 	if not is_multiplayer_authority():
 		return
 	if _rows == null:
 		jump = _sampler.take_jump()
+		dash = _sampler.take_dash()
 		return
 	var row := _rows.input_at(tick)
 	if row == null:

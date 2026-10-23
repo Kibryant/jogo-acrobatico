@@ -182,7 +182,8 @@ func test_the_header_says_which_game_recorded_it_with_the_whole_configuration() 
 	assert_str(fields["seed"]).is_equal("0")
 	assert_str(fields["config"]).is_equal(MOVEMENT_V0)
 	assert_str(fields["columns"]).is_equal(
-		"tick:int,loop:int,fighter:int,move.x:f64,move.y:f64,yaw:f64,jump:bool,check:hex8",
+		"tick:int,loop:int,fighter:int,move.x:f64,move.y:f64,yaw:f64,jump:bool,dash:bool,"
+		+ "check:hex8",
 	)
 	# One line per field of MovementData, typed, with the .tres's value in its cell.
 	var resource: Resource = load(MOVEMENT_V0)
@@ -255,7 +256,7 @@ func test_another_format_tickrate_arena_or_settings_cannot_play() -> void:
 func test_a_column_a_line_or_a_cell_this_build_cannot_read_cannot_play() -> void:
 	var text := _file().to_text()
 	var columns := ReplayFile.this_build().header["columns"]
-	var unknown := _with_header(text, "columns", columns + ",dash:bool")
+	var unknown := _with_header(text, "columns", columns + ",grapple:bool")
 	unknown = unknown.replace("0123abcd\n", "0123abcd,0\n")
 	var retyped := _with_header(text, "columns", columns.replace("yaw:f64", "yaw:int"))
 	var lines := text.split("\n")
@@ -265,7 +266,7 @@ func test_a_column_a_line_or_a_cell_this_build_cannot_read_cannot_play() -> void
 	lines[broken_at] = ReplayFile.CELL_SEPARATOR.join(cells)
 	var broken := "\n".join(lines)
 	var cases: Dictionary[String, String] = {
-		"column dash": unknown,
+		"column grapple": unknown,
 		"column yaw": retyped,
 		"line %d is broken" % (broken_at + 1): broken,
 		"column jump": _with_cell(text, 1, _column("jump"), "2"),

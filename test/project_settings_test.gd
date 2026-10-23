@@ -11,13 +11,15 @@ const MAIN_SCENE := "res://main/main.tscn"
 const GAME_THEME := "res://ui/theme/game_theme.tres"
 
 # DEC-0031 §8: the movement keys by physical position, so WASD sits in the same place on ABNT2,
-# AZERTY and Dvorak (TASK-9, criterion 7).
+# AZERTY and Dvorak (TASK-9, criterion 7). The dash is the left Shift (TASK-10.4, choice 2, F-121;
+# movimento.md, "Dash": "Tecla").
 const PHYSICAL_KEYS: Dictionary[StringName, Key] = {
 	&"move_forward": KEY_W,
 	&"move_back": KEY_S,
 	&"move_left": KEY_A,
 	&"move_right": KEY_D,
 	&"jump": KEY_SPACE,
+	&"dash": KEY_SHIFT,
 }
 
 const UNSAFE_ACCESS_WARNINGS: Array[String] = [
@@ -332,6 +334,25 @@ func test_the_movement_keys_are_bound_by_physical_position() -> void:
 			% [action, OS.get_keycode_string(expected), bound]
 		)
 		assert_bool(bound.has(expected)).override_failure_message(message).is_true()
+
+
+# TASK-10.4, choice 2 (F-121): the dash is the left Shift, not either Shift. The keyboard reports
+# both Shifts with the same physical keycode and tells them apart by location, and the binding's
+# location leaves the right one out.
+func test_the_dash_is_the_left_shift_and_not_the_right_one() -> void:
+	var left := _key_event(KEY_SHIFT, KEY_LOCATION_LEFT)
+	var right := _key_event(KEY_SHIFT, KEY_LOCATION_RIGHT)
+	assert_bool(left.is_action_pressed(&"dash")).override_failure_message("left Shift").is_true()
+	assert_bool(right.is_action_pressed(&"dash")).override_failure_message("right Shift").is_false()
+
+
+# A key pressed as the operating system reports it: by physical position, with its location.
+func _key_event(physical: Key, location: KeyLocation) -> InputEventKey:
+	var event := InputEventKey.new()
+	event.physical_keycode = physical
+	event.location = location
+	event.pressed = true
+	return event
 
 
 # Every autoload in ProjectSettings, by name, with its path as written in project.godot.

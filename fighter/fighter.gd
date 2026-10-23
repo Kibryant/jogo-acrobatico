@@ -18,7 +18,7 @@ const OTHER_TONE := Color(0.16, 0.16, 0.18)
 # 60 ticks, and the body goes back right after.
 const FLOOR_PROBE_SPEED := 0.05
 
-## The input box, recorded by netfox as Input:move, Input:yaw and Input:jump.
+## The input box, recorded by netfox as Input:move, Input:yaw, Input:jump and Input:dash.
 @export var input: FighterInput
 ## netfox's node that records the boxes on every tick and sends them over the network.
 @export var synchronizer: RollbackSynchronizer

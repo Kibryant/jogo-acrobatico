@@ -5,10 +5,13 @@
 class_name FighterState
 extends RefCounted
 
-# The state machine as data (DEC-0022): the mode and the tick it began.
+# The state machine as data (DEC-0022): the mode and the tick it began. GROUND and AIR change by
+# contact, in after_move; DASH is a committed mode, which a command starts and only its own rule
+# ends, both in before_move (DEC-0041).
 enum Mode {
 	GROUND,
 	AIR,
+	DASH = 2,
 }
 
 # The stamp of "never": far enough in the past that no window reaches it, so a fresh state
@@ -39,6 +42,13 @@ var stamina_spent_tick := NEVER
 # The tick of the double jump of this flight; the floor clears it. The key its visual signal
 # will play by, once per event (DEC-0031; TASK-10.4).
 var double_jump_tick := NEVER
+# The tick the last dash started: the dash lasts dash_ticks from it, and the next one may start
+# dash_ticks + dash_cooldown_ticks after it, so the cooldown counts from the end (movimento.md,
+# "Dash": "Recarga"). It stays after the dash; NEVER is a dash that never happened.
+var dash_tick := NEVER
+# Where the last dash goes: a horizontal unit vector, fixed on its first tick (movimento.md,
+# "Dash": "Direção").
+var dash_direction := Vector3.ZERO
 
 
 # An equal and independent state: the rules change the copy, never the state they receive.
@@ -55,4 +65,6 @@ func copy() -> FighterState:
 	other.stamina_at_spend = stamina_at_spend
 	other.stamina_spent_tick = stamina_spent_tick
 	other.double_jump_tick = double_jump_tick
+	other.dash_tick = dash_tick
+	other.dash_direction = dash_direction
 	return other

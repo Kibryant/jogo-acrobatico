@@ -6,7 +6,8 @@
 ; Change a number here only together with the code that needs it, and record the trace again
 ; (bash tools/record_reference.sh), saying why in the commit message. The five numbers of the
 ; double jump and the stamina came on purpose with the code that reads them, on 2026-10-19
-; (TASK-10.1, criterion 8).
+; (TASK-10.1, criterion 8), and the five numbers of the dash on 2026-10-23 (TASK-10.4): the route
+; never presses the dash, so its trace did not move.
 
 [ext_resource type="Script" path="res://data/movement_data.gd" id="1_yx5js"]
 
@@ -30,3 +31,8 @@ double_jump_cost = 10.0
 stamina_max = 100.0
 stamina_wait_ms = 800
 stamina_regen_per_s = 30.0
+dash_distance_m = 4.0
+dash_ms = 200
+dash_exit_speed_mps = 7.0
+dash_cooldown_ms = 400
+dash_cost = 15.0

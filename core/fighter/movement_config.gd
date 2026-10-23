@@ -44,6 +44,18 @@ var stamina_max: float
 # Points regained on each tick after the wait.
 var stamina_regen_per_tick: float
 
+# The dash (movimento.md, "Dash"). It lasts dash_ticks, the press tick first, and the next one
+# may start dash_cooldown_ticks after its end.
+var dash_ticks: int
+var dash_cooldown_ticks: int
+# m/s: the distance over the dash's ticks, so the rounding of the duration never moves the
+# distance.
+var dash_speed: float
+# m/s: the horizontal speed of the tick right after the dash, in the dash's direction.
+var dash_exit_speed: float
+# Stamina points, paid on the press tick.
+var dash_cost: float
+
 
 # The jump is two parabolas sampled on the ticks: the body is at the apex, jump_height_m up, at
 # the end of the rise_ticks-th tick counting the press, and back on the floor fall_ticks later.
@@ -61,6 +73,8 @@ static func create(data: MovementData, tickrate: int) -> MovementConfig:
 	config.fall_ticks = Ticks.from_ms(data.jump_fall_ms, tickrate)
 	config.coyote_ticks = Ticks.from_ms(data.coyote_ms, tickrate)
 	config.buffer_ticks = Ticks.from_ms(data.buffer_ms, tickrate)
+	config.dash_ticks = Ticks.from_ms(data.dash_ms, tickrate)
+	config.dash_cooldown_ticks = Ticks.from_ms(data.dash_cooldown_ms, tickrate)
 	config.run_speed = data.run_speed_mps
 	config.max_fall_speed = data.max_fall_speed_mps
 	config.floor_max_angle = deg_to_rad(data.max_slope_deg)
@@ -71,7 +85,14 @@ static func create(data: MovementData, tickrate: int) -> MovementConfig:
 	# ticks, and the gate runs it over every movement .tres under data/, before any build. This
 	# assert, gone from a release build, only guards a debug run: data that skipped the check, or
 	# another tickrate.
-	for ticks: int in [config.accel_ticks, config.stop_ticks, config.rise_ticks, config.fall_ticks]:
+	var dividing: Array[int] = [
+		config.accel_ticks,
+		config.stop_ticks,
+		config.rise_ticks,
+		config.fall_ticks,
+		config.dash_ticks,
+	]
+	for ticks: int in dividing:
 		assert(ticks > 0, "a time the rules divide by became 0 ticks at %d ticks" % tickrate)
 	config.ground_accel_per_tick = config.run_speed / config.accel_ticks
 	config.stop_decel_per_tick = config.run_speed / config.stop_ticks
@@ -98,4 +119,11 @@ static func create(data: MovementData, tickrate: int) -> MovementConfig:
 	config.double_jump_cost = data.double_jump_cost
 	config.stamina_max = data.stamina_max
 	config.stamina_regen_per_tick = data.stamina_regen_per_s / tickrate
+
+	# The dash covers its distance in its whole ticks (movimento.md, "Dash": "Deriva a velocidade:
+	# 20 m/s"): 4 m over 12 ticks at 60 is 20 m/s, and over 6 ticks at 30 too. A duration that
+	# rounds to another tick count changes the speed, never the distance (DEC-0004, rule 3).
+	config.dash_speed = data.dash_distance_m * tickrate / config.dash_ticks
+	config.dash_exit_speed = data.dash_exit_speed_mps
+	config.dash_cost = data.dash_cost
 	return config

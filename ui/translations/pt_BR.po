@@ -35,6 +35,10 @@ msgstr "No chão"
 msgid "HUD_MODE_AIR"
 msgstr "No ar"
 
+# The HUD's mode of the fighter: the 200 ms of the dash, from the press to its end (TASK-10.4).
+msgid "HUD_MODE_DASH"
+msgstr "No dash"
+
 # Every tick of the replay played in the window has played (--watch; TASK-10.3).
 msgid "REPLAY_ENDED"
 msgstr "Fim do replay. Feche a janela para sair."

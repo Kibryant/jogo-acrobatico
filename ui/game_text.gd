@@ -13,6 +13,7 @@ const SERVER_CLOSED := &"NET_SERVER_CLOSED"
 # The mode of the fighter, as the HUD shows it (TASK-10.2).
 const HUD_MODE_GROUND := &"HUD_MODE_GROUND"
 const HUD_MODE_AIR := &"HUD_MODE_AIR"
+const HUD_MODE_DASH := &"HUD_MODE_DASH"
 # Every row of a replay played in the window has played (--watch; TASK-10.3).
 const REPLAY_ENDED := &"REPLAY_ENDED"
 ## Every key the code shows; StatusMessage and the HUD take no other.
@@ -24,6 +25,7 @@ const KEYS: Array[StringName] = [
 	SERVER_CLOSED,
 	HUD_MODE_GROUND,
 	HUD_MODE_AIR,
+	HUD_MODE_DASH,
 	REPLAY_ENDED,
 ]
 ## The messages of each language, by locale.

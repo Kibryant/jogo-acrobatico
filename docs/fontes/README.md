@@ -134,3 +134,4 @@ O que chegou ao projeto e como chegou. Uma fonte não muda: só mudam `status`, 
 | [F-128](F-128-arthur-aprova-o-plano-da-parede.md) | 2026-10-23 | O Arthur aprova o plano da TASK-10.5, a corrida na parede, no plan mode: a DEC-0042, a sonda só de teste, o momento no ar e os números v0 |
 | [F-129](F-129-arthur-decide-a-emenda-da-parede.md) | 2026-10-23 | O Arthur acerta o problema da emenda e decide que a corrida continua numa emenda da parede |
 | [F-130](F-130-arthur-destrava-a-linha-do-cos-80.md) | 2026-10-23 | O Arthur acerta por que a linha travada do cos 80° nunca passa e a destrava para correção |
+| [F-131](F-131-arthur-joga-a-parede.md) | 2026-10-23 | O Arthur joga a corrida na parede: gosta de andar e pular entre as paredes, acha que a cápsula só gruda, e quer voltar pelo corredor sem desgrudar |

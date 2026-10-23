@@ -5,16 +5,19 @@
 # tick again from a restored state (DEC-0004, rule 1; DEC-0022). Every number comes from the
 # MovementConfig, already in ticks.
 # The mode changes in two places (DEC-0041): by command in before_move, where the press comes out
-# (GROUND to DASH), and by contact in after_move, where the engine's verdict comes in (GROUND and
-# AIR). A committed mode, the dash, only ends by its own rule, in before_move.
+# (GROUND to DASH, the wall jump from WALL_RUN to AIR), and by contact in after_move, where the
+# engine's verdict comes in (GROUND, AIR and the entry into WALL_RUN). A committed mode only ends
+# by its own rule: the dash in before_move; the wall run by its time or the wall jump in
+# before_move, and by the contact it loses in after_move (movimento.md, "Corrida na parede").
 class_name Movement
 extends RefCounted
 
 
 # Puts the presses in the slot and ends a dash whose ticks ran out; inside a dash nothing else
-# happens. Otherwise it applies the acceleration and gravity, then fires the slot: the jump from
-# the floor or the coyote, otherwise the double jump, or the dash from the floor. The position is
-# unused until the grapple aims from it (DEC-0039; TASK-10.6).
+# happens. A wall run runs on its wall, or ends by its time. Otherwise it applies the acceleration
+# and gravity, then fires the slot: the jump from the floor or the coyote, otherwise the double
+# jump, or the dash from the floor. The position is unused until the grapple aims from it
+# (DEC-0039; TASK-10.6).
 static func before_move(
 	state: FighterState,
 	_position: Vector3,
@@ -36,6 +39,14 @@ static func before_move(
 	if not _within(next.buffered_tick, tick, config.buffer_ticks):
 		# A press whose window closed never fires, so it leaves the slot (DEC-0039).
 		_clear_slot(next)
+	if next.mode == FighterState.Mode.WALL_RUN:
+		if tick - next.mode_since < config.wall_run_max_ticks:
+			return _wall_run(next, velocity, config, tick)
+		# The end by time (movimento.md, "Corrida na parede": "Duração máxima"): from this tick
+		# the body is in the air with the double jump the entry renewed, and the wall has no
+		# coyote, so a press now is the double jump ("Pulo da parede no voo").
+		next.mode = FighterState.Mode.AIR
+		next.mode_since = tick
 	# On the floor the body rests on it; the engine keeps it there and slides it along ramps.
 	var vertical := 0.0 if state.on_floor else _gravity(velocity.y, config)
 	var current := Vector3(velocity.x, 0.0, velocity.z)
@@ -88,21 +99,25 @@ static func before_move(
 	return _plan(next, horizontal, vertical)
 
 
-# Reads the engine's verdict: the floor renews the jump and the double jump, and leaving the floor
-# stamps the tick the coyote counts from. The contact changes the mode between GROUND and AIR, but
-# never ends a committed mode: the dash goes on off a ledge (DEC-0041 §3).
+# Reads the engine's verdict: the floor renews the jump and the double jump, clears the last wall
+# and ends a wall run, and leaving the floor stamps the tick the coyote counts from. The contact
+# changes the mode between GROUND and AIR, but never ends the dash: it goes on off a ledge
+# (DEC-0041 §3). In the air, the wall facts start, carry on or end a wall run.
 static func after_move(
 	state: FighterState,
 	facts: MoveFacts,
-	_config: MovementConfig,
+	config: MovementConfig,
 	tick: int,
 ) -> FighterState:
 	var next := state.copy()
 	var by_contact := state.mode != FighterState.Mode.DASH
 	if facts.on_floor:
-		# Touching the floor renews the double jump (movimento.md, "Pulo e ar").
+		# Touching the floor renews the double jump (movimento.md, "Pulo e ar"), and the same wall
+		# accepts a run again ("Corrida na parede": "Mesma parede").
 		next.jumps_used = 0
 		next.double_jump_tick = FighterState.NEVER
+		next.wall_normal = Vector3.ZERO
+		next.wall_id = &""
 		if not state.on_floor and by_contact:
 			next.mode = FighterState.Mode.GROUND
 			next.mode_since = tick
@@ -112,6 +127,8 @@ static func after_move(
 			next.mode_since = tick
 		next.left_floor_tick = tick
 	next.on_floor = facts.on_floor
+	if by_contact and not facts.on_floor:
+		_read_wall(next, facts, config, tick)
 	return next
 
 
@@ -193,7 +210,10 @@ static func _world(move: Vector2, yaw: float) -> Vector3:
 
 # The target is run_speed along the input, turned by the yaw. The speed moves toward it by a
 # fixed amount per tick (movimento.md, "Chão"). Without input the floor stops the body and the
-# air keeps its speed (movimento.md, "Princípios": speed carries between maneuvers).
+# air keeps its speed (movimento.md, "Princípios": speed carries between maneuvers). In the air
+# the target keeps the speed the body has when it is above run_speed, so the input turns and
+# brakes it only by the air acceleration and never cuts the excess; on the floor the excess falls
+# by the ground acceleration (movimento.md, "Pulo e ar": "Controle no ar"; F-127).
 static func _horizontal(
 	current: Vector3,
 	input: TickInput,
@@ -205,8 +225,123 @@ static func _horizontal(
 		if state.on_floor:
 			return current.move_toward(Vector3.ZERO, config.stop_decel_per_tick)
 		return current
-	var gain := config.ground_accel_per_tick if state.on_floor else config.air_accel_per_tick
-	return current.move_toward(_world(move, input.yaw) * config.run_speed, gain)
+	if state.on_floor:
+		return current.move_toward(
+			_world(move, input.yaw) * config.run_speed,
+			config.ground_accel_per_tick,
+		)
+	var speed := maxf(config.run_speed, current.length())
+	return current.move_toward(_world(move, input.yaw) * speed, config.air_accel_per_tick)
+
+
+# A tick of the wall run (movimento.md, "Corrida na parede"), committed: the input neither turns
+# nor brakes it. The speed along the wall is brought to wall_run_speed, or kept from a faster
+# entry up to wall_max_speed, in the direction it has along the wall's plane. The height holds
+# while the run is younger than wall_hold_ticks; then on the k-th slide tick the vertical is
+# -k times wall_slide_gravity_per_tick, set before the move ("Descida, tick a tick"). A jump in
+# the slot is the wall jump: the jump's parabola for its own height, the push out of the wall
+# along its normal, the speed along kept; it is the first jump of the flight, the double jump
+# stays, and the body is in the air from this tick ("Pulo da parede"; DEC-0041). A press made up
+# to the buffer before the touch fires here, on the first tick of the run (DEC-0039).
+static func _wall_run(
+	next: FighterState,
+	velocity: Vector3,
+	config: MovementConfig,
+	tick: int,
+) -> MovePlan:
+	var along := _along_wall(Vector3(velocity.x, 0.0, velocity.z), next.wall_normal)
+	var speed := clampf(along.length(), config.wall_run_speed, config.wall_max_speed)
+	var horizontal := along.normalized() * speed
+	var age := tick - next.mode_since
+	var vertical := 0.0
+	if age >= config.wall_hold_ticks:
+		vertical = -(age - config.wall_hold_ticks + 1) * config.wall_slide_gravity_per_tick
+	if next.buffered_command == FighterCommand.JUMP:
+		vertical = config.wall_jump_speed
+		horizontal += next.wall_normal * config.wall_jump_push
+		next.jumps_used = 1
+		next.wall_jump_tick = tick
+		next.mode = FighterState.Mode.AIR
+		next.mode_since = tick
+		_clear_slot(next)
+	return _plan(next, horizontal, vertical)
+
+
+# The wall facts of a tick in the air (DEC-0042): they end, carry on or start a wall run. A run
+# ends when the wall is lost, at its edge; when the body is slowed below the entry speed along
+# it, by an obstacle; or when another collider beyond the same-face angle takes over, another
+# face, where a new run may start on the same tick. Another collider within that angle, met
+# without losing contact, is a seam: the same run goes on the next block, with its clock and
+# without a new double jump (F-129). The same collider carries the run on whatever its normal
+# reads, as on the rounded edge before a corner, and the state keeps the face's normal. Out of a
+# run, a wall starts one ("Como entra").
+static func _read_wall(
+	next: FighterState,
+	facts: MoveFacts,
+	config: MovementConfig,
+	tick: int,
+) -> void:
+	var touching := not facts.wall_id.is_empty()
+	touching = touching and absf(facts.wall_normal.y) <= config.wall_max_normal_y
+	var normal := _flat(facts.wall_normal)
+	if next.mode == FighterState.Mode.WALL_RUN:
+		if not touching:
+			_leave_wall(next, tick)
+			return
+		if facts.wall_id != next.wall_id:
+			if normal.dot(next.wall_normal) < config.wall_same_face_cos:
+				_leave_wall(next, tick)
+				_enter_wall(next, facts, normal, config, tick)
+				return
+			next.wall_id = facts.wall_id
+			next.wall_normal = normal
+		var horizontal := Vector3(facts.velocity.x, 0.0, facts.velocity.z)
+		if _along_wall(horizontal, next.wall_normal).length() < config.wall_entry_speed:
+			_leave_wall(next, tick)
+		return
+	if next.mode == FighterState.Mode.AIR and touching:
+		_enter_wall(next, facts, normal, config, tick)
+
+
+# The entry (movimento.md, "Corrida na parede": "Como entra", "O que decide a entrada", "Mesma
+# parede"): a wall that is not the last one, the same collider within the same-face angle, with
+# the speed along its plane at least the entry speed. It renews the double jump; the next tick
+# zeroes the vertical and sets the speed (_wall_run).
+static func _enter_wall(
+	next: FighterState,
+	facts: MoveFacts,
+	normal: Vector3,
+	config: MovementConfig,
+	tick: int,
+) -> void:
+	var same := facts.wall_id == next.wall_id
+	if same and normal.dot(next.wall_normal) >= config.wall_same_face_cos:
+		return
+	var horizontal := Vector3(facts.velocity.x, 0.0, facts.velocity.z)
+	if _along_wall(horizontal, normal).length() < config.wall_entry_speed:
+		return
+	next.mode = FighterState.Mode.WALL_RUN
+	next.mode_since = tick
+	next.jumps_used = 0
+	next.double_jump_tick = FighterState.NEVER
+	next.wall_id = facts.wall_id
+	next.wall_normal = normal
+
+
+static func _leave_wall(next: FighterState, tick: int) -> void:
+	next.mode = FighterState.Mode.AIR
+	next.mode_since = tick
+
+
+# The horizontal velocity along a wall: its part on the plane of the flattened normal.
+static func _along_wall(horizontal: Vector3, normal: Vector3) -> Vector3:
+	var flat := _flat(normal)
+	return horizontal - flat * horizontal.dot(flat)
+
+
+# A normal laid flat: the horizontal unit vector the wall faces.
+static func _flat(normal: Vector3) -> Vector3:
+	return Vector3(normal.x, 0.0, normal.z).normalized()
 
 
 # The double jump turns the whole horizontal velocity to the pointed direction, relative to the

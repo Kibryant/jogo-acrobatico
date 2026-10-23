@@ -240,10 +240,13 @@ func _base_config() -> MovementConfig:
 
 
 # The movement numbers of a flight: a config of its own, so movement_v0.tres stays untouched.
+# The probe measures the engine, so no flight ever starts a wall run: the rule came after it, and
+# the SyncTest scenario parede proves the rule under the rollback (TASK-10.5, criterion 7).
 # Without gravity the vertical stays at zero. A flight with input reaches the input's target in
 # one tick, every tick: the stick's push.
 func _config(flight: Flight) -> MovementConfig:
 	var config := _base_config()
+	config.wall_entry_speed = INF
 	if not flight.gravity:
 		config.rise_gravity_per_tick = 0.0
 		config.fall_gravity_per_tick = 0.0

@@ -2,7 +2,8 @@
 # (replay_session.gd) plays again through the headless player (tools/replay_run.gd) with the same
 # state trace, byte for byte, and twice with the same sha256. The session is the hard case: a yaw
 # with many digits, moves that are the mean of 2 or 3 frames, loops of 2 and 3 ticks, double
-# jumps and dashes (TASK-10.4, criterion 6); the test proves that before it compares. The check
+# jumps, dashes (TASK-10.4, criterion 6) and a wall run with a wall jump (TASK-10.5, criterion 7);
+# the test proves that before it compares. The check
 # column says the first tick a replay leaves the live game, the player plays the movement numbers
 # of the header, a jump of netfox's clock plays as the same jump, and the box of every tick is the
 # row, as recorded.
@@ -102,6 +103,8 @@ func test_a_recorded_session_plays_again_byte_for_byte() -> void:
 	assert_int(session.double_jumps).override_failure_message("no double jump").is_greater(0)
 	assert_int(dash_presses).override_failure_message("no dash in the file").is_greater(0)
 	assert_int(session.dashes).override_failure_message("no dash came out").is_greater(0)
+	assert_int(session.wall_runs).override_failure_message("no wall run").is_greater(0)
+	assert_int(session.wall_jumps).override_failure_message("no wall jump").is_greater(0)
 	assert_int(replay.first_tick()).is_equal(ReplaySession.FIRST_TICK)
 	assert_int(replay.tick_count()).is_equal(ReplaySession.TICKS)
 	assert_str(replay.header["config"]).is_equal(Match.MOVEMENT_DATA_PATH)
@@ -114,7 +117,8 @@ func test_a_recorded_session_plays_again_byte_for_byte() -> void:
 			"Replay round trip: %s; twice in %d ms with the setup; turned=%d fractional=%d"
 			% [once.describe(), Time.get_ticks_msec() - started, turned, fractional]
 			+ " longest_loop=%d double_jumps=%d" % [longest, session.double_jumps]
-			+ " dashes=%d" % session.dashes
+			+ " dashes=%d wall_runs=%d" % [session.dashes, session.wall_runs]
+			+ " wall_jumps=%d" % session.wall_jumps
 		)
 	)
 	var message := "the replay left the recording: %s" % _difference(session.trace, once.trace)

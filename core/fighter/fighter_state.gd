@@ -7,11 +7,14 @@ extends RefCounted
 
 # The state machine as data (DEC-0022): the mode and the tick it began. GROUND and AIR change by
 # contact, in after_move; DASH is a committed mode, which a command starts and only its own rule
-# ends, both in before_move (DEC-0041).
+# ends, both in before_move (DEC-0041). WALL_RUN is committed too, the input neither turns nor
+# brakes it: the contact starts it in after_move, and it ends by its time or the wall jump in
+# before_move, or by the contact lost in after_move (DEC-0041; movimento.md, "Corrida na parede").
 enum Mode {
 	GROUND,
 	AIR,
 	DASH = 2,
+	WALL_RUN = 3,
 }
 
 # The stamp of "never": far enough in the past that no window reaches it, so a fresh state
@@ -49,6 +52,16 @@ var dash_tick := NEVER
 # Where the last dash goes: a horizontal unit vector, fixed on its first tick (movimento.md,
 # "Dash": "Direção").
 var dash_direction := Vector3.ZERO
+# The wall of the run now, or of the last one (DEC-0042 §2): the flattened unit normal of its face
+# and its identity, the collider's node path relative to the Arena, never an engine id. They stay
+# after the run, so the same wall refuses a new one, until the floor clears them (movimento.md,
+# "Corrida na parede": "Mesma parede"). A seam passes the run to the next block of the plane
+# (F-129).
+var wall_normal := Vector3.ZERO
+var wall_id: StringName = &""
+# The tick of the last wall jump: the key its visual signal plays by (DEC-0031). It stays after
+# the jump; NEVER is a wall jump that never happened.
+var wall_jump_tick := NEVER
 
 
 # An equal and independent state: the rules change the copy, never the state they receive.
@@ -67,4 +80,7 @@ func copy() -> FighterState:
 	other.double_jump_tick = double_jump_tick
 	other.dash_tick = dash_tick
 	other.dash_direction = dash_direction
+	other.wall_normal = wall_normal
+	other.wall_id = wall_id
+	other.wall_jump_tick = wall_jump_tick
 	return other

@@ -8,3 +8,8 @@ extends RefCounted
 var on_floor := false
 # m/s, after the collision.
 var velocity := Vector3.ZERO
+# The wall the body touches after the move (DEC-0042 §1): the normal the engine reports and the
+# collider's node path relative to the Arena; Vector3.ZERO and &"" without one. The adapter reads
+# them from the move's own collisions, and during a wall run from its test-only probe.
+var wall_normal := Vector3.ZERO
+var wall_id: StringName = &""

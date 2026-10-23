@@ -29,6 +29,7 @@ const MODE_KEYS: Dictionary[int, StringName] = {
 	FighterState.Mode.GROUND: GameText.HUD_MODE_GROUND,
 	FighterState.Mode.AIR: GameText.HUD_MODE_AIR,
 	FighterState.Mode.DASH: GameText.HUD_MODE_DASH,
+	FighterState.Mode.WALL_RUN: GameText.HUD_MODE_WALL_RUN,
 }
 
 # The fighter whose displayed state the HUD shows, and the numbers of its match; null until

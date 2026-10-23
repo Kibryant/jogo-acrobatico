@@ -1,12 +1,14 @@
 # The cues of the maneuvers (DEC-0031 §6; TASK-10.4): a puff under the feet when a double jump
-# comes out and a trail behind a dash, each played once per event, by its key: the fighter, the
-# kind and the stamp, the tick the state carries for it. Like the `key` of a list in React, the
+# comes out, a trail behind a dash and a mark on the wall a wall jump leaves (TASK-10.5), each
+# played once per event, by its key: the fighter, the kind and the stamp, the tick the state
+# carries for it. Like the `key` of a list in React, the
 # key says "this one already showed": after every tick loop it reads the displayed state, and a
 # key that already played never plays again, however many times a rollback runs its tick again.
 # A cue never undoes either: a rollback that takes the event away leaves it showing (DEC-0031 §6).
 # Only visual in the v0; the sound waits for a licensed pack (DEC-0029; Q-32). The cue wears the
 # fighter's own neutral tone, never a colour of the combat tokens (DEC-0031; visual-e-audio.md),
 # and its sizes and times come from the movement numbers: the capsule, the dash and the jump.
+# The mark of the wall jump is the puff stood up against the wall: Claude's v0 reading (DEC-0017).
 # It also counts, for the SyncTest, the events the simulation made on its fresh ticks: there,
 # with the rollback forced on every tick, the cues presented must equal the events (DEC-0031 §6;
 # rede.md §4).
@@ -17,6 +19,7 @@ extends Node
 enum Kind {
 	DOUBLE_JUMP,
 	DASH,
+	WALL_JUMP,
 }
 
 ## The cue's opacity when it appears; it fades to nothing. Claude's v0 reading (DEC-0017): seen
@@ -72,9 +75,10 @@ func forget(fighter: Fighter) -> void:
 	_fighters.erase(fighter)
 
 
-# The events fighter's state shows now: the double jump of this flight, by its stamp, and the
-# dash while it lasts, by the tick it began. A dash_tick that stays after the dash shows no cue,
-# so a fighter seen for the first time long after its dash never plays an old trail.
+# The events fighter's state shows now: the double jump of this flight, by its stamp; the dash
+# while it lasts, by the tick it began; and the wall jump during the flight it began, the air
+# since its stamp. A dash_tick or a wall_jump_tick that stays after its maneuver shows no cue, so
+# a fighter seen for the first time long after never plays an old one.
 static func shown_events(fighter: Fighter) -> Array[Event]:
 	var shown: Array[Event] = []
 	var state := fighter.state
@@ -82,6 +86,10 @@ static func shown_events(fighter: Fighter) -> Array[Event]:
 		shown.append(Event.new(fighter, Kind.DOUBLE_JUMP, state.double_jump_tick))
 	if state.mode == FighterState.Mode.DASH:
 		shown.append(Event.new(fighter, Kind.DASH, state.dash_tick))
+	var in_its_flight := state.mode == FighterState.Mode.AIR
+	if in_its_flight and state.wall_jump_tick != FighterState.NEVER:
+		if state.mode_since == state.wall_jump_tick:
+			shown.append(Event.new(fighter, Kind.WALL_JUMP, state.wall_jump_tick))
 	return shown
 
 
@@ -131,10 +139,13 @@ func _forget_old(keys: Dictionary[String, int]) -> void:
 
 
 func _draw(fighter: Fighter, kind: Kind) -> void:
-	if kind == Kind.DASH:
-		add_child(Trail.new(fighter, _config))
-	else:
-		add_child(Puff.new(fighter, _config))
+	match kind:
+		Kind.DASH:
+			add_child(Trail.new(fighter, _config))
+		Kind.WALL_JUMP:
+			add_child(Puff.new(fighter, _config, fighter.state.wall_normal))
+		_:
+			add_child(Puff.new(fighter, _config, Vector3.ZERO))
 
 
 # One event of a fighter, with its key: the fighter, the kind and the stamp.
@@ -226,7 +237,8 @@ class Trail:
 
 
 # The puff of a double jump: a flat disc under the feet where the jump came out, growing from the
-# capsule's radius while it fades, over the jump's rise.
+# capsule's radius while it fades, over the jump's rise. Given a wall's normal, it is the mark of
+# a wall jump instead: the same disc stood up on the wall, beside the body's middle.
 class Puff:
 	extends MeshInstance3D
 
@@ -236,8 +248,8 @@ class Puff:
 	var _material: StandardMaterial3D
 
 
-	func _init(fighter: Fighter, config: MovementConfig) -> void:
-		name = "DoubleJumpPuff"
+	func _init(fighter: Fighter, config: MovementConfig, wall_normal: Vector3) -> void:
+		name = "DoubleJumpPuff" if wall_normal == Vector3.ZERO else "WallJumpMark"
 		_radius = config.capsule_radius
 		_life_s = float(config.rise_ticks) / config.tickrate
 		var disc := CylinderMesh.new()
@@ -250,6 +262,11 @@ class Puff:
 		cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 		top_level = true
 		position = fighter.global_position
+		if wall_normal != Vector3.ZERO:
+			# The disc's axis along the normal, its face on the wall where the body touched it.
+			var side := Vector3.UP.cross(wall_normal).normalized()
+			basis = Basis(side, wall_normal, side.cross(wall_normal))
+			position += Vector3.UP * config.capsule_height / 2.0 - wall_normal * _radius
 		_grow(0.0)
 
 
@@ -265,4 +282,4 @@ class Puff:
 
 	func _grow(share: float) -> void:
 		var radius := _radius * lerpf(1.0, PUFF_GROWTH, share)
-		scale = Vector3(radius, 1.0, radius)
+		basis = basis.orthonormalized().scaled_local(Vector3(radius, 1.0, radius))

@@ -98,6 +98,7 @@ Cada número tem uma origem, e nem todos têm a mesma firmeza; a vitrine mostra 
 | Fins da corrida | tempo, borda, chão, trava abaixo de 4 m/s ou pulo | — | O mínimo de entrada serve de trava, sem número novo. Ao fim por tempo ou contato, cai no ar com o pulo duplo disponível. Leitura v0 do Claude (F-128) |
 | Pulo da parede no voo | conta como o primeiro pulo | — | O pulo duplo continua disponível. Não existe coyote da parede. Um pulo guardado até 150 ms antes de encostar sai no primeiro tick da corrida (DEC-0016). Leitura v0 do Claude (F-128) |
 | Mesma parede, em números | o mesmo colisor com a normal a até 10°, inclusive | ° | 10° separa as faces de uma caixa; a identidade é o caminho do nó (DEC-0042; F-127). A câmera não inclina no v0 |
+| Emenda | a corrida continua | — | Um colisor novo no mesmo plano (normal a até 10°), sem perder o contato, é a mesma corrida: o cronômetro segue, o pulo duplo não renova, e o `wall_id` passa a ser o do bloco novo. Escolha do Arthur depois da sonda A (F-129) |
 
 ## Dash
 

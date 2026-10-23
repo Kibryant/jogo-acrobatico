@@ -4,7 +4,7 @@ title: 'Corrida na parede e pulo da parede: a assinatura do jogo'
 status: In Progress
 assignee: []
 created_date: '2026-10-19 13:46'
-updated_date: '2026-10-23 14:55'
+updated_date: '2026-10-23 15:56'
 labels:
   - jogo
 milestone: m-1
@@ -192,4 +192,7 @@ Com o seu ok e uma linha no `mudancas.md` cada: `movimento.md` ("Corrida na pare
 - DEC-0042 (F-128) fixes the wall facts: MoveFacts.wall_normal/wall_id, wall_id = arena-relative node path, never a RID.
 - Ultracode is spent for TASK-10 (one workflow, at the phase plan); review is a plain reviewer.
 - From the TASK-10.4 review: the dash SyncTest never fires a cooldown-buffered dash (stamina_max 20). The wall scenario's data copy may carry a bar >= 30 so a cooldown-kept dash fires under rollback, if it fits without bloating the scenario.
+
+## Seam rule (F-129, en)
+During WALL_RUN, a new wall_id whose normal is within wall_same_face_deg (10°, inclusive) of the current wall_normal, with contact not lost (the probe still finds a wall this tick), CONTINUES the run: mode_since unchanged, no double-jump renewal, wall_id/wall_normal updated to the new collider. A new wall_id outside 10° (another face, e.g. the corner) ends the run, and a new run may start the same tick if it qualifies. The same-wall refusal after a jump compares against the last wall_id/wall_normal. Probe A result: rede.md §4 (seam: WallWest 3 ticks then WallEast, once, no flicker; normals up to 0.98° at the seam, 10.9-12.2° at the corner).
 <!-- SECTION:NOTES:END -->

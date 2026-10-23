@@ -1,6 +1,6 @@
 ---
 revisado_em: 2026-10-23
-fontes: [F-001, F-002, F-005, F-007, F-012, F-013, F-020, F-021, F-025, F-026, F-028, F-030, F-032, F-038, F-039, F-044, F-045, F-046, F-050, F-051, F-052, F-053, F-056, F-058, F-066, F-068, F-069, F-070, F-073, F-078, F-079, F-081, F-083, F-085, F-086, F-087, F-088, F-090, F-091, F-093, F-094, F-095, F-097, F-100, F-112, F-121, F-122]
+fontes: [F-001, F-002, F-005, F-007, F-012, F-013, F-020, F-021, F-025, F-026, F-028, F-030, F-032, F-038, F-039, F-044, F-045, F-046, F-050, F-051, F-052, F-053, F-056, F-058, F-066, F-068, F-069, F-070, F-073, F-078, F-079, F-081, F-083, F-085, F-086, F-087, F-088, F-090, F-091, F-093, F-094, F-095, F-097, F-100, F-112, F-121, F-122, F-129]
 ---
 
 # Glossário
@@ -28,7 +28,7 @@ A linguagem ubíqua do jogo (DEC-0004, regra 5): o mesmo termo na conversa, no d
 | Carimbo de tick | O tick em que algo aconteceu, guardado no estado no lugar de uma contagem regressiva, como o "flash 12:30" no chat do LoL | tick | `*_tick`, como `buffered_tick` e `stamina_spent_tick` |
 | Sanduíche do tick | O tick do lutador em três fatias: o núcleo decide, o motor move e colide, o núcleo confere | — | `before_move`, `move_and_slide`, `after_move` |
 | Plano do movimento | O que a primeira fatia do sanduíche devolve: o estado novo e a velocidade que o núcleo pede ao motor | — | `MovePlan` |
-| Fatos do movimento | O que o motor devolve depois de mover: se terminou no chão, a velocidade depois da colisão e, na fase 1, a parede | — | `MoveFacts` |
+| Fatos do movimento | O que o motor devolve depois de mover: se terminou no chão, a velocidade depois da colisão e, desde a TASK-10.5, a parede que toca, com a normal e o caminho do colisor (DEC-0042) | — | `MoveFacts` |
 | Configuração | Os números de design convertidos na carga para ticks e para a física do tick. Imutável e fora do estado | — | `MovementConfig` |
 | Input | O que o dono do lutador, jogador ou bot, apertou num tick: a direção, para onde olha e os comandos de um toque. É o pedido, nunca o resultado. Mora no nó `Input`, com o script `FighterInput` (DEC-0026) | — | `input`, nó `Input` (`FighterInput`) |
 | Comando de um toque | Um aperto que vale uma vez, como o pulo: fica guardado entre os frames e vale no máximo um tick, o seguinte (DEC-0026) | — | `jump`, `dash`, `parry`... |
@@ -50,6 +50,7 @@ A linguagem ubíqua do jogo (DEC-0004, regra 5): o mesmo termo na conversa, no d
 | Relógio do servidor | O jeito que o netfox julga sozinho: cada input vale no tick em que foi apertado, no relógio comum. Quem defende paga o atraso de ponta a ponta (F-028) | — | — |
 | Estado escondido | Algo que a regra ou o motor usa e o rollback não restaura, e por isso o tick refeito sai diferente do original. Exemplo: o "estava no chão" do `move_and_slide()` (F-025) | — | — |
 | SyncTest | O teste que força rollbacks e compara cada tick refeito com o original, como no GGPO. Acusa estado escondido (F-025; DEC-0004, regra 4) | — | — |
+| Sonda do motor | Um teste do portão que mede um fato do motor antes que uma regra dependa dele, com o rollback forçado e as precondições provadas. Ao contrário da sonda, fica no repositório. A sonda A mostrou que a parede não tem estado escondido (TASK-10.5; `rede.md` §4) | — | `test/fighter/engine_probe_test.gd` |
 | Contorno do transform | Antes de cada tick refeito, empurrar a posição restaurada de cada lutador para a física (estático, transform, cinemático), para um colidir com o outro na posição daquele tick (DEC-0025) | — | `after_prepare_tick` |
 | Contorno D | No começo de cada rollback, um micro-movimento de sonda que alinha o "estava no chão" guardado pelo `move_and_slide()` com o `on_floor` do estado (DEC-0025). Se a sonda não acha o chão que o estado diz, o snap do motor completa: o snap de reserva (DEC-0037) | — | `apply_floor_snap()` |
 | Par offline | O modo em que o jogo é o próprio servidor, sem rede: o `OfflineMultiplayerPeer` do Godot. É o modo "Sozinho" da `Main` | — | `OfflineMultiplayerPeer` |
@@ -111,6 +112,14 @@ A linguagem ubíqua do jogo (DEC-0004, regra 5): o mesmo termo na conversa, no d
 | Viseira | A faixa escura na frente da cápsula. Mostra para onde o lutador olha, e o corpo olha para onde a câmera olha (`movimento.md`, princípios; F-090) | — | nó `Visor` |
 | Pulo duplo | O segundo pulo no ar, um por voo, renovado no chão ou ao começar uma corrida na parede | m | `double_jump` |
 | Pulo da parede | O pulo que sai da corrida na parede, jogando o jogador para fora dela | m, m/s | `wall_jump` |
+| Normal da parede | A direção para fora da face que o lutador toca, deitada no plano horizontal: diz de que lado a parede está e para onde o pulo da parede empurra. Como a seta que sai de uma parede num mapa (DEC-0042) | vetor unitário | `wall_normal` |
+| Velocidade ao longo da parede | A parte da velocidade horizontal que corre no plano da parede, sem a parte para dentro ou para fora dela; o produto escalar com a normal separa as duas. De frente para a parede, é quase zero (`movimento.md`, "Corrida na parede") | m/s | `_along_wall` |
+| Inclinação mínima da parede | O quanto uma face precisa estar em pé para ser parede: 80°, ou seja, `abs(normal.y)` de no máximo cos 80° (0,1736). Abaixo disso, é rampa ou chão (`movimento.md`, "Corrida na parede") | ° | `wall_min_incline_deg`, `wall_max_normal_y` |
+| Velocidade mínima para entrar | A velocidade ao longo da parede que começa uma corrida: 4 m/s. Abaixo dela, a corrida também trava, como quando um obstáculo para o corpo (`movimento.md`, "Corrida na parede") | m/s | `wall_entry_speed_mps` |
+| Teto de velocidade | A maior velocidade de uma corrida na parede: 12 m/s. Quem entra mais rápido corre a 12; quem entra entre 8 e 12 mantém a sua (`movimento.md`, "Corrida na parede") | m/s | `wall_max_speed_mps` |
+| Mesma parede | O mesmo colisor, pelo caminho do nó, com a normal a até 10°, inclusive. Ela não aceita nova corrida até o lutador tocar o chão ou outra parede (DEC-0042 §3) | ° | `wall_id`, `wall_same_face_deg` |
+| Emenda | Onde dois colisores do mesmo plano se encontram numa parede. A corrida passa por ela sem recomeçar: o cronômetro segue, o pulo duplo não renova, e o `wall_id` vira o do bloco novo (F-129) | — | — |
+| Sonda da parede | A pergunta do nó ao motor durante a corrida: "se eu me movesse 5 cm para dentro da parede, bateria?", sem mover nada. Correndo paralelo, o movimento quase nunca colide, e é ela que segura o contato (DEC-0042 §1; `rede.md` §4) | m | `WALL_PROBE_DISTANCE`, `move_and_collide` com `test_only` |
 | Controle no ar | Quanto o jogador muda a direção no ar, em % da aceleração do chão | % | `air_control` |
 | Coyote time | O tempo em que ainda dá para pular depois de sair da beirada. O nome vem do Coiote do Papa-Léguas, que corre para fora do penhasco e só cai quando olha para baixo | ms no design, ticks no código | `coyote_time` |
 | Pulo atrasado | O pulo de coyote dado no fim da janela. A corrida antes dele ganha distância, e ele sobe um degrau de 1 m a 4 m de distância que o pulo na beirada não alcança (`movimento.md`, métricas de nível; F-086) | ticks | — |

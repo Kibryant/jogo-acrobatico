@@ -1,6 +1,6 @@
 ---
-revisado_em: 2026-10-19
-fontes: [F-001, F-012, F-013, F-015, F-084, F-086, F-088, F-100]
+revisado_em: 2026-10-23
+fontes: [F-001, F-012, F-013, F-015, F-084, F-086, F-088, F-100, F-127, F-128, F-129]
 ---
 
 # Movimento
@@ -58,6 +58,7 @@ Cada número tem uma origem, e nem todos têm a mesma firmeza; a vitrine mostra 
 | Tempo de subida | 350 | ms | Deriva a gravidade de subida (≈ 19,6 m/s²) e a velocidade de saída (≈ 6,86 m/s) |
 | Tempo de descida, do topo ao chão | 280 | ms | Deriva a gravidade de descida: ≈ 30,6 m/s² |
 | Controle no ar | 25 | % da aceleração do chão | Acima da velocidade de corrida, o input só gira e freia pela aceleração do ar (0,194 m/s por tick a 60), sem cortar o excesso; no chão, o excesso cai pela aceleração do chão. Escolha do Arthur (F-127); é a Q-07, julgada jogando |
+| Controle no ar com o direcional pela metade | o alvo é a direção apontada vezes o tamanho do direcional vezes a maior entre 7 m/s e a velocidade atual | — | Acima de 7 m/s, o direcional inteiro mantém a velocidade, e um direcional pela metade a freia aos poucos, pela aceleração do ar, rumo à metade dela; abaixo de 7 m/s, nada muda. Leitura v0 do Claude (TASK-10.5) |
 | Velocidade máxima de queda | 30 | m/s | |
 | Pulo variável | não | — | Soltar o botão cedo não encurta o pulo |
 | Pulo duplo | sim, um por voo | — | Decisão do Arthur (F-015 §1) |
@@ -99,6 +100,8 @@ Cada número tem uma origem, e nem todos têm a mesma firmeza; a vitrine mostra 
 | Pulo da parede no voo | conta como o primeiro pulo | — | O pulo duplo continua disponível. Não existe coyote da parede. Um pulo guardado até 150 ms antes de encostar sai no primeiro tick da corrida (DEC-0016). Leitura v0 do Claude (F-128) |
 | Mesma parede, em números | o mesmo colisor com a normal a até 10°, inclusive | ° | 10° separa as faces de uma caixa; a identidade é o caminho do nó (DEC-0042; F-127). A câmera não inclina no v0 |
 | Emenda | a corrida continua | — | Um colisor novo no mesmo plano (normal a até 10°), sem perder o contato, é a mesma corrida: o cronômetro segue, o pulo duplo não renova, e o `wall_id` passa a ser o do bloco novo. Escolha do Arthur depois da sonda A (F-129) |
+| O mesmo colisor na corrida | a corrida segue, e a normal guardada é a da face | — | Lido a cada tick, o mesmo colisor mantém a corrida qualquer que seja a normal que o motor dê, como na quina arredondada antes do canto (até ≈ 12°, `rede.md` §4). O estado guarda a normal da face da entrada, para a mesma face continuar recusando depois que o lutador sai pela ponta. Leitura v0 do Claude (TASK-10.5) |
+| Velocidade em cada tick da corrida | volta a 8 m/s, ou fica entre 8 e 12, em todo tick | m/s | A velocidade ao longo é levada à faixa de 8 a 12 em todo tick da corrida, e não só no primeiro: um obstáculo que a baixa para entre 4 e 8 m/s sem travar a corrida a vê voltar a 8 no tick seguinte. Leitura v0 do Claude (TASK-10.5) |
 
 ## Dash
 
@@ -164,6 +167,7 @@ Cada número tem uma origem, e nem todos têm a mesma firmeza; a vitrine mostra 
 - **Parede:** até ≈ 20 m de corrida (2,5 s a 8 m/s).
 - **O vão de 6 m da arena:** `PlataformaVaoA` e `PlataformaVaoB`, de 6 × 2 × 6 m com o topo a 2 m, ficam em x = −20 e deixam 6 m livres entre z = 3 e z = −3. O vão passa do pulo com o coyote (≈ 4,4 + 0,7 m) e fica abaixo do pulo duplo (≈ 7 m): só o pulo duplo cruza. Cair no vão é uma queda de 2 m, e voltar para cima pede o pulo duplo (alcance de ≈ 2,2 m); com 1 m, a queda não custava nada e o vão não se lia (F-108; F-109). Elas ficam em chão livre, fora do percurso da referência e dos cenários da SyncTest, e um teste de cena prova isso (TASK-10.2).
 - **A parede longa e o corredor (TASK-10.5):** a `ParedeLonga` tem 24 m, mais que os ≈ 20 m de uma corrida. O corredor tem 3,5 m de vão interno: a 5 m/s para fora, 2,8 m de centro a centro levam 0,56 s, e o lutador chega ≈ 0,54 m acima. O `PatamarDoCorredor` tem o topo a 3 m, que só se alcança com pulo da parede (+1,2 m) mais pulo duplo (+1,0 m). Leitura v0 do Claude (F-128).
+- **Onde ficam na arena (TASK-10.5):** a `ParedeLonga` (1 × 4 × 24 m) tem o centro em x = 14,5 e z = −8, de z = 4 a −20, com faces para o oeste e para o leste. As paredes do corredor (1 × 5 × 24 m) ficam em x = 22,5 e x = 27, no mesmo trecho de z, com 3,5 m livres entre x = 23 e 26,5. O patamar (3,5 × 3 × 4 m) fecha a ponta sul do corredor, de z = −20 a −24. A face leste do `Block3m` e a face oeste da `ParedeLonga` ficam a 4 m uma da outra, um par para brincar.
 
 ## O que o esqueleto andante usa (TASK-9)
 

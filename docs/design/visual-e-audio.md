@@ -200,6 +200,15 @@ Leituras v0 do Claude, que o Arthur julga jogando (DEC-0017; TASK-10.4).
   - Tocam uma vez por chave (lutador, tipo, carimbo), quando aparecem pela primeira vez no estado exibido, e nunca na re-simulação (DEC-0031 §6). Sem tela, como no servidor dedicado e no portão, contam e não desenham.
 - **A régua do dash:** faixas de 0,1 × 0,01 × 2 m a cada 4 m, a distância do dash, em x de −10 a 30 e em z de 14 a 16, ao sul dos pontos de nascimento, no cinza dos blocos. São só malha, sem colisão, e ficam fora do percurso da referência e das cenas da SyncTest (TASK-10.4).
 
+### A parede na tela (TASK-10.5)
+
+Leituras v0 do Claude, que o Arthur julga jogando (DEC-0017; TASK-10.5).
+
+- **O modo:** o HUD diz "Na parede" ("Wall running" em inglês) da entrada ao fim da corrida, pela chave `HUD_MODE_WALL_RUN`, além de "No chão", "No ar" e "No dash".
+- **A marca do pulo da parede:** a baforada do pulo duplo em pé contra a parede. Um disco fino com o eixo na normal da parede, na altura do meio do corpo, onde o lutador estava ao pular, que cresce do raio da cápsula até 3 raios e some na subida do pulo, 350 ms. Translúcido a 40 %, sem luz, no tom neutro do próprio lutador, como os outros sinais; toca uma vez por chave, pelo `wall_jump_tick`, durante o voo que o pulo começou, e nunca na re-simulação (DEC-0031 §6).
+- **A câmera** não inclina na corrida no v0 (`movimento.md`, "Corrida na parede").
+- **As peças da arena:** a `ParedeLonga`, o `CorredorOeste`, o `CorredorLeste` e o `PatamarDoCorredor` usam o cinza dos blocos, sem cor nova (`movimento.md`, "Métricas de nível").
+
 ## Em aberto
 
 - Q-21: a janela do parry e a carga variável do carregado.

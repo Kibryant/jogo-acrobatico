@@ -295,6 +295,7 @@ A cena de entrada olha como o jogo foi aberto, como um `main.ts` que lê o `proc
 - **Argumento desconhecido, repetido ou fora do modo é erro:** o jogo mostra o uso e sai com o código 2. Um erro de digitação já deixou uma sonda em tela cheia aberta por até 300 s (`.claude/harness/registro.md`, 07/10/2026). O servidor sem o `--headless` também é recusado.
 - **O relógio do netfox:**
   - no Sozinho, a `Main` o inicia (`NetworkTime.start()`) e só depois cria a `Match`, com a configuração passada na mão (DEC-0022);
+  - o Sozinho e o `--watch` começam no primeiro quadro, e não no `_ready` da `Main`. O `RollbackSynchronizer` do netfox só registra o lutador quando o Godot esvazia as chamadas adiadas (`process_settings.call_deferred`), e o primeiro passo de física do jogo aberto vem antes disso. Com o tick no passo de física (DEC-0040), um lutador criado no `_ready` perdia os primeiros ticks, e a gravação começava depois do tick que o cabeçalho dizia (F-118, contexto; `testes-e-entrega.md` §4);
   - no servidor e no cliente, quem inicia e para o relógio é o `NetworkEvents` do netfox, quando a conexão abre e fecha (`addons/netfox/network-events.gd`). A `Main` só espera por ele;
   - o cliente sincroniza com o servidor antes de começar os ticks (guia `network-time.md`), e o servidor só responde ao aperto de mão com o relógio rodando;
   - chamar o `start()` também no servidor e no cliente faz o netfox avisar de início dobrado. O teste de configurações guarda o `netfox/events/enabled` ligado.

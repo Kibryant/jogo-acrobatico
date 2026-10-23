@@ -132,6 +132,7 @@ func _ready() -> void:
 		LaunchOptions.Mode.CLIENT:
 			await start_client()
 		_:
+			await _first_frame()
 			if options.watch.is_empty():
 				await start_solo()
 			else:
@@ -141,6 +142,19 @@ func _ready() -> void:
 func _notification(what: int) -> void:
 	if what == NOTIFICATION_WM_CLOSE_REQUEST:
 		_quit(OK)
+
+
+# Sozinho and --watch start their clock and their fighters inside a process frame, never in the
+# Main's _ready. netfox's RollbackSynchronizer registers a fighter's input, state and simulation
+# only at the next flush of Godot's deferred calls (process_settings.call_deferred,
+# rollback-synchronizer.gd), and the tick runs in the physics step (DEC-0040). The Main of the
+# opened game is ready before Godot's first frame, whose physics step runs before any flush: a
+# fighter spawned there missed the first tick loop, neither simulated nor its input recorded, and
+# the replay began on a later tick than its header said (sozinho-20261023-091228.replay, ticks 0
+# and 1). A process frame flushes before the next physics step, so the fighter's first tick is
+# netfox's first tick.
+func _first_frame() -> void:
+	await get_tree().process_frame
 
 
 # Sozinho: Godot's default peer is an OfflineMultiplayerPeer with the server's id, 1, so this PC

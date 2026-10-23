@@ -50,6 +50,7 @@
 | [DEC-0039](DEC-0039-vaga-do-buffer-posicao-no-before-move-e-janela-inclusiva.md) | 2026-10-19 | A vaga do buffer, a posição no `before_move` e a janela inclusiva: a DEC-0022 muda só nisso | aceita; substitui a DEC-0022 só nisso (F-100 §1) |
 | [DEC-0040](DEC-0040-o-tick-no-passo-de-fisica.md) | 2026-10-23 | O tick no passo de física: o `sync_to_physics` do netfox ligado, para a janela, o jogo ao vivo e o replay sem tela darem os mesmos bits em qualquer fps | aceita (F-117) |
 | [DEC-0041](DEC-0041-troca-de-modo-por-comando.md) | 2026-10-23 | A troca de modo por comando no `before_move`: a DEC-0022 muda só nisso | aceita; substitui a DEC-0022 só nisso (F-122) |
+| [DEC-0042](DEC-0042-os-fatos-da-parede.md) | 2026-10-23 | Os fatos da parede: o caminho do nó como identidade, a normal no estado e a sonda só de teste durante a corrida | aceita (F-127; F-128) |
 
 ## Propostas — ainda não são regra
 

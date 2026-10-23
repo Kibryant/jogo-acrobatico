@@ -128,3 +128,4 @@ O que chegou ao projeto e como chegou. Uma fonte não muda: só mudam `status`, 
 | [F-122](F-122-arthur-aprova-o-plano-do-dash.md) | 2026-10-23 | O Arthur aprova o plano da TASK-10.4, o dash, no plan mode: a DEC-0041, o snap de 0,338 m, os sinais por chave e os números v0 |
 | [F-123](F-123-arthur-joga-o-dash-e-pergunta-pelo-dash-no-ar.md) | 2026-10-23 | O Arthur joga o dash, acha muito foda o dash e os sinais, e pergunta se faz sentido um dash no ar, como acha que tem no GunZ |
 | [F-124](F-124-arthur-deixa-o-dash-no-ar-para-a-task-10-8-e-fecha-a-q-33.md) | 2026-10-23 | O Arthur acerta por que o ar tem uma carta só, deixa o dash no ar para a TASK-10.8 e fecha a Q-33: com o dash, a barra pesou |
+| [F-125](F-125-arthur-libera-push-e-merge-da-task-10-4.md) | 2026-10-23 | O Arthur libera subir a branch da TASK-10.4, abrir o PR e fazer o merge |

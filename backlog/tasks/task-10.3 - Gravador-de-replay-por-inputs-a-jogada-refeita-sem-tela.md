@@ -1,10 +1,10 @@
 ---
 id: TASK-10.3
 title: 'Gravador de replay por inputs: a jogada refeita sem tela'
-status: In Progress
+status: Done
 assignee: []
 created_date: '2026-10-19 13:46'
-updated_date: '2026-10-19 19:02'
+updated_date: '2026-10-23 11:20'
 labels:
   - jogo
 milestone: m-1
@@ -48,22 +48,22 @@ Fechados pelo Claude (DEC-0017); escritos no `testes-e-entrega.md` §4 nesta fil
 
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
-- [ ] #1 Quando o Arthur joga no Sozinho, o jogo grava sozinho um arquivo `.replay` em `user://replays/`, mostra o caminho completo no log, guarda os 20 mais novos, grava em `--replay=CAMINHO` quando ele vem e desliga com `--no-replay`; salva a cada segundo, e um fechamento brusco perde no máximo o último segundo; o portão nunca escreve em `user://replays/` (leituras v0 do Claude no `testes-e-entrega.md` §4; F-044 §1).
-- [ ] #2 Quando o arquivo é gravado, o cabeçalho traz formato, versão, commit, impressão das regras, motor, plataforma, ticks por segundo, `physics_ticks_per_second`, `sync_to_physics`, `max_ticks_per_frame`, `input_delay`, arena e sua impressão, semente e a configuração inteira (um campo do `MovementData` por linha, tipado), e as colunas declaradas por nome e tipo; cada linha tem o tick absoluto do netfox, o tamanho do laço e o input que o Sozinho aplicou naquele tick, por lutador (F-044 §2; DEC-0027 §5).
-- [ ] #3 Quando um float do input é gravado e lido de volta, ele volta com os mesmos bits: o teste usa yaw com muitos dígitos, `1.0/3.0`, médias de 2 a 3 frames no move, `-0.0`, `PI` e `1e-300`; uma célula de float que não tem exatamente 16 dígitos hexadecimais é recusada, nunca lida como 0 (F-042 §3; `PackedByteArray.xml`:104-110).
-- [ ] #4 Quando o tocador sem tela refaz um arquivo, ele roda a partida de verdade pelo `Match`, laço a laço, com o relógio começando no primeiro tick gravado, reconstrói o `MovementData` do cabeçalho e emite o rastro de estado inteiro e o seu sha256; refazer duas vezes dá o mesmo sha256; um teste no portão grava uma corrida com yaw e move fracionários, pulos duplos e laços de 2 ou mais ticks, prova a precondição (yaw diferente de zero, moves fora de {-1, 0, 1}, um laço com 2 ticks) e prova que a refeita dá o mesmo rastro byte a byte; quando não dá, diz o tick, o lutador e a coluna com os dois valores (F-042 §3; DEC-0027 §5).
-- [ ] #5 Quando a mesma gravação toca com janela pelo `--watch --trace` a 30, 60 e 144 quadros por segundo (`--max-fps`) e sem janela pelo `replay.sh`, os rastros, contados a partir do primeiro tick gravado, com os carimbos do estado também, saem iguais byte a byte; o `--watch` anota o tamanho de cada laço que rodou; se os rastros não saírem iguais, o resumo diz o primeiro tick que difere e se o laço ali tinha o mesmo tamanho do gravado, os números vão ao Arthur e a escolha do `sync_to_physics` volta a ele antes da TASK-10.4 (`testes-e-entrega.md` §4; F-025 §5; F-042 §3).
-- [ ] #6 Quando o arquivo traz a coluna de conferência, o tocador diz o primeiro tick em que a refeita se separa do que o jogo calculou ao vivo, ou que não se separa (DEC-0027 §5).
-- [ ] #7 Quando o arquivo é de outro formato, outros ticks por segundo, outra arena ou outras configurações de física e de relógio, tem uma coluna desconhecida, uma linha quebrada ou uma célula malformada, o tocador recusa e diz o campo; de outra versão, commit, impressão das regras ou da arena, recusa, diz qual e só toca com `--force`; com `--force`, uma coluna que falta recebe o valor padrão do `TickInput` com um aviso que a nomeia; um salto de tick do netfox é tocado como salto; uma última linha cortada é descartada com aviso (`testes-e-entrega.md` §4; F-042 §4).
-- [ ] #8 Quando o Arthur joga uns minutos e roda `bash tools/replay.sh <arquivo> --watch`, ele vê a própria jogada refeita na tela; o que ele sentiu vai para uma fonte (F-043; F-041).
+- [x] #1 Quando o Arthur joga no Sozinho, o jogo grava sozinho um arquivo `.replay` em `user://replays/`, mostra o caminho completo no log, guarda os 20 mais novos, grava em `--replay=CAMINHO` quando ele vem e desliga com `--no-replay`; salva a cada segundo, e um fechamento brusco perde no máximo o último segundo; o portão nunca escreve em `user://replays/` (leituras v0 do Claude no `testes-e-entrega.md` §4; F-044 §1).
+- [x] #2 Quando o arquivo é gravado, o cabeçalho traz formato, versão, commit, impressão das regras, motor, plataforma, ticks por segundo, `physics_ticks_per_second`, `sync_to_physics`, `max_ticks_per_frame`, `input_delay`, arena e sua impressão, semente e a configuração inteira (um campo do `MovementData` por linha, tipado), e as colunas declaradas por nome e tipo; cada linha tem o tick absoluto do netfox, o tamanho do laço e o input que o Sozinho aplicou naquele tick, por lutador (F-044 §2; DEC-0027 §5).
+- [x] #3 Quando um float do input é gravado e lido de volta, ele volta com os mesmos bits: o teste usa yaw com muitos dígitos, `1.0/3.0`, médias de 2 a 3 frames no move, `-0.0`, `PI` e `1e-300`; uma célula de float que não tem exatamente 16 dígitos hexadecimais é recusada, nunca lida como 0 (F-042 §3; `PackedByteArray.xml`:104-110).
+- [x] #4 Quando o tocador sem tela refaz um arquivo, ele roda a partida de verdade pelo `Match`, laço a laço, com o relógio começando no primeiro tick gravado, reconstrói o `MovementData` do cabeçalho e emite o rastro de estado inteiro e o seu sha256; refazer duas vezes dá o mesmo sha256; um teste no portão grava uma corrida com yaw e move fracionários, pulos duplos e laços de 2 ou mais ticks, prova a precondição (yaw diferente de zero, moves fora de {-1, 0, 1}, um laço com 2 ticks) e prova que a refeita dá o mesmo rastro byte a byte; quando não dá, diz o tick, o lutador e a coluna com os dois valores (F-042 §3; DEC-0027 §5).
+- [x] #5 Quando a mesma gravação toca com janela pelo `--watch --trace` a 30, 60 e 144 quadros por segundo (`--max-fps`) e sem janela pelo `replay.sh`, os rastros, contados a partir do primeiro tick gravado, com os carimbos do estado também, saem iguais byte a byte; o `--watch` anota o tamanho de cada laço que rodou; se os rastros não saírem iguais, o resumo diz o primeiro tick que difere e se o laço ali tinha o mesmo tamanho do gravado, os números vão ao Arthur e a escolha do `sync_to_physics` volta a ele antes da TASK-10.4 (`testes-e-entrega.md` §4; F-025 §5; F-042 §3).
+- [x] #6 Quando o arquivo traz a coluna de conferência, o tocador diz o primeiro tick em que a refeita se separa do que o jogo calculou ao vivo, ou que não se separa (DEC-0027 §5).
+- [x] #7 Quando o arquivo é de outro formato, outros ticks por segundo, outra arena ou outras configurações de física e de relógio, tem uma coluna desconhecida, uma linha quebrada ou uma célula malformada, o tocador recusa e diz o campo; de outra versão, commit, impressão das regras ou da arena, recusa, diz qual e só toca com `--force`; com `--force`, uma coluna que falta recebe o valor padrão do `TickInput` com um aviso que a nomeia; um salto de tick do netfox é tocado como salto; uma última linha cortada é descartada com aviso (`testes-e-entrega.md` §4; F-042 §4).
+- [x] #8 Quando o Arthur joga uns minutos e roda `bash tools/replay.sh <arquivo> --watch`, ele vê a própria jogada refeita na tela; o que ele sentiu vai para uma fonte (F-043; F-041).
 <!-- AC:END -->
 
 ## Definition of Done
 <!-- DOD:BEGIN -->
-- [ ] #1 Critérios de aceite verificados
-- [ ] #2 Teste automatizado para toda regra do núcleo (core/)
-- [ ] #3 Diário da sessão escrito e glossário atualizado
-- [ ] #4 Mudanças registradas em docs/mudancas.md
+- [x] #1 Critérios de aceite verificados
+- [x] #2 Teste automatizado para toda regra do núcleo (core/)
+- [x] #3 Diário da sessão escrito e glossário atualizado
+- [x] #4 Mudanças registradas em docs/mudancas.md
 <!-- DOD:END -->
 
 ## Implementation Plan
@@ -136,3 +136,9 @@ Jogar 2 a 3 minutos no Sozinho, fechar o jogo, rodar `bash tools/replay.sh <arqu
 ## Docs a atualizar
 Com o seu ok e uma linha no `mudancas.md` cada: `testes-e-entrega.md` §4 reescrito (formato v1, tocador, limites, `user://replays/`, tamanho em hexadecimal; §12 ganha `tools/replay.sh`; a linha :94 refeita) e §3 (a medição); `rede.md` §8 ("todo replay de bug vai com o arquivo"); `glossario.md` (Gravador de replay, Arquivo de replay, Laço de ticks, Tocador de replay, Rastro de estado, Impressão do estado, Impressão das regras, Colunas declaradas); a vitrine com o painel do replay; a DEC do `sync_to_physics` só se a medição pedir; o diário e o `registro.md`.
 <!-- SECTION:NOTES:END -->
+
+## Final Summary
+
+<!-- SECTION:FINAL_SUMMARY:BEGIN -->
+O Sozinho grava sempre um replay por inputs em user://replays/ (os 20 mais novos, salvo a cada segundo); o tocador sem tela refaz a partida pelo Match bit a bit, com o mesmo sha256 em toda refeita, e a coluna check diz onde a refeita se separa do jogo ao vivo. Critério 5: a janela do --watch se separa da gravação no último bit de um float (2 a 3 µm) a partir de um tick cedo, a 30, 60 e 144 quadros por segundo, provavelmente pelo physics_factor do netfox; a escolha do sync_to_physics volta ao Arthur antes da TASK-10.4. O revisor aprovou; o portão saiu verde com 497 testes; o CI do PR #11 passou. O Arthur jogou 11 180 ticks, assistiu à refeita e achou massa (F-114); o pulo duplo que parece infinito ficou na Q-33, para julgar com o dash.
+<!-- SECTION:FINAL_SUMMARY:END -->

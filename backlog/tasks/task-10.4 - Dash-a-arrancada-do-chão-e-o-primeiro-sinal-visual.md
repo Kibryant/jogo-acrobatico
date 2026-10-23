@@ -1,10 +1,10 @@
 ---
 id: TASK-10.4
 title: 'Dash: a arrancada do chão e o primeiro sinal visual'
-status: Ready
+status: In Progress
 assignee: []
 created_date: '2026-10-19 13:46'
-updated_date: '2026-10-23 12:49'
+updated_date: '2026-10-23 12:50'
 labels:
   - jogo
 milestone: m-1

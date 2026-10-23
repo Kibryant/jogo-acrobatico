@@ -274,3 +274,120 @@ func test_the_windows_at_zero_ticks_add_no_message_to_the_four() -> void:
 		for message: String in errors:
 			var why := "%s must not be rejected, got: %s" % [field, message]
 			assert_str(message).override_failure_message(why).not_contains(field)
+
+
+# TASK-10.4: the duration of the dash (200 ms, movimento.md, "Dash") becomes ticks at load with
+# the same rule, nearest tick with ties up: 6 at 30 and 12 at 60, exact multiples. The other
+# rows are arithmetic, not design numbers: 225 ms is 6.75 -> 7 at 30 and 13.5 -> 14 at 60 (tie
+# up); 190 ms is 5.7 -> 6 at 30 and 11.4 -> 11 at 60; 17 ms is the smallest 1 tick at both.
+func test_the_dash_duration_becomes_the_nearest_tick_with_ties_up(
+	ms: int,
+	tickrate: int,
+	expected: int,
+	_test_parameters := [
+		[200, 30, 6],
+		[200, 60, 12],
+		[225, 30, 7],
+		[225, 60, 14],
+		[190, 30, 6],
+		[190, 60, 11],
+		[17, 30, 1],
+		[17, 60, 1],
+	],
+) -> void:
+	var data := _v0_copy_with("dash_ms", ms)
+	assert_array(data.validate()).is_empty()
+	var config := MovementConfig.create(data, tickrate)
+	var message := "dash_ticks for %d ms at %d ticks must be %d, found %d" % [
+		ms,
+		tickrate,
+		expected,
+		config.dash_ticks,
+	]
+	assert_int(config.dash_ticks).override_failure_message(message).is_equal(expected)
+	assert_int(config.dash_ticks).is_equal(Ticks.from_ms(ms, tickrate))
+
+
+# TASK-10.4: the cooldown of the dash (400 ms, movimento.md, "Dash": "Recarga") by the same
+# rule: 12 at 30 and 24 at 60, exact. 425 ms is 12.75 -> 13 at 30 and 25.5 -> 26 at 60 (tie
+# up); 8 ms rounds to 0 at both rates and passes, because nothing divides by the cooldown.
+func test_the_dash_cooldown_becomes_the_nearest_tick_with_ties_up(
+	ms: int,
+	tickrate: int,
+	expected: int,
+	_test_parameters := [
+		[400, 30, 12],
+		[400, 60, 24],
+		[425, 30, 13],
+		[425, 60, 26],
+		[8, 30, 0],
+		[8, 60, 0],
+		[17, 30, 1],
+		[17, 60, 1],
+	],
+) -> void:
+	var data := _v0_copy_with("dash_cooldown_ms", ms)
+	assert_array(data.validate()).is_empty()
+	var config := MovementConfig.create(data, tickrate)
+	var message := "dash_cooldown_ticks for %d ms at %d ticks must be %d, found %d" % [
+		ms,
+		tickrate,
+		expected,
+		config.dash_cooldown_ticks,
+	]
+	assert_int(config.dash_cooldown_ticks).override_failure_message(message).is_equal(expected)
+	assert_int(config.dash_cooldown_ticks).is_equal(Ticks.from_ms(ms, tickrate))
+
+
+# The speed of the dash divides by its duration (movimento.md, "Dash": "Deriva a velocidade:
+# 20 m/s"), so a duration that rounds to 0 ticks at 30 or at 60 is rejected, naming the field:
+# 1 and 8 ms are 0 at both rates, 9 and 16 ms are 1 tick at 60 but 0 at 30.
+func test_a_dash_duration_that_rounds_to_zero_ticks_is_rejected(
+	ms: int,
+	_test_parameters := [[1], [8], [9], [16]],
+) -> void:
+	var data := _v0_copy_with("dash_ms", ms)
+	var why := "dash_ms = %d ms rounds to 0 ticks at 30 or at 60 and must be rejected" % ms
+	_assert_one_message_naming(data.validate(), "dash_ms", why)
+
+
+func test_the_smallest_dash_duration_of_one_tick_at_both_rates_passes() -> void:
+	var data := _v0_copy_with("dash_ms", SMALLEST_ONE_TICK_MS_AT_30)
+	var why := "dash_ms = %d ms is 1 tick at 30 and at 60 and must pass" % data.dash_ms
+	assert_array(data.validate()).override_failure_message(why).is_empty()
+
+
+# Nothing divides by the cooldown (movimento.md, "Dash": "Recarga": a dash that waits 0 ticks
+# may just come out again), so a cooldown that rounds to 0 ticks passes, like the windows.
+func test_a_dash_cooldown_that_rounds_to_zero_ticks_is_allowed(
+	ms: int,
+	_test_parameters := [[1], [8], [16]],
+) -> void:
+	var data := _v0_copy_with("dash_cooldown_ms", ms)
+	var why := "dash_cooldown_ms = %d ms rounds to 0 ticks but nothing divides by it" % ms
+	assert_array(data.validate()).override_failure_message(why).is_empty()
+
+
+# Many: the dash's duration at 0 ticks is a fifth message next to the four dividing times.
+func test_the_dash_duration_at_zero_ticks_adds_a_fifth_message_to_the_four() -> void:
+	var data := _v0_copy()
+	for field: String in DIVIDING_TIME_FIELDS:
+		data.set(field, LARGEST_ZERO_TICK_MS_AT_60)
+	data.dash_ms = LARGEST_ZERO_TICK_MS_AT_60
+	var errors := data.validate()
+	assert_array(errors).has_size(DIVIDING_TIME_FIELDS.size() + 1)
+	for field: String in DIVIDING_TIME_FIELDS:
+		_assert_some_message_names(errors, field)
+	_assert_some_message_names(errors, "dash_ms")
+
+
+func test_the_dash_cooldown_at_zero_ticks_adds_no_message_to_the_four() -> void:
+	var data := _v0_copy()
+	for field: String in DIVIDING_TIME_FIELDS:
+		data.set(field, LARGEST_ZERO_TICK_MS_AT_60)
+	data.dash_cooldown_ms = LARGEST_ZERO_TICK_MS_AT_60
+	var errors := data.validate()
+	assert_array(errors).has_size(DIVIDING_TIME_FIELDS.size())
+	for message: String in errors:
+		var why := "dash_cooldown_ms must not be rejected, got: %s" % message
+		assert_str(message).override_failure_message(why).not_contains("dash_cooldown_ms")

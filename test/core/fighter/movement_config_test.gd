@@ -30,6 +30,14 @@ const SPEED_TOLERANCE_MPS := 0.01 # the plan's tolerance for the derived speed, 
 const STAMINA_WAIT_TICKS: Dictionary[int, int] = { 30: 24, 60: 48 }
 const STAMINA_REGEN_PER_TICK: Dictionary[int, float] = { 30: 1.0, 60: 0.5 }
 
+# TASK-10.4 (movimento.md, "Dash").
+const DASH_DISTANCE_M := 4.0 # "Distância"
+const DASH_MS := 200 # "Duração"
+const DASH_SPEED_MPS := 20.0 # "Deriva a velocidade: 20 m/s"
+const DASH_EXIT_SPEED_MPS := 7.0 # "Velocidade na saída"
+const DASH_COOLDOWN_MS := 400 # "Recarga"
+const DASH_COST := 15.0 # "Custo"
+
 
 func _data() -> MovementData:
 	var resource: Resource = load(MOVEMENT_V0)
@@ -194,6 +202,40 @@ func test_the_stamina_regen_is_0_5_per_tick_at_60_and_1_0_at_30(
 		data.stamina_regen_per_s / tickrate,
 		HAIR,
 	)
+
+
+# TASK-10.4 (movimento.md, "Dash"): 200 ms of dash is 6 ticks at 30 and 12 at 60, 400 ms of
+# cooldown is 12 and 24, exact multiples by the same rule; the speed is the 4 m over the dash's
+# ticks, 20 m/s at both rates; the exit speed (7 m/s) and the cost (15) are copied as they are.
+func test_the_dash_times_become_ticks_and_the_speed_is_derived(
+	tickrate: int,
+	dash: int,
+	cooldown: int,
+	_test_parameters := [[30, 6, 12], [60, 12, 24]],
+) -> void:
+	var data := _data()
+	var config := MovementConfig.create(data, tickrate)
+	assert_int(data.dash_ms).is_equal(DASH_MS)
+	assert_int(data.dash_cooldown_ms).is_equal(DASH_COOLDOWN_MS)
+	_assert_ticks("dash_ticks", config.dash_ticks, dash, tickrate)
+	_assert_ticks("dash_cooldown_ticks", config.dash_cooldown_ticks, cooldown, tickrate)
+	assert_int(config.dash_ticks).is_equal(Ticks.from_ms(data.dash_ms, tickrate))
+	assert_int(config.dash_cooldown_ticks).is_equal(Ticks.from_ms(data.dash_cooldown_ms, tickrate))
+	_assert_half_tick("dash_ticks", config.dash_ticks, data.dash_ms, tickrate)
+	_assert_half_tick(
+		"dash_cooldown_ticks",
+		config.dash_cooldown_ticks,
+		data.dash_cooldown_ms,
+		tickrate,
+	)
+	assert_float(data.dash_distance_m).is_equal_approx(DASH_DISTANCE_M, HAIR)
+	assert_float(config.dash_speed).is_equal_approx(DASH_SPEED_MPS, HAIR)
+	assert_float(config.dash_speed).is_equal_approx(
+		data.dash_distance_m * tickrate / config.dash_ticks,
+		HAIR,
+	)
+	assert_float(config.dash_exit_speed).is_equal_approx(DASH_EXIT_SPEED_MPS, HAIR)
+	assert_float(config.dash_cost).is_equal_approx(DASH_COST, HAIR)
 
 
 func _assert_ticks(field: String, actual: int, expected: int, tickrate: int) -> void:

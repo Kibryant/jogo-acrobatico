@@ -1,10 +1,10 @@
 ---
 id: TASK-10.4
 title: 'Dash: a arrancada do chão e o primeiro sinal visual'
-status: In Progress
+status: Done
 assignee: []
 created_date: '2026-10-19 13:46'
-updated_date: '2026-10-23 12:50'
+updated_date: '2026-10-23 14:22'
 labels:
   - jogo
 milestone: m-1
@@ -49,21 +49,21 @@ Fechados pelo Claude (DEC-0017); escritos em "Dash" no `movimento.md` com o plan
 
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
-- [ ] #1 Quando o lutador no chão aperta o dash, com a recarga livre e pelo menos 15 de stamina (`dash_cost`), o núcleo o leva 4 m em 200 ms (20 m/s; 12 ticks a 60 e 6 a 30), com tolerância de 1 cm, na direção apontada em relação à câmera, ou para onde ele olha sem direção, fixada no início; no fim ele sai a 7 m/s na mesma direção (`movimento.md`, "Dash").
-- [ ] #2 Quando o dash começa, a stamina cai 15, e o próximo só sai 400 ms depois do fim (24 ticks a 60, 12 a 30); com 14,5 de stamina ele não sai e nada é pago; um aperto no ar, na recarga ou sem stamina espera na vaga pelos 150 ms e sai no primeiro tick em que fica legal; um tick além da janela, não sai (`movimento.md`, "Dash" e "Perdão"; DEC-0016).
-- [ ] #3 Quando o lutador está no dash, o input de direção não muda nada, e um pulo apertado durante o dash sai no primeiro tick depois do fim, se ainda estiver nos 150 ms: o dash não se cancela; quando pulo e dash chegam no mesmo tick, o pulo vence, e um aperto depois substitui o guardado (DEC-0016; F-012 §1; `movimento.md`, "Perdão", leitura v0 da ordem).
-- [ ] #4 Quando o dash sai da beirada, ele continua até o fim dos 200 ms, com a gravidade, e sai a 7 m/s; quando desce a rampa de 45°, o lutador fica no chão em todos os ticks, e um teste de cena prova que o snap da TASK-9 não bastaria; quando bate numa parede, o tempo segue e o motor desliza (leituras v0 do Claude; DEC-0025; DEC-0037).
-- [ ] #5 Quando o pulo duplo e o dash aparecem pela primeira vez no estado exibido, cada um toca um sinal visual uma vez só, pela chave (lutador, tipo, tick), mesmo com o rollback forçado: na SyncTest, os sinais apresentados são iguais aos eventos (DEC-0031 §6).
-- [ ] #6 Quando a SyncTest roda o cenário do dash com o rollback de 7 ticks a cada tick, ela acha zero divergências no estado inteiro e esconder `:state:dash_tick` faz ela acusar; o cenário tem dash no plano, na rampa (sem tick no ar), contra a parede, saindo da beirada, guardado no ar, guardado na recarga, uma recusa por stamina e um pulo no fim; a gravação de um dash refaz o mesmo rastro no teste do replay (`rede.md` §8; DEC-0027 §5).
-- [ ] #7 Quando o Arthur aperta o Shift esquerdo (por posição física) no Sozinho, o lutador dá o dash sobre a régua de 4 m, e o HUD mostra a recarga como um arco com os décimos de segundo, lida do estado; o `tools/net_run.sh` passa a ping 100 com o bot dando um dash no meio de cada perna; o que ele sentiu vai para uma fonte (DEC-0031 §2 e §8; `rede.md` §8 e §10; F-041).
+- [x] #1 Quando o lutador no chão aperta o dash, com a recarga livre e pelo menos 15 de stamina (`dash_cost`), o núcleo o leva 4 m em 200 ms (20 m/s; 12 ticks a 60 e 6 a 30), com tolerância de 1 cm, na direção apontada em relação à câmera, ou para onde ele olha sem direção, fixada no início; no fim ele sai a 7 m/s na mesma direção (`movimento.md`, "Dash").
+- [x] #2 Quando o dash começa, a stamina cai 15, e o próximo só sai 400 ms depois do fim (24 ticks a 60, 12 a 30); com 14,5 de stamina ele não sai e nada é pago; um aperto no ar, na recarga ou sem stamina espera na vaga pelos 150 ms e sai no primeiro tick em que fica legal; um tick além da janela, não sai (`movimento.md`, "Dash" e "Perdão"; DEC-0016).
+- [x] #3 Quando o lutador está no dash, o input de direção não muda nada, e um pulo apertado durante o dash sai no primeiro tick depois do fim, se ainda estiver nos 150 ms: o dash não se cancela; quando pulo e dash chegam no mesmo tick, o pulo vence, e um aperto depois substitui o guardado (DEC-0016; F-012 §1; `movimento.md`, "Perdão", leitura v0 da ordem).
+- [x] #4 Quando o dash sai da beirada, ele continua até o fim dos 200 ms, com a gravidade, e sai a 7 m/s; quando desce a rampa de 45°, o lutador fica no chão em todos os ticks, e um teste de cena prova que o snap da TASK-9 não bastaria; quando bate numa parede, o tempo segue e o motor desliza (leituras v0 do Claude; DEC-0025; DEC-0037).
+- [x] #5 Quando o pulo duplo e o dash aparecem pela primeira vez no estado exibido, cada um toca um sinal visual uma vez só, pela chave (lutador, tipo, tick), mesmo com o rollback forçado: na SyncTest, os sinais apresentados são iguais aos eventos (DEC-0031 §6).
+- [x] #6 Quando a SyncTest roda o cenário do dash com o rollback de 7 ticks a cada tick, ela acha zero divergências no estado inteiro e esconder `:state:dash_tick` faz ela acusar; o cenário tem dash no plano, na rampa (sem tick no ar), contra a parede, saindo da beirada, guardado no ar, guardado na recarga, uma recusa por stamina e um pulo no fim; a gravação de um dash refaz o mesmo rastro no teste do replay (`rede.md` §8; DEC-0027 §5).
+- [x] #7 Quando o Arthur aperta o Shift esquerdo (por posição física) no Sozinho, o lutador dá o dash sobre a régua de 4 m, e o HUD mostra a recarga como um arco com os décimos de segundo, lida do estado; o `tools/net_run.sh` passa a ping 100 com o bot dando um dash no meio de cada perna; o que ele sentiu vai para uma fonte (DEC-0031 §2 e §8; `rede.md` §8 e §10; F-041).
 <!-- AC:END -->
 
 ## Definition of Done
 <!-- DOD:BEGIN -->
-- [ ] #1 Critérios de aceite verificados
-- [ ] #2 Teste automatizado para toda regra do núcleo (core/)
-- [ ] #3 Diário da sessão escrito e glossário atualizado
-- [ ] #4 Mudanças registradas em docs/mudancas.md
+- [x] #1 Critérios de aceite verificados
+- [x] #2 Teste automatizado para toda regra do núcleo (core/)
+- [x] #3 Diário da sessão escrito e glossário atualizado
+- [x] #4 Mudanças registradas em docs/mudancas.md
 <!-- DOD:END -->
 
 ## Implementation Plan
@@ -170,3 +170,9 @@ Com o seu ok e uma linha no `mudancas.md` cada: `movimento.md` ("Dash" com as le
 ## Since the plan (23/10/2026, en)
 The tick now runs in the physics step (DEC-0040, sync_to_physics on; was numbered as this task's DEC before, now DEC-0041). Device sampling in `fighter_input.gd` is in `_physics_process` with `process_physics_priority = -1`: the dash key follows the jump's path (`_unhandled_input` → `press_dash()`). Sozinho and `--watch` start after one process frame (`Main._first_frame`). Q-33 (double jump feels infinite) is judged in this task's playtest.
 <!-- SECTION:NOTES:END -->
+
+## Final Summary
+
+<!-- SECTION:FINAL_SUMMARY:BEGIN -->
+O dash entrou: 4 m em 200 ms, saída a 7 m/s, recarga de 400 ms, 15 de stamina, só no chão, no Shift esquerdo (F-121). O modo DASH entra por comando no before_move e só termina pela própria regra (DEC-0041); o snap do chão cobre os 20 m/s na rampa, 0,338 m, e a referência foi regravada por isso; os sinais do dash e do pulo duplo tocam uma vez por chave, mesmo com o rollback. A SyncTest do dash acha zero divergências, e o veneno no dash_tick acusa; o net_run passa com o bot dando dash; o replay com dash se refaz bit a bit. Critério 6: no cenário, o dash guardado na recarga aparece só como recusa, porque com a barra de 20 da cópia a stamina volta depois da recarga; o teste do núcleo prova que ele sai. O revisor aprovou. O Arthur jogou e achou muito foda (F-123); o dash no ar virou a Q-34, e a Q-33 fechou (F-124).
+<!-- SECTION:FINAL_SUMMARY:END -->

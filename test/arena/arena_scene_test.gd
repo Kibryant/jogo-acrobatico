@@ -211,7 +211,7 @@ func test_the_dash_ruler_marks_every_4_m_and_collides_with_nothing() -> void:
 	for strip: Node in ruler.get_children():
 		assert(strip is MeshInstance3D, "every strip of the ruler is a MeshInstance3D")
 		var mesh_node := strip as MeshInstance3D
-		assert_bool(mesh_node.mesh is BoxMesh).is_true()
+		assert(mesh_node.mesh is BoxMesh, "every strip of the ruler is a BoxMesh")
 		assert_vector((mesh_node.mesh as BoxMesh).size).is_equal_approx(
 			RULER_STRIP,
 			Vector3.ONE * HAIR,

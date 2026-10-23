@@ -107,6 +107,9 @@ Cada número tem uma origem, e nem todos têm a mesma firmeza; a vitrine mostra 
 | Descendo a rampa de 45° | fica no chão em todos os ticks | — | O snap do chão cobre a maior velocidade no chão: 0,338 m a 60 ticks (20 m/s ÷ 60 × tan 45°, mais as margens do motor), contra 0,121 m da corrida. Um degrau de até 0,338 m passa a ser chão (F-122) |
 | Contra uma parede | o tempo segue, e o motor desliza | — | Leitura v0 do Claude (TASK-10.4) |
 | Tecla | Shift esquerdo, por posição física | — | F-121; DEC-0031 §8 |
+| Dash guardado | sai na direção do tick em que sai | — | Um aperto guardado no ar ou na recarga usa a direção apontada, ou para onde o corpo olha, no tick em que o dash começa. Leitura v0 do Claude (TASK-10.4) |
+| Para onde o corpo olha no dash | segue a câmera | — | Só a imagem: a direção do dash não muda (F-015 §1). Leitura v0 do Claude (TASK-10.4) |
+| Pulo depois de um dash que saiu da beirada | o coyote conta da beirada | — | Dentro dos 100 ms do coyote, sai o pulo cheio; depois, é o pulo duplo ("Pulo e ar"). Leitura v0 do Claude (TASK-10.4) |
 | Recarga | 400 | ms | Conta a partir do fim do dash: 24 ticks a 60 e 12 a 30. O dash dura 12 ticks a 60 e 6 a 30 |
 | Custo | 15 | pontos de stamina | |
 | Invulnerabilidade | nenhuma | — | Separado da esquiva, que é do combate (`combate.md`); o protótipo pode pedir para unir os dois |

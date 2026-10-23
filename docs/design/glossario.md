@@ -14,6 +14,7 @@ A linguagem ubíqua do jogo (DEC-0004, regra 5): o mesmo termo na conversa, no d
 | Lutador | O personagem na simulação, controlado por um jogador ou por um bot. No LoL, é o campeão (DEC-0022) | — | `Fighter` |
 | Jogador | A pessoa por trás do lutador; na rede, um peer. No LoL, é o invocador (DEC-0022) | — | `peer_id` |
 | Tick | Uma rodada de atualização do jogo, em ritmo fixo: lê o input, aplica as regras e anota a nova situação. O "servidor de 128 ticks" do Valorant faz 128 por segundo | tick | `tick` |
+| Passo de física | A batida fixa do motor do Godot, 60 por segundo, independente dos quadros da tela. O tick do netfox roda dentro dela, então anda sempre o mesmo tempo, a 30 ou a 144 fps (DEC-0040) | passo | `_physics_process`, `sync_to_physics` |
 | Ticks por segundo | Quantos ticks a simulação roda por segundo. O jogo roda a 60, um tick a cada 16,7 ms; o padrão do netfox é 30 (DEC-0024) | tick/s | `tickrate` |
 | Frame | Um desenho da tela. Varia com o PC (FPS); o tick, não. O frame desenha; o tick decide | frame/s | `frame` |
 | Loop de ticks | Os ticks que um frame roda de uma vez para alcançar o relógio: nenhum, um ou vários, até 8; também laço de ticks. O `Match` faz cada tick do loop rodar uma vez (`rede.md` §2; F-085). O arquivo de replay guarda o tamanho do laço de cada tick, e o tocador sem tela roda laço a laço como foi gravado (TASK-10.3) | ticks | `before_tick_loop`, `after_tick_loop`, a coluna `loop` |

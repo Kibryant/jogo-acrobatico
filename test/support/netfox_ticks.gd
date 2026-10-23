@@ -8,7 +8,7 @@
 # physics_factor is the physics rate over the tickrate and move_and_slide() moves by the fixed
 # physics step, so a tick moves exactly one tick. Inside a process frame the factor would use the
 # last frame's delta and move_and_slide() this frame's, and a test's frames vary too much for that.
-# The game has no such gap: NetworkTime takes the delta and runs its ticks in the same frame.
+# The game runs its ticks in the physics step too (DEC-0040).
 extends RefCounted
 
 

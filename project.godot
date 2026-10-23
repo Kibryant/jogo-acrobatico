@@ -87,6 +87,7 @@ jump={
 [netfox]
 
 time/tickrate=60
+time/sync_to_physics=true
 
 [physics]
 

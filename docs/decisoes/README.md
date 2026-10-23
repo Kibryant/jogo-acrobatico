@@ -48,6 +48,7 @@
 | [DEC-0037](DEC-0037-snap-de-reserva-do-contorno-d.md) | 2026-10-17 | O snap de reserva do contorno D: quando a sonda não acha o chão que o estado diz, o lutador chama o snap do motor | aceita; completa a DEC-0025 §2 |
 | [DEC-0038](DEC-0038-sessao-de-teste-com-o-simulador.md) | 2026-10-18 | A sessão de teste com o simulador de lag: um `override.cfg` temporário liga a conexão automática do netfox, e a `Main` usa a conexão do simulador | aceita; completa a DEC-0023 §7 |
 | [DEC-0039](DEC-0039-vaga-do-buffer-posicao-no-before-move-e-janela-inclusiva.md) | 2026-10-19 | A vaga do buffer, a posição no `before_move` e a janela inclusiva: a DEC-0022 muda só nisso | aceita; substitui a DEC-0022 só nisso (F-100 §1) |
+| [DEC-0040](DEC-0040-o-tick-no-passo-de-fisica.md) | 2026-10-23 | O tick no passo de física: o `sync_to_physics` do netfox ligado, para a janela, o jogo ao vivo e o replay sem tela darem os mesmos bits em qualquer fps | aceita (F-117) |
 
 ## Propostas — ainda não são regra
 

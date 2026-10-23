@@ -11,6 +11,7 @@ extends GdUnitTestSuite
 
 const NetfoxTicks := preload("res://test/support/netfox_ticks.gd")
 const MAIN_SCENE := preload("res://main/main.tscn")
+const ReplayRun := preload("res://tools/replay_run.gd")
 const SPAWN_A := Vector3(-6, 0, 9) # arena.tscn: SpawnA
 const HAIR := 1e-4
 ## s of wall clock Sozinho plays before the session ends: netfox's real clock runs ticks in it.
@@ -113,3 +114,32 @@ func test_sozinho_records_its_session_in_the_replay_folder() -> void:
 	assert_int(replay.tick_count()).is_greater(0)
 	var last := replay.rows[replay.rows.size() - 1]
 	assert_int(last.tick - first_tick + 1).is_equal(replay.tick_count())
+
+
+# The opened game's Main is ready before Godot's first frame, and that frame's physics step runs
+# netfox's tick (DEC-0040) before Godot flushes the deferred calls where netfox registers a fighter
+# (rollback-synchronizer.gd). Entering the tree right before a physics step's tick loop is the same
+# order: Sozinho must still simulate its fighter from netfox's first tick and record that tick
+# first, so the header tells the truth and the player replays the file as the live game played it
+# (sozinho-20261023-091228.replay began on tick 2 under first_tick=0).
+func test_sozinho_opened_before_a_physics_step_records_from_its_first_tick() -> void:
+	_folder = OS.get_temp_dir().path_join("jogo-acrobatico-main-test-%d" % Time.get_ticks_usec())
+	DirAccess.make_dir_recursive_absolute(_folder)
+	var path := _folder.path_join("opened.replay")
+	await get_tree().physics_frame
+	var main := _main(["--replay=%s" % path])
+	await get_tree().create_timer(PLAY_S).timeout
+	main.end_session()
+	var replay := ReplayFile.open(path)
+	assert_array(replay.errors).is_empty()
+	replay.judge(ReplayFile.this_build())
+	assert_bool(replay.playable(false)).override_failure_message("%s" % replay.errors).is_true()
+	assert_int(replay.first_tick()).is_equal(0)
+	assert_int(replay.tick_count()).is_greater(0)
+	if not replay.playable(false) or replay.rows.is_empty():
+		return
+	assert_int(replay.rows[0].tick).is_equal(replay.first_tick())
+	var played := await ReplayRun.new().play(self, replay, replay.movement_data())
+	assert_int(played.ticks).is_equal(replay.tick_count())
+	assert_bool(played.checked).is_true()
+	assert_int(played.first_apart).is_equal(-1)

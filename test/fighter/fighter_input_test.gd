@@ -50,6 +50,15 @@ static func _jump_key(echo: bool) -> InputEventKey:
 	return event
 
 
+# DEC-0040: netfox ticks in the physics step, so the keyboard is read in the physics step before
+# netfox's own (review of the sync_to_physics change): the keys of a step count in its tick.
+func test_the_keyboard_is_read_in_the_physics_step_before_netfox_ticks() -> void:
+	var fighter := await _fighter_at_the_keyboard()
+	var input := fighter.input
+	assert_bool(input.is_physics_processing()).is_true()
+	assert_int(input.process_physics_priority).is_less(NetworkTime.process_physics_priority)
+
+
 func test_the_tick_input_is_the_mean_move_and_the_last_yaw_of_the_frames() -> void:
 	var fighter := await _fighter_in_a_match()
 	fighter.input.sample_frame(FORWARD, 0.25)

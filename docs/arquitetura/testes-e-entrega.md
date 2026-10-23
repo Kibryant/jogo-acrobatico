@@ -92,8 +92,12 @@ Os tempos são os da rodada B depois dos consertos (F-049 §5). O total foi 31,3
 - `--replay=CAMINHO` grava num arquivo, `--replay-dir=PASTA` em outra pasta, e `--no-replay` desliga. O cliente e o servidor não gravam na v1.
 - Ele salva a cada segundo (`FileAccess.flush` a cada 60 ticks): um fechamento brusco perde no máximo o último segundo. O teste lê o arquivo com o gravador ainda aberto, o que um fechamento brusco deixaria no disco, e o arquivo toca (leitura v0 do Claude, TASK-10.3).
 - Ele só lê: escuta o `after_process_tick` do netfox, como o `TickRecorder`, e anota o input que o netfox restaurou para aquele tick.
+- **O lutador existe para o netfox antes do primeiro tick.** O `RollbackSynchronizer` do netfox registra a entrada, o estado e a simulação do lutador só quando o Godot esvazia as chamadas adiadas (`process_settings.call_deferred`, `rollback-synchronizer.gd`). Com o tick no passo de física (DEC-0040), o primeiro passo do jogo aberto roda antes disso. Um lutador criado no `_ready` da `Main` ficava parado nos primeiros ticks, sem simulação e sem input anotado.
+  - A gravação de 23/10 tinha `first_tick=0` e começava no tick 2, e o tocador a recusou (F-118, contexto).
+  - Por isso o Sozinho e o `--watch` começam a sessão no primeiro quadro (`Main._first_frame`). O quadro esvazia as chamadas adiadas antes do próximo passo de física.
+  - Um teste da `Main` abre o Sozinho logo antes de um passo de física, que é a mesma ordem. Ele confere que a primeira linha é o `first_tick` e que o tocador refaz o arquivo sem se separar da coluna `check`. Sem a correção, o teste vê a primeira linha no tick 1.
 
-**O portão nunca escreve em `user://replays/`** (critério 1 da TASK-10.3). Os testes da `Main` passam `--no-replay`, e os do gravador gravam numa pasta temporária. Depois de cada rodada, o `tools/run_tests.sh` reprova se achar ali um arquivo mais novo que ela; um teste diz onde a pasta fica nesta máquina. A prova: tirar o `--no-replay` de um teste da `Main` reprovou a rodada, com o arquivo nomeado.
+**O portão nunca escreve em `user://replays/`** (critério 1 da TASK-10.3). Os testes da `Main` passam `--no-replay` ou gravam numa pasta temporária, como os do gravador. Depois de cada rodada, o `tools/run_tests.sh` reprova se achar ali um arquivo mais novo que ela; um teste diz onde a pasta fica nesta máquina. A prova: tirar o `--no-replay` de um teste da `Main` reprovou a rodada, com o arquivo nomeado.
 
 **O arquivo, formato 1** (`replay/replay_file.gd`):
 - Texto em UTF-8, com `\n`. O cabeçalho vem em linhas `chave=valor`: formato, versão, commit, impressão das regras, motor, plataforma, ticks por segundo, `physics_ticks_per_second`, `sync_to_physics`, `max_ticks_per_frame`, `input_delay`, a arena e a impressão dela, a semente, a configuração inteira, os lutadores, o primeiro tick e as colunas declaradas (F-044 §2).
@@ -141,11 +145,11 @@ Os tempos são os da rodada B depois dos consertos (F-049 §5). O total foi 31,3
 - Em todas, a diferença começa no último bit de um float de 32 bits e fica em micrômetros nos 600 ticks.
 - Nenhum campo discreto se separou: chão, modo, pulos usados e carimbos ficaram iguais em todo tick.
 - Duas janelas a 60 também saíram diferentes entre si.
-- **A causa provável:** no jogo, os ticks rodam no `_process`. Ali, o `physics_factor` vale o tempo do tick dividido pelo do quadro, e o `move_and_slide()` usa o tempo daquele quadro. O tocador sem tela roda dentro de um quadro de física, onde o fator vale exatamente 1 (`network-time.gd`). Duas medidas apontam para isso:
+- **A causa provável:** no jogo, os ticks rodavam no `_process` (até a DEC-0040). Ali, o `physics_factor` vale o tempo do tick dividido pelo do quadro, e o `move_and_slide()` usa o tempo daquele quadro. O tocador sem tela roda dentro de um quadro de física, onde o fator vale exatamente 1 (`network-time.gd`). Duas medidas apontam para isso:
   - a 30 quadros, o laço tinha o mesmo tamanho do gravado, e o rastro se separou assim mesmo;
   - no portão, o mesmo `ReplayWatch`, rodando dentro de um quadro de física, a partir do tick 37 e em laços de 1 tick, refaz byte a byte a gravação feita do tick 1000 em laços de 1 a 3. Nem o tick de começo nem o tamanho do laço separam o rastro; o tempo do quadro do `_process`, sim.
 - **O que isso quer dizer:** o tocador sem tela refaz o arquivo e a si mesmo byte a byte, mas não o que a janela calculou. Um bug que dependa de um micrômetro pode aparecer ao vivo e não no replay.
-- A escolha do `sync_to_physics` volta ao Arthur com estes números antes da TASK-10.4, e uma mudança, se vier, é uma DEC nova (F-025 §5; F-112, contexto).
+- A escolha do `sync_to_physics` voltou ao Arthur com estes números antes da TASK-10.4 (F-025 §5; F-112, contexto). A sonda de 23/10 confirmou a causa com o replay de 11 180 ticks dele: desligado, a janela se separa entre o tick 342 e o 408, com até 5 a 13 µm, a 30, 60 e 144 fps; ligado, sai igual byte a byte em todos. O Arthur ligou o `sync_to_physics` (DEC-0040; F-117).
 
 **O tamanho:**
 - 71 bytes por tick e lutador, com os floats em hexadecimal, mais uns 1,2 KB de cabeçalho.
@@ -258,7 +262,6 @@ O plano Free não impõe nada disso: o pre-push continua sendo a trava, e o CI n
 
 - **O tempo do portão:** na TASK-9, ele levou de 61 a 114 s neste PC, conforme o PC estava quieto ou ocupado, contra o limite de 90 s do pre-push (DEC-0027). Os passos que mais pesam são o import e os testes; a referência soma uns 1,1 s.
   - Na TASK-10.1, medido em silêncio: 72 s na rodada A, 76 s na rodada B e 78 s no fechamento, com os testes em uns 34 s, contra os 90 s (DEC-0027 §1). Com o PC ocupado, o revisor mediu 103 s e 116 s, com a SyncTest de 4 s subindo para 6 a 11 s: o pre-push de quem trabalha com outra coisa aberta pode passar do limite. A divisão do CI da DEC-0027 §4 ainda não precisou entrar.
-- **O `sync_to_physics`:** o ao vivo e o sem tela se separam no último bit (§4, a medição); a escolha volta ao Arthur antes da TASK-10.4.
 - **Q-20:** a assinatura do `.exe`, antes de alguém de fora testar.
 - **Canários** para o formato, o lint, as travas, o import e o log limpo, se um furo aparecer ali.
 - **Um job do CI fora do pre-push,** quando uma camada não couber nos 90 s.

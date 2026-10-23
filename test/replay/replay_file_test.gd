@@ -173,7 +173,8 @@ func test_the_header_says_which_game_recorded_it_with_the_whole_configuration() 
 	assert_str(fields["platform"]).is_equal(OS.get_name())
 	assert_str(fields["tickrate"]).is_equal("60")
 	assert_str(fields["physics_ticks_per_second"]).is_equal("60")
-	assert_str(fields["sync_to_physics"]).is_equal("0")
+	# DEC-0040: the game ticks in the physics step.
+	assert_str(fields["sync_to_physics"]).is_equal("1")
 	assert_str(fields["max_ticks_per_frame"]).is_equal(str(NetworkTime.max_ticks_per_frame))
 	assert_str(fields["input_delay"]).is_equal("0")
 	assert_str(fields["arena"]).is_equal("res://arena/arena.tscn")
@@ -239,7 +240,7 @@ func test_another_format_tickrate_arena_or_settings_cannot_play() -> void:
 		"format": "2",
 		"tickrate": "30",
 		"physics_ticks_per_second": "120",
-		"sync_to_physics": "1",
+		"sync_to_physics": "0",
 		"max_ticks_per_frame": "4",
 		"input_delay": "2",
 		"arena": "res://arena/other_arena.tscn",

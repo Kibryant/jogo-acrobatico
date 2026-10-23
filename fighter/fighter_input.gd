@@ -25,10 +25,12 @@ var _fields := ReplayFile.input_fields()
 func _ready() -> void:
 	# BaseNetInput connects netfox's before_tick_loop to _gather(), on the owner's peer only.
 	super()
-	# A lower priority processes first, so the devices are sampled before netfox's tick loop of
-	# the same frame (NetworkTime, an autoload, processes with the default 0): the keys of a frame
-	# count in that frame's ticks instead of a frame later.
-	process_priority = -1
+	# netfox runs its tick loop in the physics step (DEC-0040), and Godot runs a frame's physics
+	# steps before its _process: the devices are sampled in the physics step too, and a lower
+	# priority goes first (NetworkTime, an autoload, has the default 0), so the keys of a step
+	# count in that step's tick instead of a frame later. The mouse turns the camera in
+	# _unhandled_input, which Godot dispatches before the physics steps.
+	process_physics_priority = -1
 
 
 # netfox emits after_tick and then records the input of that tick (NetworkTime._loop), so the
@@ -81,7 +83,7 @@ func to_tick_input() -> TickInput:
 	return tick_input
 
 
-func _process(_delta: float) -> void:
+func _physics_process(_delta: float) -> void:
 	if _camera == null:
 		return
 	# Keys by physical position (DEC-0031): the InputMap actions use physical_keycode.

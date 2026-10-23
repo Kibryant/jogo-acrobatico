@@ -114,7 +114,8 @@ func _rollback_tick(_delta: float, tick: int, _is_fresh: bool) -> void:
 	var plan := Movement.before_move(state, global_position, velocity, tick_input, config, tick)
 	# move_and_slide() moves by velocity times the frame's delta, and a tick is not a frame:
 	# physics_factor turns the move into exactly one tick (netfox's rollback-caveats.md). The
-	# velocity is divided back, so the state keeps m/s.
+	# velocity is divided back, so the state keeps m/s. With the tick in the physics step it is
+	# exactly 1 (DEC-0040); it stays so a tick run outside the physics step still moves one tick.
 	velocity = plan.velocity * NetworkTime.physics_factor
 	move_and_slide()
 	velocity /= NetworkTime.physics_factor

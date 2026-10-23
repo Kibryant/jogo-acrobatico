@@ -72,6 +72,7 @@ const OWN_FOLDERS: Array[String] = [
 	"res://main",
 	"res://net",
 	"res://ui",
+	"res://replay",
 	"res://tools",
 ]
 

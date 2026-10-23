@@ -1,0 +1,6 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://tools/replay_play.gd" id="1_r3p1y"]
+
+[node name="ReplayPlay" type="Node" unique_id=1958315742]
+script = ExtResource("1_r3p1y")

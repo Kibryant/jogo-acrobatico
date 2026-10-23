@@ -114,3 +114,8 @@ O que chegou ao projeto e como chegou. Uma fonte não muda: só mudam `status`, 
 | [F-108](F-108-arthur-joga-o-hud-e-nao-acha-o-vao.md) | 2026-10-19 | O Arthur joga a TASK-10.2, gosta da barra, que reage rápido, e não acha o vão de 6 m |
 | [F-109](F-109-arthur-sobe-as-plataformas-do-vao-para-2-m.md) | 2026-10-19 | O Arthur escolhe subir as plataformas do vão para 2 m, para cair no vão custar a volta pelo pulo duplo |
 | [F-110](F-110-arthur-joga-o-vao-de-2-m.md) | 2026-10-19 | O Arthur joga o vão com as plataformas de 2 m, cruza com o pulo duplo e acha massa, sem novidade, porque já fazia isso nos blocos da escada |
+| [F-111](F-111-arthur-libera-o-merge-da-task-10-2-e-segue-para-a-task-10-3.md) | 2026-10-19 | O Arthur libera o merge do PR #10 com o CI verde e escolhe seguir para a TASK-10.3 na mesma sessão |
+| [F-112](F-112-arthur-abre-a-task-10-3.md) | 2026-10-19 | O Arthur abre a TASK-10.3: acerta que o replay guarda as teclas e a câmera e escolhe que o Sozinho grave sempre |
+| [F-113](F-113-arthur-libera-o-pr-rascunho-da-task-10-3.md) | 2026-10-19 | O Arthur libera subir a branch da TASK-10.3 e abrir o PR rascunho, depois de o PC desligar |
+| [F-114](F-114-arthur-assiste-ao-replay-e-ve-pulo-duplo-infinito.md) | 2026-10-23 | O Arthur assiste ao replay com o `--watch`, acha massa e conta que parece ter pulo duplo infinito: a barra zera e volta a 10 a tempo do próximo voo |
+| [F-115](F-115-arthur-libera-o-merge-da-task-10-3-e-deixa-a-stamina-para-o-dash.md) | 2026-10-23 | O Arthur acerta por que a barra não segura o pulo duplo, deixa a Q-33 para o dash e libera o merge do PR #11 com o CI verde |

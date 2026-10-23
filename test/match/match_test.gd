@@ -100,6 +100,17 @@ func test_watch_gives_the_fighter_a_camera() -> void:
 	assert_float(rig.yaw).is_equal_approx(SPAWN_A_YAW, HAIR)
 
 
+# TASK-10.3: a replay played in a window gets a camera that only follows its fighter, looking where
+# it looks, and leaves the mouse free: the replay's rows drive the fighter, not this PC's devices.
+func test_view_gives_a_replayed_fighter_a_camera_that_only_follows() -> void:
+	var game_match := await _match_with_fighters(1)
+	var rig := game_match.view(game_match.fighters[0])
+	assert_object(game_match.camera_rig).is_same(rig)
+	assert_bool(rig.takes_mouse).is_false()
+	assert_float(rig.yaw).is_equal_approx(SPAWN_A_YAW, HAIR)
+	assert_int(Input.mouse_mode).is_not_equal(Input.MOUSE_MODE_CAPTURED)
+
+
 # The two spawn points: 10 m apart, each looking at the other (TASK-9, "Números v0 do Claude").
 func test_the_two_fighters_spawn_10_m_apart_facing_each_other() -> void:
 	var game_match := await _match_with_fighters(2)

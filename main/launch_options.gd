@@ -2,12 +2,15 @@
 # main.ts reading process.argv. A pure function of the arguments, of the dedicated server build,
 # of the screen and of netfox's network simulator, so a test covers every form without opening the
 # game:
-# - no argument: Sozinho;
+# - no argument: Sozinho, which records a replay of the session in user://replays/ (TASK-10.3;
+#   F-112 §2), or in --replay=PATH, or in --replay-dir=DIR, or none with --no-replay;
 # - --server [--port=N] [--stop-file=PATH] [--record=PATH], or the build exported as a dedicated
 #   server: the server, which runs without a screen;
 # - --connect=HOST[:PORT] [--bot] [--record=PATH]: a client, played by a person or by the bot.
 # With a screen, --half=left or --half=right puts the window on that half of the screen, and
 # --measure-fps=PATH measures the frame rate in fullscreen once the game's own fighter plays.
+# With a screen, --watch=FILE [--force] [--trace=PATH] plays a replay in Sozinho instead of the
+# keyboard, and records none.
 # When netfox's network simulator connects the game (SimulatorLink), the address is its own: an
 # address in the arguments that differs is refused, and so is Sozinho, which has no network.
 # An argument this build does not know, or one that does not fit the mode, is an error: a typo
@@ -32,10 +35,33 @@ const BOT := "bot"
 const RECORD := "record"
 const HALF := "half"
 const MEASURE_FPS := "measure-fps"
+const REPLAY := "replay"
+const REPLAY_DIR := "replay-dir"
+const NO_REPLAY := "no-replay"
+const WATCH := "watch"
+const TRACE := "trace"
+const FORCE := "force"
 ## The arguments this build knows, by name.
-const KNOWN: Array[String] = [SERVER, PORT, CONNECT, STOP_FILE, BOT, RECORD, HALF, MEASURE_FPS]
+const KNOWN: Array[String] = [
+	SERVER,
+	PORT,
+	CONNECT,
+	STOP_FILE,
+	BOT,
+	RECORD,
+	HALF,
+	MEASURE_FPS,
+	REPLAY,
+	REPLAY_DIR,
+	NO_REPLAY,
+	WATCH,
+	TRACE,
+	FORCE,
+]
 ## The ones that take no value.
-const FLAGS: Array[String] = [SERVER, BOT]
+const FLAGS: Array[String] = [SERVER, BOT, NO_REPLAY, FORCE]
+## The ones that only Sozinho takes (TASK-10.3): the server and the clients record no replay.
+const SOLO_ONLY: Array[String] = [REPLAY, REPLAY_DIR, NO_REPLAY, WATCH, TRACE, FORCE]
 ## The values of --half.
 const HALVES: Array[String] = ["left", "right"]
 
@@ -57,6 +83,18 @@ var half := ""
 ## The file where the game writes, as JSON, its frame rate over a minute in fullscreen (FpsMeter;
 ## TASK-9, criterion 17); empty when it does not measure.
 var measure_fps := ""
+## The file Sozinho records its replay to; empty for a new file in replay_dir (ReplayRecorder).
+var replay := ""
+## The folder of Sozinho's replays; empty for user://replays/ (TASK-10.3; F-112 §2).
+var replay_dir := ""
+## Sozinho records no replay, as the gate's tests of the Main (TASK-10.3, criterion 1).
+var no_replay := false
+## The replay file Sozinho plays in a window instead of the keyboard; empty when it plays.
+var watch := ""
+## With --watch: where the window writes the state trace of what it played (StateTrace).
+var trace := ""
+## With --watch: plays a replay of another build anyway (ReplayFile's refusals).
+var force := false
 ## netfox's network simulator, when it connects the game; null otherwise.
 var simulator: SimulatorLink
 ## One line per problem with the arguments; the game opens only when there is none.
@@ -158,8 +196,56 @@ func _read_mode(
 			errors.append("--measure-fps takes the whole screen: it does not go with --half")
 		else:
 			measure_fps = given[MEASURE_FPS]
+	_read_replay(given, has_screen)
 	if simulator != null:
 		_check_simulator_address()
+
+
+# True when this launch records a replay: Sozinho, unless --no-replay or --watch (TASK-10.3).
+func records_replay() -> bool:
+	return mode == Mode.SOLO and not no_replay and watch.is_empty()
+
+
+# The replay's arguments, Sozinho's only (TASK-10.3): where it records, or none, or the replay a
+# window plays instead of the keyboard.
+func _read_replay(given: Dictionary[String, String], has_screen: bool) -> void:
+	for argument_name: String in SOLO_ONLY:
+		if given.has(argument_name) and mode != Mode.SOLO:
+			errors.append(
+				"--%s goes with Sozinho: the server and the clients record no replay"
+				% argument_name,
+			)
+	if mode != Mode.SOLO:
+		return
+	var recording := given.has(REPLAY) or given.has(REPLAY_DIR)
+	if given.has(REPLAY) and given.has(REPLAY_DIR):
+		errors.append("--replay names the file and --replay-dir its folder: give one of them")
+	if given.has(NO_REPLAY) and recording:
+		errors.append("--no-replay records nothing: it goes without --replay and --replay-dir")
+	if given.has(WATCH):
+		if not has_screen:
+			errors.append(
+				"--watch plays a replay in a window: it needs a screen (tools/replay.sh plays one"
+				+ " without)",
+			)
+		elif recording or given.has(NO_REPLAY):
+			errors.append(
+				"--watch records no replay: it goes without --replay, --replay-dir and --no-replay",
+			)
+		elif given.has(MEASURE_FPS):
+			errors.append("--watch and --measure-fps do not go together")
+		else:
+			watch = given[WATCH]
+	else:
+		for argument_name: String in [TRACE, FORCE]:
+			if given.has(argument_name):
+				errors.append("--%s goes with --watch" % argument_name)
+	replay = given.get(REPLAY, "")
+	replay_dir = given.get(REPLAY_DIR, "")
+	no_replay = given.has(NO_REPLAY)
+	if not watch.is_empty():
+		trace = given.get(TRACE, "")
+		force = given.has(FORCE)
 
 
 # HOST or HOST:PORT. An IPv6 address, with its own colons, is not read here.

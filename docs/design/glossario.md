@@ -1,6 +1,6 @@
 ---
 revisado_em: 2026-10-19
-fontes: [F-001, F-002, F-005, F-007, F-012, F-013, F-020, F-021, F-025, F-026, F-028, F-030, F-032, F-038, F-039, F-044, F-045, F-046, F-050, F-051, F-052, F-053, F-056, F-058, F-066, F-068, F-069, F-070, F-073, F-078, F-079, F-081, F-083, F-085, F-086, F-087, F-088, F-090, F-091, F-093, F-094, F-095, F-097, F-100]
+fontes: [F-001, F-002, F-005, F-007, F-012, F-013, F-020, F-021, F-025, F-026, F-028, F-030, F-032, F-038, F-039, F-044, F-045, F-046, F-050, F-051, F-052, F-053, F-056, F-058, F-066, F-068, F-069, F-070, F-073, F-078, F-079, F-081, F-083, F-085, F-086, F-087, F-088, F-090, F-091, F-093, F-094, F-095, F-097, F-100, F-112]
 ---
 
 # Glossário
@@ -16,7 +16,7 @@ A linguagem ubíqua do jogo (DEC-0004, regra 5): o mesmo termo na conversa, no d
 | Tick | Uma rodada de atualização do jogo, em ritmo fixo: lê o input, aplica as regras e anota a nova situação. O "servidor de 128 ticks" do Valorant faz 128 por segundo | tick | `tick` |
 | Ticks por segundo | Quantos ticks a simulação roda por segundo. O jogo roda a 60, um tick a cada 16,7 ms; o padrão do netfox é 30 (DEC-0024) | tick/s | `tickrate` |
 | Frame | Um desenho da tela. Varia com o PC (FPS); o tick, não. O frame desenha; o tick decide | frame/s | `frame` |
-| Loop de ticks | Os ticks que um frame roda de uma vez para alcançar o relógio: nenhum, um ou vários, até 8. O `Match` faz cada tick do loop rodar uma vez (`rede.md` §2; F-085) | ticks | `before_tick_loop`, `after_tick_loop` |
+| Loop de ticks | Os ticks que um frame roda de uma vez para alcançar o relógio: nenhum, um ou vários, até 8; também laço de ticks. O `Match` faz cada tick do loop rodar uma vez (`rede.md` §2; F-085). O arquivo de replay guarda o tamanho do laço de cada tick, e o tocador sem tela roda laço a laço como foi gravado (TASK-10.3) | ticks | `before_tick_loop`, `after_tick_loop`, a coluna `loop` |
 | Estado | Retrato da simulação num tick, feito de valores planos (número, vetor, texto curto e ID), nunca referência a outro objeto. Fica em quatro caixas: corpo, regras, input e configuração (DEC-0022) | — | `state` |
 | Estado do lutador | A caixa de regras do lutador: modo, carimbos e pulos usados. O netfox grava campo a campo, por valor | — | `FighterState` |
 | Modo | Em que situação o lutador está: no chão ou no ar e, na fase 1, na parede, no dash ou no gancho. Um por vez, com o tick em que começou | — | `mode`, `mode_since` |
@@ -145,7 +145,15 @@ A linguagem ubíqua do jogo (DEC-0004, regra 5): o mesmo termo na conversa, no d
 | Log limpo | Um portão verde não tem linha `ERROR:` no log; testes que passam com erro no log reprovam (F-039) | — | `tools/run_tests.sh` |
 | Trava do teste de aceite | O sha256 de um teste de aceite, guardado enquanto a task está aberta. Só o Arthur destrava (DEC-0009) | — | `.claude/harness/locks/` |
 | Hook do Claude Code | Um comando que o Claude Code roda antes ou depois de cada ferramenta do agente, como um middleware. Aqui, ele nega a edição de teste travado e formata o `.gd` | — | `.claude/hooks/` |
-| Replay por inputs | A partida guardada como o input de cada tick e tocada de novo no servidor. Só reproduz na mesma build: a mesma tecla com outra regra dá outra partida (DEC-0011; DEC-0027) | — | — |
+| Replay por inputs | A partida guardada como o input de cada tick e tocada de novo no servidor. Só reproduz na mesma build: a mesma tecla com outra regra dá outra partida (DEC-0011; DEC-0027) | — | `replay/` |
+| Gravador de replay | Quem escreve o arquivo de replay enquanto se joga no Sozinho: o cabeçalho ao começar e, a cada tick, o input aplicado e a impressão do estado. Salva a cada segundo e guarda os 20 mais novos em `user://replays/` (F-112 §2; TASK-10.3) | — | `ReplayRecorder` |
+| Arquivo de replay | O texto que guarda uma sessão: um cabeçalho que diz qual jogo gravou, com a configuração inteira, e uma linha por tick e lutador com o input. Os floats vão em 16 dígitos hexadecimais, os bits exatos (`testes-e-entrega.md` §4) | ~71 bytes por tick | `ReplayFile`, `.replay` |
+| Colunas declaradas | A lista de nome e tipo das colunas, no cabeçalho do arquivo de replay, tirada do `TickInput` por reflexão. O leitor acha cada coluna pelo nome, e um campo novo do input entra no arquivo sozinho | — | `columns` |
+| Tocador de replay | Quem roda a partida de novo a partir do arquivo: sem tela, pela `Match` de verdade, laço a laço, com o relógio no primeiro tick gravado; ou com janela, no relógio de verdade (`--watch`) | ticks | `tools/replay.sh`, `ReplayWatch` |
+| Rastro de estado | Uma linha por tick e lutador com o estado inteiro depois do tick, os ticks e os carimbos contados a partir do primeiro tick gravado. Dois rastros iguais byte a byte provam que as duas corridas calcularam o mesmo | — | `StateTrace` |
+| Impressão do estado | 8 dígitos do sha256 de uma linha do rastro de estado, gravados a cada tick ao vivo na coluna `check`: o tocador diz o primeiro tick em que a refeita se separa do que o jogo calculou | — | `check` |
+| Impressão das regras | O sha256 dos scripts que movem o corpo mais a fixação do netfox, lido dos arquivos quando o jogo roda do código-fonte; vazio na build exportada, onde o commit diz qual é. Outra impressão é outra build: o tocador recusa sem `--force` | — | `rules` |
+| Impressão da arena | O sha256 das caixas que o corpo colide e dos pontos de nascimento da arena. Outra impressão é outra arena: o tocador recusa sem `--force` | — | `arena_sha256` |
 | Referência | Um percurso fixo de bot, com o rastro do caminho guardado; o teste refaz e compara, como o snapshot do Jest. Reprovou sem uma mudança de movimento de propósito? Investiga. Mudou de propósito? Regrava, e o commit diz por quê (golden master; DEC-0027; F-094) | ticks | `test/reference/`, `tools/record_reference.sh` |
 | Números congelados | A cópia dos números do movimento que só a referência usa: o ajuste fino do jogo não a quebra, só uma mudança de código (DEC-0027) | — | — |
 | Build | O jogo empacotado para rodar fora do editor: o template mais o pacote do jogo, num arquivo só (DEC-0028) | MB | `build/` |

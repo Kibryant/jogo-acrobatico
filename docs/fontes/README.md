@@ -122,3 +122,4 @@ O que chegou ao projeto e como chegou. Uma fonte não muda: só mudam `status`, 
 | [F-116](F-116-arthur-abre-a-rodada-do-sync-to-physics.md) | 2026-10-23 | O Arthur abre a rodada do `sync_to_physics`, antes da TASK-10.4 |
 | [F-117](F-117-arthur-aprova-ligar-o-sync-to-physics.md) | 2026-10-23 | O Arthur acerta por que a janela se separava e aprova ligar o `sync_to_physics` no plan mode |
 | [F-118](F-118-arthur-joga-com-o-tick-no-passo-de-fisica.md) | 2026-10-23 | O Arthur joga com o tick no passo de física e sente a câmera lisa e as teclas normais |
+| [F-119](F-119-arthur-assiste-ao-replay-igual-e-libera-o-pr.md) | 2026-10-23 | O Arthur assiste ao replay igual em todo tick e libera subir a branch `sync-to-physics` e abrir o PR |

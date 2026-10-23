@@ -2,7 +2,8 @@
 # 6 x 2 x 6 m with their tops at 2 m (F-109), stand on free floor of the arena: unique names
 # under Arena, on the world's physics layer, a collision box equal to the mesh, and clear of the
 # other bodies, of the reference route and of the SyncTest's scenarios, so neither the reference
-# nor the SyncTest meets them.
+# nor the SyncTest meets them. From TASK-10.4 (criterion 7), the dash's ruler: strips every 4 m,
+# only seen, on free floor too.
 extends GdUnitTestSuite
 
 const ARENA_SCENE := preload("res://arena/arena.tscn")
@@ -27,16 +28,29 @@ const GREY_BLOCK := "Block1m"
 const BODY_RADIUS := 0.35
 
 ## The ground the reference route covers, on the floor plane: x across, z down. Its stored trace,
-## route.trace (rastro d53a533c…, TASK-10.1), puts the fighter's feet between x -7.27 and 4.88
-## and z -11.53 and 9.97; grown by 1 m and rounded out to whole meters, x -9..6 and z -13..11.
-## The test below proves the stored trace still fits in it.
+## route.trace (rastro 3a877934…, TASK-10.4, with the floor snap of the dash), puts the fighter's
+## feet between x -7.27 and 4.88 and z -11.53 and 9.97; grown by 1 m and rounded out to whole
+## meters, x -9..6 and z -13..11. The test below proves the stored trace still fits in it.
 const REFERENCE_ROUTE_AREA := Rect2(Vector2(-9, -13), Vector2(15, 24))
-## The ground the five scenarios of the SyncTest cover (test/fighter/fighter_sync_test.gd), on the
+## The ground the scenarios of the SyncTest cover (test/fighter/fighter_sync_test.gd), on the
 ## floor plane. Measured on 2026-10-19 over every fighter of every scenario on every tick: the
 ## feet between x -8.76 (empurrão) and 9.10 (rampa) and z -11.51 (pulo duplo, on Block2m) and
-## 5.99 (empurrão); grown by 1 m and rounded out to whole meters, x -10..11 and z -13..7.
+## 5.99 (empurrão); grown by 1 m and rounded out to whole meters, x -10..11 and z -13..7. The
+## dash's scenario (TASK-10.4), measured on 2026-10-23, stays inside: x -8.23 to 9.03 and z -9.65
+## to 1.5.
 const SYNC_TEST_AREA := Rect2(Vector2(-10, -13), Vector2(21, 20))
 const HAIR := 1e-4
+
+## The dash's ruler (TASK-10.4, "Arena"): a strip every 4 m, the dash's distance (movimento.md,
+## "Dash"), along x from -10 to 30, each 0.1 m across x, 0.01 m tall and 2 m along z, centred
+## at y 0.01 and z 15, so it covers z 14..16.
+const RULER := "RéguaDoDash"
+const RULER_FROM_X := -10.0
+const RULER_TO_X := 30.0
+const RULER_STEP_M := 4.0
+const RULER_STRIP := Vector3(0.1, 0.01, 2)
+const RULER_Y := 0.01
+const RULER_Z := 15.0
 
 
 func _arena() -> Arena:
@@ -176,3 +190,62 @@ func _grey_of(body: StaticBody3D) -> Material:
 	var mesh := (mesh_node as MeshInstance3D).mesh
 	assert(mesh is PrimitiveMesh, "%s/Mesh is a primitive" % body.name)
 	return (mesh as PrimitiveMesh).material
+
+
+# Criterion 7 of TASK-10.4: the ruler is one node under the arena, with a strip every 4 m from
+# x -10 to 30, each a box of 0.1 x 0.01 x 2 m, and nothing to collide with.
+func test_the_dash_ruler_marks_every_4_m_and_collides_with_nothing() -> void:
+	var arena := _arena()
+	var found := arena.find_children(RULER, "", true, false)
+	assert_int(found.size()).override_failure_message("%s is not one node" % RULER).is_equal(1)
+	var ruler := arena.get_node_or_null(NodePath(RULER))
+	assert_object(ruler).override_failure_message("no %s under Arena" % RULER).is_not_null()
+	if ruler == null:
+		return
+	assert_bool(ruler is Node3D).is_true()
+	var bodies := ruler.find_children("*", "CollisionObject3D", true, false)
+	bodies.append_array(ruler.find_children("*", "CollisionShape3D", true, false))
+	assert_array(bodies).override_failure_message("the ruler has something to collide with") \
+			.is_empty()
+	var xs: Array[float] = []
+	for strip: Node in ruler.get_children():
+		assert(strip is MeshInstance3D, "every strip of the ruler is a MeshInstance3D")
+		var mesh_node := strip as MeshInstance3D
+		assert_bool(mesh_node.mesh is BoxMesh).is_true()
+		assert_vector((mesh_node.mesh as BoxMesh).size).is_equal_approx(
+			RULER_STRIP,
+			Vector3.ONE * HAIR,
+		)
+		var at := mesh_node.global_position
+		assert_float(at.y).is_equal_approx(RULER_Y, HAIR)
+		assert_float(at.z).is_equal_approx(RULER_Z, HAIR)
+		xs.append(at.x)
+	xs.sort()
+	var expected: Array[float] = []
+	var x := RULER_FROM_X
+	while x <= RULER_TO_X + HAIR:
+		expected.append(x)
+		x += RULER_STEP_M
+	assert_array(xs).is_equal(expected)
+
+
+# The ruler's strips stand on free floor: off the reference route's ground and the SyncTest's,
+# as the gap platforms do.
+func test_the_dash_ruler_stays_clear_of_the_reference_route_and_the_sync_test() -> void:
+	var arena := _arena()
+	var ruler := arena.get_node_or_null(NodePath(RULER))
+	assert_object(ruler).is_not_null()
+	if ruler == null:
+		return
+	for strip: Node in ruler.get_children():
+		assert(strip is MeshInstance3D, "every strip of the ruler is a MeshInstance3D")
+		var mesh_node := strip as MeshInstance3D
+		var box := mesh_node.global_transform * mesh_node.get_aabb()
+		var reach := _footprint(box).grow(BODY_RADIUS)
+		var where := "%s/%s" % [RULER, strip.name]
+		assert_bool(reach.intersects(REFERENCE_ROUTE_AREA)) \
+				.override_failure_message("%s is on the reference route's ground" % where) \
+				.is_false()
+		assert_bool(reach.intersects(SYNC_TEST_AREA)) \
+				.override_failure_message("%s is on the SyncTest's ground" % where) \
+				.is_false()

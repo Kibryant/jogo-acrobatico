@@ -14,6 +14,9 @@ const SERVER_CLOSED := &"NET_SERVER_CLOSED"
 const HUD_MODE_GROUND := &"HUD_MODE_GROUND"
 const HUD_MODE_AIR := &"HUD_MODE_AIR"
 const HUD_MODE_DASH := &"HUD_MODE_DASH"
+# The tenths of a second until the next dash, beside its arc; the message holds the decimal
+# separator of its language (TASK-10.4).
+const HUD_DASH_COOLDOWN := &"HUD_DASH_COOLDOWN"
 # Every row of a replay played in the window has played (--watch; TASK-10.3).
 const REPLAY_ENDED := &"REPLAY_ENDED"
 ## Every key the code shows; StatusMessage and the HUD take no other.
@@ -26,6 +29,7 @@ const KEYS: Array[StringName] = [
 	HUD_MODE_GROUND,
 	HUD_MODE_AIR,
 	HUD_MODE_DASH,
+	HUD_DASH_COOLDOWN,
 	REPLAY_ENDED,
 ]
 ## The messages of each language, by locale.

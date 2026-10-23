@@ -1,10 +1,11 @@
 # Criteria 4 and 6 of TASK-10.3 (DEC-0027 §5; F-042 §3): a session the real ReplayRecorder wrote
 # (replay_session.gd) plays again through the headless player (tools/replay_run.gd) with the same
 # state trace, byte for byte, and twice with the same sha256. The session is the hard case: a yaw
-# with many digits, moves that are the mean of 2 or 3 frames, loops of 2 and 3 ticks and double
-# jumps; the test proves that before it compares. The check column says the first tick a replay
-# leaves the live game, the player plays the movement numbers of the header, a jump of netfox's
-# clock plays as the same jump, and the box of every tick is the row, as recorded.
+# with many digits, moves that are the mean of 2 or 3 frames, loops of 2 and 3 ticks, double
+# jumps and dashes (TASK-10.4, criterion 6); the test proves that before it compares. The check
+# column says the first tick a replay leaves the live game, the player plays the movement numbers
+# of the header, a jump of netfox's clock plays as the same jump, and the box of every tick is the
+# row, as recorded.
 # The session is recorded once for the suite, in a temporary folder; the time is printed.
 extends GdUnitTestSuite
 
@@ -84,6 +85,7 @@ func test_a_recorded_session_plays_again_byte_for_byte() -> void:
 	var fractional := 0
 	var longest := 0
 	var presses := 0
+	var dash_presses := 0
 	for row: ReplayFile.Row in replay.rows:
 		if row.input.yaw != 0.0:
 			turned += 1
@@ -92,11 +94,14 @@ func test_a_recorded_session_plays_again_byte_for_byte() -> void:
 				fractional += 1
 		longest = maxi(longest, row.loop)
 		presses += 1 if row.input.jump else 0
+		dash_presses += 1 if row.input.dash else 0
 	assert_int(turned).override_failure_message("no tick with a yaw other than 0").is_greater(0)
 	assert_int(fractional).override_failure_message("no move outside -1, 0 and 1").is_greater(0)
 	assert_int(longest).override_failure_message("no loop of 2 ticks or more").is_greater(1)
 	assert_int(presses).is_greater(1)
 	assert_int(session.double_jumps).override_failure_message("no double jump").is_greater(0)
+	assert_int(dash_presses).override_failure_message("no dash in the file").is_greater(0)
+	assert_int(session.dashes).override_failure_message("no dash came out").is_greater(0)
 	assert_int(replay.first_tick()).is_equal(ReplaySession.FIRST_TICK)
 	assert_int(replay.tick_count()).is_equal(ReplaySession.TICKS)
 	assert_str(replay.header["config"]).is_equal(Match.MOVEMENT_DATA_PATH)
@@ -109,6 +114,7 @@ func test_a_recorded_session_plays_again_byte_for_byte() -> void:
 			"Replay round trip: %s; twice in %d ms with the setup; turned=%d fractional=%d"
 			% [once.describe(), Time.get_ticks_msec() - started, turned, fractional]
 			+ " longest_loop=%d double_jumps=%d" % [longest, session.double_jumps]
+			+ " dashes=%d" % session.dashes
 		)
 	)
 	var message := "the replay left the recording: %s" % _difference(session.trace, once.trace)

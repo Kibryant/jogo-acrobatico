@@ -105,6 +105,16 @@ func test_physics_jitter_fix_is_off_for_netcode() -> void:
 	assert_float(jitter_fix).is_equal(0.0)
 
 
+# TASK-10.4 (F-122): the 3D physics stays on the main thread, Godot's default. The rollback runs
+# several move_and_slide() calls in each physics step, one per tick it simulates again, and a
+# thread of its own would only pay off with heavy physics; the question comes back with the
+# measurement of 16 bots (DEC-0004, rule 6). The old reason, the tick loop in _process, is gone
+# with DEC-0040.
+func test_the_3d_physics_runs_on_the_main_thread() -> void:
+	var separate: bool = ProjectSettings.get_setting("physics/3d/run_on_separate_thread", false)
+	assert_bool(separate).is_false()
+
+
 func test_every_netfox_autoload_is_a_singleton_by_res_path() -> void:
 	var autoloads := _autoloads()
 	for autoload_name: String in NETFOX_AUTOLOADS:

@@ -1,8 +1,8 @@
 # Criterion 6 of TASK-9, the fighter's scene (visao-geral.md, "As cenas"): netfox records the
 # body box and every field of FighterState, and the input box (DEC-0022); no fighter predicts
 # input (DEC-0026 §2); the capsule is the 1.8 m x 0.35 m of movimento.md, "O corpo", with its
-# bottom at the body's origin; the engine judges the floor with the 45°, and its snap covers a
-# full-speed run down the steepest floor in one tick.
+# bottom at the body's origin; the engine judges the floor with the 45°, and its snap covers one
+# tick of the fastest ground speed, the dash's, down the steepest floor (TASK-10.4).
 extends GdUnitTestSuite
 
 const NetfoxTicks := preload("res://test/support/netfox_ticks.gd")
@@ -103,13 +103,14 @@ func test_the_engine_judges_the_floor_with_45_degrees() -> void:
 	assert_float(fighter.floor_max_angle).is_equal_approx(deg_to_rad(45.0), HAIR)
 
 
-# 7 m/s across a 45° floor drops tan(45°) * 7 / tickrate a tick: 0.117 m at 60 and 0.233 m at 30,
-# plus three safe margins measured along the floor's normal (Fighter.floor_snap_for). The run
-# down the ramp in fighter_slope_test.gd proves the 60-tick snap holds the floor.
-func test_the_floor_snap_covers_a_full_speed_tick_down_45_degrees(
+# The fastest ground speed is the dash's 20 m/s, not the run's 7 (movimento.md, "Dash"; TASK-10.4):
+# across a 45° floor it drops tan(45°) * 20 / tickrate a tick, 0.333 m at 60 and 0.667 m at 30,
+# plus three safe margins measured along the floor's normal (Fighter.floor_snap_for): 0.338 m at
+# 60. The dash down the ramp in fighter_slope_test.gd proves the 60-tick snap holds the floor.
+func test_the_floor_snap_covers_a_dash_tick_down_45_degrees(
 	tickrate: int,
 	drop_per_tick: float,
-	_test_parameters := [[60, 7.0 / 60.0], [30, 7.0 / 30.0]],
+	_test_parameters := [[60, 20.0 / 60.0], [30, 20.0 / 30.0]],
 ) -> void:
 	var fighter := _fighter(tickrate)
 	var skin := 3.0 * fighter.safe_margin / cos(deg_to_rad(45.0))

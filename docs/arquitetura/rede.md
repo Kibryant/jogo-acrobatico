@@ -1,6 +1,6 @@
 ---
-revisado_em: 2026-10-19
-fontes: [F-001, F-005, F-007, F-023, F-024, F-025, F-026, F-027, F-028, F-029, F-030, F-032, F-033, F-034, F-036, F-042, F-044, F-046, F-073, F-084, F-085, F-087, F-088, F-089, F-091, F-092, F-093, F-095, F-097, F-101, F-112]
+revisado_em: 2026-10-23
+fontes: [F-001, F-005, F-007, F-023, F-024, F-025, F-026, F-027, F-028, F-029, F-030, F-032, F-033, F-034, F-036, F-042, F-044, F-046, F-073, F-084, F-085, F-087, F-088, F-089, F-091, F-092, F-093, F-095, F-097, F-101, F-112, F-121, F-122]
 ---
 
 # Rede
@@ -68,7 +68,8 @@ O input é o pedido do jogador para o tick, como o corpo de uma requisição: o 
 | `yaw` | Para onde a câmera olha; a última amostra dos frames do tick | esqueleto andante |
 | `jump` | Um toque | esqueleto andante |
 | `pitch` | A mira na vertical, para o gancho | fase 1 |
-| `dash`, `grapple` | Um toque | fase 1 |
+| `dash` | Um toque: o Shift esquerdo, por posição física (F-121). Entra na vaga antes do pulo, então o pulo vence um empate no mesmo tick (DEC-0039 §4) | TASK-10.4 |
+| `grapple` | Um toque | fase 1 |
 | `light`, `parry`, `dodge`, `feint`, `swap` | Um toque | fase 2 |
 | `heavy`, `block` | Segurar | fase 2 |
 | `view_lag` | Quão velho estava o oponente na tela, em ticks (§6) | fase 3 |
@@ -150,14 +151,16 @@ O teste é mais duro que a rede: ele força o rollback a cada tick. As mediçõe
 **O float:** com o frame sem limite, o contorno D deu erro máximo de 0,000000 m. O resíduo do `physics_factor` fica abaixo de 1 µm nesta máquina (F-025 §5).
 
 **A prova permanente:** a SyncTest está no portão desde a TASK-9 (`test/fighter/fighter_sync_test.gd`; DEC-0004, regra 4).
-- Ela roda a partida de verdade no Sozinho, com um rollback de 7 ticks a cada tick, nas cenas da rampa de 45°, da beirada, do pouso, do empurrão e do pulo duplo (TASK-10.1).
+- Ela roda a partida de verdade no Sozinho, com um rollback de 7 ticks a cada tick, nas cenas da rampa de 45°, da beirada, do pouso, do empurrão, do pulo duplo (TASK-10.1) e do dash (TASK-10.4).
 - Avança os ticks à mão, pelo ajudante `test/support/netfox_ticks.gd`, como a suíte do netfox (`test/network-mocks.gd`). Pelo relógio do netfox, cada cenário custaria o tempo de jogo dele (F-042 §1; DEC-0027 §3).
 - **O que ela compara:** desde a TASK-10.1, o estado inteiro. São a posição, a velocidade e todo campo do `FighterState`, achado por reflexão na classe, e não pela lista do que o netfox grava. Inteiros, booleanos, enums e nomes têm de ser iguais; floats e vetores, até 0,000001 (1 µm na posição). Na TASK-9, eram só a posição até 1 mm, o `on_floor` e o `mode` (TASK-10.1, critério 8; F-101 §1). A reflexão vai além do "todo campo gravado" do plano aprovado: um campo escondido do netfox precisa continuar sendo comparado, senão o teste de veneno não o vê, porque nos dois venenos novos o corpo anda igual (TASK-10.1, rodada B; o harness só aperta, `.claude/harness/README.md`).
 - **O erro medido:** zero exato na posição e na velocidade, nas cinco cenas, impresso em notação científica no resumo de cada uma. A salvaguarda da F-101, voltar a posição para 1 mm se as cenas da TASK-9 passassem de 1 µm, não precisou entrar (TASK-10.1, rodada B).
 - **A conferência da rede continua em 1 mm** (`net/prediction_check.gd`; §10): ela compara dois processos, o cliente e o servidor, e não o mesmo tick refeito num processo só (F-101 §1).
 - **A cena do pulo duplo:** dois lutadores numa cópia do `movement_v0.tres` com a barra de 25 e sem recuperação, que vai de 25 a 15, a 5 e recusa o terceiro aperto (DEC-0004, regra 3). Um sobe o bloco de 2 m com o pulo e o pulo duplo no topo, faz um pulo duplo no tick seguinte a um pulo e tem o terceiro recusado. O outro sai da beirada sem pular e faz o pulo duplo depois do coyote. O pouso ganhou um pulo duplo no topo de cada salto, para o aperto perto do chão continuar indo para a vaga (TASK-10.1, critério 8; DEC-0039).
-- As cinco cenas dão zero divergência em 3,9 a 4,3 s no portão em silêncio, e em 1,7 s no Linux do CI, e o tempo aparece em toda rodada do portão, sem trava (F-087 §1).
-- Três autotestes tiram um campo do que o netfox grava e exigem que ela acuse: o `on_floor`, o `stamina_at_spend` e o `double_jump_tick`. Os dois últimos só acusam porque ela compara o estado inteiro: com a comparação da TASK-9, o campo esquecido passaria calado (TASK-10.1).
+- **A cena do dash** (TASK-10.4, critério 6): dois lutadores numa cópia do `movement_v0.tres` com a barra de 20, então um dash de 15 deixa no máximo 5, e a barra só paga o próximo 68 ticks depois. Um sai da plataforma num dash pela crista e desce a rampa de 45° sem tick no ar, volta, sai da beirada num dash, e pula apertando o dash logo antes do pouso, que fica na vaga e sai no primeiro tick no chão. O outro dá um dash contra a face do bloco de 2 m, aperta na recarga e com a barra curta, as duas recusas, dá um dash no plano com o pulo apertado perto do fim, que sai no primeiro tick depois dele, e aperta o dash 3 ticks antes de a barra pagar, um aperto que a vaga guarda até lá. Com a barra de 20, a recarga de 36 ticks sempre acaba antes da barra, então o aperto guardado na recarga é recusado por ela e não chega a sair.
+- **O sinal da manobra sob rollback** (DEC-0031 §6): nas cenas do pulo duplo e do dash, ela confere que os sinais apresentados pelo `ManeuverCues` são tantos quanto os eventos dos ticks novos, e tantos quanto as manobras: 3 de 3 no pulo duplo e 6 de 6 no dash, com cada tick refeito até 7 vezes (TASK-10.4, critério 5).
+- As seis cenas dão zero divergência em uns 4,1 s no portão em silêncio (TASK-10.4); as cinco da TASK-10.1 levavam 3,9 a 4,3 s, e 1,7 s no Linux do CI. O tempo aparece em toda rodada do portão, sem trava (F-087 §1).
+- Quatro autotestes tiram um campo do que o netfox grava e exigem que ela acuse: o `on_floor`, o `stamina_at_spend`, o `double_jump_tick` e o `dash_tick` (TASK-10.4). Os três últimos só acusam porque ela compara o estado inteiro: com a comparação da TASK-9, o campo esquecido passaria calado (TASK-10.1).
 - Na beirada, ela achou a cápsula apoiada na quina, que a sonda do Desenho 3 não via (DEC-0037).
 
 ## 5. O oponente no passado (DEC-0026 §2)
@@ -277,6 +280,7 @@ O modelo bate com o que o Arthur fez a 60 ticks: 72 % sem lag e 13 % com ping 10
 - **O movimento da fase 1 nasce no tick do netfox.** É jogado no modo "Sozinho" da `Main`, o par offline do Godot: o PC do jogador é o servidor dele mesmo, sem rede, sem rollback e sem o custo de refazer. A sonda rodou assim (F-025 §1).
 - **A SyncTest no CI** cobre cada manobra nova, parede, gancho e dash, no dia em que ela nasce. É o jeito de achar estado escondido enquanto ele ainda é pequeno: o Mortal Kombat precisou mexer fundo na engine porque adaptou o rollback depois (F-007 §2).
   - O pulo duplo e a stamina foram os primeiros, na TASK-10.1: a cena do pulo duplo e os dois venenos da §4.
+  - O dash veio na TASK-10.4: a cena do dash, o veneno do `dash_tick` e os sinais das manobras contados sob rollback (§4).
   - Desde a TASK-10.1, ela compara o estado inteiro (§4): um campo novo do `FighterState` entra na comparação no dia em que existe, sem ninguém lembrar de pôr.
 - **De tempos em tempos,** o mesmo movimento roda com 2 clientes e o simulador do netfox, para ver a correção com lag. É o `tools/net_run.sh` (§10).
 - **Todo replay de bug vai com o arquivo.** O Sozinho grava cada sessão em `user://replays/`, e o log diz onde (TASK-10.3; `testes-e-entrega.md` §4). Quando o Arthur achar um bug jogando, o arquivo vai junto, e o Claude refaz sem tela com o `tools/replay.sh` (F-044 §1).
@@ -424,7 +428,7 @@ A cena de entrada olha como o jogo foi aberto, como um `main.ts` que lê o `proc
 
 O `tools/net_run.sh [ping]` roda um servidor sem tela e dois clientes sem tela com o bot, por 30 s, a ping 100.
 
-- O bot corre de lado, 2 s para cada lado, e pula no primeiro tick de cada trecho. Ele só produz input (DEC-0022).
+- O bot corre de lado, 2 s para cada lado, pula no primeiro tick de cada trecho e, desde a TASK-10.4, dá um dash ao longo da linha 1 s depois do começo de cada trecho (`BotRoute.dashes_at`). Ele só produz input (DEC-0022).
 - Cada cliente grava o que previu para o próprio lutador, tick a tick: o primeiro resultado de cada tick. O servidor grava o que confirmou: o último.
 - O `tools/net_run_check.gd` junta os registros e confere cada tick com a tolerância da SyncTest da TASK-9: a posição a até 1 mm, e o `on_floor` e o `mode` iguais. A SyncTest passou a comparar o estado inteiro na TASK-10.1, e esta conferência ficou em 1 mm (§4; F-101 §1).
 
@@ -432,6 +436,7 @@ O `tools/net_run.sh [ping]` roda um servidor sem tela e dois clientes sem tela c
 |---|---|---|---|
 | Fechamento da rodada C2, 17/10/2026 | 1.852 ticks conferidos, 0 corrigidos | 1.850 conferidos, 0 corrigidos | 10,00 m |
 | Revisão da parte 2, 18/10/2026 | 1.852 conferidos, 0 corrigidos | 1.846 conferidos, 0 corrigidos | 10,00 m |
+| TASK-10.4, rodada B, 23/10/2026, com o dash no meio de cada trecho | 1.818 conferidos, 0 corrigidos | 1.815 conferidos, 0 corrigidos | 10,00 m |
 
 A primeira corrida achou 13 ticks corrigidos: o lutador do cliente nascia um tick antes do servidor (§9, o nascimento do lutador).
 

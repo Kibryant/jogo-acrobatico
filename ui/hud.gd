@@ -1,12 +1,13 @@
 # The HUD of whoever plays on this PC (TASK-10.2): the stamina as a bar with its number beside
-# it, and the mode as text, in the bottom-left corner. It keeps no time of its own, no Timer and
-# no counter: every frame it reads the displayed state of the fighter it follows and netfox's
-# tick, and computes the bar with Stamina.at, so a rollback that rewrites the state rewrites the
-# bar with it (DEC-0031 §2; F-051 §3.4). Nothing shows by colour alone: below the cost of the
-# double jump the number gains an underline, a shape (DEC-0031 §2). Its look comes from the one
-# Theme of the project (ui/theme/game_theme.tres, DEC-0031 §8): its nodes take type variations,
-# the Theme's classes, and never a font, a size or a colour of their own. Only a PC with a screen
-# has one: the Match creates it in watch().
+# it, the mode as text and, while the dash recharges, an arc with the tenths of a second left
+# (TASK-10.4), in the bottom-left corner. It keeps no time of its own, no Timer and no counter:
+# every frame it reads the displayed state of the fighter it follows and netfox's tick, computes
+# the bar with Stamina.at and the arc from the dash's stamp, so a rollback that rewrites the state
+# rewrites the bar and the arc with it (DEC-0031 §2; F-051 §3.4). Nothing shows by colour alone:
+# below the cost of the double jump the number gains an underline, a shape (DEC-0031 §2). Its
+# look comes from the one Theme of the project (ui/theme/game_theme.tres, DEC-0031 §8): its nodes
+# take type variations, the Theme's classes, and never a font, a size or a colour of their own.
+# Only a PC with a screen has one: the Match creates it in watch().
 class_name Hud
 extends CanvasLayer
 
@@ -19,6 +20,10 @@ const MARGIN_TYPE := &"HudMargin"
 const BAR_BACK_TYPE := &"StaminaBarBack"
 const BAR_FILL_TYPE := &"StaminaBarFill"
 const LOW_MARK_TYPE := &"StaminaLowMark"
+const COOLDOWN_ARC_TYPE := &"DashCooldownArc"
+## px at the 1080p base: the box of the dash's cooldown arc, twice the bar's height. Claude's v0
+## reading (DEC-0017; TASK-10.4).
+const ARC_SIZE := Vector2(24, 24)
 ## The key of GameText each mode shows, by FighterState.Mode.
 const MODE_KEYS: Dictionary[int, StringName] = {
 	FighterState.Mode.GROUND: GameText.HUD_MODE_GROUND,
@@ -34,6 +39,8 @@ var _mode := Label.new()
 var _fill := Panel.new()
 var _number := Label.new()
 var _low_mark := Panel.new()
+var _arc := CooldownArc.new()
+var _cooldown := Label.new()
 
 
 func _init() -> void:
@@ -49,6 +56,22 @@ func _init() -> void:
 	var rows := VBoxContainer.new()
 	rows.name = "Rows"
 	frame.add_child(rows)
+
+	# The row keeps its height while the arc is hidden, so the rows below never jump.
+	var dash_row := HBoxContainer.new()
+	dash_row.name = "DashRow"
+	dash_row.custom_minimum_size = Vector2(0, ARC_SIZE.y)
+	rows.add_child(dash_row)
+	_arc.name = "DashCooldownArc"
+	_arc.theme_type_variation = COOLDOWN_ARC_TYPE
+	_arc.custom_minimum_size = ARC_SIZE
+	_arc.visible = false
+	dash_row.add_child(_arc)
+	_cooldown.name = "DashCooldown"
+	# The tenths come already in the player's language, from a key with the number filled in.
+	_cooldown.auto_translate_mode = Node.AUTO_TRANSLATE_MODE_DISABLED
+	_cooldown.visible = false
+	dash_row.add_child(_cooldown)
 
 	_mode.name = "ModeLabel"
 	rows.add_child(_mode)
@@ -112,6 +135,33 @@ func show_at(tick: int) -> void:
 	_number.text = str(floori(stamina))
 	_low_mark.visible = stamina < _config.double_jump_cost
 	_mode.text = mode_key(state.mode)
+	_show_cooldown(tick)
+
+
+# The ticks until the next dash may start, counted from the stamp of the last one: its ticks and
+# then the cooldown (movimento.md, "Dash": "Recarga"). Zero or less, or no dash ever, is ready.
+func cooldown_ticks_at(tick: int) -> int:
+	var state := _fighter.state
+	if state.dash_tick == FighterState.NEVER:
+		return 0
+	return state.dash_tick + _config.dash_ticks + _config.dash_cooldown_ticks - tick
+
+
+# The arc full when the dash starts and empty when the next may start; the text, the time left in
+# tenths of a second, rounded up, so it never reads 0 while the dash still waits.
+func _show_cooldown(tick: int) -> void:
+	var left := cooldown_ticks_at(tick)
+	var waiting := left > 0
+	_arc.visible = waiting
+	_cooldown.visible = waiting
+	if not waiting:
+		return
+	_arc.share = float(left) / (_config.dash_ticks + _config.dash_cooldown_ticks)
+	_arc.queue_redraw()
+	var tenths := ceili(left * 10.0 / _config.tickrate)
+	var whole := floori(tenths / 10.0)
+	var pattern := GameText.text(GameText.HUD_DASH_COOLDOWN)
+	_cooldown.text = pattern.format({ "whole": whole, "tenth": tenths % 10 })
 
 
 # The key of the text that names mode.
@@ -138,3 +188,43 @@ func shows_low_mark() -> bool:
 # The key of GameText the mode shows.
 func shown_mode_key() -> StringName:
 	return StringName(_mode.text)
+
+
+# True while the dash's cooldown arc shows.
+func shows_dash_cooldown() -> bool:
+	return _arc.visible and _cooldown.visible
+
+
+# The share of the circle the arc covers: 1 when the dash starts, 0 when the next may.
+func dash_cooldown_share() -> float:
+	return _arc.share
+
+
+# The tenths of a second left, as the screen shows them.
+func shown_dash_cooldown() -> String:
+	return _cooldown.text
+
+
+# The arc of the dash's cooldown: a ring in the track colour, and over it the arc from the top,
+# clockwise, over the share of the circle still to wait. Its colours and thickness come from the
+# Theme's DashCooldownArc (DEC-0031 §8).
+class CooldownArc:
+	extends Control
+
+	## Points of the drawn arc on a full circle; fewer on a shorter arc.
+	const POINTS := 48
+
+	var share := 0.0
+
+
+	func _draw() -> void:
+		var thickness := float(get_theme_constant(&"thickness"))
+		var center := size / 2.0
+		var radius := minf(size.x, size.y) / 2.0 - thickness / 2.0
+		var top := -PI / 2.0
+		draw_arc(center, radius, 0.0, TAU, POINTS, get_theme_color(&"track_color"), thickness, true)
+		if share <= 0.0:
+			return
+		var points := maxi(2, ceili(POINTS * share))
+		var end := top + TAU * share
+		draw_arc(center, radius, top, end, points, get_theme_color(&"arc_color"), thickness, true)

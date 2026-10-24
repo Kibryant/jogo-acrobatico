@@ -3,10 +3,10 @@ id: TASK-10.10
 title: >-
   Ajuste da parede: a volta no corredor, a parede que cobre o corpo e a cápsula
   que inclina
-status: In Progress
+status: Done
 assignee: []
 created_date: '2026-10-24 17:28'
-updated_date: '2026-10-24 18:32'
+updated_date: '2026-10-24 18:41'
 labels:
   - jogo
 dependencies:
@@ -54,20 +54,20 @@ Fechados pelo Claude (DEC-0017), entram no `movimento.md` com o plano aprovado.
 
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
-- [ ] #1 Quando o lutador aperta o pulo na corrida, ou o guardou até 150 ms antes de encostar, com a tecla tendo componente ao longo da parede contrária ao sentido da corrida, o pulo da parede sai com a velocidade ao longo trocada de sinal e a mesma rapidez, os mesmos 5 m/s para fora e 1,2 m de altura (tolerância de 1 cm); sem tecla, com a tecla para frente ou só para fora, sai como hoje (F-131; Q-36; leitura v0 do Claude)
-- [ ] #2 Quando o lutador pula para trás da parede de um corredor de 3,5 m e cruza sem tecla no ar, ele entra na outra parede correndo no sentido de volta; com a tecla segurada só para trás, reta, ele não cruza, e isso não é erro (F-131; Q-36)
-- [ ] #3 Quando o lutador encosta numa parede de 80° ou mais e o raio 30 cm acima da cabeça (2,1 m acima dos pés) não acha uma face no mesmo plano, a no máximo raio + 5 cm do centro, a parede não aceita a corrida; na corrida, quando o raio passa do topo, ela termina como na borda; uma pilha de dois blocos no mesmo plano conta como uma parede; o raio não move nada e sai igual no tick novo e no refeito com o rollback de 7 ticks (F-132; Q-38; DEC-0042)
-- [ ] #4 Quando o lutador corre na arena, o Block1m e o Block2m recusam a corrida, e a ParedeLonga, as paredes do corredor e o Block3m a aceitam com o raio abaixo do topo; o movimento.md ganha a métrica do corredor estreito (vão de até 4 m: a altura das paredes é a altura que se quer alcançar) (F-135)
-- [ ] #5 Quando o lutador corre na parede, a malha da cápsula inclina 15° para longe dela, entrando e saindo em 100 ms, e um rastro curto a acompanha; nada disso entra no estado, o rollback não duplica o rastro e a gravação de um replay refaz o mesmo rastro de estado (Q-37; DEC-0031 §6; DEC-0004, regra 2)
-- [ ] #6 Quando a SyncTest roda o cenário da parede com uma volta, ela acha zero divergências; o portão fica verde; o Arthur corre o corredor indo e voltando, tenta o Block2m e vê a cápsula inclinar, e o que ele sentiu vai para uma fonte (F-041; DEC-0027 §5)
+- [x] #1 Quando o lutador aperta o pulo na corrida, ou o guardou até 150 ms antes de encostar, com a tecla tendo componente ao longo da parede contrária ao sentido da corrida, o pulo da parede sai com a velocidade ao longo trocada de sinal e a mesma rapidez, os mesmos 5 m/s para fora e 1,2 m de altura (tolerância de 1 cm); sem tecla, com a tecla para frente ou só para fora, sai como hoje (F-131; Q-36; leitura v0 do Claude)
+- [x] #2 Quando o lutador pula para trás da parede de um corredor de 3,5 m e cruza sem tecla no ar, ele entra na outra parede correndo no sentido de volta; com a tecla segurada só para trás, reta, ele não cruza, e isso não é erro (F-131; Q-36)
+- [x] #3 Quando o lutador encosta numa parede de 80° ou mais e o raio 30 cm acima da cabeça (2,1 m acima dos pés) não acha uma face no mesmo plano, a no máximo raio + 5 cm do centro, a parede não aceita a corrida; na corrida, quando o raio passa do topo, ela termina como na borda; uma pilha de dois blocos no mesmo plano conta como uma parede; o raio não move nada e sai igual no tick novo e no refeito com o rollback de 7 ticks (F-132; Q-38; DEC-0042)
+- [x] #4 Quando o lutador corre na arena, o Block1m e o Block2m recusam a corrida, e a ParedeLonga, as paredes do corredor e o Block3m a aceitam com o raio abaixo do topo; o movimento.md ganha a métrica do corredor estreito (vão de até 4 m: a altura das paredes é a altura que se quer alcançar) (F-135)
+- [x] #5 Quando o lutador corre na parede, a malha da cápsula inclina 15° para longe dela, entrando e saindo em 100 ms, e um rastro curto a acompanha; nada disso entra no estado, o rollback não duplica o rastro e a gravação de um replay refaz o mesmo rastro de estado (Q-37; DEC-0031 §6; DEC-0004, regra 2)
+- [x] #6 Quando a SyncTest roda o cenário da parede com uma volta, ela acha zero divergências; o portão fica verde; o Arthur corre o corredor indo e voltando, tenta o Block2m e vê a cápsula inclinar, e o que ele sentiu vai para uma fonte (F-041; DEC-0027 §5)
 <!-- AC:END -->
 
 ## Definition of Done
 <!-- DOD:BEGIN -->
-- [ ] #1 Critérios de aceite verificados
-- [ ] #2 Teste automatizado para toda regra do núcleo (core/)
-- [ ] #3 Diário da sessão escrito e glossário atualizado
-- [ ] #4 Mudanças registradas em docs/mudancas.md
+- [x] #1 Critérios de aceite verificados
+- [x] #2 Teste automatizado para toda regra do núcleo (core/)
+- [x] #3 Diário da sessão escrito e glossário atualizado
+- [x] #4 Mudanças registradas em docs/mudancas.md
 - [ ] #5 Critérios de aceite verificados
 - [ ] #6 Teste automatizado para toda regra do núcleo (core/)
 - [ ] #7 Diário da sessão escrito e glossário atualizado
@@ -133,3 +133,14 @@ O ultracode da TASK-10 já foi usado; nada de workflow aqui.
 - **O raio numa quina:** o raio sai do eixo da cápsula, então a corrida solta quando o eixo passa da ponta da face, até ≈ 35 cm antes da sonda da TASK-10.5 (`movimento.md`).
 - **O `Block3m`:** com o raio a 2,1 m dos pés, ele aceita só com os pés abaixo de 0,9 m e recusa no alto do pulo.
 <!-- SECTION:PLAN:END -->
+
+## Final Summary
+
+<!-- SECTION:FINAL_SUMMARY:BEGIN -->
+Os três ajustes da parede pedidos pelo Arthur (F-131; F-132; F-134) estão no jogo:
+- **A volta (Q-36):** a tecla para trás no tick do pulo da parede troca o sentido com a mesma rapidez; o mapa limita o elevador (F-135).
+- **A parede passa da cabeça (Q-38):** um raio só de leitura a 2,1 m dos pés; era 1,7 m no plano, e o implementer achou a entrada baixa no Block2m (leitura v0 do Claude, `mudancas.md`).
+- **A cápsula inclina (Q-37):** 15° em 100 ms, com um rastro curto, fora do estado.
+
+Provas: 39 testes travados da volta, testes de motor do raio com rollback de 7 ticks e zero divergências, SyncTest "parede" com `turned_wall_jumps=1` e zero divergências, `net_run` com zero ticks corrigidos e portão verde (952 testes). Revisor: APPROVE, com duas correções de texto aplicadas. O Arthur jogou e achou excelente (F-137). Observação do revisor: o `MovementConfig` guarda três números só do adaptador e do visual, um deles em segundos.
+<!-- SECTION:FINAL_SUMMARY:END -->

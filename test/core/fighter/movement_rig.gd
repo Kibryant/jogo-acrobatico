@@ -13,6 +13,9 @@
 # move, slides the velocity and reports its normal and id while the body is within the probe
 # distance, even when it moves parallel to it, as the test-only probe of the adapter does
 # (rede.md §4, "A sonda A da parede"). The wall of wall_x stays as it was: it reports no facts.
+# TASK-10.6 adds the aim (DEC-0044): the test sets what the adapter's ray would find (aim_hit and
+# aim_point), and step() copies them into the MoveFacts only on a tick whose plan asked
+# (MovePlan.aim_request), with the position after the move on every tick (MoveFacts.position).
 extends RefCounted
 
 const MOVEMENT_V0 := "res://data/movement_v0.tres"
@@ -77,13 +80,19 @@ var ramp_on := false
 var wall_x := INF
 # The walls of TASK-10.5, in the order they were added (add_wall). Empty, the rig is as before.
 var walls: Array[FakeWall] = []
+# What the adapter's ray would find on a tick the core asks for the aim (TASK-10.6; DEC-0044): a
+# hit and its point, set by the test as the scenery would answer. They reach the MoveFacts only
+# when the plan asked; otherwise the facts say no hit and Vector3.ZERO.
+var aim_hit := false
+var aim_point := Vector3.ZERO
 var tick: int
 var last_plan: MovePlan
 var last_facts: MoveFacts
 
 
 # A fighter at rest on the floor at first_tick, set field by field from the agreed interface:
-# an empty slot, no jump used, a bar never spent (TASK-10.1 plan), no dash (TASK-10.4 plan).
+# an empty slot, no jump used, a bar never spent (TASK-10.1 plan), no dash (TASK-10.4 plan), no
+# grapple fired, no point and no release (TASK-10.6 plan).
 func _init(movement_config: MovementConfig, first_tick: int) -> void:
 	config = movement_config
 	tick = first_tick
@@ -101,6 +110,9 @@ func _init(movement_config: MovementConfig, first_tick: int) -> void:
 	state.double_jump_tick = FighterState.NEVER
 	state.dash_tick = FighterState.NEVER
 	state.dash_direction = Vector3.ZERO
+	state.grapple_fired_tick = FighterState.NEVER
+	state.grapple_point = Vector3.ZERO
+	state.grapple_end_tick = FighterState.NEVER
 
 
 # The numbers of movement_v0.tres as the configuration of one tickrate, the way the Match makes
@@ -183,13 +195,46 @@ static func press_jump_and_dash(move := Vector2.ZERO, yaw := 0.0) -> TickInput:
 	return input
 
 
-# move.x goes right and move.y forward, relative to yaw, length up to 1 (TASK-9 plan).
-static func run(move: Vector2, yaw := 0.0) -> TickInput:
+# The one-tick touch of the grapple (TickInput.grapple) while aiming: the camera's yaw and pitch
+# of the tick, in rad, pitch positive up (TASK-10.6 plan). No direction pointed.
+static func press_grapple(yaw := 0.0, pitch := 0.0) -> TickInput:
+	return press_grapple_toward(Vector2.ZERO, yaw, pitch)
+
+
+# The one-tick touch of the grapple while pointing a direction and aiming.
+static func press_grapple_toward(move: Vector2, yaw := 0.0, pitch := 0.0) -> TickInput:
+	var input := run(move, yaw, pitch)
+	input.grapple = true
+	return input
+
+
+# Any set of one-tick touches on the same tick: the ties of criterion 5 of TASK-10.6 (jump, dash
+# and grapple together, or any two of them).
+static func press_together(
+	jump: bool,
+	dash: bool,
+	grapple: bool,
+	move := Vector2.ZERO,
+	yaw := 0.0,
+	pitch := 0.0,
+) -> TickInput:
+	var input := run(move, yaw, pitch)
+	input.jump = jump
+	input.dash = dash
+	input.grapple = grapple
+	return input
+
+
+# move.x goes right and move.y forward, relative to yaw, length up to 1 (TASK-9 plan). The pitch
+# is the camera's, in rad, positive up (TASK-10.6 plan); every one-tick touch is off.
+static func run(move: Vector2, yaw := 0.0, pitch := 0.0) -> TickInput:
 	var input := TickInput.new()
 	input.move = move
 	input.yaw = yaw
+	input.pitch = pitch
 	input.jump = false
 	input.dash = false
+	input.grapple = false
 	return input
 
 
@@ -225,6 +270,15 @@ func step(input: TickInput) -> MovePlan:
 	if contact != null:
 		facts.wall_normal = contact.normal
 		facts.wall_id = contact.id
+	# The feet after the move, on every tick, and the aim only on a tick whose plan asked for it:
+	# the adapter casts the ray from the shoulder after move_and_slide() (TASK-10.6 plan; DEC-0044).
+	facts.position = next
+	if plan.aim_request:
+		facts.aim_hit = aim_hit
+		facts.aim_point = aim_point
+	else:
+		facts.aim_hit = false
+		facts.aim_point = Vector3.ZERO
 	position = next
 	velocity = facts.velocity
 	state = Movement.after_move(plan.state, facts, config, tick)

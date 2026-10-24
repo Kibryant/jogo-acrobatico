@@ -95,6 +95,15 @@ const CHECKED_TICKRATES: Array[int] = [30, 60]
 ## The same collider with a normal this close is the same wall (movimento.md, "Corrida na
 ## parede": "Mesma parede, em números").
 @export var wall_same_face_deg: float
+## The head ray stands this far below the capsule's top: 1,7 m above the feet of the 1,8 m capsule
+## (movimento.md, "Corrida na parede": "A parede cobre o corpo"; TASK-10.10, "Números v0").
+@export var wall_head_below_top_m: float
+## The capsule's mesh leans this far away from the wall during a run, only on screen
+## (movimento.md, "Corrida na parede": "O que se vê na parede").
+@export var wall_lean_deg: float
+## The lean comes in and goes out over this time, per displayed frame (movimento.md, "Corrida na
+## parede": "O que se vê na parede").
+@export var wall_lean_ms: int
 
 
 # The data check, layer 3 of DEC-0027 §2: one message per impossible number, empty when every
@@ -168,6 +177,11 @@ func validate() -> PackedStringArray:
 			"a negative push would throw the body into the wall",
 		),
 		_range_error("wall_same_face_deg", wall_same_face_deg, 90.0, "an angle between normals"),
+		# The wall that covers the body and the lean on screen (TASK-10.10). The ray stays inside
+		# the capsule, at or above its feet; nothing divides by the lean's time: 0 leans at once.
+		_wall_head_error(),
+		_range_error("wall_lean_deg", wall_lean_deg, 90.0, "a lean"),
+		_time_error("wall_lean_ms", wall_lean_ms, false),
 	]
 	var errors := PackedStringArray()
 	for message: String in checks:
@@ -270,6 +284,20 @@ func _wall_hold_error() -> String:
 		return (
 			"wall_hold_ms is %d ms: longer than wall_run_max_ms, %d ms, the run ends first"
 			% [wall_hold_ms, wall_run_max_ms]
+		)
+	return ""
+
+
+# The head ray is not above the capsule's top, and not below its feet: from 0 up to the height.
+# A capsule without a height has its own message, and against it the ray says nothing more.
+func _wall_head_error() -> String:
+	var below := wall_head_below_top_m
+	if below < 0.0:
+		return "wall_head_below_top_m is %s: the head ray cannot stand above the capsule" % below
+	if capsule_height_m > 0.0 and below > capsule_height_m:
+		return (
+			"wall_head_below_top_m is %s: below the feet of a capsule of %s m"
+			% [below, capsule_height_m]
 		)
 	return ""
 

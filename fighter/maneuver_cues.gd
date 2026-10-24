@@ -1,5 +1,6 @@
 # The cues of the maneuvers (DEC-0031 §6; TASK-10.4): a puff under the feet when a double jump
-# comes out, a trail behind a dash and a mark on the wall a wall jump leaves (TASK-10.5), each
+# comes out, a trail behind a dash, a mark on the wall a wall jump leaves (TASK-10.5) and a short
+# trail behind a wall run (TASK-10.10; movimento.md, "O que se vê na parede"), each
 # played once per event, by its key: the fighter, the kind and the stamp, the tick the state
 # carries for it. Like the `key` of a list in React, the
 # key says "this one already showed": after every tick loop it reads the displayed state, and a
@@ -9,6 +10,8 @@
 # fighter's own neutral tone, never a colour of the combat tokens (DEC-0031; visual-e-audio.md),
 # and its sizes and times come from the movement numbers: the capsule, the dash and the jump.
 # The mark of the wall jump is the puff stood up against the wall: Claude's v0 reading (DEC-0017).
+# The wall run's trail is the dash's, cut short to the body's last dash duration of path, with
+# the same material: Claude's v0 reading of "um rastro curto" (DEC-0017; no new asset, DEC-0029).
 # It also counts, for the SyncTest, the events the simulation made on its fresh ticks: there,
 # with the rollback forced on every tick, the cues presented must equal the events (DEC-0031 §6;
 # rede.md §4).
@@ -20,6 +23,7 @@ enum Kind {
 	DOUBLE_JUMP,
 	DASH,
 	WALL_JUMP,
+	WALL_RUN,
 }
 
 ## The cue's opacity when it appears; it fades to nothing. Claude's v0 reading (DEC-0017): seen
@@ -76,9 +80,10 @@ func forget(fighter: Fighter) -> void:
 
 
 # The events fighter's state shows now: the double jump of this flight, by its stamp; the dash
-# while it lasts, by the tick it began; and the wall jump during the flight it began, the air
-# since its stamp. A dash_tick or a wall_jump_tick that stays after its maneuver shows no cue, so
-# a fighter seen for the first time long after never plays an old one.
+# while it lasts, by the tick it began; the wall jump during the flight it began, the air since
+# its stamp; and the wall run while it lasts, by the tick it began, so a seam, which keeps the
+# run's clock, is the same run (F-129). A dash_tick or a wall_jump_tick that stays after its
+# maneuver shows no cue, so a fighter seen for the first time long after never plays an old one.
 static func shown_events(fighter: Fighter) -> Array[Event]:
 	var shown: Array[Event] = []
 	var state := fighter.state
@@ -90,6 +95,8 @@ static func shown_events(fighter: Fighter) -> Array[Event]:
 	if in_its_flight and state.wall_jump_tick != FighterState.NEVER:
 		if state.mode_since == state.wall_jump_tick:
 			shown.append(Event.new(fighter, Kind.WALL_JUMP, state.wall_jump_tick))
+	if state.mode == FighterState.Mode.WALL_RUN:
+		shown.append(Event.new(fighter, Kind.WALL_RUN, state.mode_since))
 	return shown
 
 
@@ -141,7 +148,9 @@ func _forget_old(keys: Dictionary[String, int]) -> void:
 func _draw(fighter: Fighter, kind: Kind) -> void:
 	match kind:
 		Kind.DASH:
-			add_child(Trail.new(fighter, _config))
+			add_child(Trail.new(fighter, _config, Kind.DASH))
+		Kind.WALL_RUN:
+			add_child(Trail.new(fighter, _config, Kind.WALL_RUN))
 		Kind.WALL_JUMP:
 			add_child(Puff.new(fighter, _config, fighter.state.wall_normal))
 		_:
@@ -172,11 +181,14 @@ static func material_of(fighter: Fighter) -> StandardMaterial3D:
 
 # The trail of a dash: the space the capsule swept, from where the dash first showed to where
 # the body is, as wide and as tall as the capsule. It follows the body while that dash lasts,
-# then fades over the dash's own duration.
+# then fades over the dash's own duration. The trail of a wall run is the same box, short: it
+# covers only the path of the body's last dash duration, so it follows the body along the wall
+# instead of drawing the whole run, and fades the same way once the run ends.
 class Trail:
 	extends MeshInstance3D
 
 	var _fighter: Fighter
+	var _kind: Kind
 	var _stamp: int
 	var _from: Vector3
 	var _height: float
@@ -184,16 +196,25 @@ class Trail:
 	var _fade_s: float
 	var _left_s := -1.0
 	var _material: StandardMaterial3D
+	# The wall run's short tail: the body's feet on each displayed frame, with netfox's tick then,
+	# back to the first one at least _tail_ticks old. The tick, not the frame's time, so the tail
+	# is as long at any frame rate.
+	var _tail_ticks: int
+	var _seen_tick: Array[int] = []
+	var _seen_at: Array[Vector3] = []
 
 
-	func _init(fighter: Fighter, config: MovementConfig) -> void:
-		name = "DashTrail"
+	func _init(fighter: Fighter, config: MovementConfig, kind: Kind) -> void:
+		assert(kind == Kind.DASH or kind == Kind.WALL_RUN, "a trail follows a dash or a wall run")
+		_kind = kind
+		name = "DashTrail" if kind == Kind.DASH else "WallRunTrail"
 		_fighter = fighter
-		_stamp = fighter.state.dash_tick
+		_stamp = fighter.state.dash_tick if kind == Kind.DASH else fighter.state.mode_since
 		_from = fighter.global_position
 		_height = config.capsule_height
 		_width = 2.0 * config.capsule_radius
 		_fade_s = float(config.dash_ticks) / config.tickrate
+		_tail_ticks = config.dash_ticks
 		var box := BoxMesh.new()
 		box.size = Vector3.ONE
 		_material = ManeuverCues.material_of(fighter)
@@ -206,8 +227,11 @@ class Trail:
 
 	func _process(delta: float) -> void:
 		if _left_s < 0.0:
-			if is_instance_valid(_fighter) and _in_its_dash():
-				_reach(_fighter.global_position)
+			if is_instance_valid(_fighter) and _in_its_maneuver():
+				var to := _fighter.global_position
+				if _kind == Kind.WALL_RUN:
+					_from = _tail(to)
+				_reach(to)
 				return
 			_left_s = _fade_s
 		_left_s -= delta
@@ -217,9 +241,23 @@ class Trail:
 		_material.albedo_color.a = OPACITY * _left_s / _fade_s
 
 
-	func _in_its_dash() -> bool:
+	func _in_its_maneuver() -> bool:
 		var state := _fighter.state
+		if _kind == Kind.WALL_RUN:
+			return state.mode == FighterState.Mode.WALL_RUN and state.mode_since == _stamp
 		return state.mode == FighterState.Mode.DASH and state.dash_tick == _stamp
+
+
+	# Where the body was the dash's duration ago, or where the run first showed while it is
+	# younger.
+	func _tail(to: Vector3) -> Vector3:
+		var now := NetworkTime.tick
+		_seen_tick.append(now)
+		_seen_at.append(to)
+		while _seen_tick.size() > 1 and now - _seen_tick[1] >= _tail_ticks:
+			_seen_tick.pop_front()
+			_seen_at.pop_front()
+		return _seen_at[0]
 
 
 	# Stretches the box from where the dash showed to the feet at to.

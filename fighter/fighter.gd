@@ -48,6 +48,11 @@ var tone := OTHER_TONE
 
 # Contour D waits for the first tick of each rollback loop (DEC-0025 §2).
 var _engine_floor_pending := false
+# The lean on screen during a wall run (lean): how far it has come in, from 0 to 1, and the flat
+# normal of the wall it leans away from, kept while it goes out. Only the screen reads them: they
+# are never in the state, so no rollback, replay or SyncTest sees them (DEC-0031 §6).
+var _lean_share := 0.0
+var _lean_normal := Vector3.ZERO
 
 
 # The engine's floor snap must catch a body at the fastest ground speed down the steepest floor:
@@ -124,9 +129,39 @@ func _exit_tree() -> void:
 	NetworkRollback.on_process_tick.disconnect(_align_engine_floor_once)
 
 
-func _process(_delta: float) -> void:
-	# The body looks where the state says; the capsule is round, the visor shows the facing.
-	visual.rotation = Vector3(0.0, state.facing_yaw, 0.0)
+func _process(delta: float) -> void:
+	lean(delta)
+
+
+# What the screen shows of the state, once per displayed frame: the body looks where the state
+# says (the capsule is round, the visor shows the facing), and during a wall run the capsule and
+# its visor lean away from the wall, pivoting on the feet, coming in and going out linearly over
+# the lean's time (movimento.md, "Corrida na parede": "O que se vê na parede"; Q-37). It reads the
+# state and writes only the visual node: the simulation never sees the lean (DEC-0004, rule 2).
+func lean(delta: float) -> void:
+	if config == null:
+		# Not set up yet: there is no lean to read, only the facing.
+		visual.basis = Basis(Vector3.UP, state.facing_yaw)
+		return
+	var running := state.mode == FighterState.Mode.WALL_RUN
+	var wall := _flat(state.wall_normal)
+	if running and wall != Vector3.ZERO:
+		_lean_normal = wall
+	var target := 1.0 if running and _lean_normal != Vector3.ZERO else 0.0
+	var step := INF if config.wall_lean_s <= 0.0 else delta / config.wall_lean_s
+	_lean_share = move_toward(_lean_share, target, step)
+	var facing := Basis(Vector3.UP, state.facing_yaw)
+	if _lean_share <= 0.0:
+		visual.basis = facing
+		return
+	# A turn about the wall's tangent, UP x normal, takes the top toward the normal: away.
+	var tangent := Vector3.UP.cross(_lean_normal).normalized()
+	visual.basis = Basis(tangent, config.wall_lean * _lean_share) * facing
+
+
+## The visual's lean away from the last wall, in rad: 0 at rest, the full lean on a wall run.
+func lean_angle() -> float:
+	return config.wall_lean * _lean_share
 
 
 # The tick sandwich (visao-geral.md, "O tick por dentro"): netfox has restored the state and the
@@ -154,14 +189,63 @@ func _rollback_tick(_delta: float, tick: int, _is_fresh: bool) -> void:
 # into the wall of the state would hit, and moves nothing. Out of a run, the move's own
 # collisions tell the entry: of the colliders that are not a fighter, the one with the most
 # horizontal normal, the first in the engine's order on a tie. The core judges whether it is a
-# wall at all.
+# wall at all. A wall must also cover the body (covers_body): when the head ray finds no face,
+# the node reports no wall, so the entry is refused and a run ends as at the edge (movimento.md,
+# "Corrida na parede": "A parede cobre o corpo"; TASK-10.10).
 func _wall_contact(prior: FighterState, facts: MoveFacts) -> void:
 	if prior.mode == FighterState.Mode.WALL_RUN:
 		var hit := move_and_collide(-prior.wall_normal * WALL_PROBE_DISTANCE, true)
-		if hit != null and hit.get_collider() is not Fighter:
+		if hit == null or hit.get_collider() is Fighter:
+			return
+		var id := _wall_id_of(hit.get_collider())
+		# The run's own face while the probe reads it (the same collider, or a seam within the
+		# same-face angle, F-129): the state keeps the face's normal, so a rounded edge's slanted
+		# reading never aims the head ray off the face. Another face aims it along its own normal.
+		var face := _flat(hit.get_normal())
+		if id == prior.wall_id or face.dot(prior.wall_normal) >= config.wall_same_face_cos:
+			face = prior.wall_normal
+		if covers_body(face):
 			facts.wall_normal = hit.get_normal()
-			facts.wall_id = _wall_id_of(hit.get_collider())
+			facts.wall_id = id
 		return
+	_read_slide_contact(facts)
+	# Only a face steep enough to be a wall asks the head ray; the core turns the rest away.
+	var steep := absf(facts.wall_normal.y) <= config.wall_max_normal_y
+	if not facts.wall_id.is_empty() and steep and not covers_body(_flat(facts.wall_normal)):
+		facts.wall_normal = Vector3.ZERO
+		facts.wall_id = &""
+
+
+## Whether the wall covers the body (movimento.md, "Corrida na parede": "A parede cobre o corpo"):
+## a ray at the head's height, wall_head_height above the feet, from the capsule's axis toward
+## the face, as far as the capsule's radius plus WALL_PROBE_DISTANCE, hits a face of the world
+## whose flat normal is within the same-face angle of face_normal. Any collider counts, so a stack
+## of blocks in one plane is one wall. A query of the physics space: it moves nothing and changes
+## no flag of the engine, the fighters are not on its mask, and the world it reads never moves,
+## so a resimulated tick asks the same question at the same position and gets the same answer
+## (rede.md §4; DEC-0042).
+func covers_body(face_normal: Vector3) -> bool:
+	var face := _flat(face_normal)
+	if face == Vector3.ZERO:
+		return false
+	var head := global_position + Vector3.UP * config.wall_head_height
+	var reach := config.capsule_radius + WALL_PROBE_DISTANCE
+	var query := PhysicsRayQueryParameters3D.create(
+		head,
+		head - face * reach,
+		PhysicsLayers.WORLD,
+		[get_rid()],
+	)
+	var hit := get_world_3d().direct_space_state.intersect_ray(query)
+	if hit.is_empty():
+		return false
+	var normal: Vector3 = hit["normal"]
+	return _flat(normal).dot(face) >= config.wall_same_face_cos
+
+
+# The move's own collisions (DEC-0042 §1): of the colliders that are not a fighter, the one with
+# the most horizontal normal, the first in the engine's order on a tie.
+func _read_slide_contact(facts: MoveFacts) -> void:
 	var flattest := INF
 	for slide: int in get_slide_collision_count():
 		var collision := get_slide_collision(slide)
@@ -173,6 +257,11 @@ func _wall_contact(prior: FighterState, facts: MoveFacts) -> void:
 			flattest = absf(normal.y)
 			facts.wall_normal = normal
 			facts.wall_id = _wall_id_of(collider)
+
+
+# A normal laid flat: the horizontal unit vector a wall faces; zero for a floor or a ceiling.
+static func _flat(normal: Vector3) -> Vector3:
+	return Vector3(normal.x, 0.0, normal.z).normalized()
 
 
 # A wall's identity (DEC-0042 §2): the collider's node path relative to the arena, never the

@@ -131,7 +131,9 @@ const DASH_SELF_TEST_LOOPS := 40
 # (TASK-10.5, "Números v0"): its west wall runs the whole 26 m, its east one stops at z = 27. The
 # climber enters the west wall, wall-jumps to the east one and back, wall-jumps once more and
 # double-jumps back into the same wall, which refuses it; once landed, it enters the east wall
-# near its south end and runs off it.
+# near its south end and runs off it. Once the runner has landed from its long run it steps away
+# from the lane, runs back into it southward and wall-jumps with the stick pointing north, against
+# the run: the turn (TASK-10.10, criterion 6; movimento.md, "A volta no pulo da parede").
 const PAREDE_FROM_Z := 13.0
 const PAREDE_SEAM_Z := 26.0
 const PAREDE_TO_Z := 39.0
@@ -147,7 +149,10 @@ const PAREDE_STARTS: Array[Vector3] = [Vector3(-35.5, 0, 12), Vector3(-29.5, 0, 
 # The runs into a wall: full speed north with a quarter of it into the wall, about 14°, so the
 # speed along it is 6,8 m/s, above the 4 of the entry (movimento.md, "Corrida na parede").
 const INTO_WEST := Vector3(-0.25, 0, 1)
+const INTO_WEST_SOUTHWARD := Vector3(-0.25, 0, -1)
 const INTO_EAST_SOUTHWARD := Vector3(0.25, 0, -1)
+# m: after its long run the runner steps this far east of the lane's face before running back in.
+const STEP_AWAY := 1.5
 # m: the jump comes this far before the capsule would touch the face, at the apex of the jump.
 const JUMP_BEFORE_FACE := 0.6
 # Ticks on a wall before the climber's wall jump, and ticks after its last wall jump before the
@@ -155,7 +160,7 @@ const JUMP_BEFORE_FACE := 0.6
 const RUN_BEFORE_WALL_JUMP := 6
 const TURN_BACK_AFTER := 5
 const BACK_INTO_WEST := Vector3(-1, 0, 1.5)
-const PAREDE_LOOPS := 420
+const PAREDE_LOOPS := 480
 # The self-test needs only the long runner's entry and a few ticks of its run.
 const PAREDE_SELF_TEST_LOOPS := 80
 
@@ -286,7 +291,10 @@ func test_the_dash_tick_netfox_does_not_record_makes_the_sync_test_diverge() -> 
 # Criterion 7 of TASK-10.5: the wall run under the rollback of 7 ticks on every tick, with zero
 # divergence in the whole state: the entries, the end by time, the end at the wall's edge, the
 # wall jumps from one wall to the other, the same wall refused, a double jump after a wall jump
-# and a seam crossed in the run (F-129). As many cues as wall jumps and double jumps.
+# and a seam crossed in the run (F-129). TASK-10.10 adds a turned wall jump (criterion 6) and the
+# head ray on every wall contact: the walls are 8 m tall, so they cover the body. As many cues as
+# wall jumps, double jumps and wall runs, each run a short trail (movimento.md, "O que se vê na
+# parede").
 func test_the_wall_scenario_resimulates_with_zero_divergence() -> void:
 	var parede := await _parede(PAREDE_LOOPS)
 	var message := "%s diverged:\n%s" % [parede.scenario, "\n".join(parede.shown)]
@@ -299,8 +307,10 @@ func test_the_wall_scenario_resimulates_with_zero_divergence() -> void:
 	assert_int(parede.paths["same_wall_refusals"]).is_greater_equal(1)
 	assert_int(parede.paths["double_jumps_after_wall"]).is_greater_equal(1)
 	assert_int(parede.paths["seams"]).is_greater_equal(1)
+	assert_int(parede.paths["turned_wall_jumps"]).is_greater_equal(1)
 	assert_int(parede.paths["bots_done"]).is_equal(PAREDE_STARTS.size())
-	_assert_cues(parede, parede.paths["wall_jumps"] + parede.paths["double_jumps"])
+	var cued := parede.paths["wall_jumps"] + parede.paths["double_jumps"]
+	_assert_cues(parede, cued + parede.paths["wall_entries"])
 
 
 # The wall's identity in the state (DEC-0042 §2): out of the recording, a rollback across the
@@ -1186,7 +1196,9 @@ class Dashes:
 
 
 # Runs north into the long lane's face, jumping just before it, and rides the run to its end by
-# time, across the seam; then it lands and stands.
+# time, across the seam; then it lands, steps away from the face, runs back into it southward and
+# wall-jumps with the stick pointing north, against the run: the turn (TASK-10.10). Then it lands
+# and stands.
 class LongWallBot:
 	extends DashBot
 
@@ -1194,6 +1206,10 @@ class LongWallBot:
 		STAND,
 		RUN_IN,
 		ON_WALL,
+		STEP_AWAY,
+		RUN_BACK_IN,
+		ON_WALL_SOUTHWARD,
+		TURNED,
 		DONE,
 	}
 
@@ -1220,6 +1236,26 @@ class LongWallBot:
 				if state.mode == FighterState.Mode.WALL_RUN:
 					_step = Step.ON_WALL
 			Step.ON_WALL:
+				if state.on_floor:
+					_step = Step.STEP_AWAY
+			Step.STEP_AWAY:
+				heading = Vector3.RIGHT
+				if fighter.position.x >= LONG_FACE_X + STEP_AWAY:
+					_step = Step.RUN_BACK_IN
+			Step.RUN_BACK_IN:
+				heading = INTO_WEST_SOUTHWARD.normalized()
+				var touch_x := LONG_FACE_X + _config.capsule_radius
+				if state.on_floor and fighter.position.x <= touch_x + JUMP_BEFORE_FACE:
+					fighter.input.press_jump()
+				if state.mode == FighterState.Mode.WALL_RUN:
+					_step = Step.ON_WALL_SOUTHWARD
+			Step.ON_WALL_SOUTHWARD:
+				if NetworkTime.tick - state.mode_since == RUN_BEFORE_WALL_JUMP:
+					# North, against the run going south: the stick turns the wall jump back.
+					heading = Vector3.BACK
+					fighter.input.press_jump()
+					_step = Step.TURNED
+			Step.TURNED:
 				if state.on_floor:
 					_step = Step.DONE
 		run(heading)
@@ -1327,11 +1363,14 @@ class Walls:
 	var double_jumps := 0
 	var double_jumps_after_wall := 0
 	var seams := 0
+	## Wall jumps whose velocity along the wall came out against the run's: the turn (TASK-10.10).
+	var turned_wall_jumps := 0
 
 	var _fighter: Fighter
 	var _config: MovementConfig
 	var _arena: Node
 	var _before: FighterState
+	var _before_velocity := Vector3.ZERO
 	# The wall of the last wall jump, until the floor: the next entry on another wall is a hop.
 	var _jumped_from: StringName = &""
 	var _refusing := false
@@ -1366,6 +1405,9 @@ class Walls:
 		if jumped:
 			wall_jumps += 1
 			_jumped_from = state.wall_id
+			var run_along := _along(_before_velocity, state.wall_normal)
+			if run_along.dot(_along(_fighter.velocity, state.wall_normal)) < 0.0:
+				turned_wall_jumps += 1
 		if state.double_jump_tick == tick:
 			double_jumps += 1
 			if state.mode == FighterState.Mode.AIR and state.mode_since == state.wall_jump_tick:
@@ -1375,6 +1417,7 @@ class Walls:
 			same_wall_refusals += 1
 		_refusing = refused
 		_before = state.copy()
+		_before_velocity = _fighter.velocity
 
 
 	func add_to(paths: Dictionary[String, int]) -> void:
@@ -1388,11 +1431,18 @@ class Walls:
 			"double_jumps": double_jumps,
 			"double_jumps_after_wall": double_jumps_after_wall,
 			"seams": seams,
+			"turned_wall_jumps": turned_wall_jumps,
 		}
 		for path: String in mine:
 			if not paths.has(path):
 				paths[path] = 0
 			paths[path] += mine[path]
+
+
+	# The horizontal velocity along a wall: its part on the plane of the flat normal.
+	static func _along(velocity: Vector3, normal: Vector3) -> Vector3:
+		var horizontal := Vector3(velocity.x, 0.0, velocity.z)
+		return horizontal - normal * horizontal.dot(normal)
 
 
 	# The body is north or south of the face of the wall it ran on, as parede builds it.

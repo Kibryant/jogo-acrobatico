@@ -6,9 +6,9 @@
 # double jump at the top and, from TASK-10.4, a dash between two jumps, so the file's dash column
 # holds presses (criterion 6). From TASK-10.5 it opens with a wall run and a wall jump (WallPhase),
 # so the trace holds the wall's fields with a wall in them: on ParedeLonga's east face since
-# TASK-10.10, because PlataformaVaoA, 2 m tall, no longer covers the body (movimento.md, "Corrida
-# na parede": "A parede cobre o corpo"). Optionally the clock jumps once, as netfox's does after
-# a stall.
+# TASK-10.10, because PlataformaVaoA, 2 m tall, no longer rises above the head (movimento.md,
+# "Corrida na parede": "A parede passa da cabeça"). Optionally the clock jumps once, as
+# netfox's does after a stall.
 # The run is the reference's (test/reference/reference_run.gd): the real Match in Sozinho, in a
 # SubViewport with its own physics world, with netfox's ticks by hand inside a physics frame
 # (test/support/netfox_ticks.gd), starting on FIRST_TICK.

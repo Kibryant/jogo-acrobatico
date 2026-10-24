@@ -1,16 +1,16 @@
-# Criterion 3 of TASK-10.10, the wall that covers the body (movimento.md, "Corrida na parede": "A
-# parede cobre o corpo"; Q-38; DEC-0042): besides the contact, a ray at the head's height, 1,7 m
-# above the feet, from the capsule's axis toward the face and as far as the radius plus 5 cm, must
-# find a face of the world in the same plane (normal within 10°), or the wall refuses the run; in
-# a run, the head passing the top ends it as at the edge; a stack of two blocks in one plane is one
-# wall. A fighter of fighter.tscn, with the game's capsule, margin and contours, flies into walls
-# built here under netfox's rollback of 7 ticks on every loop (test/support/wall_flight.gd): every
-# resimulated tick must give the same state and body as the fresh one, and the same answer of the
-# head ray. Each flight proves its preconditions: it touched the wall, and netfox resimulated every
-# tick it owed.
+# Criterion 3 of TASK-10.10, the wall that rises above the head (movimento.md, "Corrida na
+# parede": "A parede passa da cabeça"; Q-38; DEC-0042): besides the contact, a ray 2,1 m above the
+# feet, 30 cm above the head, from the capsule's axis toward the face and as far as the radius plus
+# 5 cm, must find a face of the world in the same plane (normal within 10°), or the wall refuses
+# the run; in a run, the ray passing the top ends it as at the edge; a stack of two blocks in one
+# plane is one wall. A fighter of fighter.tscn, with the game's capsule, margin and contours,
+# flies into walls built here under netfox's rollback of 7 ticks on every loop
+# (test/support/wall_flight.gd): every resimulated tick must give the same state and body as the
+# fresh one, and the same answer of the ray. Each flight proves its preconditions: it touched the
+# wall, and netfox resimulated every tick it owed.
 #
 # The flights hold their height before the wall the way the run will: their config is a copy of
-# movement_v0.tres without gravity, as in engine_probe_test.gd, so the head stays at one height
+# movement_v0.tres without gravity, as in engine_probe_test.gd, so the ray stays at one height
 # against each wall. The geometry is the test's own, so the arena never changes what this proves.
 extends GdUnitTestSuite
 
@@ -18,14 +18,14 @@ const NetfoxTicks := preload("res://test/support/netfox_ticks.gd")
 const WallFlight := preload("res://test/support/wall_flight.gd")
 const MOVEMENT_V0 := "res://data/movement_v0.tres"
 
-## movimento.md, "A parede cobre o corpo": 1,7 m above the feet of the 1,8 m capsule.
-const HEAD_HEIGHT_M := 1.7
+## movimento.md, "A parede passa da cabeça": 2,1 m above the feet, 30 cm above the 1,8 m capsule.
+const RAY_HEIGHT_M := 2.1
 ## The face of every test wall is the plane z = 0, looking down +Z; the fighter flies along +X on
 ## that side, 8 m/s along it and 2 m/s into it, about 14°: 8 m/s along, above the 4 of the entry
 ## (movimento.md, "Corrida na parede").
 const FACE_NORMAL := Vector3.BACK
 const FLIGHT_VELOCITY := Vector3(8.0, 0.0, -2.0)
-## m: the feet fly at this height, so the head ray stands at 2,7 m: above a 2 m top, below a 4 m
+## m: the feet fly at this height, so the ray stands at 3,1 m: above a 2 m top, below a 4 m
 ## one.
 const FLIGHT_Y := 1.0
 ## m: the flight starts this far off the face, so the move meets it in a few ticks.
@@ -50,13 +50,13 @@ func after_test() -> void:
 	NetfoxTicks.reset()
 
 
-# The ray's height comes from the data: the capsule's 1,8 m minus the 10 cm below its top.
-func test_the_head_ray_stands_1_7_m_above_the_feet() -> void:
-	assert_float(_base_config().wall_head_height).is_equal_approx(HEAD_HEIGHT_M, 1e-6)
+# The ray's height comes from the data: the capsule's 1,8 m plus the 30 cm above the head.
+func test_the_ray_stands_2_1_m_above_the_feet() -> void:
+	assert_float(_base_config().wall_ray_height).is_equal_approx(RAY_HEIGHT_M, 1e-6)
 
 
-# Failure: a block of 2 m does not cover a body whose head is at 2,7 m. The move hits its face,
-# the probe keeps finding it beside the body, the head ray finds nothing, and no run starts.
+# Failure: a block of 2 m does not rise above a body whose ray is at 3,1 m. The move hits its
+# face, the probe keeps finding it beside the body, the ray finds nothing, and no run starts.
 func test_a_2_m_block_refuses_the_run() -> void:
 	var walls: Array[Box] = [Box.new(&"Bloco2m", WALL_FROM_X, WALL_TO_X, 0.0, 2.0)]
 	var flight := await _fly("bloco de 2 m", walls)
@@ -68,7 +68,7 @@ func test_a_2_m_block_refuses_the_run() -> void:
 	assert_int(flight.covered_on_contact).is_equal(0)
 
 
-# One: a wall of 4 m covers the same body. The run starts, with the head below the top.
+# One: a wall of 4 m rises above the same body. The run starts, with the ray below the top.
 func test_a_4_m_wall_accepts_the_run_with_the_head_below_the_top() -> void:
 	var walls: Array[Box] = [Box.new(&"Parede4m", WALL_FROM_X, WALL_TO_X, 0.0, 4.0)]
 	var flight := await _fly("parede de 4 m", walls)
@@ -77,12 +77,12 @@ func test_a_4_m_wall_accepts_the_run_with_the_head_below_the_top() -> void:
 	assert_int(flight.run_ticks).override_failure_message("%s never ran" % flight.name) \
 			.is_greater(0)
 	assert_str(String(flight.entry_wall)).is_equal("Parede4m")
-	assert_float(flight.entry_feet + HEAD_HEIGHT_M).is_less(4.0)
+	assert_float(flight.entry_feet + RAY_HEIGHT_M).is_less(4.0)
 	assert_int(flight.covered_on_contact).is_equal(flight.contact_ticks)
 
 
 # Many: two blocks of 2 m stacked in one plane are one wall. The move touches the lower one, the
-# head ray finds the upper one, and the run starts.
+# ray finds the upper one, and the run starts.
 func test_a_stack_of_two_2_m_blocks_in_one_plane_accepts_the_run() -> void:
 	var walls: Array[Box] = [
 		Box.new(&"PilhaBaixo", WALL_FROM_X, WALL_TO_X, 0.0, 2.0),
@@ -97,7 +97,7 @@ func test_a_stack_of_two_2_m_blocks_in_one_plane_accepts_the_run() -> void:
 
 
 # Limit: a wall that steps down from 4 m to 2 m in one plane. The run starts on the tall part and
-# ends as at the edge within a tick of the step, where the head passes the low part's top, while
+# ends as at the edge within a tick of the step, where the ray passes the low part's top, while
 # the body is still beside the low part: the test-only probe still finds it, and the run is far
 # from its 2,5 s.
 func test_the_run_ends_when_the_head_passes_the_top() -> void:
@@ -150,7 +150,7 @@ func _assert_resimulated_unchanged(flight: WallFlight) -> void:
 	var message := "%s: %d ticks resimulated, %d owed" % [flight.name, flight.checks, flight.owed]
 	assert_int(flight.owed).override_failure_message(message).is_greater(0)
 	assert_int(flight.checks).override_failure_message(message).is_equal(flight.owed)
-	message = "%s: the head ray diverged:\n%s" % [flight.name, "\n".join(flight.shown)]
+	message = "%s: the ray diverged:\n%s" % [flight.name, "\n".join(flight.shown)]
 	assert_int(flight.mismatches).override_failure_message(message).is_equal(0)
 	message = "%s: the state or the body diverged:\n%s" % [
 		flight.name,
@@ -170,7 +170,7 @@ func _base_config() -> MovementConfig:
 	return MovementConfig.create(resource as MovementData, NetworkTime.tickrate)
 
 
-# The numbers of a flight: movement_v0.tres without gravity, so the head holds its height.
+# The numbers of a flight: movement_v0.tres without gravity, so the ray holds its height.
 func _config() -> MovementConfig:
 	var config := _base_config()
 	config.rise_gravity_per_tick = 0.0

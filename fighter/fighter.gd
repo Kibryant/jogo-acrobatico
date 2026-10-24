@@ -189,9 +189,9 @@ func _rollback_tick(_delta: float, tick: int, _is_fresh: bool) -> void:
 # into the wall of the state would hit, and moves nothing. Out of a run, the move's own
 # collisions tell the entry: of the colliders that are not a fighter, the one with the most
 # horizontal normal, the first in the engine's order on a tie. The core judges whether it is a
-# wall at all. A wall must also cover the body (covers_body): when the head ray finds no face,
-# the node reports no wall, so the entry is refused and a run ends as at the edge (movimento.md,
-# "Corrida na parede": "A parede cobre o corpo"; TASK-10.10).
+# wall at all. A wall must also rise above the head (covers_body): when the ray above the head
+# finds no face, the node reports no wall, so the entry is refused and a run ends as at the edge
+# (movimento.md, "Corrida na parede": "A parede passa da cabeça"; TASK-10.10).
 func _wall_contact(prior: FighterState, facts: MoveFacts) -> void:
 	if prior.mode == FighterState.Mode.WALL_RUN:
 		var hit := move_and_collide(-prior.wall_normal * WALL_PROBE_DISTANCE, true)
@@ -216,8 +216,9 @@ func _wall_contact(prior: FighterState, facts: MoveFacts) -> void:
 		facts.wall_id = &""
 
 
-## Whether the wall covers the body (movimento.md, "Corrida na parede": "A parede cobre o corpo"):
-## a ray at the head's height, wall_head_height above the feet, from the capsule's axis toward
+## Whether the wall covers the body and rises above the head (movimento.md, "Corrida na parede":
+## "A parede passa da cabeça"): a ray wall_ray_height above the feet, 30 cm above the head, from
+## the capsule's axis toward
 ## the face, as far as the capsule's radius plus WALL_PROBE_DISTANCE, hits a face of the world
 ## whose flat normal is within the same-face angle of face_normal. Any collider counts, so a stack
 ## of blocks in one plane is one wall. A query of the physics space: it moves nothing and changes
@@ -228,7 +229,7 @@ func covers_body(face_normal: Vector3) -> bool:
 	var face := _flat(face_normal)
 	if face == Vector3.ZERO:
 		return false
-	var head := global_position + Vector3.UP * config.wall_head_height
+	var head := global_position + Vector3.UP * config.wall_ray_height
 	var reach := config.capsule_radius + WALL_PROBE_DISTANCE
 	var query := PhysicsRayQueryParameters3D.create(
 		head,

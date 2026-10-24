@@ -76,9 +76,10 @@ var wall_slide_gravity_per_tick: float
 # push out of the wall, in m/s along the wall's normal.
 var wall_jump_speed: float
 var wall_jump_push: float
-# m above the feet: the adapter's head ray, which must find the wall's face for the wall to cover
-# the body (movimento.md, "Corrida na parede": "A parede cobre o corpo"). The core never reads it.
-var wall_head_height: float
+# m above the feet: the adapter's ray above the head, which must find the wall's face for the
+# wall to rise above the head (movimento.md, "Corrida na parede": "A parede passa da cabeça").
+# The core never reads it.
+var wall_ray_height: float
 # The lean of the capsule's mesh away from the wall, in rad, and the time it takes to come in or
 # go out, in seconds: it is eased per displayed frame, never per tick, and never in the state
 # (movimento.md, "Corrida na parede": "O que se vê na parede"). The core never reads them.
@@ -170,8 +171,8 @@ static func create(data: MovementData, tickrate: int) -> MovementConfig:
 	# jump's own exit speed, the same parabola on the ticks (movimento.md, "Pulo da parede").
 	config.wall_jump_speed = sqrt(2.0 * rise * tickrate * data.wall_jump_height_m) - rise / 2.0
 	config.wall_jump_push = data.wall_jump_push_mps
-	# The head ray hangs from the capsule's top: 1,8 - 0,1 = 1,7 m above the feet.
-	config.wall_head_height = data.capsule_height_m - data.wall_head_below_top_m
+	# The ray stands above the capsule's top: 1,8 + 0,3 = 2,1 m above the feet.
+	config.wall_ray_height = data.capsule_height_m + data.wall_clear_above_head_m
 	config.wall_lean = deg_to_rad(data.wall_lean_deg)
 	config.wall_lean_s = data.wall_lean_ms / 1000.0
 	return config

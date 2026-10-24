@@ -1,15 +1,17 @@
-# Criterion 4 of TASK-10.10: in the arena, Block1m and Block2m refuse the wall run, and
-# ParedeLonga, the corridor's walls and Block3m accept it with the head below the top
-# (movimento.md, "Corrida na parede": "A parede cobre o corpo": "Os blocos de 1 e 2 m recusam";
-# "Métricas de nível": "Onde ficam na arena", "Corredor estreito"). A fighter of fighter.tscn flies
-# into each face of the real arena.tscn under netfox's rollback of 7 ticks on every loop
-# (test/support/wall_flight.gd), 8 m/s along the face and 2 m/s into it, about 14°, above the 4 of
-# the entry; every resimulated tick must give the same state, body and head ray as the fresh one.
+# Criterion 4 of TASK-10.10: in the arena, Block1m and Block2m refuse the wall run at every
+# height, a jump pressed into them from the floor included, and ParedeLonga, the corridor's walls
+# and Block3m accept it while the wall rises 30 cm above the head (movimento.md, "Corrida na
+# parede": "A parede passa da cabeça"; "Métricas de nível": "Onde ficam na arena", "Corredor
+# estreito"). A fighter of fighter.tscn meets each face of the real arena.tscn under netfox's
+# rollback of 7 ticks on every loop (test/support/wall_flight.gd); every resimulated tick must give
+# the same state, body and ray as the fresh one.
 #
-# The flights hold their height before the face, as the wall run will: their config is a copy of
-# movement_v0.tres without gravity, so the head stays where the case puts it. The feet heights are
-# where a body meets these faces in the air: 0,5 m, early in a jump, and 1,2 m, the jump's apex
-# (movimento.md, "Pulo e ar"), the highest a body reaches from the floor without a double jump.
+# Most flights hold their height before the face, as the wall run will: their config is a copy of
+# movement_v0.tres without gravity, 8 m/s along the face and 2 m/s into it, about 14°, above the 4
+# of the entry, so the ray stays where the case puts it. The feet heights are where a body meets
+# these faces in the air: 0,15 m, the second tick of a jump; 0,5 m, early in a jump; 1,2 m, the
+# jump's apex (movimento.md, "Pulo e ar"). The jump pressed into a low block plays with the real
+# gravity, from the feet on the floor.
 extends GdUnitTestSuite
 
 const NetfoxTicks := preload("res://test/support/netfox_ticks.gd")
@@ -17,16 +19,18 @@ const WallFlight := preload("res://test/support/wall_flight.gd")
 const ARENA_SCENE := preload("res://arena/arena.tscn")
 const MOVEMENT_V0 := "res://data/movement_v0.tres"
 
-## movimento.md, "A parede cobre o corpo": 1,7 m above the feet.
-const HEAD_HEIGHT_M := 1.7
+## movimento.md, "A parede passa da cabeça": the ray 2,1 m above the feet, 30 cm above the head.
+const RAY_HEIGHT_M := 2.1
 ## m/s: along the face and into it.
 const ALONG := 8.0
 const INTO := 2.0
 ## m: each flight starts this far off its face.
 const START_GAP := 0.1
 const LOOPS := 20
+const LOW_FEET := 0.15
 const EARLY_FEET := 0.5
 const APEX_FEET := 1.2 # movimento.md, "Pulo e ar": the jump's 1,2 m
+const HIGH_FEET := 2.5 # on a corridor wall, after a climb: the ray at 4,6 m, below its 5 m
 
 # The faces of arena.tscn ("Métricas de nível": "Onde ficam na arena"; arena.gd): the blocks span
 # z -14..-10, so their south faces look down +Z from z = -10 (Block1m over x -10..-6, Block2m over
@@ -35,6 +39,12 @@ const APEX_FEET := 1.2 # movimento.md, "Pulo e ar": the jump's 1,2 m
 # (CorredorOeste's east face) and x = 26,5 (CorredorLeste's west face), over the same z.
 const BLOCK_FACE_Z := -10.0
 const LANE_Z := 2.0
+# The jump pressed into a block: from the floor 2 cm off its face, full run along it with a quarter
+# of the speed into it, about 14°, the jump pressed once the run is at full speed.
+const PRESSED_RUN := Vector3(1.0, 0.0, -0.25)
+const PRESSED_GAP := 0.02
+const JUMP_ON_LOOP := 12
+const PRESSED_LOOPS := 50
 
 
 func before_test() -> void:
@@ -45,55 +55,83 @@ func after_test() -> void:
 	NetfoxTicks.reset()
 
 
-# Failure: the low blocks refuse. At 0,5 m and at the apex the head is above a 1 m and a 2 m top:
-# the move touches the face, and no run starts.
-func test_the_1_m_and_2_m_blocks_refuse_the_run(
+# Failure: the low blocks refuse at every height a body meets them in the air, and Block3m refuses
+# at the apex: the ray stands above their tops, the move touches the face, and no run starts.
+func test_the_low_blocks_refuse_the_run_when_the_ray_is_above_their_top(
 	block: String,
 	from_x: float,
 	feet: float,
 	_test_parameters := [
+		["Block1m", -9.5, LOW_FEET],
 		["Block1m", -9.5, EARLY_FEET],
+		["Block2m", -1.5, LOW_FEET],
 		["Block2m", -1.5, EARLY_FEET],
 		["Block2m", -1.5, APEX_FEET],
+		["Block3m", 6.5, APEX_FEET],
 	],
 ) -> void:
 	var flight := await _fly_along_a_block(block, from_x, feet)
 	_assert_resimulated_unchanged(flight)
-	var message := "%s never touched %s: %s" % [flight.name, block, flight.touched]
-	assert_bool(flight.touched.has(StringName(block))).override_failure_message(message).is_true()
-	assert_float(feet + HEAD_HEIGHT_M).is_greater(_top_of(block))
+	_assert_touched(flight, block)
+	assert_float(feet + RAY_HEIGHT_M).is_greater(_top_of(block))
 	assert_int(flight.run_ticks).override_failure_message("%s ran" % flight.name).is_equal(0)
 
 
-# One: Block3m accepts a body that meets it early in a jump or at the apex, the head below its
-# 3 m top (at the apex, 2,9 m: 10 cm of room).
-func test_block_3m_accepts_the_run_with_the_head_below_the_top(
-	feet: float,
-	_test_parameters := [[EARLY_FEET], [APEX_FEET]],
+# Failure, the case Block2m let through with the ray at 1,7 m: a jump pressed from the floor into
+# the face of Block1m or Block2m, running along it. The body leaves the floor touching the face,
+# and no tick of the jump starts a run, not even the first ones, with the feet a few cm up.
+func test_a_jump_pressed_into_a_low_block_from_the_floor_never_runs(
+	block: String,
+	from_x: float,
+	_test_parameters := [["Block1m", -9.8], ["Block2m", -1.9]],
 ) -> void:
-	var flight := await _fly_along_a_block("Block3m", 6.5, feet)
+	var config := _real_config()
+	var face := Vector3.BACK
+	var start := Vector3(from_x, 0.0, BLOCK_FACE_Z + config.capsule_radius + PRESSED_GAP)
+	var run := PRESSED_RUN.normalized()
+	var flight := WallFlight.new()
+	flight.grounded = true
+	flight.move = Vector2(0, 1)
+	flight.yaw = atan2(-run.x, -run.z)
+	flight.jump_on_loop = JUMP_ON_LOOP
+	var flight_name := "%s, jump pressed into it from the floor" % block
+	await flight.fly(self, flight_name, _arena(), config, start, Vector3.ZERO, face, PRESSED_LOOPS)
+	_assert_resimulated_unchanged(flight)
+	_assert_touched(flight, block)
+	assert_float(flight.highest_feet).override_failure_message("%s never jumped" % flight.name) \
+			.is_greater(EARLY_FEET)
+	assert_int(flight.run_ticks).override_failure_message("%s ran" % flight.name).is_equal(0)
+
+
+# One: Block3m accepts a body that meets it early in a jump, the ray at 2,6 m below its 3 m top;
+# with the feet at 0,9 m or higher the ray passes the top, as the apex case above shows.
+func test_block_3m_accepts_the_run_early_in_a_jump() -> void:
+	var flight := await _fly_along_a_block("Block3m", 6.5, EARLY_FEET)
 	_assert_runs_on(flight, "Block3m", 3.0)
 
 
-# Many: ParedeLonga's two faces and the corridor's two walls accept, the head below their tops.
+# Many: ParedeLonga's two faces and the corridor's two walls accept while the ray is below their
+# tops: at the apex of a jump from the floor, and on the corridor after a climb.
 func test_the_long_wall_and_the_corridor_walls_accept_the_run(
 	wall: String,
 	face_x: float,
 	normal_x: float,
 	top: float,
+	feet: float,
 	_test_parameters := [
-		["ParedeLonga", 14.0, -1.0, 4.0],
-		["ParedeLonga", 15.0, 1.0, 4.0],
-		["CorredorOeste", 23.0, 1.0, 5.0],
-		["CorredorLeste", 26.5, -1.0, 5.0],
+		["ParedeLonga", 14.0, -1.0, 4.0, APEX_FEET],
+		["ParedeLonga", 15.0, 1.0, 4.0, APEX_FEET],
+		["CorredorOeste", 23.0, 1.0, 5.0, APEX_FEET],
+		["CorredorLeste", 26.5, -1.0, 5.0, APEX_FEET],
+		["CorredorOeste", 23.0, 1.0, 5.0, HIGH_FEET],
 	],
 ) -> void:
 	var config := _config()
 	var face := Vector3(normal_x, 0.0, 0.0)
-	var start := Vector3(face_x, APEX_FEET, LANE_Z) + face * (config.capsule_radius + START_GAP)
+	var start := Vector3(face_x, feet, LANE_Z) + face * (config.capsule_radius + START_GAP)
 	var velocity := -face * INTO + Vector3.FORWARD * ALONG
 	var flight := WallFlight.new()
-	var flight_name := "%s, face at x %.1f" % [wall, face_x]
+	var flight_name := "%s, face at x %.1f, feet at %.1f m" % [wall, face_x, feet]
 	await flight.fly(self, flight_name, _arena(), config, start, velocity, face, LOOPS)
 	_assert_runs_on(flight, wall, top)
 
@@ -117,9 +155,14 @@ func _assert_runs_on(flight: WallFlight, wall: String, top: float) -> void:
 	var message := "%s never ran: touched %s" % [flight.name, flight.touched]
 	assert_int(flight.run_ticks).override_failure_message(message).is_greater(0)
 	assert_str(String(flight.entry_wall)).is_equal(wall)
-	var head := flight.entry_feet + HEAD_HEIGHT_M
-	message = "%s: the head at %.3f m, the top at %.1f m" % [flight.name, head, top]
-	assert_float(head).override_failure_message(message).is_less(top)
+	var ray := flight.entry_feet + RAY_HEIGHT_M
+	message = "%s: the ray at %.3f m, the top at %.1f m" % [flight.name, ray, top]
+	assert_float(ray).override_failure_message(message).is_less(top)
+
+
+func _assert_touched(flight: WallFlight, wall: String) -> void:
+	var message := "%s never touched %s: %s" % [flight.name, wall, flight.touched]
+	assert_bool(flight.touched.has(StringName(wall))).override_failure_message(message).is_true()
 
 
 func _assert_resimulated_unchanged(flight: WallFlight) -> void:
@@ -142,7 +185,7 @@ func _fly_along_a_block(block: String, from_x: float, feet: float) -> WallFlight
 	var start := Vector3(from_x, feet, BLOCK_FACE_Z + config.capsule_radius + START_GAP)
 	var velocity := Vector3.RIGHT * ALONG - face * INTO
 	var flight := WallFlight.new()
-	var flight_name := "%s, feet at %.1f m" % [block, feet]
+	var flight_name := "%s, feet at %.2f m" % [block, feet]
 	await flight.fly(self, flight_name, _arena(), config, start, velocity, face, LOOPS)
 	return flight
 
@@ -174,10 +217,15 @@ func _arena() -> Node3D:
 	return node as Node3D
 
 
-func _config() -> MovementConfig:
+func _real_config() -> MovementConfig:
 	var resource: Resource = load(MOVEMENT_V0)
 	assert(resource is MovementData, "%s must load as a MovementData" % MOVEMENT_V0)
-	var config := MovementConfig.create(resource as MovementData, NetworkTime.tickrate)
+	return MovementConfig.create(resource as MovementData, NetworkTime.tickrate)
+
+
+# movement_v0.tres without gravity, so a flight holds its height before the face.
+func _config() -> MovementConfig:
+	var config := _real_config()
 	config.rise_gravity_per_tick = 0.0
 	config.fall_gravity_per_tick = 0.0
 	return config

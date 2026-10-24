@@ -34,7 +34,7 @@ const TIME_FIELDS: Array[String] = [
 # slope), a negative entry speed, a run speed of zero (with the entry at a negative value, below
 # it), a negative ceiling (below the run speed), two negative times (equal, so neither exceeds the
 # other), a negative slide percentage, a jump without height, a negative push, a negative
-# same-face angle, a head ray above the capsule's top, a negative lean and a negative lean time.
+# same-face angle, a ray inside the capsule, a negative lean and a negative lean time.
 # The times are ints; the rest are floats.
 const WALL_IMPOSSIBLE: Dictionary[String, Variant] = {
 	"wall_min_incline_deg": -1.0,
@@ -47,7 +47,7 @@ const WALL_IMPOSSIBLE: Dictionary[String, Variant] = {
 	"wall_jump_height_m": 0.0,
 	"wall_jump_push_mps": -5.0,
 	"wall_same_face_deg": -10.0,
-	"wall_head_below_top_m": -0.1,
+	"wall_clear_above_head_m": -0.3,
 	"wall_lean_deg": -15.0,
 	"wall_lean_ms": -1,
 }
@@ -113,7 +113,7 @@ func _design_data() -> MovementData:
 	data.wall_jump_height_m = 1.2 # "Corrida na parede": "Pulo da parede"
 	data.wall_jump_push_mps = 5.0 # "Corrida na parede": "Pulo da parede: 5 m/s para fora"
 	data.wall_same_face_deg = 10.0 # "Corrida na parede": "Mesma parede, em números"
-	data.wall_head_below_top_m = 0.1 # "A parede cobre o corpo": 1,7 m above the feet of 1,8 m
+	data.wall_clear_above_head_m = 0.3 # "A parede passa da cabeça": 2,1 m above the feet
 	data.wall_lean_deg = 15.0 # "Corrida na parede": "O que se vê na parede"
 	data.wall_lean_ms = 100 # "Corrida na parede": "O que se vê na parede"
 	return data
@@ -183,7 +183,7 @@ func test_movement_v0_holds_the_numbers_of_movimento_md() -> void:
 	assert_float(data.wall_jump_height_m).is_equal_approx(design.wall_jump_height_m, HAIR)
 	assert_float(data.wall_jump_push_mps).is_equal_approx(design.wall_jump_push_mps, HAIR)
 	assert_float(data.wall_same_face_deg).is_equal_approx(design.wall_same_face_deg, HAIR)
-	assert_float(data.wall_head_below_top_m).is_equal_approx(design.wall_head_below_top_m, HAIR)
+	assert_float(data.wall_clear_above_head_m).is_equal_approx(design.wall_clear_above_head_m, HAIR)
 	assert_float(data.wall_lean_deg).is_equal_approx(design.wall_lean_deg, HAIR)
 	assert_int(data.wall_lean_ms).is_equal(design.wall_lean_ms)
 
@@ -734,29 +734,29 @@ func test_a_wall_same_face_angle_from_0_to_90_degrees_is_allowed(
 			.is_empty()
 
 
-# The head ray hangs from the capsule's top and stays inside it: above the top or below the feet
-# is rejected naming the field; at the top, at the 10 cm of the design and at the feet it passes
-# (movimento.md, "Corrida na parede": "A parede cobre o corpo"; TASK-10.10).
-func test_a_head_ray_outside_the_capsule_is_rejected(
-	below_top_m: float,
-	_test_parameters := [[-0.1], [1.81], [3.0]],
+# The ray stands at or above the capsule's top: below it, inside the capsule, is rejected naming
+# the field; at the top, at the 30 cm of the design and far above it passes (movimento.md,
+# "Corrida na parede": "A parede passa da cabeça"; TASK-10.10).
+func test_a_ray_inside_the_capsule_is_rejected(
+	clear_m: float,
+	_test_parameters := [[-0.01], [-0.3], [-1.8]],
 ) -> void:
 	var data := _design_data()
-	data.wall_head_below_top_m = below_top_m
+	data.wall_clear_above_head_m = clear_m
 	_assert_one_message_naming(
 		data.validate(),
-		"wall_head_below_top_m",
-		"a head ray %.2f m below the top must be rejected" % below_top_m,
+		"wall_clear_above_head_m",
+		"a ray %.2f m above the head must be rejected" % clear_m,
 	)
 
 
-func test_a_head_ray_inside_the_capsule_is_allowed(
-	below_top_m: float,
-	_test_parameters := [[0.0], [0.1], [1.8]],
+func test_a_ray_at_or_above_the_head_is_allowed(
+	clear_m: float,
+	_test_parameters := [[0.0], [0.3], [3.0]],
 ) -> void:
 	var data := _design_data()
-	data.wall_head_below_top_m = below_top_m
-	var message := "a head ray %.2f m below the top must pass" % below_top_m
+	data.wall_clear_above_head_m = clear_m
+	var message := "a ray %.2f m above the head must pass" % clear_m
 	assert_array(data.validate()).override_failure_message(message).is_empty()
 
 

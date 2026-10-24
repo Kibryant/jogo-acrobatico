@@ -1,7 +1,7 @@
 # One flight of a fighter of fighter.tscn into a wall, through netfox's real tick loop driven by
 # hand (test/support/netfox_ticks.gd), with a rollback of DEPTH ticks on every loop, the depth of
 # a 220 ms ping at 60 ticks (rede.md §4): the shared rig of the head ray's tests (TASK-10.10,
-# criteria 3 and 4; movimento.md, "Corrida na parede": "A parede cobre o corpo"). After every
+# criteria 3 and 4; movimento.md, "Corrida na parede": "A parede passa da cabeça"). After every
 # tick, on netfox's after_process_tick, which comes after the fighter moved, it asks the head ray
 # (Fighter.covers_body) about the face it flies into: the first reading of a tick is the fresh
 # one, and every resimulation of it must give the same answer, the way the probe of TASK-10.5
@@ -18,6 +18,14 @@ const FIGHTER_SCENE := preload("res://fighter/fighter.tscn")
 const DEPTH := 7
 ## How many divergences the failure message describes.
 const SHOWN := 5
+
+## The input of every loop, set before fly: the stick (x right, y forward) at this yaw, and the
+## loop whose input presses the jump, -1 for none. A grounded flight starts standing on the floor,
+## on its first recorded state; otherwise in the air.
+var move := Vector2.ZERO
+var yaw := 0.0
+var jump_on_loop := -1
+var grounded := false
 
 var name: String
 ## One check per resimulated tick, and those whose head ray answered otherwise.
@@ -43,6 +51,8 @@ var entry_feet := INF
 var end_position := Vector3.INF
 var mode_at_end := -1
 var probe_at_end := false
+## The highest the feet went on a fresh tick.
+var highest_feet := -INF
 
 var _fighter: Fighter
 var _arena: Node
@@ -53,30 +63,33 @@ var _was_running := false
 var _first_state_tick := 0
 
 
-# A fighter of fighter.tscn under arena, set up with config at start, in the air at velocity, its
-# wall ids relative to arena. Call before arena enters the tree: netfox records the first state
-# when the fighter's synchronizer processes its settings.
+# A fighter of fighter.tscn under arena, set up with config at start, at velocity, its wall ids
+# relative to arena: in the air, or standing on the floor as setup leaves it when on_floor. Call
+# before arena enters the tree: netfox records the first state when the fighter's synchronizer
+# processes its settings.
 static func fighter_in(
 	arena: Node3D,
 	config: MovementConfig,
 	start: Vector3,
 	velocity: Vector3,
+	on_floor := false,
 ) -> Fighter:
 	var node := FIGHTER_SCENE.instantiate()
 	assert(node is Fighter, "fighter.tscn must have a Fighter at its root")
 	var fighter := node as Fighter
 	fighter.setup(config, start, 0.0, true)
 	fighter.arena = arena
-	fighter.state.on_floor = false
-	fighter.state.mode = FighterState.Mode.AIR
+	if not on_floor:
+		fighter.state.on_floor = false
+		fighter.state.mode = FighterState.Mode.AIR
 	fighter.velocity = velocity
 	arena.add_child(fighter)
 	return fighter
 
 
-# Flies a fighter from start at velocity, without input, for loops ticks, against the face whose
-# normal is face; arena joins host's tree for the flight and is freed after it. Prints the
-# observer's line and the flight's for the gate's log.
+# Flies a fighter from start at velocity, with the flight's input, for loops ticks, against the
+# face whose normal is face; arena joins host's tree for the flight and is freed after it. Prints
+# the observer's line and the flight's for the gate's log.
 func fly(
 	host: Node,
 	flight_name: String,
@@ -87,7 +100,7 @@ func fly(
 	face: Vector3,
 	loops: int,
 ) -> void:
-	var fighter := fighter_in(arena, config, start, velocity)
+	var fighter := fighter_in(arena, config, start, velocity, grounded)
 	host.add_child(arena)
 	await host.get_tree().process_frame
 	await host.get_tree().physics_frame
@@ -103,8 +116,10 @@ func fly(
 	var observer := SyncObserver.new(flight_name, watched)
 	NetworkRollback.before_loop.connect(_force_rollback)
 	NetworkRollback.after_process_tick.connect(_observe)
-	for _loop: int in loops:
-		fighter.input.sample_frame(Vector2.ZERO, 0.0)
+	for loop: int in loops:
+		fighter.input.sample_frame(move, yaw)
+		if loop == jump_on_loop:
+			fighter.input.press_jump()
 		NetfoxTicks.run_loop()
 	NetworkRollback.after_process_tick.disconnect(_observe)
 	NetworkRollback.before_loop.disconnect(_force_rollback)
@@ -155,6 +170,7 @@ func _observe(tick: int) -> void:
 		contact_ticks += 1
 		if covered:
 			covered_on_contact += 1
+	highest_feet = maxf(highest_feet, _fighter.position.y)
 	var state := _fighter.state
 	var running := state.mode == FighterState.Mode.WALL_RUN
 	if running:

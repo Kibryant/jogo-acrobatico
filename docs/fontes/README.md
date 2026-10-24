@@ -136,3 +136,4 @@ O que chegou ao projeto e como chegou. Uma fonte não muda: só mudam `status`, 
 | [F-130](F-130-arthur-destrava-a-linha-do-cos-80.md) | 2026-10-23 | O Arthur acerta por que a linha travada do cos 80° nunca passa e a destrava para correção |
 | [F-131](F-131-arthur-joga-a-parede.md) | 2026-10-23 | O Arthur joga a corrida na parede: gosta de andar e pular entre as paredes, acha que a cápsula só gruda, e quer voltar pelo corredor sem desgrudar |
 | [F-132](F-132-arthur-joga-os-15-minutos.md) | 2026-10-24 | O Arthur joga os 15 minutos cronometrados, gosta muito, duvida do próprio ensaio por ser o criador e pede que nem toda parede seja corrível |
+| [F-133](F-133-arthur-libera-push-e-merge-da-task-10-5.md) | 2026-10-24 | O Arthur libera subir a branch da TASK-10.5, abrir o PR e fazer o merge |

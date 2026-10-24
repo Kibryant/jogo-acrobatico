@@ -1,6 +1,7 @@
 # Criterion 7 of TASK-9: how the frames become the input of a tick (DEC-0026 §1; rede.md §3).
 # move is the mean of the frame samples, yaw is the last sample and jump is a one-touch command
-# taken once.
+# taken once. TASK-10.4 adds the dash, and TASK-10.6 the pitch, the last sample like the yaw, and
+# the grapple, one more one-touch command (criterion 2).
 extends GdUnitTestSuite
 
 const HAIR := 1e-9 # floating-point slack, not a design number
@@ -118,3 +119,60 @@ func test_the_dash_and_the_jump_are_taken_apart() -> void:
 	sampler.press_jump()
 	assert_bool(sampler.take_dash()).is_false()
 	assert_bool(sampler.take_jump()).is_true()
+
+
+# TASK-10.6: the pitch is the last sample, like the yaw (rede.md §3): the aim of a tick is where
+# the camera looks now, not a mean of where it looked.
+func test_pitch_is_the_last_sample() -> void:
+	var sampler := InputSampler.new()
+	sampler.add_frame(FORWARD, 0.0, deg_to_rad(80.0))
+	sampler.add_frame(FORWARD, 0.0, deg_to_rad(-12.5))
+	sampler.take_move()
+	assert_float(sampler.last_pitch()).is_equal_approx(deg_to_rad(-12.5), HAIR)
+	assert_float(sampler.last_yaw()).is_equal(0.0)
+
+
+# Before any sample the camera looks level; a pitch stays until a new sample, and a frame sampled
+# without one looks level again, as a bot that never aims does.
+func test_pitch_stays_until_a_new_sample_and_a_frame_without_one_looks_level() -> void:
+	var sampler := InputSampler.new(1.5)
+	assert_float(sampler.last_pitch()).is_equal(0.0)
+	sampler.add_frame(Vector2.ZERO, -0.5, 0.25)
+	sampler.take_move()
+	sampler.take_move()
+	assert_float(sampler.last_pitch()).is_equal(0.25)
+	assert_float(sampler.last_yaw()).is_equal(-0.5)
+	sampler.add_frame(Vector2.ZERO, -0.5)
+	assert_float(sampler.last_pitch()).is_equal(0.0)
+
+
+# TASK-10.6: the grapple is a one-touch command like the jump: presses before one take are one.
+func test_a_grapple_press_is_taken_once() -> void:
+	var sampler := InputSampler.new()
+	sampler.press_grapple()
+	sampler.press_grapple()
+	assert_bool(sampler.take_grapple()).is_true()
+	assert_bool(sampler.take_grapple()).is_false()
+
+
+func test_no_press_is_no_grapple() -> void:
+	var sampler := InputSampler.new()
+	sampler.add_frame(FORWARD, 0.0, 0.3)
+	assert_bool(sampler.take_grapple()).is_false()
+
+
+# The grapple, the dash and the jump are kept apart: taking one leaves the others, and the press
+# waits across frames for its tick.
+func test_the_grapple_the_dash_and_the_jump_are_taken_apart() -> void:
+	var sampler := InputSampler.new()
+	sampler.press_grapple()
+	assert_bool(sampler.take_jump()).is_false()
+	assert_bool(sampler.take_dash()).is_false()
+	sampler.add_frame(FORWARD, 0.0, 0.3)
+	sampler.take_move()
+	assert_bool(sampler.take_grapple()).is_true()
+	sampler.press_jump()
+	sampler.press_dash()
+	assert_bool(sampler.take_grapple()).is_false()
+	assert_bool(sampler.take_jump()).is_true()
+	assert_bool(sampler.take_dash()).is_true()

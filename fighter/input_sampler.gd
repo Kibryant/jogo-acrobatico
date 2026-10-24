@@ -5,9 +5,10 @@
 #   continuous input (continuous-sampled-input.gd). With the keyboard it is below 1 only on the
 #   tick a key changes (TASK-9 plan, Claude's v0 readings);
 # - yaw is the last sample: a mean of angles breaks where they wrap at 180 degrees, and the last
-#   sample is where the camera looks now (TASK-9, choice 1);
-# - jump and dash are one-touch commands kept between frames and taken once, so a press counts for
-#   at most one tick even when a frame runs two (netfox's one-off-input.gd).
+#   sample is where the camera looks now (TASK-9, choice 1); pitch is the last sample too, for the
+#   same reasons (rede.md §3; TASK-10.6);
+# - jump, dash and grapple are one-touch commands kept between frames and taken once, so a press
+#   counts for at most one tick even when a frame runs two (netfox's one-off-input.gd).
 # No node and no engine input here: FighterInput feeds it, from the devices or from a bot.
 class_name InputSampler
 extends RefCounted
@@ -15,8 +16,10 @@ extends RefCounted
 var _move_sum := Vector2.ZERO
 var _move_samples := 0
 var _yaw: float
+var _pitch := 0.0
 var _jump_pressed := false
 var _dash_pressed := false
+var _grapple_pressed := false
 
 
 # start_yaw is the yaw before any sample: where the fighter looks at its spawn point.
@@ -25,11 +28,13 @@ func _init(start_yaw := 0.0) -> void:
 
 
 # One frame of input: where the player pushes (x right, y forward, up to 1) and where the camera
-# looks, in rad.
-func add_frame(move: Vector2, yaw: float) -> void:
+# looks, in rad: yaw about the vertical, and pitch up from the horizontal, positive up. A frame
+# without a pitch looks level.
+func add_frame(move: Vector2, yaw: float, pitch := 0.0) -> void:
 	_move_sum += move.limit_length(1.0)
 	_move_samples += 1
 	_yaw = yaw
+	_pitch = pitch
 
 
 # One press of the jump, kept until take_jump().
@@ -40,6 +45,11 @@ func press_jump() -> void:
 # One press of the dash, kept until take_dash().
 func press_dash() -> void:
 	_dash_pressed = true
+
+
+# One press of the grapple, kept until take_grapple().
+func press_grapple() -> void:
+	_grapple_pressed = true
 
 
 # The mean of the move samples since the last call, which starts a new tick's samples. Zero when
@@ -58,6 +68,11 @@ func last_yaw() -> float:
 	return _yaw
 
 
+# The pitch of the last sample, like the yaw; 0 before any sample.
+func last_pitch() -> float:
+	return _pitch
+
+
 # True once per press: the press is consumed, and the next call is false until a new press.
 func take_jump() -> bool:
 	var pressed := _jump_pressed
@@ -69,4 +84,11 @@ func take_jump() -> bool:
 func take_dash() -> bool:
 	var pressed := _dash_pressed
 	_dash_pressed = false
+	return pressed
+
+
+# True once per press, like take_jump().
+func take_grapple() -> bool:
+	var pressed := _grapple_pressed
+	_grapple_pressed = false
 	return pressed

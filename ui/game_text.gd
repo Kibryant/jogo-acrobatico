@@ -15,6 +15,7 @@ const HUD_MODE_GROUND := &"HUD_MODE_GROUND"
 const HUD_MODE_AIR := &"HUD_MODE_AIR"
 const HUD_MODE_DASH := &"HUD_MODE_DASH"
 const HUD_MODE_WALL_RUN := &"HUD_MODE_WALL_RUN"
+const HUD_MODE_GRAPPLE := &"HUD_MODE_GRAPPLE"
 # The tenths of a second until the next dash, beside its arc; the message holds the decimal
 # separator of its language (TASK-10.4).
 const HUD_DASH_COOLDOWN := &"HUD_DASH_COOLDOWN"
@@ -31,6 +32,7 @@ const KEYS: Array[StringName] = [
 	HUD_MODE_AIR,
 	HUD_MODE_DASH,
 	HUD_MODE_WALL_RUN,
+	HUD_MODE_GRAPPLE,
 	HUD_DASH_COOLDOWN,
 	REPLAY_ENDED,
 ]

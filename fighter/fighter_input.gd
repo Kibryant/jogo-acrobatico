@@ -1,9 +1,9 @@
-# The input box of a fighter (visao-geral.md, "O estado em quatro caixas"): move, yaw, jump and
-# dash, which netfox records for every tick through "Input:move", "Input:yaw", "Input:jump" and
-# "Input:dash". Whoever owns the fighter fills them through the same calls, sample_frame(),
-# press_jump() and press_dash(): this PC's keyboard and mouse after use_devices(), or a bot, so the
-# rules never know who presses (DEC-0004). How the frames become the input of a tick is the
-# InputSampler's job (DEC-0026 §1).
+# The input box of a fighter (visao-geral.md, "O estado em quatro caixas"): move, yaw, pitch,
+# jump, dash and grapple, which netfox records for every tick through "Input:move", "Input:yaw",
+# "Input:pitch", "Input:jump", "Input:dash" and "Input:grapple". Whoever owns the fighter fills them
+# through the same calls, sample_frame(), press_jump(), press_dash() and press_grapple(): this PC's
+# keyboard and mouse after use_devices(), or a bot, so the rules never know who presses
+# (DEC-0004). How the frames become the input of a tick is the InputSampler's job (DEC-0026 §1).
 # A replay takes the place of all of them through play_rows() (TASK-10.3): each tick's box is then
 # the recorded row, and this script stays the only one that writes the box.
 class_name FighterInput
@@ -12,8 +12,10 @@ extends BaseNetInput
 # The fields netfox records and restores. The core reads them as a TickInput.
 var move := Vector2.ZERO
 var yaw := 0.0
+var pitch := 0.0
 var jump := false
 var dash := false
+var grapple := false
 
 var _sampler := InputSampler.new()
 # The camera of whoever plays this fighter on this PC; null when nobody here does.
@@ -36,8 +38,8 @@ func _ready() -> void:
 
 
 # netfox emits after_tick and then records the input of that tick (NetworkTime._loop), so the
-# jump and the dash set in _on_after_tick are those of this tick, and the next tick of the same
-# loop finds them taken.
+# jump, the dash and the grapple set in _on_after_tick are those of this tick, and the next tick
+# of the same loop finds them taken.
 func _enter_tree() -> void:
 	NetworkTime.after_tick.connect(_on_after_tick)
 
@@ -52,8 +54,9 @@ func face(start_yaw: float) -> void:
 	_sampler = InputSampler.new(start_yaw)
 
 
-# From now on this PC's keyboard and mouse drive the fighter, with the yaw of this camera: the
-# body looks where the camera looks (movimento.md, "Princípios").
+# From now on this PC's keyboard and mouse drive the fighter, with the yaw and the pitch of this
+# camera: the body looks where the camera looks (movimento.md, "Princípios"), and the grapple aims
+# where it aims (DEC-0044).
 func use_devices(camera: CameraRig) -> void:
 	_camera = camera
 
@@ -66,9 +69,10 @@ func play_rows(source: ReplaySource) -> void:
 	_rows = source
 
 
-# One frame of input (x right, y forward, up to 1; yaw in rad), from the devices or a bot.
-func sample_frame(frame_move: Vector2, frame_yaw: float) -> void:
-	_sampler.add_frame(frame_move, frame_yaw)
+# One frame of input (x right, y forward, up to 1; yaw and pitch in rad, pitch positive up), from
+# the devices or a bot. A frame without a pitch looks level.
+func sample_frame(frame_move: Vector2, frame_yaw: float, frame_pitch := 0.0) -> void:
+	_sampler.add_frame(frame_move, frame_yaw, frame_pitch)
 
 
 # One press of the jump, a one-touch command (DEC-0026 §1).
@@ -81,13 +85,20 @@ func press_dash() -> void:
 	_sampler.press_dash()
 
 
+# One press of the grapple, a one-touch command like the jump (DEC-0026 §1).
+func press_grapple() -> void:
+	_sampler.press_grapple()
+
+
 # The input of the tick being simulated, as the core reads it.
 func to_tick_input() -> TickInput:
 	var tick_input := TickInput.new()
 	tick_input.move = move
 	tick_input.yaw = yaw
+	tick_input.pitch = pitch
 	tick_input.jump = jump
 	tick_input.dash = dash
+	tick_input.grapple = grapple
 	return tick_input
 
 
@@ -96,7 +107,7 @@ func _physics_process(_delta: float) -> void:
 		return
 	# Keys by physical position (DEC-0031): the InputMap actions use physical_keycode.
 	var keys := Input.get_vector(&"move_left", &"move_right", &"move_back", &"move_forward")
-	sample_frame(keys, _camera.yaw)
+	sample_frame(keys, _camera.yaw, _camera.pitch)
 
 
 # A held key repeats as echo events, which is_action_pressed leaves out: a hold is one press.
@@ -108,6 +119,9 @@ func _unhandled_input(event: InputEvent) -> void:
 	# The left Shift, by physical position (project.godot, [input]; movimento.md, "Dash": "Tecla").
 	if event.is_action_pressed(&"dash"):
 		press_dash()
+	# The Q, by physical position (project.godot, [input]; movimento.md, "Gancho": "Tecla"; F-140).
+	if event.is_action_pressed(&"grapple"):
+		press_grapple()
 
 
 # netfox calls this once per tick loop, before its ticks, on the owner's peer (BaseNetInput). A
@@ -117,16 +131,18 @@ func _gather() -> void:
 		return
 	move = _sampler.take_move()
 	yaw = _sampler.last_yaw()
+	pitch = _sampler.last_pitch()
 
 
 # netfox records the box of tick right after this (NetworkTime._loop), so what is set here is the
-# input of tick: the sampler's jump and dash, or the whole row of a replay.
+# input of tick: the sampler's jump, dash and grapple, or the whole row of a replay.
 func _on_after_tick(_delta: float, tick: int) -> void:
 	if not is_multiplayer_authority():
 		return
 	if _rows == null:
 		jump = _sampler.take_jump()
 		dash = _sampler.take_dash()
+		grapple = _sampler.take_grapple()
 		return
 	var row := _rows.input_at(tick)
 	if row == null:

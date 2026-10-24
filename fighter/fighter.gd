@@ -23,7 +23,8 @@ const FLOOR_PROBE_SPEED := 0.05
 # included, from 0 to 4.5 cm off the face (rede.md §4, "A sonda A da parede").
 const WALL_PROBE_DISTANCE := 0.05
 
-## The input box, recorded by netfox as Input:move, Input:yaw, Input:jump and Input:dash.
+## The input box, recorded by netfox as Input:move, Input:yaw, Input:pitch, Input:jump,
+## Input:dash and Input:grapple.
 @export var input: FighterInput
 ## netfox's node that records the boxes on every tick and sends them over the network.
 @export var synchronizer: RollbackSynchronizer

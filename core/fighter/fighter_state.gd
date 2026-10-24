@@ -10,11 +10,14 @@ extends RefCounted
 # ends, both in before_move (DEC-0041). WALL_RUN is committed too, the input neither turns nor
 # brakes it: the contact starts it in after_move, and it ends by its time or the wall jump in
 # before_move, or by the contact lost in after_move (DEC-0041; movimento.md, "Corrida na parede").
+# GRAPPLE is the pull toward the hook's point, committed too: it starts when the cable has flown
+# and ends by its own release, both in before_move (DEC-0041; movimento.md, "Gancho").
 enum Mode {
 	GROUND,
 	AIR,
 	DASH = 2,
 	WALL_RUN = 3,
+	GRAPPLE = 4,
 }
 
 # The stamp of "never": far enough in the past that no window reaches it, so a fresh state
@@ -62,6 +65,15 @@ var wall_id: StringName = &""
 # The tick of the last wall jump: the key its visual signal plays by (DEC-0031). It stays after
 # the jump; NEVER is a wall jump that never happened.
 var wall_jump_tick := NEVER
+# The grapple (movimento.md, "Gancho"; DEC-0044). The tick the hook was fired, while a cable is in
+# the air, flying or pulling; NEVER when none is. The cable flies grapple_attach_ticks from it.
+var grapple_fired_tick := NEVER
+# Where the hook bit: the point the aim found on the fire, fixed until the release; the pull takes
+# the feet to it.
+var grapple_point := Vector3.ZERO
+# The tick of the last release: the cooldown counts from it, as the dash's counts from its end
+# ("Recarga"). It stays after the release; NEVER is a grapple that never happened.
+var grapple_end_tick := NEVER
 
 
 # An equal and independent state: the rules change the copy, never the state they receive.
@@ -83,4 +95,7 @@ func copy() -> FighterState:
 	other.wall_normal = wall_normal
 	other.wall_id = wall_id
 	other.wall_jump_tick = wall_jump_tick
+	other.grapple_fired_tick = grapple_fired_tick
+	other.grapple_point = grapple_point
+	other.grapple_end_tick = grapple_end_tick
 	return other

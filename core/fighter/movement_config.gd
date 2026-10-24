@@ -86,6 +86,21 @@ var wall_ray_height: float
 var wall_lean: float
 var wall_lean_s: float
 
+# The grapple (movimento.md, "Gancho"). A point hooks from grapple_min_range to grapple_range off
+# the shoulder, aim_height above the feet; the cable flies grapple_attach_ticks, and the next one
+# may fire grapple_cooldown_ticks after the release.
+var grapple_range: float # m
+var grapple_min_range: float # m
+var grapple_attach_ticks: int
+var grapple_cooldown_ticks: int
+# m/s: the pull's speed toward the point, and the speed toward it below which the pull releases.
+var grapple_pull_speed: float
+var grapple_block_speed: float
+# m: the feet this close to the point release the hook.
+var grapple_release_distance: float
+# m above the feet: the shoulder the aim leaves from (DEC-0044 §3).
+var aim_height: float
+
 
 # The jump is two parabolas sampled on the ticks: the body is at the apex, jump_height_m up, at
 # the end of the rise_ticks-th tick counting the press, and back on the floor fall_ticks later.
@@ -175,4 +190,15 @@ static func create(data: MovementData, tickrate: int) -> MovementConfig:
 	config.wall_ray_height = data.capsule_height_m + data.wall_clear_above_head_m
 	config.wall_lean = deg_to_rad(data.wall_lean_deg)
 	config.wall_lean_s = data.wall_lean_ms / 1000.0
+
+	# The grapple (movimento.md, "Gancho"): its two times become ticks like every other, and the
+	# block is a share of the pull, 18 × 50 / 100 = 9 m/s.
+	config.grapple_range = data.grapple_range_m
+	config.grapple_min_range = data.grapple_min_range_m
+	config.grapple_attach_ticks = Ticks.from_ms(data.grapple_attach_ms, tickrate)
+	config.grapple_cooldown_ticks = Ticks.from_ms(data.grapple_cooldown_ms, tickrate)
+	config.grapple_pull_speed = data.grapple_pull_speed_mps
+	config.grapple_block_speed = data.grapple_pull_speed_mps * data.grapple_block_pct / 100.0
+	config.grapple_release_distance = data.grapple_release_distance_m
+	config.aim_height = data.aim_height_m
 	return config

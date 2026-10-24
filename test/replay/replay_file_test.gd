@@ -181,9 +181,10 @@ func test_the_header_says_which_game_recorded_it_with_the_whole_configuration() 
 	assert_int(fields["arena_sha256"].length()).is_equal(SHA256_LENGTH)
 	assert_str(fields["seed"]).is_equal("0")
 	assert_str(fields["config"]).is_equal(MOVEMENT_V0)
+	# TASK-10.6 added pitch and grapple, by reflection over TickInput (criterion 2).
 	assert_str(fields["columns"]).is_equal(
-		"tick:int,loop:int,fighter:int,move.x:f64,move.y:f64,yaw:f64,jump:bool,dash:bool,"
-		+ "check:hex8",
+		"tick:int,loop:int,fighter:int,move.x:f64,move.y:f64,yaw:f64,pitch:f64,jump:bool,dash:bool,"
+		+ "grapple:bool,check:hex8",
 	)
 	# One line per field of MovementData, typed, with the .tres's value in its cell.
 	var resource: Resource = load(MOVEMENT_V0)
@@ -202,6 +203,44 @@ func test_the_header_says_which_game_recorded_it_with_the_whole_configuration() 
 			order.append(key)
 	assert_array(Array(order)).is_equal(Array(ReplayFile.KEYS))
 	assert_int(keys.find("config.capsule_height_m:f64")).is_equal(keys.find("config") + 1)
+
+
+# Criterion 2 of TASK-10.6: the pitch travels with every bit, like the yaw (a mouse never stops on
+# a round angle), the 80° of the camera's limit and the negative zero included, and the grapple as
+# 0 or 1.
+func test_the_pitch_and_the_grapple_of_a_row_come_back_as_written() -> void:
+	var pitches: Array[float] = [
+		0.0,
+		-0.0,
+		deg_to_rad(80.0),
+		-deg_to_rad(80.0),
+		0.12345678901234567,
+		-1.0 / 3.0,
+	]
+	var replay := _file([1])
+	for index: int in pitches.size():
+		var row := ReplayFile.Row.new()
+		row.tick = FIRST_TICK + 1 + index
+		row.check = "00000000"
+		row.input.pitch = pitches[index]
+		row.input.grapple = index % 2 == 1
+		replay.rows.append(row)
+	var read := ReplayFile.parse(replay.to_text())
+	assert_array(read.errors).is_empty()
+	assert_int(read.rows.size()).is_equal(replay.rows.size())
+	for index: int in replay.rows.size():
+		var written := replay.rows[index].input
+		var found := read.rows[index].input
+		var message := "row %d: pitch %s came back as %s" % [index, written.pitch, found.pitch]
+		assert_bool(var_to_bytes(found.pitch) == var_to_bytes(written.pitch)) \
+				.override_failure_message(message) \
+				.is_true()
+		assert_bool(found.grapple).is_equal(written.grapple)
+	# A pitch cell that is not 16 hex digits is refused, as any float cell.
+	var text := _with_cell(replay.to_text(), 1, _column("pitch"), "3fe0")
+	var refused := ReplayFile.parse(text)
+	assert_bool(refused.playable(true)).is_false()
+	assert_str(refused.errors[0]).contains("column pitch")
 
 
 # The player plays the numbers of the header, not the .tres's: a tuned .tres leaves an old replay
@@ -256,7 +295,8 @@ func test_another_format_tickrate_arena_or_settings_cannot_play() -> void:
 func test_a_column_a_line_or_a_cell_this_build_cannot_read_cannot_play() -> void:
 	var text := _file().to_text()
 	var columns := ReplayFile.this_build().header["columns"]
-	var unknown := _with_header(text, "columns", columns + ",grapple:bool")
+	# A command no build has: grapple was the unknown one until TASK-10.6 made it a column.
+	var unknown := _with_header(text, "columns", columns + ",teleport:bool")
 	unknown = unknown.replace("0123abcd\n", "0123abcd,0\n")
 	var retyped := _with_header(text, "columns", columns.replace("yaw:f64", "yaw:int"))
 	var lines := text.split("\n")
@@ -266,7 +306,7 @@ func test_a_column_a_line_or_a_cell_this_build_cannot_read_cannot_play() -> void
 	lines[broken_at] = ReplayFile.CELL_SEPARATOR.join(cells)
 	var broken := "\n".join(lines)
 	var cases: Dictionary[String, String] = {
-		"column grapple": unknown,
+		"column teleport": unknown,
 		"column yaw": retyped,
 		"line %d is broken" % (broken_at + 1): broken,
 		"column jump": _with_cell(text, 1, _column("jump"), "2"),

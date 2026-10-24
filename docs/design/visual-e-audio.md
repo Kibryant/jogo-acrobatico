@@ -1,6 +1,6 @@
 ---
-revisado_em: 2026-10-23
-fontes: [F-050, F-051, F-052, F-053, F-054, F-056, F-058, F-059, F-061, F-062, F-063, F-100, F-121, F-122]
+revisado_em: 2026-10-24
+fontes: [F-050, F-051, F-052, F-053, F-054, F-056, F-058, F-059, F-061, F-062, F-063, F-100, F-121, F-122, F-137, F-139]
 ---
 
 # Visual e áudio
@@ -185,6 +185,15 @@ Leitura v0 do Claude, que o Arthur julga jogando (DEC-0017; TASK-10.2).
 - A fonte é a padrão do Godot, em 16 px na base de 1080p, o tamanho que os textos da TASK-9 já tinham. O texto ganha um contorno escuro de 4 px, para se ler sobre os blocos claros. A margem do canto é de 24 px. Leitura v0 do Claude (DEC-0017; TASK-10.2).
 - As cores do HUD são branco e preto: a barra cheia em branco sobre um fundo preto translúcido. Nenhuma cor de token (DEC-0031 §1 e §3).
 - Cada texto da tela é uma chave de tradução, com pt-BR e en. Um teste reprova a chave sem mensagem num dos dois idiomas (DEC-0031 §8).
+
+### Toda manobra nasce com o seu sinal (F-139)
+
+Decisão do Arthur, depois de jogar a parede ajustada: "Ter um feedback visual de tudo" (F-137; F-139).
+
+- **A regra:** toda manobra nova entra no jogo já com um sinal visual que mostra que ela aconteceu e em que fase está: o rastro e a baforada (TASK-10.4), a marca, a inclinação e o rastro da parede (TASK-10.5; TASK-10.10). Uma manobra sem sinal não está pronta.
+- **No plano de cada task de manobra:** o sinal é um critério de aceite, com os números v0 do Claude escritos aqui antes do código (DEC-0017).
+- **Como os outros sinais:** só na tela, fora do estado, uma vez por chave e nunca na re-simulação (DEC-0031 §6); no tom neutro do lutador e sem ativo novo enquanto não houver arte (DEC-0029).
+- **O som** segue a Q-32: entra quando houver um pacote com licença.
 
 ### O dash na tela (TASK-10.4)
 

@@ -142,3 +142,4 @@ O que chegou ao projeto e como chegou. Uma fonte não muda: só mudam `status`, 
 | [F-136](F-136-arthur-aprova-o-plano-do-ajuste-da-parede.md) | 2026-10-24 | O Arthur aprova o plano da TASK-10.10, o ajuste da parede, no plan mode: a volta, o raio da cabeça, a cápsula que inclina e a métrica do corredor |
 | [F-137](F-137-arthur-joga-o-ajuste-da-parede.md) | 2026-10-24 | O Arthur joga o ajuste da parede, acha que ficou excelente e pede retorno visual para tudo daqui para frente |
 | [F-138](F-138-arthur-libera-push-e-merge-da-task-10-10.md) | 2026-10-24 | O Arthur libera subir a branch da TASK-10.10, abrir o PR e fazer o merge |
+| [F-139](F-139-arthur-decide-que-toda-manobra-nasce-com-o-seu-sinal.md) | 2026-10-24 | O Arthur decide que toda manobra nasce com o seu sinal visual e abre a TASK-10.6 em outra sessão |

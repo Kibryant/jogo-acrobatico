@@ -1,6 +1,6 @@
 ---
 revisado_em: 2026-10-23
-fontes: [F-001, F-005, F-007, F-023, F-024, F-025, F-026, F-027, F-028, F-029, F-030, F-032, F-033, F-034, F-036, F-042, F-044, F-046, F-073, F-084, F-085, F-087, F-088, F-089, F-091, F-092, F-093, F-095, F-097, F-101, F-112, F-121, F-122]
+fontes: [F-001, F-005, F-007, F-023, F-024, F-025, F-026, F-027, F-028, F-029, F-030, F-032, F-033, F-034, F-036, F-042, F-044, F-046, F-073, F-084, F-085, F-087, F-088, F-089, F-091, F-092, F-093, F-095, F-097, F-101, F-112, F-121, F-122, F-129]
 ---
 
 # Rede
@@ -160,8 +160,45 @@ O teste é mais duro que a rede: ele força o rollback a cada tick. As mediçõe
 - **A cena do dash** (TASK-10.4, critério 6): dois lutadores numa cópia do `movement_v0.tres` com a barra de 20, então um dash de 15 deixa no máximo 5, e a barra só paga o próximo 68 ticks depois. Um sai da plataforma num dash pela crista e desce a rampa de 45° sem tick no ar, volta, sai da beirada num dash, e pula apertando o dash logo antes do pouso, que fica na vaga e sai no primeiro tick no chão. O outro dá um dash contra a face do bloco de 2 m, aperta na recarga e com a barra curta, as duas recusas, dá um dash no plano com o pulo apertado perto do fim, que sai no primeiro tick depois dele, e aperta o dash 3 ticks antes de a barra pagar, um aperto que a vaga guarda até lá. Com a barra de 20, a recarga de 36 ticks sempre acaba antes da barra, então o aperto guardado na recarga é recusado por ela e não chega a sair.
 - **O sinal da manobra sob rollback** (DEC-0031 §6): nas cenas do pulo duplo e do dash, ela confere que os sinais apresentados pelo `ManeuverCues` são tantos quanto os eventos dos ticks novos, e tantos quanto as manobras: 3 de 3 no pulo duplo e 6 de 6 no dash, com cada tick refeito até 7 vezes (TASK-10.4, critério 5).
 - As seis cenas dão zero divergência em uns 4,1 s no portão em silêncio (TASK-10.4); as cinco da TASK-10.1 levavam 3,9 a 4,3 s, e 1,7 s no Linux do CI. O tempo aparece em toda rodada do portão, sem trava (F-087 §1).
-- Quatro autotestes tiram um campo do que o netfox grava e exigem que ela acuse: o `on_floor`, o `stamina_at_spend`, o `double_jump_tick` e o `dash_tick` (TASK-10.4). Os três últimos só acusam porque ela compara o estado inteiro: com a comparação da TASK-9, o campo esquecido passaria calado (TASK-10.1).
+- Quatro autotestes tiram um campo do que o netfox grava e exigem que ela acuse: o `on_floor`, o `stamina_at_spend`, o `double_jump_tick` e o `dash_tick` (TASK-10.4). A TASK-10.5 somou o quinto, o `wall_id`, na cena `parede`. Os três últimos só acusam porque ela compara o estado inteiro: com a comparação da TASK-9, o campo esquecido passaria calado (TASK-10.1).
 - Na beirada, ela achou a cápsula apoiada na quina, que a sonda do Desenho 3 não via (DEC-0037).
+
+### A sonda A da parede (TASK-10.5, critério 1; DEC-0042 §4)
+
+A parede é o primeiro fato do motor lido além do chão, e o chão tinha estado escondido (DEC-0025). Por isso a sonda A rodou antes de qualquer regra da parede. Ela fica no portão (`test/fighter/engine_probe_test.gd`).
+
+**Como ela mede:**
+
+- **O lutador é o de verdade:** o `fighter.tscn`, com a cápsula, a margem e os dois contornos do jogo, no tick do netfox avançado à mão e com o rollback de 7 ticks a cada loop, como a SyncTest. O observador da SyncTest compara junto o corpo e o estado inteiro.
+- **A parede é de teste:** dois colisores, `WallWest` (x de −4 a 0) e `WallEast` (x de 0 a 3), com a emenda em x = 0 e um canto externo em x = 3, onde a face acaba.
+- **A altura mantida:** ainda não há regra de parede, então uma cópia da configuração fica sem gravidade. No ar, sem input, o núcleo conserva a velocidade, como a corrida faz depois da entrada. Um voo mantém a gravidade.
+- **Os fatos lidos a cada tick,** os que o adaptador da rodada B vai ler (DEC-0042 §1): as colisões do próprio movimento (`get_slide_collision`) e a sonda só de teste (`move_and_collide(-normal * 0,05, true)`). Cada um vira encostou, a normal e o caminho do colisor relativo à `Arena`. O tick refeito é comparado com o novo: a normal até 0,000001, o caminho e os ids iguais.
+- **Os voos:** a batida a 30°, a 8 m/s, que desliza a 6,93 m/s pela parede, passa a emenda e solta depois do canto. O mesmo voo é construído três vezes; a terceira dá um passo de física entre dois loops, como o jogo (DEC-0040). Depois, a batida com gravidade, subindo na batida e descendo no deslize; quatro corridas paralelas a 8 m/s, a 0, 1, 2,5 e 4,5 cm da face; uma a 6 cm, fora do alcance da sonda; e uma com o empurrão de 1 m/s, só como medida.
+- **As precondições,** provadas em cada voo: o netfox refez todo tick devido (321 de 321 em cada batida, 225 de 225 em cada corrida), houve contato, a emenda foi cruzada em contato (`WallWest` a oeste, `WallEast` a leste), o canto foi alcançado em contato e a parede soltou depois dele. A 6 cm, a sonda não achou parede em nenhum tick, da frente da emenda até depois do canto: ela sabe dizer não.
+
+**O que ela achou (23/10/2026):**
+
+| Pergunta | Resposta |
+|---|---|
+| Os fatos saem iguais no tick novo e no refeito? | **Sim.** 0 divergência em 2.634 conferências dos fatos da parede, nos 10 voos, e 0 no corpo e no estado: erro de 0 m na posição e na velocidade. A parede não tem estado escondido |
+| Por que a parede não tem o flag do chão? | O `move_and_slide()` zera a normal da parede no começo de cada movimento (`character_body_3d.cpp`, `_move_and_slide_grounded`). O que passa de um movimento para o outro é o "estava no chão", a normal do chão e a plataforma: os dois primeiros o contorno D alinha, e a plataforma de um corpo estático tem velocidade zero. A sonda só de teste não move o corpo nem mexe no estado do `CharacterBody3D` (`physics_body_3d.cpp`, `move_and_collide`) |
+| Ticks sem colisão do movimento, correndo paralelo | **100 %:** 32 de 32 em cada distância, de 0 a 4,5 cm; na batida, 35 de 36, e o que colidiu foi o tick da própria batida. Paralelo, o movimento não muda de direção, e o motor não conta colisão (`CharacterBody3D.xml`:86). Só as colisões do movimento não seguram a corrida |
+| A sonda só de teste segura o contato? | **Sim,** em todo tick ao lado da parede, nas quatro distâncias e nas quatro batidas, inclusive nos 5 ou 6 ticks da emenda. Lá, o colisor troca uma vez (`WallWest` 3 ticks, depois `WallEast`), sem voltar |
+| A normal | 0° no meio da face; até 0,98° na emenda; de 10,9° a 12,2° no canto, no último contato, com o eixo 3 a 4 cm depois do fim da face, e no tick seguinte a sonda já não acha parede. A 4,5 cm, o último contato vem 10 cm antes do fim, sem inclinar. O Jolt arredonda as quinas das caixas com a margem do `Shape3D`, 4 cm (`physics/jolt_physics_3d/collisions/collision_margin_fraction`, com o `Shape3D.margin` como teto) |
+| O id e o RID do colisor | **Mudam** a cada construção no mesmo processo: o `WallWest` teve os ids 181663696961, 245400340539 e 308969212478, e os RIDs 180388626432, 240518168576 e 283467841536. Rodando só esta suíte duas vezes, o RID da primeira construção saiu igual e o id não; no portão, depois das outras suítes, o mesmo RID saiu 1438814044160. O RID depende do que o motor criou antes; o caminho não muda. As três construções deram as mesmas posições e normais, até o último bit, com o passo de física ou sem ele |
+| O empurrão de 1 m/s, só como medida | O movimento colide em 31 de 32 ticks, mas na emenda bate nas quinas arredondadas dos dois colisores no mesmo movimento (normais a +2,7° e −4,2°), e o motor para tudo: a velocidade ao longo cai de 8 para 0 m/s naquele tick (`character_body_3d.cpp`, "Stop all motion when a second wall is hit"). No tick seguinte, ele sai a 0,51 m/s para fora. Sem o empurrão, nenhuma colisão, e 8 m/s constantes na emenda |
+
+**O que isso decidiu:**
+
+- A sonda só de teste fica, como a DEC-0042 §1 escolheu, e o empurrão de 1 m/s não entra. Além de sujar a velocidade, ele travaria a corrida na emenda, abaixo dos 4 m/s do mínimo.
+- **A emenda:** ela troca o caminho do contato no meio da corrida. Pela DEC-0042, são duas paredes; terminar a corrida ali reiniciaria o tempo e o pulo duplo a cada emenda. O Arthur decidiu que a corrida continua: um colisor novo no mesmo plano, a até 10°, sem perder o contato, é a mesma corrida, com o mesmo cronômetro e sem renovar o pulo duplo (F-129).
+- **A sonda fica como medida do motor:** desde a rodada B, os voos dela usam uma configuração que nunca entra na corrida (`wall_entry_speed` infinita), para medir o motor sozinho; a regra sob rollback é a cena `parede` da SyncTest.
+
+### A parede no estado e na rede (TASK-10.5; DEC-0042)
+
+- **O netfox grava** `:state:wall_normal`, `:state:wall_id` e `:state:wall_jump_tick`, junto com os outros campos do `FighterState` (`fighter/fighter.tscn`). O `wall_id` é um `StringName`, o caminho do colisor relativo à `Arena`, como `ParedeLonga`: ele sai igual no servidor, no cliente e no replay. Nenhum RID ou id do motor entra no estado nem no input.
+- **O input não muda:** a corrida e o pulo da parede usam o `Input:move`, o `Input:yaw` e o `Input:jump` de sempre; durante a corrida, o input de direção é ignorado.
+- **A cena `parede` da SyncTest** (critério 7): dois lutadores, no canto noroeste da arena, em paredes que a cena constrói em tempo de execução, longe das formas da arena. Um corre a parede longa, de dois blocos com uma emenda em z = 26, até o fim por tempo; o outro sobe o corredor de 3,5 m alternando as paredes, faz o pulo duplo de volta para a mesma parede, que recusa, e depois sai pela borda da parede leste. No portão de 23/10/2026: `wall_entries=5 wall_timeouts=1 edge_exits=1 wall_jumps=3 wall_to_wall=2 same_wall_refusals=1 double_jumps_after_wall=1 seams=1 bots_done=2 cues_presented=4 cue_events=4`, com 0 divergência em 4.998 conferências, em uns 2,2 s com o PC ocupado. Tirar o `:state:wall_id` do que o netfox grava a faz acusar: 30 divergências.
 
 ## 5. O oponente no passado (DEC-0026 §2)
 

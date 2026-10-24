@@ -1,8 +1,9 @@
 # The fighter node (visao-geral.md, "As cenas"; DEC-0022): a thin adapter between netfox, the
 # engine and the pure core. In _rollback_tick it only calls Movement and mirrors the result: the
-# core decides, move_and_slide() moves and collides, the core confers (the tick sandwich). The two
-# rollback contours of DEC-0025 live here because they touch the engine, never the core. The same
-# code runs in Sozinho, on the server and on the clients (DEC-0026 §5).
+# core decides, move_and_slide() moves and collides, the core confers with the facts the engine
+# gives back, the floor and the wall (the tick sandwich; DEC-0042). The two rollback contours of
+# DEC-0025 live here because they touch the engine, never the core. The same code runs in
+# Sozinho, on the server and on the clients (DEC-0026 §5).
 class_name Fighter
 extends CharacterBody3D
 
@@ -17,6 +18,10 @@ const OTHER_TONE := Color(0.16, 0.16, 0.18)
 # proved it (netfox-sonda, probe_fighter.gd; F-025 §4). For one tick it moves the body 0.83 mm at
 # 60 ticks, and the body goes back right after.
 const FLOOR_PROBE_SPEED := 0.05
+# m: during a wall run, how far into the wall the test-only probe looks for it (DEC-0042 §1). It
+# moves nothing; probe A measured it holding the contact on every tick beside the wall, a seam's
+# included, from 0 to 4.5 cm off the face (rede.md §4, "A sonda A da parede").
+const WALL_PROBE_DISTANCE := 0.05
 
 ## The input box, recorded by netfox as Input:move, Input:yaw, Input:jump and Input:dash.
 @export var input: FighterInput
@@ -31,6 +36,10 @@ const FLOOR_PROBE_SPEED := 0.05
 
 ## The movement numbers of the match, in ticks; the Match passes them by hand (DEC-0022).
 var config: MovementConfig
+## The node a wall's identity is relative to (DEC-0042 §2): the Match gives its Arena, so a wall
+## is ParedeLonga on the server, on a client and in a replay alike. Left null, the fighter's parent
+## stands in, as in the tests that build a world of their own.
+var arena: Node
 ## The rules box, recorded by netfox field by field (":state:mode" and the others; DEC-0022).
 var state := FighterState.new()
 ## The neutral tone the body is painted in, OWN_TONE or OTHER_TONE; its maneuver cues take it too
@@ -135,7 +144,43 @@ func _rollback_tick(_delta: float, tick: int, _is_fresh: bool) -> void:
 	var facts := MoveFacts.new()
 	facts.on_floor = is_on_floor()
 	facts.velocity = velocity
+	_wall_contact(plan.state, facts)
 	state = Movement.after_move(plan.state, facts, config, tick)
+
+
+# The wall facts of DEC-0042 §1, read right after the move. During a wall run, parallel to the
+# wall, the move itself collides with nothing on almost every tick (rede.md §4: 100 % of the
+# ticks beside the wall), so a test-only probe asks the engine whether a move WALL_PROBE_DISTANCE
+# into the wall of the state would hit, and moves nothing. Out of a run, the move's own
+# collisions tell the entry: of the colliders that are not a fighter, the one with the most
+# horizontal normal, the first in the engine's order on a tie. The core judges whether it is a
+# wall at all.
+func _wall_contact(prior: FighterState, facts: MoveFacts) -> void:
+	if prior.mode == FighterState.Mode.WALL_RUN:
+		var hit := move_and_collide(-prior.wall_normal * WALL_PROBE_DISTANCE, true)
+		if hit != null and hit.get_collider() is not Fighter:
+			facts.wall_normal = hit.get_normal()
+			facts.wall_id = _wall_id_of(hit.get_collider())
+		return
+	var flattest := INF
+	for slide: int in get_slide_collision_count():
+		var collision := get_slide_collision(slide)
+		for index: int in collision.get_collision_count():
+			var collider := collision.get_collider(index)
+			var normal := collision.get_normal(index)
+			if collider is Fighter or absf(normal.y) >= flattest:
+				continue
+			flattest = absf(normal.y)
+			facts.wall_normal = normal
+			facts.wall_id = _wall_id_of(collider)
+
+
+# A wall's identity (DEC-0042 §2): the collider's node path relative to the arena, never the
+# engine's instance id or RID, which probe A saw change on every build (rede.md §4).
+func _wall_id_of(collider: Object) -> StringName:
+	assert(collider is Node, "a collider of the arena is a node")
+	var root := arena if arena != null else get_parent()
+	return StringName(str(root.get_path_to(collider as Node)))
 
 
 # netfox's liveness (rollback-liveness-server.gd): with these two callbacks the fighter exists only

@@ -10,7 +10,9 @@
 # the landing and two fighters pushing each other on the ground; the fifth goes through the double
 # jump and the stamina (TASK-10.1), and the sixth through the dash (TASK-10.4, criterion 6). Each
 # prints a summary line that proves its paths ran. The pulo duplo and the dash also check the
-# cues of the maneuvers: played once per event, as many as the events (DEC-0031 §6).
+# cues of the maneuvers: played once per event, as many as the events (DEC-0031 §6). The wall
+# scenario, parede (TASK-10.5, criterion 7), runs on walls it builds in the arena, away from the
+# arena's own shapes, and has a test of its own.
 extends GdUnitTestSuite
 
 const NetfoxTicks := preload("res://test/support/netfox_ticks.gd")
@@ -121,6 +123,41 @@ const DASH_LOOPS := 300
 const SELF_TEST_LOOPS := 90
 const DOUBLE_JUMP_SELF_TEST_LOOPS := 60
 const DASH_SELF_TEST_LOOPS := 40
+
+# Parede (TASK-10.5, criterion 7): walls the scenario builds in the arena's empty north-west
+# corner, 8 m tall and 1 m thick, every face along Z. The long lane is one plane in two blocks,
+# 13 m each, meeting at a seam at z = 26: the runner enters it at full speed and runs until the
+# 2,5 s are up, across the seam (F-129). The corridor has the 3,5 m inner gap of the planned one
+# (TASK-10.5, "Números v0"): its west wall runs the whole 26 m, its east one stops at z = 27. The
+# climber enters the west wall, wall-jumps to the east one and back, wall-jumps once more and
+# double-jumps back into the same wall, which refuses it; once landed, it enters the east wall
+# near its south end and runs off it.
+const PAREDE_FROM_Z := 13.0
+const PAREDE_SEAM_Z := 26.0
+const PAREDE_TO_Z := 39.0
+const CORRIDOR_EAST_TO_Z := 27.0
+const PAREDE_HEIGHT := 8.0
+const PAREDE_THICKNESS := 1.0
+# The faces: the long lane's looks east from x = -37; the corridor's west wall looks east from
+# x = -31 and its east wall looks west from x = -27.5, 3.5 m across.
+const LONG_FACE_X := -37.0
+const CORRIDOR_WEST_FACE_X := -31.0
+const CORRIDOR_EAST_FACE_X := -27.5
+const PAREDE_STARTS: Array[Vector3] = [Vector3(-35.5, 0, 12), Vector3(-29.5, 0, 12)]
+# The runs into a wall: full speed north with a quarter of it into the wall, about 14°, so the
+# speed along it is 6,8 m/s, above the 4 of the entry (movimento.md, "Corrida na parede").
+const INTO_WEST := Vector3(-0.25, 0, 1)
+const INTO_EAST_SOUTHWARD := Vector3(0.25, 0, -1)
+# m: the jump comes this far before the capsule would touch the face, at the apex of the jump.
+const JUMP_BEFORE_FACE := 0.6
+# Ticks on a wall before the climber's wall jump, and ticks after its last wall jump before the
+# double jump that turns it back into the same wall.
+const RUN_BEFORE_WALL_JUMP := 6
+const TURN_BACK_AFTER := 5
+const BACK_INTO_WEST := Vector3(-1, 0, 1.5)
+const PAREDE_LOOPS := 420
+# The self-test needs only the long runner's entry and a few ticks of its run.
+const PAREDE_SELF_TEST_LOOPS := 80
 
 # The first tick of the run and the tick of the fighters' first recorded state.
 var _first_tick := 0
@@ -243,6 +280,33 @@ func _assert_cues(observer: SyncObserver, maneuvers: int) -> void:
 # rollback across the dash brings the stamp back on the ticks before it (TASK-10.4, criterion 6).
 func test_the_dash_tick_netfox_does_not_record_makes_the_sync_test_diverge() -> void:
 	var observer := await _dash(DASH_SELF_TEST_LOOPS, ":state:dash_tick")
+	assert_int(observer.mismatches).is_greater(0)
+
+
+# Criterion 7 of TASK-10.5: the wall run under the rollback of 7 ticks on every tick, with zero
+# divergence in the whole state: the entries, the end by time, the end at the wall's edge, the
+# wall jumps from one wall to the other, the same wall refused, a double jump after a wall jump
+# and a seam crossed in the run (F-129). As many cues as wall jumps and double jumps.
+func test_the_wall_scenario_resimulates_with_zero_divergence() -> void:
+	var parede := await _parede(PAREDE_LOOPS)
+	var message := "%s diverged:\n%s" % [parede.scenario, "\n".join(parede.shown)]
+	assert_int(parede.mismatches).override_failure_message(message).is_equal(0)
+	assert_int(parede.paths["wall_entries"]).is_greater_equal(3)
+	assert_int(parede.paths["wall_timeouts"]).is_greater_equal(1)
+	assert_int(parede.paths["edge_exits"]).is_greater_equal(1)
+	assert_int(parede.paths["wall_jumps"]).is_greater_equal(2)
+	assert_int(parede.paths["wall_to_wall"]).is_greater_equal(1)
+	assert_int(parede.paths["same_wall_refusals"]).is_greater_equal(1)
+	assert_int(parede.paths["double_jumps_after_wall"]).is_greater_equal(1)
+	assert_int(parede.paths["seams"]).is_greater_equal(1)
+	assert_int(parede.paths["bots_done"]).is_equal(PAREDE_STARTS.size())
+	_assert_cues(parede, parede.paths["wall_jumps"] + parede.paths["double_jumps"])
+
+
+# The wall's identity in the state (DEC-0042 §2): out of the recording, a rollback across the
+# entry brings back the wall of the present on the ticks before it.
+func test_the_wall_id_netfox_does_not_record_makes_the_sync_test_diverge() -> void:
+	var observer := await _parede(PAREDE_SELF_TEST_LOOPS, ":state:wall_id")
 	assert_int(observer.mismatches).is_greater(0)
 
 
@@ -376,6 +440,69 @@ func _dash(loops: int, hidden := "") -> SyncObserver:
 		observer.paths["bots_done"] += 1 if bot.done() else 0
 	_add_cues(observer, game_match)
 	return _finish(observer, game_match)
+
+
+func _parede(loops: int, hidden := "") -> SyncObserver:
+	var game_match := await _match_with(PAREDE_STARTS, hidden)
+	_build_parede(game_match.arena)
+	var config := game_match.config
+	var bots: Array[DashBot] = [
+		LongWallBot.new(game_match.fighters[0], config),
+		CorridorBot.new(game_match.fighters[1], config),
+	]
+	var walls: Array[Walls] = []
+	for fighter: Fighter in game_match.fighters:
+		walls.append(Walls.new(fighter, config, game_match.arena))
+	var scenario := "parede" if hidden.is_empty() else "parede without " + hidden
+	var observer := _start(game_match, scenario)
+	for _loop: int in loops:
+		for bot: DashBot in bots:
+			bot.drive()
+		NetfoxTicks.run_loop()
+		for path: Walls in walls:
+			path.observe()
+	for path: Walls in walls:
+		path.add_to(observer.paths)
+	observer.paths["bots_done"] = 0
+	for bot: DashBot in bots:
+		observer.paths["bots_done"] += 1 if bot.done() else 0
+	_add_cues(observer, game_match)
+	return _finish(observer, game_match)
+
+
+# The walls of parede, built in the arena at run time on the world's layer, so their paths
+# relative to it are their names (DEC-0042 §2).
+func _build_parede(arena: Arena) -> void:
+	var half := PAREDE_THICKNESS / 2.0
+	_parede_box(arena, &"ParedeTesteSul", LONG_FACE_X - half, PAREDE_FROM_Z, PAREDE_SEAM_Z)
+	_parede_box(arena, &"ParedeTesteNorte", LONG_FACE_X - half, PAREDE_SEAM_Z, PAREDE_TO_Z)
+	_parede_box(
+		arena,
+		&"CorredorTesteOeste",
+		CORRIDOR_WEST_FACE_X - half,
+		PAREDE_FROM_Z,
+		PAREDE_TO_Z,
+	)
+	_parede_box(
+		arena,
+		&"CorredorTesteLeste",
+		CORRIDOR_EAST_FACE_X + half,
+		PAREDE_FROM_Z,
+		CORRIDOR_EAST_TO_Z,
+	)
+
+
+func _parede_box(arena: Arena, wall_name: StringName, x: float, from_z: float, to_z: float) -> void:
+	var body := StaticBody3D.new()
+	body.name = wall_name
+	body.collision_layer = PhysicsLayers.WORLD
+	body.position = Vector3(x, PAREDE_HEIGHT / 2.0, (from_z + to_z) / 2.0)
+	var collision := CollisionShape3D.new()
+	var shape := BoxShape3D.new()
+	shape.size = Vector3(PAREDE_THICKNESS, PAREDE_HEIGHT, to_z - from_z)
+	collision.shape = shape
+	body.add_child(collision)
+	arena.add_child(body)
 
 
 # The cues of the match, read before it goes.
@@ -1056,3 +1183,241 @@ class Dashes:
 		if stopped and _blocked_stamp != state.dash_tick:
 			_blocked_stamp = state.dash_tick
 			blocked_dashes += 1
+
+
+# Runs north into the long lane's face, jumping just before it, and rides the run to its end by
+# time, across the seam; then it lands and stands.
+class LongWallBot:
+	extends DashBot
+
+	enum Step {
+		STAND,
+		RUN_IN,
+		ON_WALL,
+		DONE,
+	}
+
+	var _step := Step.STAND
+
+
+	func done() -> bool:
+		return _step == Step.DONE
+
+
+	func drive() -> void:
+		_track_floor()
+		var state := fighter.state
+		var heading := Vector3.ZERO
+		match _step:
+			Step.STAND:
+				if _floor_ticks > REST_TICKS:
+					_step = Step.RUN_IN
+			Step.RUN_IN:
+				heading = INTO_WEST.normalized()
+				var touch_x := LONG_FACE_X + _config.capsule_radius
+				if state.on_floor and fighter.position.x <= touch_x + JUMP_BEFORE_FACE:
+					fighter.input.press_jump()
+				if state.mode == FighterState.Mode.WALL_RUN:
+					_step = Step.ON_WALL
+			Step.ON_WALL:
+				if state.on_floor:
+					_step = Step.DONE
+		run(heading)
+
+
+# Climbs the corridor: into its west wall, a wall jump to the east one and one back, a last wall
+# jump and a double jump back into the same west wall, which refuses it; then from the floor into
+# the east wall near its south end, and off its edge.
+class CorridorBot:
+	extends DashBot
+
+	enum Step {
+		STAND,
+		RUN_IN,
+		ON_WEST,
+		TO_EAST,
+		TO_WEST,
+		OFF_WEST,
+		BACK_WEST,
+		LANDED,
+		EDGE_IN,
+		ON_EDGE,
+		DONE,
+	}
+
+	var _step := Step.STAND
+
+
+	func done() -> bool:
+		return _step == Step.DONE
+
+
+	func drive() -> void:
+		_track_floor()
+		var state := fighter.state
+		var where := fighter.position
+		var running := state.mode == FighterState.Mode.WALL_RUN
+		var heading := Vector3.ZERO
+		match _step:
+			Step.STAND:
+				if _floor_ticks > REST_TICKS:
+					_step = Step.RUN_IN
+			Step.RUN_IN:
+				heading = INTO_WEST.normalized()
+				var touch_x := CORRIDOR_WEST_FACE_X + _config.capsule_radius
+				if state.on_floor and where.x <= touch_x + JUMP_BEFORE_FACE:
+					fighter.input.press_jump()
+				if running:
+					_step = Step.ON_WEST
+			Step.ON_WEST:
+				_wall_jump_after_run(Step.TO_EAST)
+			Step.TO_EAST:
+				_wall_jump_after_run(Step.TO_WEST)
+			Step.TO_WEST:
+				_wall_jump_after_run(Step.OFF_WEST)
+			Step.OFF_WEST:
+				if NetworkTime.tick - state.wall_jump_tick == TURN_BACK_AFTER:
+					heading = BACK_INTO_WEST.normalized()
+					fighter.input.press_jump()
+					_step = Step.BACK_WEST
+			Step.BACK_WEST:
+				if state.on_floor:
+					_step = Step.LANDED
+			Step.LANDED:
+				if _floor_ticks > REST_TICKS:
+					_step = Step.EDGE_IN
+			Step.EDGE_IN:
+				heading = INTO_EAST_SOUTHWARD.normalized()
+				var touch_x := CORRIDOR_EAST_FACE_X - _config.capsule_radius
+				var beside := where.z < CORRIDOR_EAST_TO_Z - 1.0
+				if state.on_floor and beside and where.x >= touch_x - JUMP_BEFORE_FACE:
+					fighter.input.press_jump()
+				if running:
+					_step = Step.ON_EDGE
+			Step.ON_EDGE:
+				if not running:
+					_step = Step.DONE
+		run(heading)
+
+
+	# On a wall run, the wall jump once the run is RUN_BEFORE_WALL_JUMP ticks old, then the next
+	# step; in the air, it waits for the next wall.
+	func _wall_jump_after_run(next: Step) -> void:
+		var state := fighter.state
+		if state.mode != FighterState.Mode.WALL_RUN:
+			return
+		if NetworkTime.tick - state.mode_since == RUN_BEFORE_WALL_JUMP:
+			fighter.input.press_jump()
+			_step = next
+
+
+# Counts the wall's paths of one fighter in its fresh states, after every loop, like Flights: the
+# state on screen is the result of the tick the loop simulated for the first time, and the slide
+# collisions are still those of its move. The end of a run that is neither by time, nor the wall
+# jump, nor the floor, with the body past the end of the face it ran on, is the edge; a touch of
+# the last wall's face in the air, out of a run, is the same wall refusing (movimento.md,
+# "Corrida na parede": "Mesma parede").
+class Walls:
+	var wall_entries := 0
+	var wall_timeouts := 0
+	var edge_exits := 0
+	var wall_jumps := 0
+	var wall_to_wall := 0
+	var same_wall_refusals := 0
+	var double_jumps := 0
+	var double_jumps_after_wall := 0
+	var seams := 0
+
+	var _fighter: Fighter
+	var _config: MovementConfig
+	var _arena: Node
+	var _before: FighterState
+	# The wall of the last wall jump, until the floor: the next entry on another wall is a hop.
+	var _jumped_from: StringName = &""
+	var _refusing := false
+
+
+	func _init(watched: Fighter, config: MovementConfig, arena: Node) -> void:
+		_fighter = watched
+		_config = config
+		_arena = arena
+		_before = watched.state.copy()
+
+
+	func observe() -> void:
+		var state := _fighter.state
+		var tick := NetworkTime.tick - 1
+		var running := state.mode == FighterState.Mode.WALL_RUN
+		var was_running := _before.mode == FighterState.Mode.WALL_RUN
+		if state.on_floor:
+			_jumped_from = &""
+		if running and state.mode_since == tick:
+			wall_entries += 1
+			if not _jumped_from.is_empty() and state.wall_id != _jumped_from:
+				wall_to_wall += 1
+		elif running and was_running and state.wall_id != _before.wall_id:
+			seams += 1
+		var jumped := state.wall_jump_tick == tick
+		if was_running and not running and not jumped and not state.on_floor:
+			if tick - _before.mode_since >= _config.wall_run_max_ticks:
+				wall_timeouts += 1
+			elif _past_the_end(_before.wall_id):
+				edge_exits += 1
+		if jumped:
+			wall_jumps += 1
+			_jumped_from = state.wall_id
+		if state.double_jump_tick == tick:
+			double_jumps += 1
+			if state.mode == FighterState.Mode.AIR and state.mode_since == state.wall_jump_tick:
+				double_jumps_after_wall += 1
+		var refused := state.mode == FighterState.Mode.AIR and _touches_the_last_wall(state)
+		if refused and not _refusing:
+			same_wall_refusals += 1
+		_refusing = refused
+		_before = state.copy()
+
+
+	func add_to(paths: Dictionary[String, int]) -> void:
+		var mine: Dictionary[String, int] = {
+			"wall_entries": wall_entries,
+			"wall_timeouts": wall_timeouts,
+			"edge_exits": edge_exits,
+			"wall_jumps": wall_jumps,
+			"wall_to_wall": wall_to_wall,
+			"same_wall_refusals": same_wall_refusals,
+			"double_jumps": double_jumps,
+			"double_jumps_after_wall": double_jumps_after_wall,
+			"seams": seams,
+		}
+		for path: String in mine:
+			if not paths.has(path):
+				paths[path] = 0
+			paths[path] += mine[path]
+
+
+	# The body is north or south of the face of the wall it ran on, as parede builds it.
+	func _past_the_end(wall: StringName) -> bool:
+		var z := _fighter.position.z
+		var to_z := CORRIDOR_EAST_TO_Z if wall == &"CorredorTesteLeste" else PAREDE_TO_Z
+		return z < PAREDE_FROM_Z or z > to_z
+
+
+	# The move of this tick hit the face of the state's last wall: the same collider, within the
+	# same-face angle.
+	func _touches_the_last_wall(state: FighterState) -> bool:
+		if state.wall_id.is_empty():
+			return false
+		for slide: int in _fighter.get_slide_collision_count():
+			var collision := _fighter.get_slide_collision(slide)
+			for index: int in collision.get_collision_count():
+				var collider := collision.get_collider(index)
+				if collider is not Node:
+					continue
+				var node := collider as Node
+				var path := StringName(str(_arena.get_path_to(node)))
+				var normal := collision.get_normal(index)
+				var flat := Vector3(normal.x, 0.0, normal.z).normalized()
+				var same_face := flat.dot(state.wall_normal) >= _config.wall_same_face_cos
+				if path == state.wall_id and same_face:
+					return true
+		return false

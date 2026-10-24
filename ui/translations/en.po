@@ -39,6 +39,11 @@ msgstr "In the air"
 msgid "HUD_MODE_DASH"
 msgstr "Dashing"
 
+# The HUD's mode of the fighter: from the touch on a wall to the end of the run, by its time, the
+# wall jump, the edge, the floor or an obstacle (TASK-10.5).
+msgid "HUD_MODE_WALL_RUN"
+msgstr "Wall running"
+
 # The HUD's time until the next dash, beside its arc: {whole} and {tenth} are the digits of the
 # seconds, rounded up to the tenth (TASK-10.4).
 msgid "HUD_DASH_COOLDOWN"

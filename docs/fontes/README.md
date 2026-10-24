@@ -129,3 +129,11 @@ O que chegou ao projeto e como chegou. Uma fonte não muda: só mudam `status`, 
 | [F-123](F-123-arthur-joga-o-dash-e-pergunta-pelo-dash-no-ar.md) | 2026-10-23 | O Arthur joga o dash, acha muito foda o dash e os sinais, e pergunta se faz sentido um dash no ar, como acha que tem no GunZ |
 | [F-124](F-124-arthur-deixa-o-dash-no-ar-para-a-task-10-8-e-fecha-a-q-33.md) | 2026-10-23 | O Arthur acerta por que o ar tem uma carta só, deixa o dash no ar para a TASK-10.8 e fecha a Q-33: com o dash, a barra pesou |
 | [F-125](F-125-arthur-libera-push-e-merge-da-task-10-4.md) | 2026-10-23 | O Arthur libera subir a branch da TASK-10.4, abrir o PR e fazer o merge |
+| [F-126](F-126-arthur-pede-vitrine-yabadoo-e-segue-para-a-task-10-5.md) | 2026-10-23 | O Arthur pede republicar a vitrine, registrar no Yabadoo e seguir para a TASK-10.5 |
+| [F-127](F-127-arthur-abre-a-task-10-5.md) | 2026-10-23 | O Arthur abre a TASK-10.5: acerta por que a sonda vem antes, escolhe conservar o momento no ar e reconhecer a parede pelo caminho do nó |
+| [F-128](F-128-arthur-aprova-o-plano-da-parede.md) | 2026-10-23 | O Arthur aprova o plano da TASK-10.5, a corrida na parede, no plan mode: a DEC-0042, a sonda só de teste, o momento no ar e os números v0 |
+| [F-129](F-129-arthur-decide-a-emenda-da-parede.md) | 2026-10-23 | O Arthur acerta o problema da emenda e decide que a corrida continua numa emenda da parede |
+| [F-130](F-130-arthur-destrava-a-linha-do-cos-80.md) | 2026-10-23 | O Arthur acerta por que a linha travada do cos 80° nunca passa e a destrava para correção |
+| [F-131](F-131-arthur-joga-a-parede.md) | 2026-10-23 | O Arthur joga a corrida na parede: gosta de andar e pular entre as paredes, acha que a cápsula só gruda, e quer voltar pelo corredor sem desgrudar |
+| [F-132](F-132-arthur-joga-os-15-minutos.md) | 2026-10-24 | O Arthur joga os 15 minutos cronometrados, gosta muito, duvida do próprio ensaio por ser o criador e pede que nem toda parede seja corrível |
+| [F-133](F-133-arthur-libera-push-e-merge-da-task-10-5.md) | 2026-10-24 | O Arthur libera subir a branch da TASK-10.5, abrir o PR e fazer o merge |

@@ -38,6 +38,30 @@ const DASH_EXIT_SPEED_MPS := 7.0 # "Velocidade na saída"
 const DASH_COOLDOWN_MS := 400 # "Recarga"
 const DASH_COST := 15.0 # "Custo"
 
+# TASK-10.5 (movimento.md, "Corrida na parede"). 1,5 s of held height is 45 ticks at 30 and
+# 90 at 60; 2,5 s of run is 75 and 150, exact multiples. The incline becomes the largest
+# |normal.y| a wall may have, cos 80° = 0,1736 ("Parede válida"); the same-face angle becomes
+# its cosine, cos 10° = 0,9848; the slide's gravity per tick is 10 % of the rise gravity per
+# tick, 0,0595 m/s at 30 and 0,0327 at 60 (criterion 3); the wall jump of 1,2 m leaves at the
+# jump's own speed, 6,25 m/s at 30 and 6,69 at 60 ("Pulo e ar", "No tick").
+const WALL_MIN_INCLINE_DEG := 80.0 # "Inclinação mínima da parede"
+const WALL_MAX_NORMAL_Y := 0.1736 # "Parede válida"
+const WALL_ENTRY_SPEED_MPS := 4.0 # "Velocidade mínima para entrar"
+const WALL_RUN_SPEED_MPS := 8.0 # "Velocidade na parede"
+const WALL_MAX_SPEED_MPS := 12.0 # "Teto de velocidade na parede"
+const WALL_RUN_MAX_MS := 2500 # "Duração máxima"
+const WALL_HOLD_MS := 1500 # "Altura: mantida por 1,5 s"
+const WALL_SLIDE_GRAVITY_PCT := 10.0 # "Altura: 10% da gravidade de subida"
+const WALL_JUMP_HEIGHT_M := 1.2 # "Pulo da parede"
+const WALL_JUMP_PUSH_MPS := 5.0 # "Pulo da parede: 5 m/s para fora"
+const WALL_SAME_FACE_DEG := 10.0 # "Mesma parede, em números"
+const WALL_SAME_FACE_COS := 0.9848 # cos 10°, arithmetic on the design's angle
+const WALL_HOLD_TICKS: Dictionary[int, int] = { 30: 45, 60: 90 }
+const WALL_RUN_MAX_TICKS: Dictionary[int, int] = { 30: 75, 60: 150 }
+const WALL_SLIDE_GRAVITY_PER_TICK: Dictionary[int, float] = { 30: 0.0595, 60: 0.0327 }
+const WALL_JUMP_SPEED_MPS: Dictionary[int, float] = { 30: 6.25, 60: 6.69 }
+const FOUR_DECIMALS := 1e-4 # the design rounds these to four decimals, not a design number
+
 
 func _data() -> MovementData:
 	var resource: Resource = load(MOVEMENT_V0)
@@ -236,6 +260,118 @@ func test_the_dash_times_become_ticks_and_the_speed_is_derived(
 	)
 	assert_float(config.dash_exit_speed).is_equal_approx(DASH_EXIT_SPEED_MPS, HAIR)
 	assert_float(config.dash_cost).is_equal_approx(DASH_COST, HAIR)
+
+
+# TASK-10.5 (movimento.md, "Corrida na parede"): 1500 ms of held height is 45 ticks at 30 and
+# 90 at 60, 2500 ms of run is 75 and 150, exact multiples by the same rule, within half a tick.
+func test_the_wall_times_become_ticks(
+	tickrate: int,
+	hold: int,
+	run_max: int,
+	_test_parameters := [[30, 45, 75], [60, 90, 150]],
+) -> void:
+	var data := _data()
+	var config := MovementConfig.create(data, tickrate)
+	assert_int(data.wall_hold_ms).is_equal(WALL_HOLD_MS)
+	assert_int(data.wall_run_max_ms).is_equal(WALL_RUN_MAX_MS)
+	_assert_ticks("wall_hold_ticks", config.wall_hold_ticks, hold, tickrate)
+	_assert_ticks("wall_run_max_ticks", config.wall_run_max_ticks, run_max, tickrate)
+	assert_int(config.wall_hold_ticks).is_equal(WALL_HOLD_TICKS[tickrate])
+	assert_int(config.wall_run_max_ticks).is_equal(WALL_RUN_MAX_TICKS[tickrate])
+	assert_int(config.wall_hold_ticks).is_equal(Ticks.from_ms(data.wall_hold_ms, tickrate))
+	assert_int(config.wall_run_max_ticks).is_equal(Ticks.from_ms(data.wall_run_max_ms, tickrate))
+	_assert_half_tick("wall_hold_ticks", config.wall_hold_ticks, data.wall_hold_ms, tickrate)
+	_assert_half_tick(
+		"wall_run_max_ticks",
+		config.wall_run_max_ticks,
+		data.wall_run_max_ms,
+		tickrate,
+	)
+
+
+# The three speeds and the push are copied as they are: 4, 8, 12 and 5 m/s.
+func test_the_wall_speeds_and_the_push_are_copied(
+	tickrate: int,
+	_test_parameters := [[30], [60]],
+) -> void:
+	var config := MovementConfig.create(_data(), tickrate)
+	assert_float(config.wall_entry_speed).is_equal_approx(WALL_ENTRY_SPEED_MPS, HAIR)
+	assert_float(config.wall_run_speed).is_equal_approx(WALL_RUN_SPEED_MPS, HAIR)
+	assert_float(config.wall_max_speed).is_equal_approx(WALL_MAX_SPEED_MPS, HAIR)
+	assert_float(config.wall_jump_push).is_equal_approx(WALL_JUMP_PUSH_MPS, HAIR)
+
+
+# The incline of 80° becomes the largest |normal.y| a wall may have: cos 80° = 0,1736
+# (movimento.md, "Corrida na parede": "Parede válida").
+func test_the_wall_incline_becomes_the_max_normal_y_of_cos_80_degrees(
+	tickrate: int,
+	_test_parameters := [[30], [60]],
+) -> void:
+	var data := _data()
+	var config := MovementConfig.create(data, tickrate)
+	assert_float(data.wall_min_incline_deg).is_equal_approx(WALL_MIN_INCLINE_DEG, HAIR)
+	assert_float(config.wall_max_normal_y).is_equal_approx(WALL_MAX_NORMAL_Y, FOUR_DECIMALS)
+	assert_float(config.wall_max_normal_y).is_equal_approx(
+		cos(deg_to_rad(data.wall_min_incline_deg)),
+		HAIR,
+	)
+
+
+# The same-face angle of 10° becomes its cosine, so the rule compares a dot product
+# (movimento.md, "Corrida na parede": "Mesma parede, em números").
+func test_the_wall_same_face_angle_becomes_its_cosine(
+	tickrate: int,
+	_test_parameters := [[30], [60]],
+) -> void:
+	var data := _data()
+	var config := MovementConfig.create(data, tickrate)
+	assert_float(data.wall_same_face_deg).is_equal_approx(WALL_SAME_FACE_DEG, HAIR)
+	assert_float(config.wall_same_face_cos).is_equal_approx(WALL_SAME_FACE_COS, FOUR_DECIMALS)
+	assert_float(config.wall_same_face_cos).is_equal_approx(
+		cos(deg_to_rad(data.wall_same_face_deg)),
+		HAIR,
+	)
+
+
+# The slide's gravity per tick is 10 % of the rise gravity per tick: 0,0595 m/s at 30 and
+# 0,0327 at 60 (TASK-10.5, criterion 3; movimento.md, "Corrida na parede": "Altura").
+func test_the_wall_slide_gravity_is_10_percent_of_the_rise_gravity_per_tick(
+	tickrate: int,
+	_test_parameters := [[30], [60]],
+) -> void:
+	var data := _data()
+	var config := MovementConfig.create(data, tickrate)
+	assert_float(data.wall_slide_gravity_pct).is_equal_approx(WALL_SLIDE_GRAVITY_PCT, HAIR)
+	assert_float(config.wall_slide_gravity_per_tick).is_equal_approx(
+		config.rise_gravity_per_tick * data.wall_slide_gravity_pct / 100.0,
+		HAIR,
+	)
+	assert_float(config.wall_slide_gravity_per_tick).is_equal_approx(
+		WALL_SLIDE_GRAVITY_PER_TICK[tickrate],
+		FOUR_DECIMALS,
+	)
+
+
+# The wall jump's exit speed is derived for the tick from its own height, like the double
+# jump's; for the design's 1,2 m it is the jump's own speed, 6,69 m/s at 60 and 6,25 at 30
+# (movimento.md, "Pulo e ar", "No tick"; "Corrida na parede": "Pulo da parede").
+func test_the_wall_jump_speed_is_derived_for_the_tick_from_its_height(
+	tickrate: int,
+	_test_parameters := [[30], [60]],
+) -> void:
+	var data := _data()
+	var config := MovementConfig.create(data, tickrate)
+	assert_float(data.wall_jump_height_m).is_equal_approx(WALL_JUMP_HEIGHT_M, HAIR)
+	assert_float(config.wall_jump_speed).is_equal_approx(
+		WALL_JUMP_SPEED_MPS[tickrate],
+		SPEED_TOLERANCE_MPS,
+	)
+	assert_float(config.wall_jump_speed).is_equal_approx(config.jump_speed, HAIR)
+	var rise := config.rise_gravity_per_tick
+	assert_float(config.wall_jump_speed).is_equal_approx(
+		sqrt(2.0 * rise * tickrate * data.wall_jump_height_m) - rise / 2.0,
+		HAIR,
+	)
 
 
 func _assert_ticks(field: String, actual: int, expected: int, tickrate: int) -> void:

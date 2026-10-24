@@ -102,6 +102,7 @@ func spawn_fighter(
 	var own := input_owner == multiplayer.get_unique_id()
 	# The match is never turned, so the spawn point's yaw in the world is its yaw in the match.
 	fighter.setup(config, to_local(point.global_position), point.global_rotation.y, own)
+	fighter.arena = arena
 	fighter.input.set_multiplayer_authority(input_owner)
 	fighter.synchronizer.spawn_tick = NetworkTime.tick if first_tick == NO_TICK else first_tick
 	add_child(fighter)

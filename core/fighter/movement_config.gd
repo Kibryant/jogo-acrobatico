@@ -56,6 +56,27 @@ var dash_exit_speed: float
 # Stamina points, paid on the press tick.
 var dash_cost: float
 
+# The wall run (movimento.md, "Corrida na parede"). A face is a wall while |normal.y| is at most
+# wall_max_normal_y, the cosine of the least incline; the same collider is the same wall while its
+# normal is within wall_same_face_cos of the last one, as a dot product.
+var wall_max_normal_y: float
+var wall_same_face_cos: float
+# m/s: the least speed along the wall that enters, the run's speed and its ceiling. A run slower
+# than the entry speed ends: an obstacle stopped it.
+var wall_entry_speed: float
+var wall_run_speed: float
+var wall_max_speed: float
+# The run lasts wall_run_max_ticks from the entry; the height holds for wall_hold_ticks of them,
+# the entry tick first, and the slide fills the rest.
+var wall_run_max_ticks: int
+var wall_hold_ticks: int
+# The slide's vertical grows by this every tick, in m/s per tick: a share of the rise gravity.
+var wall_slide_gravity_per_tick: float
+# The vertical speed of the wall jump's press tick, in m/s, under the jump's rise gravity, and its
+# push out of the wall, in m/s along the wall's normal.
+var wall_jump_speed: float
+var wall_jump_push: float
+
 
 # The jump is two parabolas sampled on the ticks: the body is at the apex, jump_height_m up, at
 # the end of the rise_ticks-th tick counting the press, and back on the floor fall_ticks later.
@@ -126,4 +147,19 @@ static func create(data: MovementData, tickrate: int) -> MovementConfig:
 	config.dash_speed = data.dash_distance_m * tickrate / config.dash_ticks
 	config.dash_exit_speed = data.dash_exit_speed_mps
 	config.dash_cost = data.dash_cost
+
+	# The wall run (movimento.md, "Corrida na parede"): the two angles become the numbers a rule
+	# compares a normal with, and the two times become ticks like every other.
+	config.wall_max_normal_y = cos(deg_to_rad(data.wall_min_incline_deg))
+	config.wall_same_face_cos = cos(deg_to_rad(data.wall_same_face_deg))
+	config.wall_entry_speed = data.wall_entry_speed_mps
+	config.wall_run_speed = data.wall_run_speed_mps
+	config.wall_max_speed = data.wall_max_speed_mps
+	config.wall_run_max_ticks = Ticks.from_ms(data.wall_run_max_ms, tickrate)
+	config.wall_hold_ticks = Ticks.from_ms(data.wall_hold_ms, tickrate)
+	config.wall_slide_gravity_per_tick = rise * data.wall_slide_gravity_pct / 100.0
+	# The double jump's formula, for the wall jump's own height: at the jump's 1,2 m it is the
+	# jump's own exit speed, the same parabola on the ticks (movimento.md, "Pulo da parede").
+	config.wall_jump_speed = sqrt(2.0 * rise * tickrate * data.wall_jump_height_m) - rise / 2.0
+	config.wall_jump_push = data.wall_jump_push_mps
 	return config

@@ -64,6 +64,27 @@ size = Vector3(4, 3, 4)
 material = SubResource("StandardMaterial3D_x52g8")
 size = Vector3(4, 3, 4)
 
+[sub_resource type="BoxShape3D" id="BoxShape3D_parede"]
+size = Vector3(1, 4, 24)
+
+[sub_resource type="BoxMesh" id="BoxMesh_parede"]
+material = SubResource("StandardMaterial3D_x52g8")
+size = Vector3(1, 4, 24)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_corredor"]
+size = Vector3(1, 5, 24)
+
+[sub_resource type="BoxMesh" id="BoxMesh_corredor"]
+material = SubResource("StandardMaterial3D_x52g8")
+size = Vector3(1, 5, 24)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_patamar"]
+size = Vector3(3.5, 3, 4)
+
+[sub_resource type="BoxMesh" id="BoxMesh_patamar"]
+material = SubResource("StandardMaterial3D_x52g8")
+size = Vector3(3.5, 3, 4)
+
 [sub_resource type="BoxMesh" id="BoxMesh_regua"]
 material = SubResource("StandardMaterial3D_x52g8")
 size = Vector3(0.1, 0.01, 2)
@@ -150,6 +171,42 @@ shape = SubResource("BoxShape3D_vao2m")
 
 [node name="Mesh" type="MeshInstance3D" parent="PlataformaVaoB" unique_id=722796823]
 mesh = SubResource("BoxMesh_vao2m")
+
+[node name="ParedeLonga" type="StaticBody3D" parent="." unique_id=1203948571]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 14.5, 2, -8)
+
+[node name="Collision" type="CollisionShape3D" parent="ParedeLonga" unique_id=1817263540]
+shape = SubResource("BoxShape3D_parede")
+
+[node name="Mesh" type="MeshInstance3D" parent="ParedeLonga" unique_id=664019283]
+mesh = SubResource("BoxMesh_parede")
+
+[node name="CorredorOeste" type="StaticBody3D" parent="." unique_id=1459837261]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 22.5, 2.5, -8)
+
+[node name="Collision" type="CollisionShape3D" parent="CorredorOeste" unique_id=908172634]
+shape = SubResource("BoxShape3D_corredor")
+
+[node name="Mesh" type="MeshInstance3D" parent="CorredorOeste" unique_id=2039485716]
+mesh = SubResource("BoxMesh_corredor")
+
+[node name="CorredorLeste" type="StaticBody3D" parent="." unique_id=1748293056]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 27, 2.5, -8)
+
+[node name="Collision" type="CollisionShape3D" parent="CorredorLeste" unique_id=517283946]
+shape = SubResource("BoxShape3D_corredor")
+
+[node name="Mesh" type="MeshInstance3D" parent="CorredorLeste" unique_id=1376482915]
+mesh = SubResource("BoxMesh_corredor")
+
+[node name="PatamarDoCorredor" type="StaticBody3D" parent="." unique_id=803948172]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 24.75, 1.5, -22)
+
+[node name="Collision" type="CollisionShape3D" parent="PatamarDoCorredor" unique_id=1928374650]
+shape = SubResource("BoxShape3D_patamar")
+
+[node name="Mesh" type="MeshInstance3D" parent="PatamarDoCorredor" unique_id=1102938475]
+mesh = SubResource("BoxMesh_patamar")
 
 [node name="RéguaDoDash" type="Node3D" parent="." unique_id=141947930]
 

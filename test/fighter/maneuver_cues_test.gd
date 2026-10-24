@@ -1,8 +1,9 @@
 # Criterion 5 of TASK-10.4: the double jump and the dash each play one visual cue, once per key
 # (fighter, kind, stamp), when they first show in the displayed state, and never again when a
-# rollback runs their tick again (DEC-0031 §6). The real Match runs in Sozinho with netfox's ticks
-# by hand (test/support/netfox_ticks.gd; DEC-0027 §3); the SyncTest checks the same count under
-# the forced rollback of every tick (fighter_sync_test.gd, the dash and pulo duplo scenarios).
+# rollback runs their tick again (DEC-0031 §6); TASK-10.5 adds the wall jump's mark. The real
+# Match runs in Sozinho with netfox's ticks by hand (test/support/netfox_ticks.gd; DEC-0027 §3);
+# the SyncTest checks the same count under the forced rollback of every tick
+# (fighter_sync_test.gd, the dash, pulo duplo and parede scenarios).
 extends GdUnitTestSuite
 
 const NetfoxTicks := preload("res://test/support/netfox_ticks.gd")
@@ -149,6 +150,76 @@ func test_with_a_screen_the_cues_draw_a_trail_and_a_puff_that_go_away() -> void:
 	assert_int(puffs.size()).is_equal(1)
 	assert_int(cues.presented).is_equal(2)
 	# The longest cue is the puff, over the jump's rise: 350 ms (movimento.md, "Pulo e ar").
+	await get_tree().create_timer(0.6).timeout
+	assert_int(cues.get_child_count()).is_equal(0)
+	cues.free()
+
+
+# A wall_jump_tick that stays after the wall jump shows no mark: on the floor, or in a flight that
+# began later, the event is gone; during the flight the wall jump began, it shows by its stamp.
+func test_the_wall_jump_shows_only_during_the_flight_it_began() -> void:
+	await _start()
+	var state := _fighter.state
+	state.wall_jump_tick = 50
+	state.mode = FighterState.Mode.GROUND
+	state.mode_since = 60
+	assert_array(ManeuverCues.shown_events(_fighter)).is_empty()
+	state.mode = FighterState.Mode.AIR
+	assert_array(ManeuverCues.shown_events(_fighter)).is_empty()
+	state.mode_since = 50
+	var shown := ManeuverCues.shown_events(_fighter)
+	assert_int(shown.size()).is_equal(1)
+	assert_int(shown[0].kind).is_equal(ManeuverCues.Kind.WALL_JUMP)
+	assert_int(shown[0].stamp).is_equal(50)
+
+
+# With a screen, a wall jump leaves a mark on the wall: a disc in the fighter's tone standing on
+# the face, its axis along the wall's normal, which goes away by itself. The wall is the test's
+# own, in a corner of the arena away from its shapes.
+func test_with_a_screen_a_wall_jump_leaves_a_mark_on_the_wall_that_goes_away() -> void:
+	var node := MATCH_SCENE.instantiate()
+	assert(node is Match, "match.tscn must have a Match at its root")
+	_match = auto_free(node)
+	add_child(_match)
+	var wall := StaticBody3D.new()
+	wall.name = "ParedeDoSinal"
+	wall.position = Vector3(-30.5, 4, 20)
+	var collision := CollisionShape3D.new()
+	var box := BoxShape3D.new()
+	box.size = Vector3(1, 8, 12)
+	collision.shape = box
+	wall.add_child(collision)
+	_match.arena.add_child(wall)
+	_fighter = _match.spawn_fighter(0, multiplayer.get_unique_id())
+	# In the air beside the face at x = -30, flying into it and north along it, before netfox
+	# records the first state.
+	_fighter.position = Vector3(-29.5, 2, 16)
+	_fighter.state.on_floor = false
+	_fighter.state.mode = FighterState.Mode.AIR
+	_fighter.velocity = Vector3(-2, 0, 8)
+	_first_tick = NetworkTime.tick
+	await get_tree().process_frame
+	await get_tree().physics_frame
+	var cues := ManeuverCues.new(_match.config, true)
+	_match.add_child(cues)
+	cues.watch(_fighter)
+	for _tick: int in 30:
+		if _fighter.state.mode == FighterState.Mode.WALL_RUN:
+			break
+		_stand(1)
+	assert_int(_fighter.state.mode).is_equal(FighterState.Mode.WALL_RUN)
+	assert_str(String(_fighter.state.wall_id)).is_equal("ParedeDoSinal")
+	_fighter.input.press_jump()
+	_stand(1)
+	assert_int(_fighter.state.wall_jump_tick).is_equal(NetworkTime.tick - 1)
+	var marks := cues.find_children("WallJumpMark*", "MeshInstance3D", false, false)
+	assert_int(marks.size()).is_equal(1)
+	assert_int(cues.presented).is_equal(1)
+	assert_str(_tone_of(marks[0])).is_equal(str(Color(_fighter.tone, ManeuverCues.OPACITY)))
+	assert(marks[0] is Node3D, "a mark is a Node3D")
+	var axis := (marks[0] as Node3D).global_transform.basis.y.normalized()
+	assert_vector(axis).is_equal_approx(Vector3.RIGHT, Vector3.ONE * 1e-4)
+	# It lasts the jump's rise, 350 ms, like the puff (movimento.md, "Pulo e ar").
 	await get_tree().create_timer(0.6).timeout
 	assert_int(cues.get_child_count()).is_equal(0)
 	cues.free()

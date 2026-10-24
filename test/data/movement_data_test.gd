@@ -4,7 +4,8 @@
 # MovementData under res://data/, so a bad file committed later fails here. The baseline numbers
 # come from docs/design/movimento.md, cited by section. TASK-10.1, criterion 7, adds the double
 # jump and the stamina (movimento.md, "Pulo e ar" and "Stamina"); TASK-10.4 adds the dash
-# (movimento.md, "Dash").
+# (movimento.md, "Dash"); TASK-10.5, criterion 7, adds the wall (movimento.md, "Corrida na
+# parede").
 extends GdUnitTestSuite
 
 const MOVEMENT_V0 := "res://data/movement_v0.tres"
@@ -24,7 +25,28 @@ const TIME_FIELDS: Array[String] = [
 	"stamina_wait_ms",
 	"dash_ms",
 	"dash_cooldown_ms",
+	"wall_run_max_ms",
+	"wall_hold_ms",
 ]
+
+# The ten numbers of the wall (movimento.md, "Corrida na parede"; TASK-10.5 plan, Data), each
+# with one value that cannot be: an incline below 0° (also below the max slope), a negative
+# entry speed, a run speed of zero (with the entry at a negative value, below it), a negative
+# ceiling (below the run speed), two negative times (equal, so neither exceeds the other), a
+# negative slide percentage, a jump without height, a negative push and a negative same-face
+# angle. The times are ints; the rest are floats.
+const WALL_IMPOSSIBLE: Dictionary[String, Variant] = {
+	"wall_min_incline_deg": -1.0,
+	"wall_entry_speed_mps": -4.0,
+	"wall_run_speed_mps": 0.0,
+	"wall_max_speed_mps": -12.0,
+	"wall_run_max_ms": -1,
+	"wall_hold_ms": -1,
+	"wall_slide_gravity_pct": -10.0,
+	"wall_jump_height_m": 0.0,
+	"wall_jump_push_mps": -5.0,
+	"wall_same_face_deg": -10.0,
+}
 
 # The five numbers of the dash (movimento.md, "Dash"), each with one value that cannot be: a
 # distance of zero (the speed derives from it), a duration that rounds to 0 ticks (the speed
@@ -77,6 +99,16 @@ func _design_data() -> MovementData:
 	data.dash_exit_speed_mps = 7.0 # "Dash": "Velocidade na saída"
 	data.dash_cooldown_ms = 400 # "Dash": "Recarga"
 	data.dash_cost = 15.0 # "Dash": "Custo"
+	data.wall_min_incline_deg = 80.0 # "Corrida na parede": "Inclinação mínima da parede"
+	data.wall_entry_speed_mps = 4.0 # "Corrida na parede": "Velocidade mínima para entrar"
+	data.wall_run_speed_mps = 8.0 # "Corrida na parede": "Velocidade na parede"
+	data.wall_max_speed_mps = 12.0 # "Corrida na parede": "Teto de velocidade na parede"
+	data.wall_run_max_ms = 2500 # "Corrida na parede": "Duração máxima"
+	data.wall_hold_ms = 1500 # "Corrida na parede": "Altura: mantida por 1,5 s"
+	data.wall_slide_gravity_pct = 10.0 # "Corrida na parede": "Altura: 10% da gravidade"
+	data.wall_jump_height_m = 1.2 # "Corrida na parede": "Pulo da parede"
+	data.wall_jump_push_mps = 5.0 # "Corrida na parede": "Pulo da parede: 5 m/s para fora"
+	data.wall_same_face_deg = 10.0 # "Corrida na parede": "Mesma parede, em números"
 	return data
 
 
@@ -134,6 +166,16 @@ func test_movement_v0_holds_the_numbers_of_movimento_md() -> void:
 	assert_float(data.dash_exit_speed_mps).is_equal_approx(design.dash_exit_speed_mps, HAIR)
 	assert_int(data.dash_cooldown_ms).is_equal(design.dash_cooldown_ms)
 	assert_float(data.dash_cost).is_equal_approx(design.dash_cost, HAIR)
+	assert_float(data.wall_min_incline_deg).is_equal_approx(design.wall_min_incline_deg, HAIR)
+	assert_float(data.wall_entry_speed_mps).is_equal_approx(design.wall_entry_speed_mps, HAIR)
+	assert_float(data.wall_run_speed_mps).is_equal_approx(design.wall_run_speed_mps, HAIR)
+	assert_float(data.wall_max_speed_mps).is_equal_approx(design.wall_max_speed_mps, HAIR)
+	assert_int(data.wall_run_max_ms).is_equal(design.wall_run_max_ms)
+	assert_int(data.wall_hold_ms).is_equal(design.wall_hold_ms)
+	assert_float(data.wall_slide_gravity_pct).is_equal_approx(design.wall_slide_gravity_pct, HAIR)
+	assert_float(data.wall_jump_height_m).is_equal_approx(design.wall_jump_height_m, HAIR)
+	assert_float(data.wall_jump_push_mps).is_equal_approx(design.wall_jump_push_mps, HAIR)
+	assert_float(data.wall_same_face_deg).is_equal_approx(design.wall_same_face_deg, HAIR)
 
 
 func test_movement_v0_passes_the_data_check() -> void:
@@ -172,6 +214,7 @@ func test_a_negative_time_is_rejected(
 		["stamina_wait_ms"],
 		["dash_ms"],
 		["dash_cooldown_ms"],
+		["wall_hold_ms"],
 	],
 ) -> void:
 	var data := _design_data()
@@ -460,6 +503,258 @@ func test_five_impossible_dash_numbers_give_five_messages_each_naming_its_field(
 				named = true
 		var unnamed := "no message names %s, got: %s" % [field, errors]
 		assert_bool(named).override_failure_message(unnamed).is_true()
+
+
+# TASK-10.5, criterion 7: the wall's incline must be a wall, not a floor: from the max slope
+# (exclusive: at 45° it would be floor) up to 90° (inclusive). Outside 0 to 90 and at or below
+# the max slope it is rejected with one message naming the field; 45,5°, 80° and 90° pass
+# (movimento.md, "Corrida na parede": "Inclinação mínima da parede"; "O corpo": "Rampa máxima";
+# TASK-10.5 plan, Data: "max_slope_deg < it <= 90").
+func test_a_wall_incline_outside_the_max_slope_to_90_degrees_is_rejected(
+	deg: float,
+	_test_parameters := [[-1.0], [0.0], [44.0], [45.0], [90.5], [91.0], [180.0]],
+) -> void:
+	var data := _design_data()
+	data.wall_min_incline_deg = deg
+	var errors := data.validate()
+	_assert_one_message_naming(
+		errors,
+		"wall_min_incline_deg",
+		"incline %.1f° must be rejected" % deg,
+	)
+
+
+func test_a_wall_incline_above_the_max_slope_up_to_90_degrees_is_allowed(
+	deg: float,
+	_test_parameters := [[45.5], [80.0], [90.0]],
+) -> void:
+	var data := _design_data()
+	data.wall_min_incline_deg = deg
+	assert_array(data.validate()).override_failure_message("incline %.1f° must pass" % deg) \
+			.is_empty()
+
+
+# The entry speed cannot exceed the run speed on the wall, nor be negative: 8,5 and -4 are
+# rejected naming the field; 0 (any touch enters) and 8 (the limit) pass (TASK-10.5 plan,
+# Data: "not negative, ≤ run"; movimento.md, "Corrida na parede").
+func test_a_wall_entry_speed_above_the_run_speed_or_negative_is_rejected(
+	mps: float,
+	_test_parameters := [[8.5], [-4.0]],
+) -> void:
+	var data := _design_data()
+	data.wall_entry_speed_mps = mps
+	var errors := data.validate()
+	_assert_one_message_naming(
+		errors,
+		"wall_entry_speed_mps",
+		"entry %.1f m/s must be rejected" % mps,
+	)
+
+
+func test_a_wall_entry_speed_up_to_the_run_speed_is_allowed(
+	mps: float,
+	_test_parameters := [[0.0], [4.0], [8.0]],
+) -> void:
+	var data := _design_data()
+	data.wall_entry_speed_mps = mps
+	assert_array(data.validate()).override_failure_message("entry %.1f m/s must pass" % mps) \
+			.is_empty()
+
+
+# The run speed must be positive. The entry speed is set to 0 so that only the run speed is
+# wrong: exactly one message, naming it (TASK-10.5 plan, Data: "positive").
+func test_a_wall_run_speed_that_is_not_positive_is_rejected(
+	mps: float,
+	_test_parameters := [[0.0], [-8.0]],
+) -> void:
+	var data := _design_data()
+	data.wall_entry_speed_mps = 0.0
+	data.wall_run_speed_mps = mps
+	var errors := data.validate()
+	_assert_one_message_naming(
+		errors,
+		"wall_run_speed_mps",
+		"run speed %.1f must be rejected" % mps,
+	)
+
+
+# The ceiling cannot be below the run speed: 7,9, 0 and -12 are rejected naming the field; 8
+# (the limit) and 12 pass (TASK-10.5 plan, Data: "≥ run"; movimento.md, "Corrida na parede":
+# "Teto de velocidade na parede").
+func test_a_wall_max_speed_below_the_run_speed_is_rejected(
+	mps: float,
+	_test_parameters := [[7.9], [0.0], [-12.0]],
+) -> void:
+	var data := _design_data()
+	data.wall_max_speed_mps = mps
+	var errors := data.validate()
+	_assert_one_message_naming(errors, "wall_max_speed_mps", "ceiling %.1f must be rejected" % mps)
+
+
+func test_a_wall_max_speed_from_the_run_speed_up_is_allowed(
+	mps: float,
+	_test_parameters := [[8.0], [12.0], [20.0]],
+) -> void:
+	var data := _design_data()
+	data.wall_max_speed_mps = mps
+	assert_array(data.validate()).override_failure_message("ceiling %.1f must pass" % mps) \
+			.is_empty()
+
+
+# The held height cannot outlast the run: 2501 ms against 2500 is rejected naming the hold;
+# 2500 (the limit) and 0 (no held height: the slide starts at once) pass (TASK-10.5 plan,
+# Data: "time, ≤ max"; movimento.md, "Corrida na parede": "Altura", "Duração máxima").
+func test_a_wall_hold_longer_than_the_run_max_is_rejected() -> void:
+	var data := _design_data()
+	data.wall_hold_ms = data.wall_run_max_ms + 1
+	var errors := data.validate()
+	_assert_one_message_naming(
+		errors,
+		"wall_hold_ms",
+		"a hold longer than the run must be rejected",
+	)
+
+
+func test_a_wall_hold_up_to_the_run_max_is_allowed(
+	ms: int,
+	_test_parameters := [[0], [1500], [2500]],
+) -> void:
+	var data := _design_data()
+	data.wall_hold_ms = ms
+	assert_array(data.validate()).override_failure_message("hold %d ms must pass" % ms).is_empty()
+
+
+# Both wall times negative at once: one message each, naming its own field (equal, so neither
+# exceeds the other).
+func test_negative_wall_times_give_one_message_each() -> void:
+	var data := _design_data()
+	data.wall_run_max_ms = -1
+	data.wall_hold_ms = -1
+	var errors := data.validate()
+	assert_array(errors).has_size(2)
+	_assert_some_message_names(errors, "wall_run_max_ms")
+	_assert_some_message_names(errors, "wall_hold_ms")
+
+
+# A negative run max alone is rejected with a message naming it; whether the design's hold of
+# 1500 ms "exceeding" a negative max adds a second message is the implementer's call.
+func test_a_negative_wall_run_max_is_rejected() -> void:
+	var data := _design_data()
+	data.wall_run_max_ms = -1
+	_assert_some_message_names(data.validate(), "wall_run_max_ms")
+
+
+# The slide's share of the gravity is a percentage: outside 0 to 100 it is rejected naming the
+# field; 0 (no slide), 10 and 100 (the full rise gravity) pass (TASK-10.5 plan, Data:
+# "0..100"; movimento.md, "Corrida na parede": "Altura: 10% da gravidade de subida").
+func test_a_wall_slide_gravity_outside_0_to_100_percent_is_rejected(
+	pct: float,
+	_test_parameters := [[-1.0], [100.5], [101.0], [200.0]],
+) -> void:
+	var data := _design_data()
+	data.wall_slide_gravity_pct = pct
+	var errors := data.validate()
+	_assert_one_message_naming(errors, "wall_slide_gravity_pct", "%.1f %% must be rejected" % pct)
+
+
+func test_a_wall_slide_gravity_from_0_to_100_percent_is_allowed(
+	pct: float,
+	_test_parameters := [[0.0], [10.0], [100.0]],
+) -> void:
+	var data := _design_data()
+	data.wall_slide_gravity_pct = pct
+	assert_array(data.validate()).override_failure_message("%.1f %% must pass" % pct).is_empty()
+
+
+# The wall jump's exit speed derives from its height, so zero is no jump: 0 and -1,2 are
+# rejected naming the field (TASK-10.5 plan, Data: "positive"; movimento.md, "Corrida na
+# parede": "Pulo da parede").
+func test_a_wall_jump_height_that_is_not_positive_is_rejected(
+	height_m: float,
+	_test_parameters := [[0.0], [-1.2]],
+) -> void:
+	var data := _design_data()
+	data.wall_jump_height_m = height_m
+	var errors := data.validate()
+	_assert_one_message_naming(
+		errors,
+		"wall_jump_height_m",
+		"height %.1f must be rejected" % height_m,
+	)
+
+
+# The push out of the wall cannot be negative (it would push into the wall); 0 (straight up)
+# passes (TASK-10.5 plan, Data: "not negative").
+func test_a_negative_wall_jump_push_is_rejected() -> void:
+	var data := _design_data()
+	data.wall_jump_push_mps = -5.0
+	_assert_one_message_naming(data.validate(), "wall_jump_push_mps", "a negative push must fail")
+
+
+func test_a_zero_wall_jump_push_is_allowed() -> void:
+	var data := _design_data()
+	data.wall_jump_push_mps = 0.0
+	assert_array(data.validate()).override_failure_message("a push of 0 must pass").is_empty()
+
+
+# The same-face angle goes from 0 to 90°: outside it is rejected naming the field; 0 (only the
+# exact normal), 10 and 90 (any face of the collider) pass (TASK-10.5 plan, Data: "0..90";
+# movimento.md, "Corrida na parede": "Mesma parede, em números").
+func test_a_wall_same_face_angle_outside_0_to_90_degrees_is_rejected(
+	deg: float,
+	_test_parameters := [[-1.0], [90.5], [91.0], [180.0]],
+) -> void:
+	var data := _design_data()
+	data.wall_same_face_deg = deg
+	var errors := data.validate()
+	_assert_one_message_naming(
+		errors,
+		"wall_same_face_deg",
+		"same face %.1f° must be rejected" % deg,
+	)
+
+
+func test_a_wall_same_face_angle_from_0_to_90_degrees_is_allowed(
+	deg: float,
+	_test_parameters := [[0.0], [10.0], [90.0]],
+) -> void:
+	var data := _design_data()
+	data.wall_same_face_deg = deg
+	assert_array(data.validate()).override_failure_message("same face %.1f° must pass" % deg) \
+			.is_empty()
+
+
+# Many: the ten wall numbers wrong at once give ten messages, each naming its field.
+func test_ten_impossible_wall_numbers_give_ten_messages_each_naming_its_field() -> void:
+	var data := _design_data()
+	for field: String in WALL_IMPOSSIBLE:
+		data.set(field, WALL_IMPOSSIBLE[field])
+		var set_message := "%s is not a field" % field
+		assert_bool(data.get(field) == WALL_IMPOSSIBLE[field]) \
+				.override_failure_message(set_message) \
+				.is_true()
+	var errors := data.validate()
+	assert_array(errors).override_failure_message("%s" % [errors]).has_size(WALL_IMPOSSIBLE.size())
+	for field: String in WALL_IMPOSSIBLE:
+		_assert_some_message_names(errors, field)
+
+
+# Exactly one message (one per impossible number, TASK-9 plan, part 1), and it names the field,
+# so the gate's print says which number to fix. The wording beyond the name is the implementer's.
+func _assert_one_message_naming(errors: PackedStringArray, field: String, why: String) -> void:
+	assert_array(errors).override_failure_message("%s, got: %s" % [why, errors]).has_size(1)
+	if errors.size() == 1:
+		var unnamed := "the message must name %s, got: %s" % [field, errors[0]]
+		assert_str(errors[0]).override_failure_message(unnamed).contains(field)
+
+
+func _assert_some_message_names(errors: PackedStringArray, field: String) -> void:
+	var named := false
+	for message: String in errors:
+		if message.contains(field):
+			named = true
+	var unnamed := "no message names %s, got: %s" % [field, errors]
+	assert_bool(named).override_failure_message(unnamed).is_true()
 
 
 # The gate prints the message: it must say something. Guarded, so a missing rejection fails on

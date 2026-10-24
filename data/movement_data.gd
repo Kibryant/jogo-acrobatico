@@ -68,6 +68,34 @@ const CHECKED_TICKRATES: Array[int] = [30, 60]
 ## Stamina points, paid when the dash starts (movimento.md, "Dash": "Custo").
 @export var dash_cost: float
 
+@export_group("Wall run")
+## A face this steep or steeper is a wall, from the horizontal (movimento.md, "Corrida na parede":
+## "Inclinação mínima da parede").
+@export var wall_min_incline_deg: float
+## The least speed along the wall that starts a run (movimento.md, "Corrida na parede").
+@export var wall_entry_speed_mps: float
+## The speed of the run, kept from a faster entry up to the ceiling (movimento.md, "Corrida na
+## parede": "Velocidade na parede").
+@export var wall_run_speed_mps: float
+## movimento.md, "Corrida na parede": "Teto de velocidade na parede".
+@export var wall_max_speed_mps: float
+## The longest run, from the entry (movimento.md, "Corrida na parede": "Duração máxima").
+@export var wall_run_max_ms: int
+## The height holds this long from the entry, then the slide begins (movimento.md, "Corrida na
+## parede": "Altura").
+@export var wall_hold_ms: int
+## Percent of the jump's rise gravity, added on every tick of the slide (movimento.md, "Corrida na
+## parede": "Altura").
+@export var wall_slide_gravity_pct: float
+## Above the press, with the rise gravity of the jump (movimento.md, "Corrida na parede": "Pulo da
+## parede").
+@export var wall_jump_height_m: float
+## Out of the wall, along its normal (movimento.md, "Corrida na parede": "Pulo da parede").
+@export var wall_jump_push_mps: float
+## The same collider with a normal this close is the same wall (movimento.md, "Corrida na
+## parede": "Mesma parede, em números").
+@export var wall_same_face_deg: float
+
 
 # The data check, layer 3 of DEC-0027 §2: one message per impossible number, empty when every
 # number can be. The gate runs it over every movement .tres under data/
@@ -124,6 +152,22 @@ func validate() -> PackedStringArray:
 		),
 		_time_error("dash_cooldown_ms", dash_cooldown_ms, false),
 		_cost_error("dash_cost", dash_cost),
+		# The wall run (movimento.md, "Corrida na parede"). Nothing divides by its two times: a run
+		# or a hold of 0 ticks is legal, the hold never longer than the run.
+		_wall_incline_error(),
+		_wall_entry_speed_error(),
+		_positive_error("wall_run_speed_mps", wall_run_speed_mps, "a run needs a speed"),
+		_wall_max_speed_error(),
+		_time_error("wall_run_max_ms", wall_run_max_ms, false),
+		_wall_hold_error(),
+		_range_error("wall_slide_gravity_pct", wall_slide_gravity_pct, 100.0, "a percentage"),
+		_positive_error("wall_jump_height_m", wall_jump_height_m, "its exit speed derives from it"),
+		_not_negative_error(
+			"wall_jump_push_mps",
+			wall_jump_push_mps,
+			"a negative push would throw the body into the wall",
+		),
+		_range_error("wall_same_face_deg", wall_same_face_deg, 90.0, "an angle between normals"),
 	]
 	var errors := PackedStringArray()
 	for message: String in checks:
@@ -167,6 +211,66 @@ static func _positive_error(field: String, value: float, why: String) -> String:
 static func _not_negative_error(field: String, value: float, why: String) -> String:
 	if value < 0.0:
 		return "%s is %s: %s" % [field, value, why]
+	return ""
+
+
+# A value from 0 to most, both inclusive.
+static func _range_error(field: String, value: float, most: float, what: String) -> String:
+	if value < 0.0 or value > most:
+		return "%s is %s: %s goes from 0 to %s" % [field, value, what, most]
+	return ""
+
+
+# A wall is steeper than any floor and at most vertical: above max_slope_deg, up to 90°. A max
+# slope that is not a slope has its own message, and at 90° every face is floor, a design that
+# never runs on a wall but is no impossible number: against those the incline says nothing more.
+func _wall_incline_error() -> String:
+	var incline := wall_min_incline_deg
+	if incline <= 0.0 or incline > 90.0:
+		return "wall_min_incline_deg is %s: a wall goes up to 90 degrees" % incline
+	var slope_leaves_room := max_slope_deg >= 0.0 and max_slope_deg < 90.0
+	if slope_leaves_room and incline <= max_slope_deg:
+		return (
+			"wall_min_incline_deg is %s: at or below max_slope_deg, %s, it would be floor"
+			% [incline, max_slope_deg]
+		)
+	return ""
+
+
+# The entry speed is not negative and never above the run speed: a run slower than the entry
+# speed ends (movimento.md, "Corrida na parede": "Fins da corrida"), so one at the run speed would
+# end at once. A run speed that is not positive has its own message.
+func _wall_entry_speed_error() -> String:
+	var entry := wall_entry_speed_mps
+	if entry < 0.0:
+		return "wall_entry_speed_mps is %s: a speed cannot be negative" % entry
+	if wall_run_speed_mps > 0.0 and entry > wall_run_speed_mps:
+		return (
+			"wall_entry_speed_mps is %s: above wall_run_speed_mps, %s, a run would end at once"
+			% [entry, wall_run_speed_mps]
+		)
+	return ""
+
+
+func _wall_max_speed_error() -> String:
+	if wall_max_speed_mps < wall_run_speed_mps:
+		return (
+			"wall_max_speed_mps is %s: below wall_run_speed_mps, %s, no run could keep its speed"
+			% [wall_max_speed_mps, wall_run_speed_mps]
+		)
+	return ""
+
+
+# The held height is a time, and it cannot outlast the run. A negative run has its own message.
+func _wall_hold_error() -> String:
+	var negative := _time_error("wall_hold_ms", wall_hold_ms, false)
+	if not negative.is_empty():
+		return negative
+	if wall_run_max_ms >= 0 and wall_hold_ms > wall_run_max_ms:
+		return (
+			"wall_hold_ms is %d ms: longer than wall_run_max_ms, %d ms, the run ends first"
+			% [wall_hold_ms, wall_run_max_ms]
+		)
 	return ""
 
 

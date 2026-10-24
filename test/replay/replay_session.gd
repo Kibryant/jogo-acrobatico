@@ -4,7 +4,9 @@
 # number with many digits on every loop, moves that are the mean of 2 or 3 different frames, so
 # never -1, 0 or 1, tick loops of 1, 2 and 3 ticks, as frames at 60, 30 and 20 fps, jumps with a
 # double jump at the top and, from TASK-10.4, a dash between two jumps, so the file's dash column
-# holds presses (criterion 6). Optionally the clock jumps once, as netfox's does after a stall.
+# holds presses (criterion 6). From TASK-10.5 it opens with a wall run and a wall jump on
+# PlataformaVaoA's east face (WallPhase), so the trace holds the wall's fields with a wall in
+# them. Optionally the clock jumps once, as netfox's does after a stall.
 # The run is the reference's (test/reference/reference_run.gd): the real Match in Sozinho, in a
 # SubViewport with its own physics world, with netfox's ticks by hand inside a physics frame
 # (test/support/netfox_ticks.gd), starting on FIRST_TICK.
@@ -42,6 +44,18 @@ const DOUBLE_AFTER := 9
 const DASH_AFTER := 30
 ## Ticks the clock jumps by, when it jumps.
 const CLOCK_JUMP := 30
+## The wall phase (TASK-10.5): from the spawn point the fighter runs to WALL_FROM, north-east of
+## PlataformaVaoA, whose east face looks east from x = -17 over z 3 to 9, 2 m tall (arena.tscn).
+## From there it runs south with a quarter of its speed into the face, about 14°, jumps
+## JUMP_BEFORE_FACE before the capsule would touch it, runs on the wall WALL_RUN_TICKS ticks and
+## wall-jumps away.
+const WALL_FROM := Vector3(-15.4, 0, 11)
+const INTO_WALL := Vector3(-0.25, 0, -1)
+const WALL_FACE_X := -17.0
+const JUMP_BEFORE_FACE := 0.6
+const WALL_RUN_TICKS := 4
+## m: WALL_FROM counts as reached this close.
+const NEAR := 0.5
 
 
 class Result:
@@ -54,6 +68,9 @@ class Result:
 	var double_jumps := 0
 	## Dashes the fighter made.
 	var dashes := 0
+	## Wall runs the fighter started and wall jumps it made.
+	var wall_runs := 0
+	var wall_jumps := 0
 	## Ticks and loops run, and µs of wall clock for them.
 	var ticks := 0
 	var loops := 0
@@ -83,26 +100,42 @@ func record(host: Node, path: String, ticks := TICKS, jump_before_loop := -1) ->
 	result.trace.observe([fighter])
 	await host.get_tree().process_frame
 	await host.get_tree().physics_frame
+	var wall_phase := WallPhase.new(fighter, game_match.config.capsule_radius)
+	# The loop the script starts on, once the wall phase is over.
+	var script_from := -1
 	var started_usec := Time.get_ticks_usec()
 	while result.ticks < ticks:
 		var loop := result.loops
 		if loop == jump_before_loop:
 			NetfoxTicks.set_tick(NetworkTime.tick + CLOCK_JUMP)
-		for move: Vector2 in frames_of(loop):
-			fighter.input.sample_frame(move, yaw_of(loop))
-		if presses_at(loop):
-			fighter.input.press_jump()
-		if dashes_at(loop):
-			fighter.input.press_dash()
+		if script_from < 0 and wall_phase.done():
+			script_from = loop
+		if script_from < 0:
+			wall_phase.drive()
+		else:
+			var step := loop - script_from
+			for move: Vector2 in frames_of(step):
+				fighter.input.sample_frame(move, yaw_of(step))
+			if presses_at(step):
+				fighter.input.press_jump()
+			if dashes_at(step):
+				fighter.input.press_dash()
 		var size := mini(LOOPS[loop % LOOPS.size()], ticks - result.ticks)
 		var stamp := fighter.state.double_jump_tick
 		var dash_stamp := fighter.state.dash_tick
+		var wall_stamp := fighter.state.wall_jump_tick
+		var run_stamp := _run_stamp(fighter.state)
 		NetfoxTicks.run_loop(size)
 		var stamped := fighter.state.double_jump_tick
 		if stamped != stamp and stamped != FighterState.NEVER:
 			result.double_jumps += 1
 		if fighter.state.dash_tick != dash_stamp:
 			result.dashes += 1
+		if fighter.state.wall_jump_tick != wall_stamp:
+			result.wall_jumps += 1
+		var run_now := _run_stamp(fighter.state)
+		if run_now != run_stamp and run_now != FighterState.NEVER:
+			result.wall_runs += 1
 		result.ticks += size
 		result.loops += 1
 	result.record_usec = Time.get_ticks_usec() - started_usec
@@ -112,6 +145,13 @@ func record(host: Node, path: String, ticks := TICKS, jump_before_loop := -1) ->
 	NetfoxTicks.reset()
 	result.text = FileAccess.get_file_as_string(path)
 	return result
+
+
+# The tick the wall run on screen began, or NEVER off the wall.
+static func _run_stamp(state: FighterState) -> int:
+	if state.mode == FighterState.Mode.WALL_RUN:
+		return state.mode_since
+	return FighterState.NEVER
 
 
 # The frames sampled before loop: 1 to 3 of MOVES, in turn.
@@ -134,3 +174,69 @@ static func presses_at(loop: int) -> bool:
 
 static func dashes_at(loop: int) -> bool:
 	return loop > 0 and loop % PRESS_EVERY == DASH_AFTER
+
+
+# The opening of the session (TASK-10.5): a scripted player, reading the state on screen before
+# each loop as a player reads the game, runs to WALL_FROM, into PlataformaVaoA's east face with a
+# jump just before it, rides the wall run for WALL_RUN_TICKS ticks and wall-jumps; it is done once
+# the body lands. Each loop it samples one frame, the yaw of where it runs.
+class WallPhase:
+	enum Step {
+		TO_START,
+		INTO_WALL,
+		ON_WALL,
+		FLYING,
+		DONE,
+	}
+
+	var _fighter: Fighter
+	var _radius: float
+	var _step := Step.TO_START
+
+
+	func _init(played: Fighter, capsule_radius: float) -> void:
+		_fighter = played
+		_radius = capsule_radius
+
+
+	func done() -> bool:
+		return _step == Step.DONE
+
+
+	func drive() -> void:
+		var state := _fighter.state
+		var where := _fighter.position
+		var heading := Vector3.ZERO
+		match _step:
+			Step.TO_START:
+				heading = Vector3(WALL_FROM.x - where.x, 0.0, WALL_FROM.z - where.z)
+				if heading.length() < NEAR:
+					_step = Step.INTO_WALL
+			Step.INTO_WALL:
+				heading = INTO_WALL
+				var touch_x := WALL_FACE_X + _radius
+				if state.on_floor and where.x <= touch_x + JUMP_BEFORE_FACE:
+					_fighter.input.press_jump()
+				if state.mode == FighterState.Mode.WALL_RUN:
+					_step = Step.ON_WALL
+			Step.ON_WALL:
+				var running := state.mode == FighterState.Mode.WALL_RUN
+				if running and NetworkTime.tick - state.mode_since >= WALL_RUN_TICKS:
+					_fighter.input.press_jump()
+					_step = Step.FLYING
+				elif not running:
+					_step = Step.FLYING
+			Step.FLYING:
+				if state.on_floor:
+					_step = Step.DONE
+		_run(heading)
+
+
+	# Full input along a horizontal direction, the body looking where it runs; none stands, looking
+	# where it looked. yaw 0 looks down -Z.
+	func _run(direction: Vector3) -> void:
+		if direction == Vector3.ZERO:
+			_fighter.input.sample_frame(Vector2.ZERO, _fighter.state.facing_yaw)
+			return
+		var flat := direction.normalized()
+		_fighter.input.sample_frame(Vector2(0, 1), atan2(-flat.x, -flat.z))

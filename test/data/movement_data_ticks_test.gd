@@ -391,3 +391,117 @@ func test_the_dash_cooldown_at_zero_ticks_adds_no_message_to_the_four() -> void:
 	for message: String in errors:
 		var why := "dash_cooldown_ms must not be rejected, got: %s" % message
 		assert_str(message).override_failure_message(why).not_contains("dash_cooldown_ms")
+
+
+# TASK-10.5, criterion 7: the run's duration (2500 ms, movimento.md, "Corrida na parede":
+# "Duração máxima") becomes ticks at load with the same rule, nearest tick with ties up: 75 at
+# 30 and 150 at 60, exact. The other rows are arithmetic, not design numbers: 2525 ms is
+# 75.75 -> 76 at 30 and 151.5 -> 152 at 60 (tie up); 2490 ms is 74.7 -> 75 at 30 and
+# 149.4 -> 149 at 60. The hold (1500 ms) stays below every value here.
+func test_the_wall_run_max_becomes_the_nearest_tick_with_ties_up(
+	ms: int,
+	tickrate: int,
+	expected: int,
+	_test_parameters := [
+		[2500, 30, 75],
+		[2500, 60, 150],
+		[2525, 30, 76],
+		[2525, 60, 152],
+		[2490, 30, 75],
+		[2490, 60, 149],
+	],
+) -> void:
+	var data := _v0_copy_with("wall_run_max_ms", ms)
+	assert_array(data.validate()).is_empty()
+	var config := MovementConfig.create(data, tickrate)
+	var message := "wall_run_max_ticks for %d ms at %d ticks must be %d, found %d" % [
+		ms,
+		tickrate,
+		expected,
+		config.wall_run_max_ticks,
+	]
+	assert_int(config.wall_run_max_ticks).override_failure_message(message).is_equal(expected)
+	assert_int(config.wall_run_max_ticks).is_equal(Ticks.from_ms(ms, tickrate))
+
+
+# TASK-10.5, criterion 7: the held height (1500 ms, movimento.md, "Corrida na parede":
+# "Altura: mantida por 1,5 s") by the same rule: 45 at 30 and 90 at 60, exact. 1525 ms is
+# 45.75 -> 46 at 30 and 91.5 -> 92 at 60 (tie up); 1490 ms is 44.7 -> 45 at 30 and
+# 89.4 -> 89 at 60; 8 ms rounds to 0 at both rates and 17 ms is the smallest 1 tick at both:
+# nothing divides by the hold (the slide's gravity is a product), so both pass the check.
+func test_the_wall_hold_becomes_the_nearest_tick_with_ties_up(
+	ms: int,
+	tickrate: int,
+	expected: int,
+	_test_parameters := [
+		[1500, 30, 45],
+		[1500, 60, 90],
+		[1525, 30, 46],
+		[1525, 60, 92],
+		[1490, 30, 45],
+		[1490, 60, 89],
+		[8, 30, 0],
+		[8, 60, 0],
+		[17, 30, 1],
+		[17, 60, 1],
+	],
+) -> void:
+	var data := _v0_copy_with("wall_hold_ms", ms)
+	assert_array(data.validate()).is_empty()
+	var config := MovementConfig.create(data, tickrate)
+	var message := "wall_hold_ticks for %d ms at %d ticks must be %d, found %d" % [
+		ms,
+		tickrate,
+		expected,
+		config.wall_hold_ticks,
+	]
+	assert_int(config.wall_hold_ticks).override_failure_message(message).is_equal(expected)
+	assert_int(config.wall_hold_ticks).is_equal(Ticks.from_ms(ms, tickrate))
+
+
+# The slide fills the run after the hold: the two conversions round on their own, so the slide
+# has 30 ticks at 30 and 60 at 60 for the design's times, and 76 - 46 = 30 and 152 - 92 = 60
+# for the tie-up pair, never a negative count.
+func test_the_slide_ticks_are_the_run_max_minus_the_hold(
+	run_max_ms: int,
+	hold_ms: int,
+	tickrate: int,
+	expected: int,
+	_test_parameters := [
+		[2500, 1500, 30, 30],
+		[2500, 1500, 60, 60],
+		[2525, 1525, 30, 30],
+		[2525, 1525, 60, 60],
+	],
+) -> void:
+	var data := _v0_copy_with("wall_run_max_ms", run_max_ms)
+	data.wall_hold_ms = hold_ms
+	assert_array(data.validate()).is_empty()
+	var config := MovementConfig.create(data, tickrate)
+	assert_int(config.wall_run_max_ticks - config.wall_hold_ticks).is_equal(expected)
+
+
+# Nothing divides by the wall times: a hold or a run that rounds to 0 ticks passes the check,
+# like the windows of "Perdão", with the hold kept at or below the run max.
+func test_wall_times_that_round_to_zero_ticks_are_allowed(
+	ms: int,
+	_test_parameters := [[1], [8], [16]],
+) -> void:
+	var data := _v0_copy_with("wall_run_max_ms", ms)
+	data.wall_hold_ms = ms
+	var why := "wall times of %d ms round to 0 ticks but nothing divides by them" % ms
+	assert_array(data.validate()).override_failure_message(why).is_empty()
+
+
+func test_the_wall_times_at_zero_ticks_add_no_message_to_the_four() -> void:
+	var data := _v0_copy()
+	for field: String in DIVIDING_TIME_FIELDS:
+		data.set(field, LARGEST_ZERO_TICK_MS_AT_60)
+	data.wall_run_max_ms = LARGEST_ZERO_TICK_MS_AT_60
+	data.wall_hold_ms = LARGEST_ZERO_TICK_MS_AT_60
+	var errors := data.validate()
+	assert_array(errors).has_size(DIVIDING_TIME_FIELDS.size())
+	for field: String in ["wall_run_max_ms", "wall_hold_ms"]:
+		for message: String in errors:
+			var why := "%s must not be rejected, got: %s" % [field, message]
+			assert_str(message).override_failure_message(why).not_contains(field)

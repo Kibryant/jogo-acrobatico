@@ -137,3 +137,6 @@ O que chegou ao projeto e como chegou. Uma fonte não muda: só mudam `status`, 
 | [F-131](F-131-arthur-joga-a-parede.md) | 2026-10-23 | O Arthur joga a corrida na parede: gosta de andar e pular entre as paredes, acha que a cápsula só gruda, e quer voltar pelo corredor sem desgrudar |
 | [F-132](F-132-arthur-joga-os-15-minutos.md) | 2026-10-24 | O Arthur joga os 15 minutos cronometrados, gosta muito, duvida do próprio ensaio por ser o criador e pede que nem toda parede seja corrível |
 | [F-133](F-133-arthur-libera-push-e-merge-da-task-10-5.md) | 2026-10-24 | O Arthur libera subir a branch da TASK-10.5, abrir o PR e fazer o merge |
+| [F-134](F-134-arthur-pede-os-tres-ajustes-da-parede.md) | 2026-10-24 | O Arthur pede os três ajustes da parede (Q-36, Q-37 e Q-38) antes da TASK-10.6 |
+| [F-135](F-135-arthur-escolhe-o-mapa-como-limite-do-elevador.md) | 2026-10-24 | O Arthur acerta por que a volta vira elevador e escolhe que o mapa limita a subida no corredor |
+| [F-136](F-136-arthur-aprova-o-plano-do-ajuste-da-parede.md) | 2026-10-24 | O Arthur aprova o plano da TASK-10.10, o ajuste da parede, no plan mode: a volta, o raio da cabeça, a cápsula que inclina e a métrica do corredor |

@@ -4,12 +4,13 @@ title: 'Gancho: a mira, o cabo e a puxada'
 status: To Refine
 assignee: []
 created_date: '2026-10-19 13:47'
-updated_date: '2026-10-23 17:51'
+updated_date: '2026-10-24 17:29'
 labels:
   - jogo
 milestone: m-1
 dependencies:
   - TASK-10.5
+  - TASK-10.10
 parent_task_id: TASK-10
 ordinal: 17000
 ---

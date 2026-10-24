@@ -1,6 +1,6 @@
 ---
-revisado_em: 2026-10-23
-fontes: [F-001, F-012, F-013, F-015, F-084, F-086, F-088, F-100, F-127, F-128, F-129]
+revisado_em: 2026-10-24
+fontes: [F-001, F-012, F-013, F-015, F-084, F-086, F-088, F-100, F-108, F-109, F-121, F-122, F-127, F-128, F-129, F-131, F-132, F-135, F-136, F-140, F-141]
 ---
 
 # Movimento
@@ -77,7 +77,7 @@ Cada número tem uma origem, e nem todos têm a mesma firmeza; a vitrine mostra 
 | Número | Valor | Unidade | Nota |
 |---|---|---|---|
 | Coyote time | 100 | ms | Ainda pula logo depois de sair da beirada |
-| Buffer de input | 150 | ms | Um buffer só, para todo comando (DEC-0016): uma vaga, e o último aperto vence; um aperto que ainda não pode sair espera na vaga pelos 150 ms (DEC-0039; leitura v0 do Claude, TASK-10.1). No mesmo tick, o pulo vence o dash, que vence o gancho (vale quando eles existirem, TASK-10.4 e TASK-10.6) |
+| Buffer de input | 150 | ms | Um buffer só, para todo comando (DEC-0016): uma vaga, e o último aperto vence; um aperto que ainda não pode sair espera na vaga pelos 150 ms (DEC-0039; leitura v0 do Claude, TASK-10.1). No mesmo tick, o pulo vence o dash, que vence o gancho (TASK-10.4; TASK-10.6) |
 
 ## Corrida na parede
 
@@ -98,6 +98,7 @@ Cada número tem uma origem, e nem todos têm a mesma firmeza; a vitrine mostra 
 | Descida, tick a tick | no k-ésimo tick de descida, a vertical é `−k · 10% · g_tick`, antes do movimento | — | Perde 0,996 m a 60 ticks e 0,922 m a 30 até soltar aos 2,5 s (150 e 75 ticks). Leitura v0 do Claude (F-128) |
 | Fins da corrida | tempo, borda, chão, trava abaixo de 4 m/s ou pulo | — | O mínimo de entrada serve de trava, sem número novo. Ao fim por tempo ou contato, cai no ar com o pulo duplo disponível. Leitura v0 do Claude (F-128) |
 | Pulo da parede no voo | conta como o primeiro pulo | — | O pulo duplo continua disponível. Não existe coyote da parede. Um pulo guardado até 150 ms antes de encostar sai no primeiro tick da corrida (DEC-0016). Leitura v0 do Claude (F-128) |
+| O coyote do chão na entrada | zera | — | Entrar na corrida apaga o coyote de quem acabou de sair do chão: uma corrida que começa e termina nos 100 ms depois do chão deixa no ar o pulo duplo, nunca o pulo cheio. Leitura v0 do Claude (Q-35; TASK-10.6) |
 | Mesma parede, em números | o mesmo colisor com a normal a até 10°, inclusive | ° | 10° separa as faces de uma caixa; a identidade é o caminho do nó (DEC-0042; F-127). A câmera não inclina no v0 |
 | Emenda | a corrida continua | — | Um colisor novo no mesmo plano (normal a até 10°), sem perder o contato, é a mesma corrida: o cronômetro segue, o pulo duplo não renova, e o `wall_id` passa a ser o do bloco novo. Escolha do Arthur depois da sonda A (F-129) |
 | Pulo encostado na parede | entra na corrida no tick do pulo | — | Pular do chão já encostado numa parede válida começa a corrida no mesmo tick, porque o corpo já está no ar quando o motor devolve o contato. Leitura v0 do Claude (TASK-10.5) |
@@ -132,13 +133,22 @@ Cada número tem uma origem, e nem todos têm a mesma firmeza; a vitrine mostra 
 
 | Número | Valor | Unidade | Nota |
 |---|---|---|---|
-| Alcance | 25 | m | Do estudo (F-001) |
+| Alcance | 25 | m | Do estudo (F-001). Medido do ombro, ao longo da mira |
+| Alcance mínimo | 3 | m | Mais perto que isso é erro. Encostado numa parede, mirando reto, os pés iriam ao ponto e subiriam 8 m de uma vez (vitrine "A puxada do gancho"). Leitura v0 do Claude (TASK-10.6; F-141) |
+| De onde sai a mira | do ombro, 1,6 m acima dos pés, pelo yaw e pelo pitch da câmera | — | A altura do pivô ("Câmera"). Com a câmera centralizada, o raio do ombro passa pelo centro da tela. O raio só pergunta ao cenário e passa pelos lutadores (DEC-0044). Leitura v0 do Claude (TASK-10.6) |
 | Onde prende | numa superfície do cenário, no ponto da mira | — | Puxar outro jogador fica para o combate |
-| Tempo até prender | 100 | ms | O tempo do cabo voar |
-| Velocidade da puxada | 18 | m/s | 25 m em ≈ 1,4 s |
-| Como solta | ao chegar a 1,5 m do ponto, ou quando o jogador pula | — | Conserva a velocidade |
-| Recarga | 6 | s | Leitura do Claude para o "gancho de 6 s" do estudo, que critica o gancho ilimitado (F-001). A sessão 1 tinha lido como duração |
+| O erro | céu, além de 25 m ou aquém de 3 m | — | Nada acontece, e a recarga não conta: o aperto espera na vaga pelos 150 ms, e a mira é refeita a cada tick, com a direção daquele tick (DEC-0039). Leitura v0 do Claude (TASK-10.6) |
+| De onde dispara | do chão, do ar e da parede | — | Na parede, a corrida acaba no disparo. Não dispara no dash nem com outro gancho no ar, voando ou puxando: o aperto espera na vaga (DEC-0041). Leitura v0 do Claude (TASK-10.6) |
+| Tempo até prender | 100 | ms | O tempo do cabo voar: 6 ticks a 60 e 3 a 30. O ponto fica fixo no disparo, e o corpo segue as regras do seu modo enquanto o cabo voa; o dash espera na vaga. Leitura v0 do Claude (TASK-10.6) |
+| O que a puxada leva ao ponto | os pés | — | Você cai onde mira. Puxado pelo ombro, o corpo chegaria com os pés 1,6 m abaixo do ponto, e a travessia de torre para torre bateria na parede (vitrine "A puxada do gancho"). Leitura v0 do Claude (TASK-10.6; F-141) |
+| Velocidade da puxada | 18 | m/s | 25 m em ≈ 1,4 s. Rumo ao ponto, recalculada a cada tick, sem gravidade e sem input |
+| Como solta | ao chegar a 1,5 m do ponto, ou quando o jogador pula | — | Conserva a velocidade. Os 1,5 m contam dos pés |
+| Trava | abaixo de 50% da puxada (9 m/s) | % | A partir do segundo tick da puxada, a velocidade rumo ao ponto abaixo de 9 m/s solta o gancho: uma batida come mais da metade. Leitura v0 do Claude (TASK-10.6) |
+| O pulo na puxada | só solta | — | Conserva a velocidade, sem impulso e sem custo, e o aperto se gasta na soltura: o próximo aperto no ar é o pulo duplo, se houver. Um pulo apertado enquanto o cabo voa segue as regras do modo e não solta. O pulo duplo troca a vertical por 6,1 m/s e cortaria a subida de quem é puxado para cima. Leitura v0 do Claude (TASK-10.6; F-141) |
+| Coyote do gancho | não existe | — | Sair do chão puxado não abre o coyote ("Perdão"): depois da soltura, no ar, o primeiro aperto é o pulo duplo. Leitura v0 do Claude (TASK-10.6) |
+| Recarga | 6 | s | Leitura do Claude para o "gancho de 6 s" do estudo, que critica o gancho ilimitado (F-001). A sessão 1 tinha lido como duração. Conta da soltura, como a do dash: 360 ticks a 60 e 180 a 30 |
 | Custo | nenhum | — | O limite é a recarga. No jogo completo, o gancho é uma das opções do slot utilitário (F-001) |
+| Tecla | Q, por posição física | — | Escolha do Arthur (F-140 §1; DEC-0031 §8) |
 
 ## Stamina
 
@@ -173,6 +183,8 @@ Cada número tem uma origem, e nem todos têm a mesma firmeza; a vitrine mostra 
 - **A parede longa e o corredor (TASK-10.5):** a `ParedeLonga` tem 24 m, mais que os ≈ 20 m de uma corrida. O corredor tem 3,5 m de vão interno: a 5 m/s para fora, 2,8 m de centro a centro levam 0,56 s, e o lutador chega ≈ 0,54 m acima. O `PatamarDoCorredor` tem o topo a 3 m, que só se alcança com pulo da parede (+1,2 m) mais pulo duplo (+1,0 m). Leitura v0 do Claude (F-128).
 - **Onde ficam na arena (TASK-10.5):** a `ParedeLonga` (1 × 4 × 24 m) tem o centro em x = 14,5 e z = −8, de z = 4 a −20, com faces para o oeste e para o leste. As paredes do corredor (1 × 5 × 24 m) ficam em x = 22,5 e x = 27, no mesmo trecho de z, com 3,5 m livres entre x = 23 e 26,5. O patamar (3,5 × 3 × 4 m) fecha a ponta sul do corredor, de z = −20 a −24. A face leste do `Block3m` e a face oeste da `ParedeLonga` ficam a 4 m uma da outra, um par para brincar.
 - **Corredor estreito (TASK-10.10):** com a volta no pulo da parede, ir e voltar num corredor de vão de até 4 m sobe ≈ 0,54 m por travessia, sem fim. O mapa limita: a altura das paredes de um corredor estreito é a altura que se quer alcançar, porque a corrida termina quando o raio, 30 cm acima da cabeça, passa do topo. O corredor da arena tem 5 m. Escolha do Arthur (F-135).
+- **O gancho (TASK-10.6):** de 3 a 25 m, a 18 m/s: os 16 m entre as torres levam ≈ 1 s. Com os pés indo ao ponto, o topo de uma torre de 6 m se alcança do chão mirando a face logo abaixo da borda, de uns 6 a 14 m dela; de mais longe, com o pulo duplo depois da soltura. Mirando a própria borda de perto, o embalo passa por cima de uma torre de 4 m, e soltar antes com o pulo resolve. Simulação 2D de lado, a cápsula contra caixas, na vitrine "A puxada do gancho"; o motor difere em centímetros. Leitura v0 do Claude (F-141).
+- **As torres e o pilar (TASK-10.6):** a `TorreA` (centro em x = −8, z = −30) e a `TorreB` (x = 12, z = −30), de 4 × 6 × 4 m, deixam 16 m entre as faces, mais que os ≈ 7 m do pulo duplo: só o gancho cruza. O `Pilar10m` (x = 2, z = −36), de 2 × 10 × 2 m, tem o topo a 10 m. Ficam em chão livre, longe do percurso da referência e das cenas da SyncTest, e um teste de cena prova isso. Leitura v0 do Claude (F-141).
 
 ## O que o esqueleto andante usa (TASK-9)
 

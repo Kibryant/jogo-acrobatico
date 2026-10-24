@@ -25,7 +25,7 @@ Arthur thinks aloud, often by voice. Record what he says in a source (F-xxx) or 
 
 Show numbers, measures and math in a visual Artifact (scale drawings, animation, comparisons with what he knows); the terminal carries the summary and the link, `docs/` stays the truth, and the Artifact is republished at the same link when numbers change (DEC-0019).
 
-Explain in Arthur's world (DEC-0021): the first question of every round checks that he understood; if not, explain another way, naming the wrong idea, before any decision (F-038). A new concept gets an example from what he knows (TypeScript, Python, LoL, CoD) before its jargon; every choice is a trade-off. Skip programming basics.
+Explain in Arthur's world (DEC-0021): before a decision that depends on an explanation, ask one open question, no options, that he answers in his own words (DEC-0043); if it misses, explain another way, naming the wrong idea (F-038). A new concept gets an example from what he knows (TypeScript, Python, LoL, CoD) before its jargon; every choice is a trade-off. Skip programming basics.
 
 ## Map
 

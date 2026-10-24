@@ -1,6 +1,6 @@
 ---
-revisado_em: 2026-10-23
-fontes: [F-001, F-002, F-005, F-007, F-012, F-013, F-020, F-021, F-025, F-026, F-028, F-030, F-032, F-038, F-039, F-044, F-045, F-046, F-050, F-051, F-052, F-053, F-056, F-058, F-066, F-068, F-069, F-070, F-073, F-078, F-079, F-081, F-083, F-085, F-086, F-087, F-088, F-090, F-091, F-093, F-094, F-095, F-097, F-100, F-112, F-121, F-122, F-129]
+revisado_em: 2026-10-24
+fontes: [F-001, F-002, F-005, F-007, F-012, F-013, F-020, F-021, F-025, F-026, F-028, F-030, F-032, F-038, F-039, F-044, F-045, F-046, F-050, F-051, F-052, F-053, F-056, F-058, F-066, F-068, F-069, F-070, F-073, F-078, F-079, F-081, F-083, F-085, F-086, F-087, F-088, F-090, F-091, F-093, F-094, F-095, F-097, F-100, F-112, F-121, F-122, F-129, F-141]
 ---
 
 # Glossário
@@ -27,8 +27,9 @@ A linguagem ubíqua do jogo (DEC-0004, regra 5): o mesmo termo na conversa, no d
 | Saída desenhada | O tick em que um modo comprometido termina pela própria regra, com a velocidade e o modo do desenho: o dash sai a 7 m/s na mesma direção, em `GROUND` ou `AIR` conforme o chão, e um aperto guardado pode sair no mesmo tick (DEC-0041 §2; `movimento.md`, "Dash") | tick | `dash_exit_speed`, `Movement.before_move` |
 | Carimbo de tick | O tick em que algo aconteceu, guardado no estado no lugar de uma contagem regressiva, como o "flash 12:30" no chat do LoL | tick | `*_tick`, como `buffered_tick` e `stamina_spent_tick` |
 | Sanduíche do tick | O tick do lutador em três fatias: o núcleo decide, o motor move e colide, o núcleo confere | — | `before_move`, `move_and_slide`, `after_move` |
-| Plano do movimento | O que a primeira fatia do sanduíche devolve: o estado novo e a velocidade que o núcleo pede ao motor | — | `MovePlan` |
-| Fatos do movimento | O que o motor devolve depois de mover: se terminou no chão, a velocidade depois da colisão e, desde a TASK-10.5, a parede que toca, com a normal e o caminho do colisor (DEC-0042) | — | `MoveFacts` |
+| Plano do movimento | O que a primeira fatia do sanduíche devolve: o estado novo e a velocidade que o núcleo pede ao motor e, desde a TASK-10.6, o pedido de mira | — | `MovePlan` |
+| Fatos do movimento | O que o motor devolve depois de mover: se terminou no chão, a velocidade depois da colisão, desde a TASK-10.5 a parede que toca, com a normal e o caminho do colisor (DEC-0042), e desde a TASK-10.6 a posição e a resposta da mira, quando o núcleo pede (DEC-0044) | — | `MoveFacts` |
+| Pedido de mira | O pedido que o núcleo faz no plano quando há um Q válido na vaga: "o que tem na mira?". O nó lança o raio do ombro depois do movimento e devolve a resposta nos fatos. Como uma função pura do TypeScript que não pode fazer `fetch`: ela pede o dado, e quem a chamou o busca (DEC-0044) | — | `MovePlan.aim_request` |
 | Configuração | Os números de design convertidos na carga para ticks e para a física do tick. Imutável e fora do estado | — | `MovementConfig` |
 | Input | O que o dono do lutador, jogador ou bot, apertou num tick: a direção, para onde olha e os comandos de um toque. É o pedido, nunca o resultado. Mora no nó `Input`, com o script `FighterInput` (DEC-0026) | — | `input`, nó `Input` (`FighterInput`) |
 | Comando de um toque | Um aperto que vale uma vez, como o pulo: fica guardado entre os frames e vale no máximo um tick, o seguinte (DEC-0026) | — | `jump`, `dash`, `parry`... |
@@ -102,7 +103,14 @@ A linguagem ubíqua do jogo (DEC-0004, regra 5): o mesmo termo na conversa, no d
 |---|---|---|---|
 | Corrida na parede | Correr pela parede por um tempo limitado | s | `wall_run` |
 | Dash | Arrancada curta, só no chão e sem invulnerabilidade. No v0, separada da esquiva (`movimento.md`) | m, ms | `dash` |
-| Gancho | Puxa o jogador até um ponto a até 25 m | m | `grapple` |
+| Gancho | Puxa os pés do jogador até um ponto do cenário, de 3 a 25 m do ombro, pela mira (`movimento.md`, "Gancho") | m | `grapple` |
+| Mira | A direção para onde a câmera olha, pelo yaw e pelo pitch, saindo do ombro, 1,6 m acima dos pés. Na tela, um anel no centro que ganha um ponto quando o Q prenderia agora; como a mira do CoD, é o centro da tela (`movimento.md`, "Gancho"; DEC-0044) | m | `Aim.direction`, `aim_height_m`, `pitch` |
+| Alcance mínimo | A distância do ombro abaixo da qual a mira não prende: 3 m. Mais perto, é erro, como o céu, e a recarga não conta (`movimento.md`, "Gancho") | m | `grapple_min_range_m` |
+| Ponto do gancho | Onde o raio da mira tocou o cenário no tick do disparo. Fica fixo até a soltura (`movimento.md`, "Gancho") | m | `grapple_point` |
+| Cabo | O voo do gancho até o ponto, 100 ms, e a linha que liga o ombro ao ponto enquanto o gancho vale. Na tela, uma linha de 3 cm (`visual-e-audio.md`, "O gancho na tela") | ms | `grapple_fired_tick`, `grapple_attach_ms` |
+| Puxada | O modo do gancho preso: os pés vão ao ponto a 18 m/s, sem gravidade e sem input, até a soltura (`movimento.md`, "Gancho") | m/s | `Mode.GRAPPLE`, `grapple_pull_speed_mps` |
+| Soltura | O fim da puxada: com os pés a 1,5 m do ponto, pela trava ou pelo pulo. Conserva a velocidade, e a recarga conta dela (`movimento.md`, "Gancho") | m | `grapple_end_tick`, `grapple_release_distance_m` |
+| Trava do gancho | A soltura de quem bateu: a partir do segundo tick da puxada, a velocidade rumo ao ponto abaixo de 9 m/s, a metade da puxada (`movimento.md`, "Gancho") | % | `grapple_block_pct` |
 | No chão | Superestado do modo: o lutador apoiado no chão, parado, correndo ou no dash (`movimento.md`). É onde a defesa vale | — | `is_grounded(mode)` |
 | No ar | Superestado do modo: pulo e gancho; ninguém se defende. Se a corrida na parede conta como ar no combate é a Q-14 | — | `is_airborne(mode)` |
 | Manobra | O verbo de uma acrobacia como entidade do núcleo: deslocamento, tempo, custo e o que dá para fazer durante ela. É o back-end; a animação só mostra (F-013 §1) | m, ms | `maneuver` |

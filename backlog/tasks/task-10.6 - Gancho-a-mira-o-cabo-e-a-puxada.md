@@ -1,7 +1,7 @@
 ---
 id: TASK-10.6
 title: 'Gancho: a mira, o cabo e a puxada'
-status: Ready
+status: In Progress
 assignee: []
 created_date: '2026-10-19 13:47'
 updated_date: '2026-10-24 20:16'

@@ -3,10 +3,10 @@ id: TASK-10.10
 title: >-
   Ajuste da parede: a volta no corredor, a parede que cobre o corpo e a cápsula
   que inclina
-status: Ready
+status: In Progress
 assignee: []
 created_date: '2026-10-24 17:28'
-updated_date: '2026-10-24 17:30'
+updated_date: '2026-10-24 18:32'
 labels:
   - jogo
 dependencies:
@@ -31,12 +31,12 @@ Nenhuma.
 
 ### Escolhas a confirmar
 1. O limite do elevador. Confirmada pelo Arthur em 24/10/2026 (F-135): **o mapa limita**. A altura das paredes de um corredor estreito é a altura que se quer alcançar, e isso vira uma métrica de nível, sem regra nova.
-2. A sonda da cabeça é um raio de motor, só de leitura, na altura da cabeça. Passa pelo modo de plano, por ser contato com o motor (DEC-0042).
+2. A sonda da cabeça é um raio de motor, só de leitura, 30 cm acima da cabeça. Passa pelo modo de plano, por ser contato com o motor (DEC-0042).
 
 ### Números v0 do Claude
 Fechados pelo Claude (DEC-0017), entram no `movimento.md` com o plano aprovado.
 - **A volta:** no tick do pulo da parede, se a tecla tem componente ao longo da parede contrária ao sentido da corrida, a velocidade ao longo troca de sinal com a mesma rapidez. Sem tecla, com a tecla para frente ou só para fora, nada muda. Os 5 m/s para fora e o 1,2 m de altura não mudam, e vale também para o pulo guardado (DEC-0016).
-- **A parede cobre o corpo:** além do contato de hoje, um raio na altura da cabeça (1,7 m acima dos pés, ou seja, o topo da cápsula de 1,8 m menos 10 cm) precisa achar uma face no mesmo plano (normal a até 10°), a no máximo raio + 5 cm do centro. Sem isso, a parede não aceita a corrida. Na corrida, quando a cabeça passa do topo, ela termina como na borda. O `Block1m` e o `Block2m` recusam, e a `ParedeLonga`, o corredor e o `Block3m` aceitam com a cabeça abaixo do topo.
+- **A parede passa da cabeça:** além do contato de hoje, um raio 30 cm acima da cabeça (2,1 m acima dos pés; era 1,7 m no plano, e o implementer achou a entrada baixa no `Block2m`, `mudancas.md` 24/10/2026, DEC-0017) precisa achar uma face no mesmo plano (normal a até 10°), a no máximo raio + 5 cm do centro. Sem isso, a parede não aceita a corrida. Na corrida, quando o raio passa do topo, ela termina como na borda. O `Block1m` e o `Block2m` recusam, e a `ParedeLonga`, o corredor e o `Block3m` aceitam com o raio abaixo do topo (o `Block3m` só com os pés abaixo de 0,9 m).
 - **A leitura visual:** só no visual, sem estado. A malha da cápsula inclina 15° para longe da parede, entrando e saindo em 100 ms, e um rastro curto acompanha a corrida (o mesmo material do rastro do dash; nenhum asset novo, DEC-0029).
 - **A métrica do corredor:** num corredor estreito (vão de até 4 m), a altura das paredes é a altura que se quer alcançar. Na arena, o corredor fica com 5 m.
 
@@ -56,8 +56,8 @@ Fechados pelo Claude (DEC-0017), entram no `movimento.md` com o plano aprovado.
 <!-- AC:BEGIN -->
 - [ ] #1 Quando o lutador aperta o pulo na corrida, ou o guardou até 150 ms antes de encostar, com a tecla tendo componente ao longo da parede contrária ao sentido da corrida, o pulo da parede sai com a velocidade ao longo trocada de sinal e a mesma rapidez, os mesmos 5 m/s para fora e 1,2 m de altura (tolerância de 1 cm); sem tecla, com a tecla para frente ou só para fora, sai como hoje (F-131; Q-36; leitura v0 do Claude)
 - [ ] #2 Quando o lutador pula para trás da parede de um corredor de 3,5 m e cruza sem tecla no ar, ele entra na outra parede correndo no sentido de volta; com a tecla segurada só para trás, reta, ele não cruza, e isso não é erro (F-131; Q-36)
-- [ ] #3 Quando o lutador encosta numa parede de 80° ou mais e o raio na altura da cabeça (1,7 m acima dos pés) não acha uma face no mesmo plano, a no máximo raio + 5 cm do centro, a parede não aceita a corrida; na corrida, quando a cabeça passa do topo, ela termina como na borda; uma pilha de dois blocos no mesmo plano conta como uma parede; o raio não move nada e sai igual no tick novo e no refeito com o rollback de 7 ticks (F-132; Q-38; DEC-0042)
-- [ ] #4 Quando o lutador corre na arena, o Block1m e o Block2m recusam a corrida, e a ParedeLonga, as paredes do corredor e o Block3m a aceitam com a cabeça abaixo do topo; o movimento.md ganha a métrica do corredor estreito (vão de até 4 m: a altura das paredes é a altura que se quer alcançar) (F-135)
+- [ ] #3 Quando o lutador encosta numa parede de 80° ou mais e o raio 30 cm acima da cabeça (2,1 m acima dos pés) não acha uma face no mesmo plano, a no máximo raio + 5 cm do centro, a parede não aceita a corrida; na corrida, quando o raio passa do topo, ela termina como na borda; uma pilha de dois blocos no mesmo plano conta como uma parede; o raio não move nada e sai igual no tick novo e no refeito com o rollback de 7 ticks (F-132; Q-38; DEC-0042)
+- [ ] #4 Quando o lutador corre na arena, o Block1m e o Block2m recusam a corrida, e a ParedeLonga, as paredes do corredor e o Block3m a aceitam com o raio abaixo do topo; o movimento.md ganha a métrica do corredor estreito (vão de até 4 m: a altura das paredes é a altura que se quer alcançar) (F-135)
 - [ ] #5 Quando o lutador corre na parede, a malha da cápsula inclina 15° para longe dela, entrando e saindo em 100 ms, e um rastro curto a acompanha; nada disso entra no estado, o rollback não duplica o rastro e a gravação de um replay refaz o mesmo rastro de estado (Q-37; DEC-0031 §6; DEC-0004, regra 2)
 - [ ] #6 Quando a SyncTest roda o cenário da parede com uma volta, ela acha zero divergências; o portão fica verde; o Arthur corre o corredor indo e voltando, tenta o Block2m e vê a cápsula inclinar, e o que ele sentiu vai para uma fonte (F-041; DEC-0027 §5)
 <!-- AC:END -->
@@ -86,7 +86,7 @@ Você jogou a parede e os 15 minutos (F-131; F-132) e pediu três ajustes antes 
 ## O que você aprova aqui: três mudanças
 
 1. **A volta, no núcleo** (Q-36). No tick do pulo da parede, se a sua tecla aponta para trás ao longo da parede, a velocidade ao longo troca de sinal e mantém a rapidez. A escolha é só naquele tick; o voo segue comprometido. Os testes da TASK-10.5 pulam sem tecla, então nenhum deles muda.
-2. **A parede cobre o corpo, no adaptador** (Q-38; DEC-0042). Hoje, o contato vem do próprio movimento ou da sonda de 5 cm. Agora entra também um raio na altura da cabeça, a 1,7 m dos pés, que pergunta ao motor "tem parede aqui?", sem mover nada.
+2. **A parede passa da cabeça, no adaptador** (Q-38; DEC-0042). Hoje, o contato vem do próprio movimento ou da sonda de 5 cm. Agora entra também um raio 30 cm acima da cabeça, a 2,1 m dos pés (era 1,7 m; `mudancas.md` 24/10/2026), que pergunta ao motor "tem parede aqui?", sem mover nada.
    - Sem face no mesmo plano (normal a até 10°), o nó não entrega a parede ao núcleo: a entrada é recusada, e na corrida ela termina como na borda.
    - O núcleo não muda nesta parte, e o estado não ganha campo.
    - É uma pergunta ao motor de novo, como a sonda: a SyncTest e o rollback de 7 ticks conferem que ela sai igual no tick refeito.
@@ -130,6 +130,6 @@ O ultracode da TASK-10 já foi usado; nada de workflow aqui.
 
 ## Riscos
 
-- **O raio numa quina:** perto da ponta da parede, a cabeça pode sair antes dos pés. Isso só adianta a borda em alguns centímetros.
-- **O `Block3m`:** com a cabeça a 2,9 m num bloco de 3 m, a folga é de 10 cm. Ele aceita, mas por pouco. Se incomodar jogando, fica assim mesmo, e a métrica do mapa resolve.
+- **O raio numa quina:** o raio sai do eixo da cápsula, então a corrida solta quando o eixo passa da ponta da face, até ≈ 35 cm antes da sonda da TASK-10.5 (`movimento.md`).
+- **O `Block3m`:** com o raio a 2,1 m dos pés, ele aceita só com os pés abaixo de 0,9 m e recusa no alto do pulo.
 <!-- SECTION:PLAN:END -->

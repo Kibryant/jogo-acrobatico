@@ -1,10 +1,10 @@
 ---
 id: TASK-10.5
 title: 'Corrida na parede e pulo da parede: a assinatura do jogo'
-status: In Progress
+status: Done
 assignee: []
 created_date: '2026-10-19 13:46'
-updated_date: '2026-10-23 15:56'
+updated_date: '2026-10-24 17:13'
 labels:
   - jogo
 milestone: m-1
@@ -52,22 +52,22 @@ Fechados pelo Claude (DEC-0017); escritos em "Corrida na parede" no `movimento.m
 
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
-- [ ] #1 Quando a sonda do motor força o rollback de 7 ticks com o lutador batendo e deslizando numa parede de teste, passando por uma emenda entre dois colisores e por um canto, e correndo paralelo a ela com a vertical zerada, os fatos da parede (encostou, a normal e o caminho do colisor relativo à arena) saem iguais no tick novo e no refeito; a sonda falha se não houver contato, emenda ou canto, e anota a taxa de ticks sem colisão na corrida paralela e se o id e o RID do colisor mudam entre execuções (DEC-0025; `rede.md` §4; `CharacterBody3D.xml`:80-93).
-- [ ] #2 Quando o lutador no ar encosta numa parede de pelo menos 80°, com pelo menos 4 m/s ao longo dela (a velocidade horizontal no plano da parede), e ela não é a parede da última corrida desde o chão ou outra parede, o núcleo começa a corrida: zera a vertical, renova o pulo duplo e corre a 8 m/s, ou à velocidade de entrada até o teto de 12 (quem entra a 10 corre a 10; a 14, corre a 12); com 3,9 m/s, numa parede de 79°, de frente, a partir do chão ou na mesma parede, não entra; o input não vira nem freia (`movimento.md`, "Corrida na parede").
-- [ ] #3 Quando a corrida dura, a altura fica igual por 1,5 s (90 ticks a 60, 45 a 30), com tolerância de 1 cm, qualquer que fosse a vertical na entrada; depois, no k-ésimo tick de descida a vertical é `-k` vezes 10% da gravidade de subida por tick (0,0327 m/s a 60; 0,0595 a 30), aplicada antes do movimento, e ele perde 0,996 m a 60 e 0,922 m a 30 até soltar aos 2,5 s (150 ticks a 60, 75 a 30), com tolerância de 1 cm (`movimento.md`, "Corrida na parede").
-- [ ] #4 Quando a parede acaba, quando o lutador toca o chão ou quando ele trava num obstáculo (a velocidade ao longo cai abaixo de 4 m/s), a corrida termina no mesmo tick; ao fim por tempo ou por contato, ele cai no ar com o pulo duplo disponível (leituras v0 do Claude; `movimento.md`, "Corrida na parede").
-- [ ] #5 Quando o lutador aperta o pulo na corrida, ou apertou até 150 ms antes de encostar, sai o pulo da parede: 1,2 m de altura, com tolerância de 1 cm, e 5 m/s para fora, mantendo a velocidade ao longo da parede; ele conta como o primeiro pulo do voo e o pulo duplo continua disponível; no ar, acima de 7 m/s, o input gira a velocidade só pela aceleração do ar (0,194 m/s por tick a 60) sem cortar o excesso, e o input contrário freia só por ela (`movimento.md`, "Corrida na parede", "Pulo e ar" e "Princípios"; leitura v0, Q-07).
-- [ ] #6 Quando o lutador volta à mesma parede (o mesmo colisor, com a normal a até 10°, inclusive) sem ter tocado o chão ou outra parede, ela não aceita nova corrida, mas outra parede aceita, mesmo no mesmo plano: o corredor se sobe alternando (`movimento.md`: "Mesma parede"; `wall_same_face_deg`, leitura v0).
-- [ ] #7 Quando um número da parede no `movement_v0.tres` é impossível (inclinação fora de 0 a 90° ou abaixo da rampa máxima, mínimo acima da velocidade na parede, teto abaixo dela, altura mantida maior que a duração, mesma face fora de 0 a 90°), a checagem dos dados reprova no portão; quando a SyncTest roda o cenário da parede com o rollback de 7 ticks a cada tick, ela acha zero divergências no estado inteiro e esconder `:state:wall_id` faz ela acusar; o cenário tem entrada, fim por tempo, fim na borda, pulo de uma parede para a outra, a recusa da mesma parede e um pulo duplo depois do pulo da parede; o sinal do pulo da parede toca uma vez por chave; a gravação de uma corrida na parede refaz o mesmo rastro (DEC-0004, regra 3; `rede.md` §8; DEC-0031 §6; DEC-0027 §5).
-- [ ] #8 Quando a arena ganha a parede longa, o corredor e o patamar de 3 m (a referência segue verde, ou é regravada com o motivo no commit), o Arthur corre a parede longa, sobe o corredor alternando as paredes, chega ao patamar por pulo da parede mais pulo duplo, e depois joga 15 minutos cronometrados com o pulo duplo, o dash e a parede; o que ele sentiu vai para uma fonte (F-001; F-012 §1; F-041).
+- [x] #1 Quando a sonda do motor força o rollback de 7 ticks com o lutador batendo e deslizando numa parede de teste, passando por uma emenda entre dois colisores e por um canto, e correndo paralelo a ela com a vertical zerada, os fatos da parede (encostou, a normal e o caminho do colisor relativo à arena) saem iguais no tick novo e no refeito; a sonda falha se não houver contato, emenda ou canto, e anota a taxa de ticks sem colisão na corrida paralela e se o id e o RID do colisor mudam entre execuções (DEC-0025; `rede.md` §4; `CharacterBody3D.xml`:80-93).
+- [x] #2 Quando o lutador no ar encosta numa parede de pelo menos 80°, com pelo menos 4 m/s ao longo dela (a velocidade horizontal no plano da parede), e ela não é a parede da última corrida desde o chão ou outra parede, o núcleo começa a corrida: zera a vertical, renova o pulo duplo e corre a 8 m/s, ou à velocidade de entrada até o teto de 12 (quem entra a 10 corre a 10; a 14, corre a 12); com 3,9 m/s, numa parede de 79°, de frente, a partir do chão ou na mesma parede, não entra; o input não vira nem freia (`movimento.md`, "Corrida na parede").
+- [x] #3 Quando a corrida dura, a altura fica igual por 1,5 s (90 ticks a 60, 45 a 30), com tolerância de 1 cm, qualquer que fosse a vertical na entrada; depois, no k-ésimo tick de descida a vertical é `-k` vezes 10% da gravidade de subida por tick (0,0327 m/s a 60; 0,0595 a 30), aplicada antes do movimento, e ele perde 0,996 m a 60 e 0,922 m a 30 até soltar aos 2,5 s (150 ticks a 60, 75 a 30), com tolerância de 1 cm (`movimento.md`, "Corrida na parede").
+- [x] #4 Quando a parede acaba, quando o lutador toca o chão ou quando ele trava num obstáculo (a velocidade ao longo cai abaixo de 4 m/s), a corrida termina no mesmo tick; ao fim por tempo ou por contato, ele cai no ar com o pulo duplo disponível (leituras v0 do Claude; `movimento.md`, "Corrida na parede").
+- [x] #5 Quando o lutador aperta o pulo na corrida, ou apertou até 150 ms antes de encostar, sai o pulo da parede: 1,2 m de altura, com tolerância de 1 cm, e 5 m/s para fora, mantendo a velocidade ao longo da parede; ele conta como o primeiro pulo do voo e o pulo duplo continua disponível; no ar, acima de 7 m/s, o input gira a velocidade só pela aceleração do ar (0,194 m/s por tick a 60) sem cortar o excesso, e o input contrário freia só por ela (`movimento.md`, "Corrida na parede", "Pulo e ar" e "Princípios"; leitura v0, Q-07).
+- [x] #6 Quando o lutador volta à mesma parede (o mesmo colisor, com a normal a até 10°, inclusive) sem ter tocado o chão ou outra parede, ela não aceita nova corrida, mas outra parede aceita, mesmo no mesmo plano: o corredor se sobe alternando (`movimento.md`: "Mesma parede"; `wall_same_face_deg`, leitura v0).
+- [x] #7 Quando um número da parede no `movement_v0.tres` é impossível (inclinação fora de 0 a 90° ou abaixo da rampa máxima, mínimo acima da velocidade na parede, teto abaixo dela, altura mantida maior que a duração, mesma face fora de 0 a 90°), a checagem dos dados reprova no portão; quando a SyncTest roda o cenário da parede com o rollback de 7 ticks a cada tick, ela acha zero divergências no estado inteiro e esconder `:state:wall_id` faz ela acusar; o cenário tem entrada, fim por tempo, fim na borda, pulo de uma parede para a outra, a recusa da mesma parede e um pulo duplo depois do pulo da parede; o sinal do pulo da parede toca uma vez por chave; a gravação de uma corrida na parede refaz o mesmo rastro (DEC-0004, regra 3; `rede.md` §8; DEC-0031 §6; DEC-0027 §5).
+- [x] #8 Quando a arena ganha a parede longa, o corredor e o patamar de 3 m (a referência segue verde, ou é regravada com o motivo no commit), o Arthur corre a parede longa, sobe o corredor alternando as paredes, chega ao patamar por pulo da parede mais pulo duplo, e depois joga 15 minutos cronometrados com o pulo duplo, o dash e a parede; o que ele sentiu vai para uma fonte (F-001; F-012 §1; F-041).
 <!-- AC:END -->
 
 ## Definition of Done
 <!-- DOD:BEGIN -->
-- [ ] #1 Critérios de aceite verificados
-- [ ] #2 Teste automatizado para toda regra do núcleo (core/)
-- [ ] #3 Diário da sessão escrito e glossário atualizado
-- [ ] #4 Mudanças registradas em docs/mudancas.md
+- [x] #1 Critérios de aceite verificados
+- [x] #2 Teste automatizado para toda regra do núcleo (core/)
+- [x] #3 Diário da sessão escrito e glossário atualizado
+- [x] #4 Mudanças registradas em docs/mudancas.md
 <!-- DOD:END -->
 
 ## Implementation Plan
@@ -196,3 +196,15 @@ Com o seu ok e uma linha no `mudancas.md` cada: `movimento.md` ("Corrida na pare
 ## Seam rule (F-129, en)
 During WALL_RUN, a new wall_id whose normal is within wall_same_face_deg (10°, inclusive) of the current wall_normal, with contact not lost (the probe still finds a wall this tick), CONTINUES the run: mode_since unchanged, no double-jump renewal, wall_id/wall_normal updated to the new collider. A new wall_id outside 10° (another face, e.g. the corner) ends the run, and a new run may start the same tick if it qualifies. The same-wall refusal after a jump compares against the last wall_id/wall_normal. Probe A result: rede.md §4 (seam: WallWest 3 ticks then WallEast, once, no flicker; normals up to 0.98° at the seam, 10.9-12.2° at the corner).
 <!-- SECTION:NOTES:END -->
+
+## Final Summary
+
+<!-- SECTION:FINAL_SUMMARY:BEGIN -->
+A corrida na parede está no jogo: o modo `WALL_RUN` no núcleo, os fatos da parede pelo caminho do nó e pela sonda só de teste (DEC-0042), o momento no ar conservado (F-127), a regra da emenda (F-129) e a parede longa, o corredor e o patamar na arena.
+
+- Sonda A: 2 634 conferências com rollback de 7 ticks, zero divergências; o RID muda entre execuções, o caminho do nó nunca.
+- Testes de aceite travados (critérios 2 a 6 e os dados do 7); uma linha corrigida com o Arthur (F-130).
+- SyncTest "parede" sem divergências, com o veneno em `:state:wall_id` acusando; replay com corrida na parede igual em todo tick.
+- Revisor: APPROVE. Duas leituras: o coyote que sobrevive a uma corrida curta virou a Q-35 (TASK-10.6), e o pulo encostado na parede foi para o `movimento.md`. A volta do `Fighter.arena` para o `get_parent()` fica anotada para quando a cena do lutador mudar de pai.
+- O Arthur jogou (F-131) e fez os 15 minutos cronometrados (F-132): gostou muito. Ficaram a volta no corredor (Q-36, com vitrine), a leitura visual da cápsula que só gruda (Q-37) e a altura mínima de uma parede corrível (Q-38).
+<!-- SECTION:FINAL_SUMMARY:END -->

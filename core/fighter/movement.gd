@@ -12,6 +12,10 @@
 class_name Movement
 extends RefCounted
 
+# Floating-point slack of the wall jump's turn, against the unit run direction: a stick turned by
+# the camera exactly across the wall reads ~1e-7 along it. Not a design number.
+const TURN_HAIR := 1e-4
+
 
 # Puts the presses in the slot and ends a dash whose ticks ran out; inside a dash nothing else
 # happens. A wall run runs on its wall, or ends by its time. Otherwise it applies the acceleration
@@ -41,7 +45,7 @@ static func before_move(
 		_clear_slot(next)
 	if next.mode == FighterState.Mode.WALL_RUN:
 		if tick - next.mode_since < config.wall_run_max_ticks:
-			return _wall_run(next, velocity, config, tick)
+			return _wall_run(next, velocity, input, config, tick)
 		# The end by time (movimento.md, "Corrida na parede": "Duração máxima"): from this tick
 		# the body is in the air with the double jump the entry renewed, and the wall has no
 		# coyote, so a press now is the double jump ("Pulo da parede no voo").
@@ -242,10 +246,12 @@ static func _horizontal(
 # the slot is the wall jump: the jump's parabola for its own height, the push out of the wall
 # along its normal, the speed along kept; it is the first jump of the flight, the double jump
 # stays, and the body is in the air from this tick ("Pulo da parede"; DEC-0041). A press made up
-# to the buffer before the touch fires here, on the first tick of the run (DEC-0039).
+# to the buffer before the touch fires here, on the first tick of the run (DEC-0039). The stick of
+# the tick the jump fires on may turn it back along the wall ("A volta no pulo da parede").
 static func _wall_run(
 	next: FighterState,
 	velocity: Vector3,
+	input: TickInput,
 	config: MovementConfig,
 	tick: int,
 ) -> MovePlan:
@@ -258,6 +264,8 @@ static func _wall_run(
 		vertical = -(age - config.wall_hold_ticks + 1) * config.wall_slide_gravity_per_tick
 	if next.buffered_command == FighterCommand.JUMP:
 		vertical = config.wall_jump_speed
+		if _points_back(input, along):
+			horizontal = -horizontal
 		horizontal += next.wall_normal * config.wall_jump_push
 		next.jumps_used = 1
 		next.wall_jump_tick = tick
@@ -265,6 +273,18 @@ static func _wall_run(
 		next.mode_since = tick
 		_clear_slot(next)
 	return _plan(next, horizontal, vertical)
+
+
+# The turn of the wall jump (movimento.md, "Corrida na parede": "A volta no pulo da parede";
+# F-131; F-136): the stick of this tick, turned by the camera like every direction, has a
+# component along the wall against the run. Only its sign counts, never its size; no stick, a
+# forward one or one only out of or into the wall keep the run's direction. TURN_HAIR keeps a
+# stick exactly across the wall, read through a turned camera, from turning by rounding.
+static func _points_back(input: TickInput, along: Vector3) -> bool:
+	if input.move == Vector2.ZERO:
+		return false
+	var pointed := _world(input.move.limit_length(1.0), input.yaw)
+	return pointed.dot(along.normalized()) < -TURN_HAIR
 
 
 # The wall facts of a tick in the air (DEC-0042): they end, carry on or start a wall run. A run

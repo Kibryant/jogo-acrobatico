@@ -5,7 +5,7 @@
 # come from docs/design/movimento.md, cited by section. TASK-10.1, criterion 7, adds the double
 # jump and the stamina (movimento.md, "Pulo e ar" and "Stamina"); TASK-10.4 adds the dash
 # (movimento.md, "Dash"); TASK-10.5, criterion 7, adds the wall (movimento.md, "Corrida na
-# parede").
+# parede"); TASK-10.10 adds the head ray and the lean on screen (same section).
 extends GdUnitTestSuite
 
 const MOVEMENT_V0 := "res://data/movement_v0.tres"
@@ -29,12 +29,13 @@ const TIME_FIELDS: Array[String] = [
 	"wall_hold_ms",
 ]
 
-# The ten numbers of the wall (movimento.md, "Corrida na parede"; TASK-10.5 plan, Data), each
-# with one value that cannot be: an incline below 0° (also below the max slope), a negative
-# entry speed, a run speed of zero (with the entry at a negative value, below it), a negative
-# ceiling (below the run speed), two negative times (equal, so neither exceeds the other), a
-# negative slide percentage, a jump without height, a negative push and a negative same-face
-# angle. The times are ints; the rest are floats.
+# The thirteen numbers of the wall (movimento.md, "Corrida na parede"; TASK-10.5 plan, Data;
+# TASK-10.10), each with one value that cannot be: an incline below 0° (also below the max
+# slope), a negative entry speed, a run speed of zero (with the entry at a negative value, below
+# it), a negative ceiling (below the run speed), two negative times (equal, so neither exceeds the
+# other), a negative slide percentage, a jump without height, a negative push, a negative
+# same-face angle, a ray inside the capsule, a negative lean and a negative lean time.
+# The times are ints; the rest are floats.
 const WALL_IMPOSSIBLE: Dictionary[String, Variant] = {
 	"wall_min_incline_deg": -1.0,
 	"wall_entry_speed_mps": -4.0,
@@ -46,6 +47,9 @@ const WALL_IMPOSSIBLE: Dictionary[String, Variant] = {
 	"wall_jump_height_m": 0.0,
 	"wall_jump_push_mps": -5.0,
 	"wall_same_face_deg": -10.0,
+	"wall_clear_above_head_m": -0.3,
+	"wall_lean_deg": -15.0,
+	"wall_lean_ms": -1,
 }
 
 # The five numbers of the dash (movimento.md, "Dash"), each with one value that cannot be: a
@@ -109,6 +113,9 @@ func _design_data() -> MovementData:
 	data.wall_jump_height_m = 1.2 # "Corrida na parede": "Pulo da parede"
 	data.wall_jump_push_mps = 5.0 # "Corrida na parede": "Pulo da parede: 5 m/s para fora"
 	data.wall_same_face_deg = 10.0 # "Corrida na parede": "Mesma parede, em números"
+	data.wall_clear_above_head_m = 0.3 # "A parede passa da cabeça": 2,1 m above the feet
+	data.wall_lean_deg = 15.0 # "Corrida na parede": "O que se vê na parede"
+	data.wall_lean_ms = 100 # "Corrida na parede": "O que se vê na parede"
 	return data
 
 
@@ -176,6 +183,9 @@ func test_movement_v0_holds_the_numbers_of_movimento_md() -> void:
 	assert_float(data.wall_jump_height_m).is_equal_approx(design.wall_jump_height_m, HAIR)
 	assert_float(data.wall_jump_push_mps).is_equal_approx(design.wall_jump_push_mps, HAIR)
 	assert_float(data.wall_same_face_deg).is_equal_approx(design.wall_same_face_deg, HAIR)
+	assert_float(data.wall_clear_above_head_m).is_equal_approx(design.wall_clear_above_head_m, HAIR)
+	assert_float(data.wall_lean_deg).is_equal_approx(design.wall_lean_deg, HAIR)
+	assert_int(data.wall_lean_ms).is_equal(design.wall_lean_ms)
 
 
 func test_movement_v0_passes_the_data_check() -> void:
@@ -724,8 +734,53 @@ func test_a_wall_same_face_angle_from_0_to_90_degrees_is_allowed(
 			.is_empty()
 
 
-# Many: the ten wall numbers wrong at once give ten messages, each naming its field.
-func test_ten_impossible_wall_numbers_give_ten_messages_each_naming_its_field() -> void:
+# The ray stands at or above the capsule's top: below it, inside the capsule, is rejected naming
+# the field; at the top, at the 30 cm of the design and far above it passes (movimento.md,
+# "Corrida na parede": "A parede passa da cabeça"; TASK-10.10).
+func test_a_ray_inside_the_capsule_is_rejected(
+	clear_m: float,
+	_test_parameters := [[-0.01], [-0.3], [-1.8]],
+) -> void:
+	var data := _design_data()
+	data.wall_clear_above_head_m = clear_m
+	_assert_one_message_naming(
+		data.validate(),
+		"wall_clear_above_head_m",
+		"a ray %.2f m above the head must be rejected" % clear_m,
+	)
+
+
+func test_a_ray_at_or_above_the_head_is_allowed(
+	clear_m: float,
+	_test_parameters := [[0.0], [0.3], [3.0]],
+) -> void:
+	var data := _design_data()
+	data.wall_clear_above_head_m = clear_m
+	var message := "a ray %.2f m above the head must pass" % clear_m
+	assert_array(data.validate()).override_failure_message(message).is_empty()
+
+
+# The lean on screen goes from 0 to 90°, and its time is not negative; 0 ms leans at once
+# (movimento.md, "Corrida na parede": "O que se vê na parede"; TASK-10.10).
+func test_a_lean_outside_0_to_90_degrees_is_rejected(
+	deg: float,
+	_test_parameters := [[-1.0], [90.5]],
+) -> void:
+	var data := _design_data()
+	data.wall_lean_deg = deg
+	_assert_one_message_naming(data.validate(), "wall_lean_deg", "lean %.1f° must fail" % deg)
+
+
+func test_a_negative_lean_time_is_rejected_and_zero_is_allowed() -> void:
+	var data := _design_data()
+	data.wall_lean_ms = -1
+	_assert_one_message_naming(data.validate(), "wall_lean_ms", "a lean of -1 ms must fail")
+	data.wall_lean_ms = 0
+	assert_array(data.validate()).override_failure_message("a lean of 0 ms must pass").is_empty()
+
+
+# Many: the thirteen wall numbers wrong at once give thirteen messages, each naming its field.
+func test_every_impossible_wall_number_gives_its_own_message_naming_its_field() -> void:
 	var data := _design_data()
 	for field: String in WALL_IMPOSSIBLE:
 		data.set(field, WALL_IMPOSSIBLE[field])

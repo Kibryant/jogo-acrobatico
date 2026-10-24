@@ -4,12 +4,13 @@ title: 'Gancho: a mira, o cabo e a puxada'
 status: To Refine
 assignee: []
 created_date: '2026-10-19 13:47'
-updated_date: '2026-10-23 17:51'
+updated_date: '2026-10-24 18:41'
 labels:
   - jogo
 milestone: m-1
 dependencies:
   - TASK-10.5
+  - TASK-10.10
 parent_task_id: TASK-10
 ordinal: 17000
 ---
@@ -105,4 +106,6 @@ Prender no topo de uma torre a menos de 25 m; cruzar os 16 m entre as torres; so
 Com o seu ok e uma linha no `mudancas.md` cada: `movimento.md` ("Gancho" com as leituras v0; "Perdão" com a ordem completa; "Métricas de nível" com as torres e o pilar); `glossario.md` (Mira, Cabo, Ponto do gancho, Puxada, Pedido de mira); `rede.md` (tabela de input com `pitch` e `grapple`; o resultado da sonda B; a nota do tick previsto para a fase 3); `visao-geral.md` (`Mode.GRAPPLE`, os carimbos, `aim_request`, `aim_hit`); `testes-e-entrega.md` (o cenário, as colunas do replay, o `--force`); `visual-e-audio.md` (a tecla, a mira em px, o arco); a vitrine (25 m, 18 m/s, as torres); o diário e o `registro.md`.
 
 Q-35 (review of TASK-10.5): a wall run that starts and ends inside the floor coyote window leaves left_floor_tick live (movement.gd _enter_wall); fix with a new test (zero the coyote on wall entry).
+
+F-137 (24/10/2026): o Arthur pede retorno visual para tudo daqui para frente. O gancho nasce com o seu sinal visual (a mira, o cabo e a puxada), lido como o rastro e a inclinação da parede (TASK-10.10).
 <!-- SECTION:NOTES:END -->

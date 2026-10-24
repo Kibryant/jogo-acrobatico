@@ -9,6 +9,8 @@
 ; (TASK-10.1, criterion 8), the five numbers of the dash on 2026-10-23 (TASK-10.4): the route
 ; never presses the dash, so its trace did not move; and the ten numbers of the wall run on the
 ; same day (TASK-10.5): the route touches no wall in the air, and its trace did not move either.
+; The head ray and the lean on screen came on 2026-10-24 (TASK-10.10): the route still touches
+; no wall in the air, and the lean is never in the state, so its trace did not move.
 
 [ext_resource type="Script" path="res://data/movement_data.gd" id="1_yx5js"]
 
@@ -47,3 +49,6 @@ wall_slide_gravity_pct = 10.0
 wall_jump_height_m = 1.2
 wall_jump_push_mps = 5.0
 wall_same_face_deg = 10.0
+wall_clear_above_head_m = 0.3
+wall_lean_deg = 15.0
+wall_lean_ms = 100

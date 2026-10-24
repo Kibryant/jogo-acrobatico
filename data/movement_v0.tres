@@ -37,3 +37,6 @@ wall_slide_gravity_pct = 10.0
 wall_jump_height_m = 1.2
 wall_jump_push_mps = 5.0
 wall_same_face_deg = 10.0
+wall_clear_above_head_m = 0.3
+wall_lean_deg = 15.0
+wall_lean_ms = 100

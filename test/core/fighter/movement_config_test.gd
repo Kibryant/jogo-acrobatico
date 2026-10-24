@@ -386,3 +386,18 @@ func _assert_half_tick(field: String, ticks: int, ms: int, tickrate: int) -> voi
 		% [field, ms, tickrate, ticks]
 	)
 	assert_int(error).override_failure_message(message).is_less_equal(HALF_TICK_IN_MS_TIMES_RATE)
+
+
+# TASK-10.10: the ray stands 30 cm above the top of the 1,8 m capsule, 2,1 m above the feet;
+# the lean of 15° becomes radians and its 100 ms become seconds, eased per displayed frame and
+# never per tick (movimento.md, "Corrida na parede": "A parede passa da cabeça" and "O que se vê
+# na parede").
+func test_the_ray_stands_2_1_m_above_the_feet_and_the_lean_is_15_degrees_in_100_ms(
+	tickrate: int,
+	_test_parameters := [[30], [60]],
+) -> void:
+	var config := MovementConfig.create(_data(), tickrate)
+	assert_float(config.wall_ray_height).is_equal_approx(2.1, 1e-6)
+	assert_float(config.wall_ray_height).is_greater(CAPSULE_HEIGHT_M)
+	assert_float(config.wall_lean).is_equal_approx(deg_to_rad(15.0), HAIR)
+	assert_float(config.wall_lean_s).is_equal_approx(0.1, HAIR)

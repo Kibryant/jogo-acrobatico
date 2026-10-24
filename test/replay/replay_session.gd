@@ -4,9 +4,11 @@
 # number with many digits on every loop, moves that are the mean of 2 or 3 different frames, so
 # never -1, 0 or 1, tick loops of 1, 2 and 3 ticks, as frames at 60, 30 and 20 fps, jumps with a
 # double jump at the top and, from TASK-10.4, a dash between two jumps, so the file's dash column
-# holds presses (criterion 6). From TASK-10.5 it opens with a wall run and a wall jump on
-# PlataformaVaoA's east face (WallPhase), so the trace holds the wall's fields with a wall in
-# them. Optionally the clock jumps once, as netfox's does after a stall.
+# holds presses (criterion 6). From TASK-10.5 it opens with a wall run and a wall jump (WallPhase),
+# so the trace holds the wall's fields with a wall in them: on ParedeLonga's east face since
+# TASK-10.10, because PlataformaVaoA, 2 m tall, no longer rises above the head (movimento.md,
+# "Corrida na parede": "A parede passa da cabeça"). Optionally the clock jumps once, as
+# netfox's does after a stall.
 # The run is the reference's (test/reference/reference_run.gd): the real Match in Sozinho, in a
 # SubViewport with its own physics world, with netfox's ticks by hand inside a physics frame
 # (test/support/netfox_ticks.gd), starting on FIRST_TICK.
@@ -44,14 +46,14 @@ const DOUBLE_AFTER := 9
 const DASH_AFTER := 30
 ## Ticks the clock jumps by, when it jumps.
 const CLOCK_JUMP := 30
-## The wall phase (TASK-10.5): from the spawn point the fighter runs to WALL_FROM, north-east of
-## PlataformaVaoA, whose east face looks east from x = -17 over z 3 to 9, 2 m tall (arena.tscn).
-## From there it runs south with a quarter of its speed into the face, about 14°, jumps
-## JUMP_BEFORE_FACE before the capsule would touch it, runs on the wall WALL_RUN_TICKS ticks and
-## wall-jumps away.
-const WALL_FROM := Vector3(-15.4, 0, 11)
+## The wall phase (TASK-10.5; TASK-10.10): from the spawn point the fighter runs to WALL_FROM,
+## north-east of ParedeLonga, whose east face looks east from x = 15 over z -20 to 4, 4 m tall
+## (arena.tscn); the straight line there passes north of the wall's end. From there it runs south
+## with a quarter of its speed into the face, about 14°, jumps JUMP_BEFORE_FACE before the capsule
+## would touch it, runs on the wall WALL_RUN_TICKS ticks and wall-jumps away.
+const WALL_FROM := Vector3(16.6, 0, 5)
 const INTO_WALL := Vector3(-0.25, 0, -1)
-const WALL_FACE_X := -17.0
+const WALL_FACE_X := 15.0
 const JUMP_BEFORE_FACE := 0.6
 const WALL_RUN_TICKS := 4
 ## m: WALL_FROM counts as reached this close.
@@ -177,7 +179,7 @@ static func dashes_at(loop: int) -> bool:
 
 
 # The opening of the session (TASK-10.5): a scripted player, reading the state on screen before
-# each loop as a player reads the game, runs to WALL_FROM, into PlataformaVaoA's east face with a
+# each loop as a player reads the game, runs to WALL_FROM, into ParedeLonga's east face with a
 # jump just before it, rides the wall run for WALL_RUN_TICKS ticks and wall-jumps; it is done once
 # the body lands. Each loop it samples one frame, the yaw of where it runs.
 class WallPhase:

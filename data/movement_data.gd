@@ -95,6 +95,16 @@ const CHECKED_TICKRATES: Array[int] = [30, 60]
 ## The same collider with a normal this close is the same wall (movimento.md, "Corrida na
 ## parede": "Mesma parede, em números").
 @export var wall_same_face_deg: float
+## The wall must rise this far above the head: the ray that asks for it stands this far above
+## the capsule's top, 2,1 m above the feet of the 1,8 m capsule (movimento.md, "Corrida na
+## parede": "A parede passa da cabeça"; TASK-10.10).
+@export var wall_clear_above_head_m: float
+## The capsule's mesh leans this far away from the wall during a run, only on screen
+## (movimento.md, "Corrida na parede": "O que se vê na parede").
+@export var wall_lean_deg: float
+## The lean comes in and goes out over this time, per displayed frame (movimento.md, "Corrida na
+## parede": "O que se vê na parede").
+@export var wall_lean_ms: int
 
 
 # The data check, layer 3 of DEC-0027 §2: one message per impossible number, empty when every
@@ -168,6 +178,15 @@ func validate() -> PackedStringArray:
 			"a negative push would throw the body into the wall",
 		),
 		_range_error("wall_same_face_deg", wall_same_face_deg, 90.0, "an angle between normals"),
+		# The wall that rises above the head and the lean on screen (TASK-10.10). The ray is never
+		# below the capsule's top; nothing divides by the lean's time: 0 leans at once.
+		_not_negative_error(
+			"wall_clear_above_head_m",
+			wall_clear_above_head_m,
+			"the ray would stand inside the capsule",
+		),
+		_range_error("wall_lean_deg", wall_lean_deg, 90.0, "a lean"),
+		_time_error("wall_lean_ms", wall_lean_ms, false),
 	]
 	var errors := PackedStringArray()
 	for message: String in checks:

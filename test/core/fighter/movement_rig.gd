@@ -16,9 +16,25 @@
 # TASK-10.6 adds the aim (DEC-0044): the test sets what the adapter's ray would find (aim_hit and
 # aim_point), and step() copies them into the MoveFacts only on a tick whose plan asked
 # (MovePlan.aim_request), with the position after the move on every tick (MoveFacts.position).
+# TASK-10.7 adds another fighter's head (add_head): the engine would report the dome of a capsule
+# as floor up to 45° (movimento.md, "O corpo": "Rampa máxima"), and the adapter says the floor
+# is only a fighter (MoveFacts.floor_is_fighter) with the contact's normal flattened
+# (MoveFacts.fighter_away). The rig's own predicate: the head holds the feet while their
+# horizontal distance from the other's axis is below HEAD_RADIUS_M, the flat top standing in for
+# the dome; the body falls into the void, or onto the floor, once it slides past that radius.
 extends RefCounted
 
 const MOVEMENT_V0 := "res://data/movement_v0.tres"
+
+# How far from the other's axis the dome still counts as floor: two capsule radii of 0,35 m
+# times sin 45°, the slope limit, 0,495 m (movimento.md, "O corpo": "Raio da cápsula", "Rampa
+# máxima" and "Escorregar da cabeça": "o domo deixa de ser chão além de 45°, a 0,495 m do eixo").
+# Arithmetic on the design's numbers, not a number of its own.
+const HEAD_RADIUS_M := 0.495
+# Two capsule radii: the distance between the centres of two capsules in contact top to feet,
+# so (feet - axis) / HEAD_CONTACT_M is the contact's normal, flattened, as the engine's
+# get_normal() would report it on the dome (movimento.md, "O corpo": "Raio da cápsula").
+const HEAD_CONTACT_M := 0.7
 
 # How far from a wall the adapter's test-only probe still finds it: 5 cm inward (DEC-0042,
 # "Opções consideradas" 2 and "Decisão" 1; rede.md §4: "move_and_collide(-normal * 0,05,
@@ -58,6 +74,24 @@ class FakeWall:
 		return along >= along_min and along <= along_max
 
 
+# Another fighter's head, as the engine would report it (TASK-10.7): the other's feet at axis
+# (only x and z matter) and the height the feet of whoever lands on it rest at, top_y. The rig
+# keeps the top flat; the dome's curvature is the engine's business.
+class FakeHead:
+	var axis := Vector3.ZERO
+	var top_y := 0.0
+
+
+	# The flattened offset of a point from the axis: feet - axis, on the plane.
+	func offset_of(point: Vector3) -> Vector3:
+		return Vector3(point.x - axis.x, 0.0, point.z - axis.z)
+
+
+	# The head holds a point while it is nearer the axis than the dome's floor limit.
+	func covers(point: Vector3) -> bool:
+		return offset_of(point).length() < HEAD_RADIUS_M
+
+
 # A body heading down that would end the tick within this hair above the floor is on it: the
 # stand-in for the engine's own floor snap. Far below the 1 cm tolerance of the jump height
 # (movimento.md, "Pulo e ar"; visao-geral.md, "O tempo e a física no estado").
@@ -80,6 +114,8 @@ var ramp_on := false
 var wall_x := INF
 # The walls of TASK-10.5, in the order they were added (add_wall). Empty, the rig is as before.
 var walls: Array[FakeWall] = []
+# The heads of TASK-10.7, in the order they were added (add_head). Empty, the rig is as before.
+var heads: Array[FakeHead] = []
 # What the adapter's ray would find on a tick the core asks for the aim (TASK-10.6; DEC-0044): a
 # hit and its point, set by the test as the scenery would answer. They reach the MoveFacts only
 # when the plan asked; otherwise the facts say no hit and Vector3.ZERO.
@@ -113,6 +149,9 @@ func _init(movement_config: MovementConfig, first_tick: int) -> void:
 	state.grapple_fired_tick = FighterState.NEVER
 	state.grapple_point = Vector3.ZERO
 	state.grapple_end_tick = FighterState.NEVER
+	# Not on a head (TASK-10.7 plan).
+	state.slide_off_dir = Vector3.ZERO
+	state.head_landing_tick = FighterState.NEVER
 
 
 # The numbers of movement_v0.tres as the configuration of one tickrate, the way the Match makes
@@ -141,6 +180,19 @@ func add_wall(normal: Vector3, offset: float, id: StringName) -> FakeWall:
 	return wall
 
 
+# Another fighter's head the engine would report as floor (TASK-10.7): the other's feet at axis,
+# the top where the feet of whoever lands on it rest. While the feet are within HEAD_RADIUS_M of
+# the axis, heading down onto the top, the move ends on it and the facts say floor_is_fighter,
+# with fighter_away the flattened contact normal; a head wins over the floor under it, since the
+# engine's floor is then only the head. Contact follows the order of addition when two overlap.
+func add_head(axis: Vector3, top_y: float) -> FakeHead:
+	var head := FakeHead.new()
+	head.axis = axis
+	head.top_y = top_y
+	heads.append(head)
+	return head
+
+
 # The fighter in the air by hand, as after a long fall: at this position, with this velocity,
 # past the coyote window, no jump used in this flight and nothing in the slot. The wall and
 # momentum tests start from it, the way the stamina tests set the bar by hand.
@@ -155,6 +207,8 @@ func airborne(at: Vector3, with_velocity: Vector3) -> void:
 	state.buffered_tick = FighterState.NEVER
 	state.jumps_used = 0
 	state.double_jump_tick = FighterState.NEVER
+	state.slide_off_dir = Vector3.ZERO
+	state.head_landing_tick = FighterState.NEVER
 
 
 static func idle() -> TickInput:
@@ -257,12 +311,25 @@ func step(input: TickInput) -> MovePlan:
 			if into < 0.0:
 				slid -= wall.normal * into
 	var floor_y := _floor_y(next.x)
-	if floor_on and plan.velocity.y <= 0.0 and next.y <= floor_y + _floor_reach():
+	var head := _head_under(position, next, plan.velocity)
+	if head != null:
+		# The engine's floor this tick is only the other's head: the body rests on its top, and
+		# the facts say so, with the contact's normal flattened (TASK-10.7 plan).
+		next.y = head.top_y
+		facts.on_floor = true
+		facts.floor_is_fighter = true
+		facts.fighter_away = head.offset_of(next) / HEAD_CONTACT_M
+		facts.velocity = Vector3(slid.x, 0.0, slid.z)
+	elif floor_on and plan.velocity.y <= 0.0 and next.y <= floor_y + _floor_reach():
 		next.y = floor_y
 		facts.on_floor = true
+		facts.floor_is_fighter = false
+		facts.fighter_away = Vector3.ZERO
 		facts.velocity = Vector3(slid.x, 0.0, slid.z)
 	else:
 		facts.on_floor = false
+		facts.floor_is_fighter = false
+		facts.fighter_away = Vector3.ZERO
 		facts.velocity = slid
 	if blocked:
 		facts.velocity.x = 0.0
@@ -310,6 +377,21 @@ func _wall_in_contact(point: Vector3, prior: FighterState) -> FakeWall:
 		elif found == null:
 			found = wall
 	return found
+
+
+# The head the engine would report as floor for a move from `from` to `to` (TASK-10.7): the feet
+# heading down from at or above the top to at most a hair above it, within the dome's floor
+# radius of the axis. Null is no head under the feet: a body beside the other, below its top, is
+# a side bump, which the rig does not model (the TASK-9 push is the engine's).
+func _head_under(from: Vector3, to: Vector3, planned: Vector3) -> FakeHead:
+	if planned.y > 0.0:
+		return null
+	for head: FakeHead in heads:
+		if from.y < head.top_y - LANDING_HAIR or to.y > head.top_y + LANDING_HAIR:
+			continue
+		if head.covers(to):
+			return head
+	return null
 
 
 # The height of the floor under x: 0 on the flat floor, -x * tan(45°) on the ramp.

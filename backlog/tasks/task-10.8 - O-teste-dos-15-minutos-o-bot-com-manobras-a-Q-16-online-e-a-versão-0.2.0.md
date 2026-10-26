@@ -1,10 +1,10 @@
 ---
 id: TASK-10.8
 title: 'O teste dos 15 minutos: o bot com manobras, a Q-16 online e a versão 0.2.0'
-status: In Progress
+status: Done
 assignee: []
 created_date: '2026-10-19 13:47'
-updated_date: '2026-10-26 23:06'
+updated_date: '2026-10-26 23:58'
 labels:
   - jogo
 milestone: m-1
@@ -52,20 +52,20 @@ Fechados pelo Claude (DEC-0017).
 
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
-- [ ] #1 Quando o `tools/net_run.sh` roda 30 s com os bots dando pulo duplo e dash, a corrida passa a ping 100 com zero ticks corrigidos e zero faltando, cada bot dá ao menos um pulo duplo e um dash, e o tempo do portão fica anotado (`rede.md` §8 e §10; DEC-0027 §1; F-165)
-- [ ] #2 Quando um número de movimento muda numa cópia do Resource (o pulo duplo de 1,0 para 1,5 m), o jogo muda sem tocar no código, e um teste prova isso pela cópia (TASK-10, critério 2; DEC-0017; DEC-0004, regra 3)
-- [ ] #3 Quando o Arthur sobe na cabeça do bot online pelo `tools/play_online.sh 100`, ele escorrega como no Sozinho, sem o corpo voltar para cima por uma correção, e o que ele sentiu vai para uma fonte; um problema ali é bug de rede, corrigido sem mudar a DEC-0046 (DEC-0046; F-165)
-- [ ] #4 Quando o Arthur joga 15 minutos cronometrados sozinho na arena com o kit inteiro, ele quer continuar; o que ele sentiu e as técnicas que achou vão para uma fonte, as pendências Q-07, Q-34, Q-40, Q-42, Q-43 e Q-44 ganham a resposta datada, e os números que ele pedir mudam no `.tres`, no `movimento.md` e na vitrine, no mesmo link, sem tocar no código; quando ele não quer continuar, o motivo vira fonte e as filhas de ajuste nascem com `-p TASK-10` (F-001; TASK-10, critério 1; DEC-0017; DEC-0019)
-- [ ] #5 Quando a sonda do canto dirige o lutador em Z entre duas bordas, num canto da arena, por 30 s, a altura máxima fica medida e anotada no `movimento.md` ("A borda"); se passar dos 50 m, o plano de morte nasce como filha da TASK-10 e entra nas dependências da TASK-10.14 (F-167 §2)
-- [ ] #6 Quando o Sozinho fecha e salva o replay, o log diz quantos ticks a sessão teve, e não quantas linhas os dois lutadores escreveram (F-166, contexto)
+- [x] #1 Quando o `tools/net_run.sh` roda 30 s com os bots dando pulo duplo e dash, a corrida passa a ping 100 com zero ticks corrigidos e zero faltando, cada bot dá ao menos um pulo duplo e um dash, e o tempo do portão fica anotado (`rede.md` §8 e §10; DEC-0027 §1; F-165)
+- [x] #2 Quando um número de movimento muda numa cópia do Resource (o pulo duplo de 1,0 para 1,5 m), o jogo muda sem tocar no código, e um teste prova isso pela cópia (TASK-10, critério 2; DEC-0017; DEC-0004, regra 3)
+- [x] #3 Quando o Arthur sobe na cabeça do bot online pelo `tools/play_online.sh 100`, ele escorrega como no Sozinho, sem o corpo voltar para cima por uma correção, e o que ele sentiu vai para uma fonte; um problema ali é bug de rede, corrigido sem mudar a DEC-0046 (DEC-0046; F-165)
+- [x] #4 Quando o Arthur joga 15 minutos cronometrados sozinho na arena com o kit inteiro, ele quer continuar; o que ele sentiu e as técnicas que achou vão para uma fonte, as pendências Q-07, Q-34, Q-40, Q-42, Q-43 e Q-44 ganham a resposta datada, e os números que ele pedir mudam no `.tres`, no `movimento.md` e na vitrine, no mesmo link, sem tocar no código; quando ele não quer continuar, o motivo vira fonte e as filhas de ajuste nascem com `-p TASK-10` (F-001; TASK-10, critério 1; DEC-0017; DEC-0019)
+- [x] #5 Quando a sonda do canto dirige o lutador em Z entre duas bordas, num canto da arena, por 30 s, a altura máxima fica medida e anotada no `movimento.md` ("A borda"); se passar dos 50 m, o plano de morte nasce como filha da TASK-10 e entra nas dependências da TASK-10.14 (F-167 §2)
+- [x] #6 Quando o Sozinho fecha e salva o replay, o log diz quantos ticks a sessão teve, e não quantas linhas os dois lutadores escreveram (F-166, contexto)
 <!-- AC:END -->
 
 ## Definition of Done
 <!-- DOD:BEGIN -->
-- [ ] #1 Critérios de aceite verificados
-- [ ] #2 Teste automatizado para toda regra do núcleo (core/)
-- [ ] #3 Diário da sessão escrito e glossário atualizado
-- [ ] #4 Mudanças registradas em docs/mudancas.md
+- [x] #1 Critérios de aceite verificados
+- [x] #2 Teste automatizado para toda regra do núcleo (core/)
+- [x] #3 Diário da sessão escrito e glossário atualizado
+- [x] #4 Mudanças registradas em docs/mudancas.md
 <!-- DOD:END -->
 
 ## Implementation Plan
@@ -89,3 +89,9 @@ Sem test-writer: nenhuma regra nova do núcleo. A SyncTest segue com as oito cen
 <!-- SECTION:NOTES:BEGIN -->
 O rascunho de 19/10 (em inglês) virou o plano acima. Mudou desde ele: o bot ganha só o pulo duplo, porque o dash já veio na TASK-10.4 (F-165); a Q-16 virou a DEC-0046 antes da sessão online (F-165); o teste dos 15 minutos passou e respondeu as pendências (F-166); a regra da mesma parede foi para a TASK-10.13 (DEC-0047), e o fechamento da fase com a 0.2.0, para a TASK-10.14 (F-167 §2); a sonda do canto entrou (F-167 §2).
 <!-- SECTION:NOTES:END -->
+
+## Final Summary
+
+<!-- SECTION:FINAL_SUMMARY:BEGIN -->
+O teste da fase 1 passou: 15 min 38 s no Sozinho, e o Arthur continuaria jogando (F-166 §2). O bot da rede dá o pulo duplo no topo e o dash aos 1.200 ms, e a corrida a ping 100 passou sem tick corrigido nem faltando, com as manobras contadas. O teste da cópia do Resource prova o critério 2 da TASK-10. A sonda do canto mostrou a saída da arena, e o plano de morte virou a TASK-10.15. A mesma parede virou a DEC-0047 e a TASK-10.13; o fechamento da fase com a 0.2.0 ficou na TASK-10.14 (F-167 §2). O revisor aprovou os seis critérios, e o portão passou em 372 s.
+<!-- SECTION:FINAL_SUMMARY:END -->

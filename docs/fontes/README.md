@@ -153,3 +153,4 @@ O que chegou ao projeto e como chegou. Uma fonte não muda: só mudam `status`, 
 | [F-147](F-147-arthur-escolhe-o-ombro-direito-o-segundo-raio-e-adia-a-troca-de-ombro.md) | 2026-10-26 | O Arthur escolhe a câmera no ombro direito a 0,8 m, o segundo raio da quina agora e deixa a troca de ombro para as armas de longe |
 | [F-148](F-148-arthur-aprova-o-plano-da-mira-no-ombro.md) | 2026-10-26 | O Arthur aprova o plano da mira no ombro no modo de plano |
 | [F-149](F-149-arthur-joga-a-mira-no-ombro.md) | 2026-10-26 | O Arthur joga a mira no ombro, diz que "deu pra mirar melhor" e "ficou massa", sente a câmera "um pouco antinatural" na parede e no dash, quer ver com um oponente, e pergunta pela escalada vertical |
+| [F-150](F-150-arthur-libera-fechar-a-mira-no-ombro.md) | 2026-10-26 | O Arthur libera fechar a TASK-10.11 com diário, push, PR e merge |

@@ -1,10 +1,10 @@
 ---
 id: TASK-10.11
 title: 'A mira no ombro: a câmera que deixa a mira livre e o raio que a acompanha'
-status: In Progress
+status: Done
 assignee: []
 created_date: '2026-10-26 14:09'
-updated_date: '2026-10-26 16:24'
+updated_date: '2026-10-26 16:27'
 labels:
   - jogo
 milestone: m-1
@@ -57,6 +57,6 @@ Confirmadas pelo Arthur (F-147):
 <!-- DOD:BEGIN -->
 - [x] #1 Critérios de aceite verificados
 - [x] #2 Teste automatizado para toda regra do núcleo (core/)
-- [ ] #3 Diário da sessão escrito e glossário atualizado
+- [x] #3 Diário da sessão escrito e glossário atualizado
 - [x] #4 Mudanças registradas em docs/mudancas.md
 <!-- DOD:END -->

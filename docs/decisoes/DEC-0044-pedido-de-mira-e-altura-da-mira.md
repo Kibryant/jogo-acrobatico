@@ -6,8 +6,10 @@ status: aceita
 decidido_por: Arthur (F-141)
 fontes: [F-005, F-141]
 substitui:
-substituida_por:
+substituida_por: DEC-0045, só a direção pelo centro da tela com a câmera centralizada (§2)
 ---
+
+> ⚠️ Em parte substituída por DEC-0045 em 2026-10-26: o raio não sai mais do ombro, e a câmera não é mais centralizada (§2). O raio sai do ponto O, na linha do centro da tela, 0,8 m à direita do ombro, calculado pelo núcleo, e um segundo raio do ombro ao ponto recusa a quina. O resto desta DEC continua valendo: o pedido de mira (§1), a cópia no `MovementData` (§3) e a sonda B (§4).
 
 # DEC-0044 — O pedido de mira e a altura da mira: o núcleo pede o raio pelo plano, o acerto volta nos fatos, e a altura do ombro mora no `MovementData`
 

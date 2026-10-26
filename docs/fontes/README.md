@@ -149,3 +149,6 @@ O que chegou ao projeto e como chegou. Uma fonte não muda: só mudam `status`, 
 | [F-143](F-143-arthur-libera-a-correcao-do-teste-da-parede-que-para-a-puxada.md) | 2026-10-26 | O Arthur libera a correção de uma linha no teste travado da parede que para a puxada |
 | [F-144](F-144-arthur-joga-o-gancho.md) | 2026-10-26 | O Arthur joga o gancho, gosta muito, acha certa a recarga longa, sente um "boost" ao soltar perto da parede e acha a mira ruim, com o boneco na frente dela |
 | [F-145](F-145-arthur-abre-a-mira-no-ombro-e-fecha-o-gancho.md) | 2026-10-26 | O Arthur pede a filha da mira no ombro antes da TASK-10.7 e libera fechar a TASK-10.6 com push, PR e merge |
+| [F-146](F-146-arthur-ve-a-vitrine-da-mira-no-ombro-e-responde-a-conferencia.md) | 2026-10-26 | O Arthur vê a vitrine da mira no ombro, diz que a câmera por cima do ombro "faz muito mais sentido", manda um print do Fortnite e responde à conferência aberta com uma pergunta |
+| [F-147](F-147-arthur-escolhe-o-ombro-direito-o-segundo-raio-e-adia-a-troca-de-ombro.md) | 2026-10-26 | O Arthur escolhe a câmera no ombro direito a 0,8 m, o segundo raio da quina agora e deixa a troca de ombro para as armas de longe |
+| [F-148](F-148-arthur-aprova-o-plano-da-mira-no-ombro.md) | 2026-10-26 | O Arthur aprova o plano da mira no ombro no modo de plano |

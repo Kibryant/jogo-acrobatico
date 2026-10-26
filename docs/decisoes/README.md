@@ -52,7 +52,8 @@
 | [DEC-0041](DEC-0041-troca-de-modo-por-comando.md) | 2026-10-23 | A troca de modo por comando no `before_move`: a DEC-0022 muda só nisso | aceita; substitui a DEC-0022 só nisso (F-122) |
 | [DEC-0042](DEC-0042-os-fatos-da-parede.md) | 2026-10-23 | Os fatos da parede: o caminho do nó como identidade, a normal no estado e a sonda só de teste durante a corrida | aceita (F-127; F-128) |
 | [DEC-0043](DEC-0043-conferencia-aberta.md) | 2026-10-24 | A conferência aberta: uma pergunta só, sem opções, respondida com as palavras do Arthur, antes da decisão que depende da explicação | aceita (F-140 §5); substitui a DEC-0021 só na forma da pergunta fixa |
-| [DEC-0044](DEC-0044-pedido-de-mira-e-altura-da-mira.md) | 2026-10-24 | O pedido de mira e a altura da mira: o núcleo pede o raio pelo plano, o acerto volta nos fatos, e a altura do ombro mora no `MovementData` | aceita (F-141) |
+| [DEC-0044](DEC-0044-pedido-de-mira-e-altura-da-mira.md) | 2026-10-24 | O pedido de mira e a altura da mira: o núcleo pede o raio pelo plano, o acerto volta nos fatos, e a altura do ombro mora no `MovementData` | aceita (F-141); a direção pelo centro da tela com a câmera centralizada (§2) foi substituída pela DEC-0045 (o ponto O) |
+| [DEC-0045](DEC-0045-a-mira-no-ombro-e-o-ponto-o.md) | 2026-10-26 | A mira no ombro e o ponto O: a câmera por cima do ombro direito, o raio da mira saindo da linha do centro da tela, calculado pelo núcleo, e o segundo raio que recusa a quina | aceita (F-147; F-148); substitui a DEC-0044 só no §2 |
 
 ## Propostas — ainda não são regra
 
@@ -71,3 +72,4 @@ Nenhuma proposta aberta.
 | [DEC-0022](DEC-0022-arquitetura-detalhada.md) | Só o `jump_pressed_tick` como carimbo do buffer, a assinatura `before_move(state, velocity, input, config, tick)` e a janela estrita do buffer. O resto continua valendo | [DEC-0039](DEC-0039-vaga-do-buffer-posicao-no-before-move-e-janela-inclusiva.md) | 2026-10-19 |
 | [DEC-0022](DEC-0022-arquitetura-detalhada.md) | Só a frase de que o `after_move` é quem atualiza o modo: o `before_move` troca por comando, e o `after_move` por contato, fora de um modo comprometido. O resto continua valendo | [DEC-0041](DEC-0041-troca-de-modo-por-comando.md) | 2026-10-23 |
 | [DEC-0021](DEC-0021-explicar-no-mundo-do-arthur.md) | Só a forma da pergunta fixa: a múltipla escolha no começo de toda rodada vira uma pergunta aberta, respondida com as palavras do Arthur, antes da decisão que depende da explicação. O resto continua valendo | [DEC-0043](DEC-0043-conferencia-aberta.md) | 2026-10-24 |
+| [DEC-0044](DEC-0044-pedido-de-mira-e-altura-da-mira.md) | Só o §2: o raio deixa de sair do ombro com a câmera centralizada e sai do ponto O, na linha do centro da tela, 0,8 m à direita, calculado pelo núcleo; um segundo raio recusa a quina. O pedido de mira, a cópia no `MovementData` e a sonda B continuam valendo | [DEC-0045](DEC-0045-a-mira-no-ombro-e-o-ponto-o.md) | 2026-10-26 |

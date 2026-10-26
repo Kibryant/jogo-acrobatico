@@ -4,13 +4,14 @@ title: 'O teste dos 15 minutos: o bot com manobras, a Q-16 online e a versão 0.
 status: To Refine
 assignee: []
 created_date: '2026-10-19 13:47'
-updated_date: '2026-10-23 14:20'
+updated_date: '2026-10-26 19:31'
 labels:
   - jogo
 milestone: m-1
 dependencies:
   - TASK-10.7
   - TASK-10.9
+  - TASK-10.12
 parent_task_id: TASK-10
 ordinal: 19000
 ---

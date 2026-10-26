@@ -1,10 +1,10 @@
 ---
 id: TASK-10.7
 title: 'A cabeça do outro: a regra da Q-16, o boneco e a borda da arena'
-status: In Progress
+status: Done
 assignee: []
 created_date: '2026-10-19 13:47'
-updated_date: '2026-10-26 19:21'
+updated_date: '2026-10-26 19:33'
 labels:
   - jogo
 milestone: m-1
@@ -54,15 +54,15 @@ Fechados pelo Claude (DEC-0017), mostrados na vitrine; vão para o `movimento.md
 - [x] #3 Quando a SyncTest roda o cenário da cabeça (um parado, o outro pula e dá o pulo duplo sobre ele, duas vezes) com o rollback de 7 ticks a cada tick, ela acha zero divergências no estado inteiro, como a sonda C já achou no código de hoje (a DEC-0037 zerou as 6 a 32 da sonda do Desenho 2); o cenário conta pelo menos 2 pousos na cabeça, 2 escorregões, 1 pulo recusado e zero ticks com a cabeça como chão para as regras; esconder `:state:slide_off_dir` faz ela acusar (F-025 §3; `rede.md` §8)
 - [x] #4 Quando o `Fighter` nasce, ele só aceita o cenário como plataforma (`platform_floor_layers`) e não herda velocidade ao sair de outro corpo, e um teste de cena prova os dois valores; a mudança leva uma linha no `mudancas.md` (F-152; DEC-0025; DEC-0037)
 - [x] #5 Quando o Arthur abre o Sozinho, um boneco parado espera no segundo ponto de nascimento, sem câmera, desligável por `--dummy=off`, e o replay grava o input dos dois lutadores; sem tela, no portão, o `main_test` segue verde (DEC-0027 §5)
-- [ ] #6 Quando a arena ganha a borda de quatro paredes de 50 m sem sombra, ninguém cai para fora, as paredes aceitam a corrida, um gancho do topo do pilar para cima da borda norte não passa dela, a referência e os cenários seguem verdes (ou a referência é regravada com o motivo no commit), e o Arthur sobe na cabeça do boneco, escorrega em ≈ 0,2 s e não pula de cima dela; o que ele sentiu vai para uma fonte (`movimento.md`, "Métricas de nível"; F-041)
+- [x] #6 Quando a arena ganha a borda de quatro paredes de 50 m sem sombra, ninguém cai para fora, as paredes aceitam a corrida, um gancho do topo do pilar para cima da borda norte não passa dela, a referência e os cenários seguem verdes (ou a referência é regravada com o motivo no commit), e o Arthur sobe na cabeça do boneco, escorrega em ≈ 0,2 s e não pula de cima dela; o que ele sentiu vai para uma fonte (`movimento.md`, "Métricas de nível"; F-041)
 - [x] #7 Quando um lutador escorrega de uma cabeça, o rastro curto do dash, da parede e da puxada o acompanha e some em 200 ms depois de ele sair, uma vez por pouso, e sob rollback os sinais apresentados são tantos quanto os pousos (F-139; F-152; DEC-0031 §6)
 <!-- AC:END -->
 
 ## Definition of Done
 <!-- DOD:BEGIN -->
-- [ ] #1 Critérios de aceite verificados
+- [x] #1 Critérios de aceite verificados
 - [x] #2 Teste automatizado para toda regra do núcleo (core/)
-- [ ] #3 Diário da sessão escrito e glossário atualizado
+- [x] #3 Diário da sessão escrito e glossário atualizado
 - [x] #4 Mudanças registradas em docs/mudancas.md
 <!-- DOD:END -->
 

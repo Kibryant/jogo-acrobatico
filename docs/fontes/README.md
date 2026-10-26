@@ -164,3 +164,4 @@ O que chegou ao projeto e como chegou. Uma fonte não muda: só mudam `status`, 
 | [F-158](F-158-arthur-escolhe-o-dia-claro.md) | 2026-10-26 | O Arthur escolhe a cara "Dia claro" para a arena e responde à conferência do contraste de valor |
 | [F-159](F-159-arthur-joga-o-dia-claro.md) | 2026-10-26 | O Arthur joga a arena com a cara do dia claro, acha que "ficou bem melhor", libera fechar a TASK-10.12 e grava o vídeo mais tarde |
 | [F-160](F-160-medicao-de-fps-com-a-cara-do-dia-claro.md) | 2026-10-26 | A medição de fps com a cara do dia claro: 153,04 fps de média e 116,84 nos 1% piores, em 1080p no PC do Arthur |
+| [F-161](F-161-arthur-escolhe-a-sensibilidade-sem-pausa-e-os-botoes-do-mouse.md) | 2026-10-26 | O Arthur põe a sensibilidade do mouse na tela de opções, escolhe que o Sozinho não pausa com a tela aberta e libera o botão do meio e os laterais do mouse para as ações |

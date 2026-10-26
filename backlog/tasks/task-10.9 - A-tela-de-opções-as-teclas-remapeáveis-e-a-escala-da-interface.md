@@ -1,9 +1,10 @@
 ---
 id: TASK-10.9
 title: 'A tela de opções: as teclas remapeáveis e a escala da interface'
-status: To Refine
+status: Ready
 assignee: []
 created_date: '2026-10-19 13:47'
+updated_date: '2026-10-26 20:38'
 labels:
   - jogo
 milestone: m-1
@@ -17,21 +18,26 @@ ordinal: 18700
 
 <!-- SECTION:DESCRIPTION:BEGIN -->
 ### Por quê
-A DEC-0031 §8 pede teclas por posição física, remapeáveis e salvas em `user://`, mostradas com o rótulo do teclado ativo, e a escala da interface (`content_scale_factor`, de 0,8 a 1,5) exposta nas opções. A TASK-9 adiou a tela para a primeira cena de interface, e o Arthur escolheu que ela venha como filha própria, depois do HUD (TASK-10.2) e antes da v0.2.0, a primeira release com o kit da fase (F-100 §1). Sem ela, a primeira release pública da fase sairia sem o que a DEC-0031 promete a quem joga.
+A DEC-0031 §8 pede teclas por posição física, remapeáveis e salvas em `user://`, mostradas com o rótulo do teclado ativo, e a escala da interface (`content_scale_factor`, de 0,8 a 1,5) exposta nas opções. A TASK-9 adiou a tela para a primeira cena de interface, e o Arthur escolheu que ela venha como filha própria, depois do HUD (TASK-10.2) e antes da v0.2.0, a primeira release com o kit da fase (F-100 §1). O `movimento.md` chama a sensibilidade do mouse de "ajuste do jogador" ("Câmera"), e ela entra na mesma tela (F-161). Vitrine "A tela de opções": https://claude.ai/artifact/5qsxUQ4t9sbyYXD9XG6aNR.
 
 ### Perguntas em aberto
-Nenhuma.
+Nenhuma. O Arthur respondeu em 26/10/2026 (F-161): a sensibilidade entra; o Sozinho não pausa com a tela aberta; o botão do meio e os laterais do mouse valem para uma ação.
 
 ### Escolhas a confirmar
-1. A tela abre com Esc no Sozinho e lista as ações do `InputMap` (andar nas quatro direções, pular, dash, gancho) com o rótulo físico da tecla; apertar outra tecla remapeia na hora; o arquivo é `user://options.cfg`. Padrão: sim.
-2. A escala vai de 0,8 a 1,5 por `content_scale_factor`, salva no mesmo arquivo; o número v0 é o da DEC-0031 §8. Padrão: sim.
-3. A tela usa o Theme único da TASK-10.2 e as chaves de tradução, com pt-BR e en. Padrão: sim.
+Confirmadas:
+1. A tela abre com o Esc, no Sozinho e online, onde quem joga tem tela; lista as sete ações do `InputMap` (andar nas quatro direções, pular, dash, gancho) com o rótulo da tecla física no teclado ativo; apertar outra tecla, ou o botão do meio ou um lateral do mouse, remapeia na hora; o arquivo é `user://options.cfg` (F-161; DEC-0031 §8).
+2. A escala vai de 0,8 a 1,5 por `content_scale_factor`, de 0,1 em 0,1, salva no mesmo arquivo (DEC-0031 §8).
+3. A sensibilidade vai de 0,02 a 0,20 grau por pixel, de 0,005 em 0,005, com o padrão 0,06, salva no mesmo arquivo, e a tela mostra a volta em cm a 800 DPI (F-161).
+4. Com a tela aberta, o jogo não pausa: o lutador de quem joga fica parado, porque as teclas vão para a tela, e o mouse aparece; ao fechar, o mouse volta para a câmera (F-161).
+5. A tela usa o Theme único da TASK-10.2 e as chaves de tradução, com pt-BR e en, e tem o botão "Voltar ao padrão".
 
 ### Números v0 do Claude
-- Os passos da escala: 0,8, 0,9, 1,0, 1,1, 1,2, 1,3, 1,4 e 1,5 (a sonda do Desenho 5 subiu até 1,2; F-062 §2). Vai para o `visual-e-audio.md`.
+- Os passos da escala: 0,8, 0,9, 1,0, 1,1, 1,2, 1,3, 1,4 e 1,5 (a sonda do Desenho 5 subiu até 1,2; F-051 §4.4).
+- A sensibilidade: de 0,02 a 0,20 grau por pixel, de 0,005 em 0,005: uma volta de 57 cm a 5,7 cm a 800 DPI.
 
 ### Fora do escopo
-- Gamepad (Q-31). Menus além desta tela. O leitor de tela na partida (DEC-0031 §8). Som.
+- Gamepad (Q-31). Menus além desta tela. O leitor de tela na partida (DEC-0031 §8). Som. O campo de visão.
+- O botão esquerdo e o direito do mouse numa ação: ficam livres para o combate da fase 2.
 
 ### O que você vai aprender
 - O `InputMap` em tempo de execução: trocar a tecla de uma ação sem tocar no `project.godot`.
@@ -41,11 +47,13 @@ Nenhuma.
 
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
-- [ ] #1 Quando o jogador abre as opções no Sozinho, cada ação do `InputMap` aparece com o rótulo da tecla física no teclado ativo, e apertar outra tecla a remapeia; a mudança vale na hora e sobrevive ao fechar e abrir o jogo, salva em `user://` (DEC-0031 §8).
-- [ ] #2 Quando o jogador muda a escala, a interface escala de 0,8 a 1,5 sem cortar a barra de stamina nem a mira, e o valor sobrevive ao reiniciar (DEC-0031 §8).
-- [ ] #3 Quando o arquivo de opções está corrompido, tem uma tecla inválida ou uma escala fora da faixa, o jogo volta ao padrão, avisa no log e não trava.
-- [ ] #4 Quando duas ações recebem a mesma tecla, a tela avisa e a segunda troca não vale até o conflito sumir.
-- [ ] #5 Quando o Arthur remapeia o dash e o gancho, muda a escala e joga, o que ele sentiu vai para uma fonte (F-041).
+- [ ] #1 Quando o jogador abre as opções com o Esc, no Sozinho ou online, cada uma das sete ações aparece com o rótulo da tecla física no teclado ativo, e apertar outra tecla, ou o botão do meio ou um lateral do mouse, a remapeia; a mudança vale na hora e sobrevive ao fechar e abrir o jogo, salva em `user://options.cfg` (DEC-0031 §8; F-161)
+- [ ] #2 Quando o jogador muda a escala, a interface escala de 0,8 a 1,5 sem cortar a barra de stamina, as recargas nem a mira, a mira segue no centro da tela com a câmera livre, e o valor sobrevive ao reiniciar (DEC-0031 §8)
+- [ ] #3 Quando o jogador muda a sensibilidade, de 0,02 a 0,20 grau por pixel, a câmera gira com ela na hora, a tela mostra a volta em cm a 800 DPI, e o valor sobrevive ao reiniciar (F-161; `movimento.md`, "Câmera")
+- [ ] #4 Quando a tela está aberta, o jogo não pausa, o lutador de quem joga fica parado e o mouse aparece; ao fechar, o mouse volta para a câmera e as teclas voltam ao lutador (F-161)
+- [ ] #5 Quando o arquivo de opções está corrompido, tem uma tecla inválida, uma escala ou uma sensibilidade fora da faixa, o jogo volta ao padrão de cada entrada ruim, avisa no log e não trava; "Voltar ao padrão" restaura tudo
+- [ ] #6 Quando duas ações recebem a mesma tecla, a tela diz de qual ação ela já é, e a troca não vale até o conflito sumir
+- [ ] #7 Quando o Arthur remapeia o dash e o gancho, muda a escala e a sensibilidade e joga, o que ele sentiu vai para uma fonte (F-041)
 <!-- AC:END -->
 
 ## Definition of Done

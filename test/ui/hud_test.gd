@@ -25,6 +25,7 @@ const LEFT_AFTER_SPEND := 37.0
 var _match: Match
 var _fighter: Fighter
 var _locale_before := ""
+var _window_before := Vector2i.ZERO
 
 
 func before_test() -> void:
@@ -40,6 +41,10 @@ func before_test() -> void:
 
 func after_test() -> void:
 	TranslationServer.set_locale(_locale_before)
+	if _window_before != Vector2i.ZERO:
+		get_tree().root.size = _window_before
+		_window_before = Vector2i.ZERO
+	get_tree().root.content_scale_factor = 1.0
 	NetfoxTicks.reset()
 
 
@@ -195,8 +200,12 @@ func test_without_a_screen_watch_creates_no_hud() -> void:
 	_match.watch(_fighter)
 	assert_object(_match.camera_rig).is_not_null()
 	assert_object(_match.hud).is_null()
+	# Nor the options screen, created with the HUD (TASK-10.9).
+	assert_object(_match.options_screen).is_null()
 	for node: Node in _match.find_children("*", "CanvasLayer", true, false):
 		assert_bool(node is Hud).override_failure_message("a Hud under the Match").is_false()
+		var screen := node is OptionsScreen
+		assert_bool(screen).override_failure_message("an options screen under the Match").is_false()
 
 
 # Criterion 7 of TASK-10.4: from the dash's start until the next may start, 200 ms of dash and
@@ -534,3 +543,40 @@ func test_on_a_corner_the_shoulder_does_not_see_the_ring_shows_no_dot() -> void:
 	hud.show_at(SPENT_AT)
 	assert_bool(hud.shows_reticle_dot()).override_failure_message("the corner showed a dot") \
 			.is_false()
+
+
+# Criterion 2 of TASK-10.9: the interface's scale, from 0.8 to 1.5 (DEC-0031 §8), multiplies the
+# whole HUD, and on a 1080p window, with the camera free, the ring still sits at the screen's
+# centre within a pixel, on the ray's point, and the bar and both cooldown rows stay inside the
+# screen. With the canvas_items stretch the scale shrinks or grows the visible rect, the HUD's own
+# pixels, and unproject_position answers in that rect too, so the reticle needs no conversion.
+func test_at_every_scale_the_ring_stays_centred_and_the_rows_inside_the_screen(
+	factor: float,
+	_test_parameters := [[0.8], [1.0], [1.5]],
+) -> void:
+	_window_before = get_tree().root.size
+	get_tree().root.size = Vector2i(1920, 1080)
+	get_tree().root.content_scale_factor = factor
+	var hud := await _hud_before_the_target()
+	var camera := _match.camera_rig
+	_aim(camera, TARGET_POINT)
+	# Both cooldowns showing: their rows at full width.
+	_fighter.state.dash_tick = SPENT_AT
+	_fighter.state.grapple_end_tick = SPENT_AT
+	await _settle()
+	hud.show_at(SPENT_AT + 1)
+	assert_bool(hud.shows_dash_cooldown()).is_true()
+	assert_bool(hud.shows_grapple_cooldown()).is_true()
+	var screen := hud.get_viewport().get_visible_rect()
+	var expected_size := Vector2(1920, 1080) / factor
+	assert_vector(screen.size).is_equal_approx(expected_size, Vector2.ONE * 0.5)
+	var ring := _ring_centre(hud)
+	_assert_near(ring, _screen_centre(hud), "the camera free at the scale %s" % factor)
+	_assert_near(ring, camera.camera.unproject_position(TARGET_POINT), "the ray's point")
+	for row: String in ["GrappleRow", "DashRow", "ModeLabel", "StaminaRow"]:
+		var node := hud.get_node(NodePath("Frame/Rows/%s" % row))
+		assert(node is Control, "each row of the HUD is a Control")
+		var rect := (node as Control).get_global_rect()
+		var where := "%s at %s, the screen %s, the scale %s" % [row, rect, screen, factor]
+		assert_bool(screen.encloses(rect)).override_failure_message(where).is_true()
+		assert_float(rect.size.x).override_failure_message(where).is_greater(0.0)

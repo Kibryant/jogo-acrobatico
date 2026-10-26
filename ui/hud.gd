@@ -250,7 +250,9 @@ func _show_grapple_cooldown(tick: int) -> void:
 # The dot: a press now, on netfox's next tick, could fire by the core's own rule, and the ray
 # finds the world within the grapple's reach of O. The ray only asks the physics space: nothing of
 # it goes into the state. With the canvas_items stretch, unproject_position gives the point in the
-# viewport's visible rect, the base the HUD's own pixels are in, so it needs no conversion.
+# viewport's visible rect, the base the HUD's own pixels are in, so it needs no conversion, at any
+# scale of the interface too: content_scale_factor resizes that rect, and both follow it
+# (TASK-10.9).
 func _show_reticle(tick: int) -> void:
 	var dot := false
 	if _camera != null:

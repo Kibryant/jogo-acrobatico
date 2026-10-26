@@ -8,6 +8,7 @@ extends Node3D
 const ARENA_SCENE := preload("res://arena/arena.tscn")
 const FIGHTER_SCENE := preload("res://fighter/fighter.tscn")
 const CAMERA_RIG_SCENE := preload("res://fighter/camera_rig.tscn")
+const OPTIONS_SCREEN_SCENE := preload("res://ui/options/options_screen.tscn")
 const MOVEMENT_DATA_PATH := "res://data/movement_v0.tres"
 const CAMERA_DATA_PATH := "res://data/camera_v0.tres"
 ## spawn_fighter() without a first tick: netfox picks it.
@@ -33,6 +34,13 @@ var camera_rig: CameraRig
 ## The HUD of whoever plays on this PC; null until watch(), and always null without a screen, as
 ## on the dedicated server and in headless runs (TASK-10.2).
 var hud: Hud
+## The player's options: the keys, the mouse's sensitivity and the interface's scale (TASK-10.9).
+## The Main sets the ones it read from the player's file before the match enters the tree; left
+## null, the match takes the defaults, and an options screen would save them to user://options.cfg.
+var options: OptionsStore
+## The options screen of whoever plays on this PC, created with the HUD; null until watch(), and
+## always null without a screen (TASK-10.9).
+var options_screen: OptionsScreen
 ## The bot that plays on this PC; null unless let_bot_play().
 var bot: BotPlayer
 ## The cues of every fighter's maneuvers, played once per event (DEC-0031 §6; TASK-10.4). They
@@ -58,6 +66,8 @@ func _ready() -> void:
 	)
 	config = MovementConfig.create(movement_data, NetworkTime.tickrate)
 	camera_data = _load_camera_data()
+	if options == null:
+		options = OptionsStore.new()
 	var node := ARENA_SCENE.instantiate()
 	assert(node is Arena, "arena.tscn must have an Arena at its root")
 	arena = node as Arena
@@ -139,18 +149,24 @@ func remove_fighter(slot: int) -> void:
 		if hud != null:
 			hud.queue_free()
 			hud = null
+		if options_screen != null:
+			options_screen.queue_free()
+			options_screen = null
 		if bot != null:
 			bot.queue_free()
 			bot = null
 	fighter.queue_free()
 
 
-# The camera of whoever plays fighter on this PC, this PC's keyboard and mouse on its input, and,
-# with a screen, the HUD of its stamina and mode (TASK-10.2). Without one nobody would see it.
+# The camera of whoever plays fighter on this PC, turning at the player's sensitivity, this PC's
+# keyboard and mouse on its input, and, with a screen, the HUD of its stamina and mode (TASK-10.2)
+# and the options screen the Esc opens (TASK-10.9). Without one nobody would see them.
 func watch(fighter: Fighter) -> CameraRig:
 	_follow(fighter, true)
+	options.apply_sensitivity(camera_rig)
 	fighter.input.use_devices(camera_rig)
 	_show_hud(fighter)
+	_show_options(fighter)
 	return camera_rig
 
 
@@ -202,6 +218,16 @@ func _show_hud(fighter: Fighter) -> void:
 		add_child(hud)
 	if hud != null:
 		hud.follow(fighter, config, camera_rig)
+
+
+func _show_options(fighter: Fighter) -> void:
+	if options_screen == null and has_screen():
+		var node := OPTIONS_SCREEN_SCENE.instantiate()
+		assert(node is OptionsScreen, "options_screen.tscn must have an OptionsScreen at its root")
+		options_screen = node as OptionsScreen
+		add_child(options_screen)
+	if options_screen != null:
+		options_screen.follow(fighter.input, camera_rig, options)
 
 
 # A camera on fighter, looking where it looks; with takes_mouse, the mouse turns it.

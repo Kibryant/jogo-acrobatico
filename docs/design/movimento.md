@@ -1,6 +1,6 @@
 ---
 revisado_em: 2026-10-26
-fontes: [F-001, F-012, F-013, F-015, F-084, F-086, F-088, F-100, F-108, F-109, F-121, F-122, F-127, F-128, F-129, F-131, F-132, F-135, F-136, F-140, F-141, F-146, F-147, F-148, F-151, F-152, F-153]
+fontes: [F-001, F-012, F-013, F-015, F-084, F-086, F-088, F-100, F-108, F-109, F-121, F-122, F-127, F-128, F-129, F-131, F-132, F-135, F-136, F-140, F-141, F-146, F-147, F-148, F-151, F-152, F-153, F-161]
 ---
 
 # Movimento
@@ -174,7 +174,7 @@ Cada número tem uma origem, e nem todos têm a mesma firmeza; a vitrine mostra 
 | Campo de visão | 70 | ° na vertical | ≈ 102° na horizontal em 16:9; o Godot mede na vertical |
 | Colisão | sim, em duas etapas | — | Para trás, do pivô até 3,5 m, e depois para o lado, até o ombro; as duas só contra o cenário. Uma parede atrás aproxima a câmera; uma parede ao lado, como na corrida na parede, desliza o ombro para o centro e a câmera fica a 3,5 m (vitrine "A mira no ombro"). Leitura v0 do Claude (TASK-10.11; DEC-0045) |
 | Margem da colisão | 0,3 | m | Cada etapa para antes da parede, para o plano próximo da câmera (5 cm) não cortá-la. Leitura v0 do Claude (TASK-10.11) |
-| Sensibilidade padrão | 0,06 | ° por pixel do mouse | Ajuste do jogador |
+| Sensibilidade padrão | 0,06 | ° por pixel do mouse | Ajuste do jogador, na tela de opções: de 0,02 a 0,20, de 0,005 em 0,005, uma volta de 57 cm a 5,7 cm a 800 DPI. Escolha do Arthur (F-161); faixa v0 do Claude (TASK-10.9) |
 | Inclinação máxima | 80 | ° para cima e para baixo | Leitura v0 do Claude (DEC-0017): sem limite, a câmera vira de ponta-cabeça (TASK-9) |
 
 ## Métricas de nível (derivadas)

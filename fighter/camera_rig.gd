@@ -33,6 +33,15 @@ var pitch := 0.0
 ## False for a rig that only follows, as the camera of a bot (BotPlayer): it neither captures the
 ## mouse nor turns with it, so a player can use another window beside this one (TASK-9, part 2).
 var takes_mouse := true
+## Degrees per screen pixel of the mouse: camera_v0.tres's at setup(), then the player's, from the
+## options, at any moment (F-161; movimento.md, "Câmera").
+var sensitivity_deg_per_px := 0.0:
+	set(value):
+		sensitivity_deg_per_px = value
+		_turn_per_pixel = deg_to_rad(value)
+## True while a screen over the game holds the mouse, as the options screen does (TASK-10.9): the
+## mouse shows, a click does not capture it and a motion does not turn the camera.
+var mouse_free := false
 
 ## Rotates with the pitch and pulls the camera in when a wall is behind: the first step.
 @export var arm: SpringArm3D
@@ -54,7 +63,7 @@ func setup(data: CameraData, target: Node3D, start_yaw: float, mouse := true) ->
 	takes_mouse = mouse
 	_target = target
 	_pivot_height = data.pivot_height_m
-	_turn_per_pixel = deg_to_rad(data.sensitivity_deg_per_px)
+	sensitivity_deg_per_px = data.sensitivity_deg_per_px
 	_max_pitch = deg_to_rad(data.max_pitch_deg)
 	yaw = start_yaw
 	pitch = 0.0
@@ -101,20 +110,34 @@ func turn(screen_pixels: Vector2) -> void:
 	pitch = clampf(pitch - screen_pixels.y * _turn_per_pixel, -_max_pitch, _max_pitch)
 
 
-# The mouse is captured while playing; Esc releases it and a click captures it again.
-func _unhandled_input(event: InputEvent) -> void:
-	if not takes_mouse:
-		return
-	if event.is_action_pressed(&"ui_cancel"):
+# A screen over the game takes the mouse: it shows, and the camera stands still (TASK-10.9).
+func free_mouse() -> void:
+	mouse_free = true
+	if takes_mouse:
 		Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
-		get_viewport().set_input_as_handled()
-	elif _is_left_click(event) and not _is_captured():
+
+
+# The screen over the game gives the mouse back: captured, it turns the camera again.
+func take_mouse() -> void:
+	mouse_free = false
+	if takes_mouse:
+		Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
+
+
+# The mouse is captured while playing. The options screen opens and closes with the Esc and holds
+# the mouse meanwhile (OptionsScreen); with it closed, a click captures a mouse that got away, as
+# after switching windows.
+func _unhandled_input(event: InputEvent) -> void:
+	if not takes_mouse or mouse_free:
+		return
+	if _is_left_click(event) and not _is_captured():
 		Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
 		get_viewport().set_input_as_handled()
 	elif event is InputEventMouseMotion and _is_captured():
 		var motion := event as InputEventMouseMotion
 		# screen_relative is in the screen's pixels, unscaled by the 1920 x 1080 base of the
-		# interface, so the 0.06 degrees per pixel hold at any window size.
+		# interface and by its scale (content_scale_factor), so the degrees per pixel hold at any
+		# window size and any scale of the options.
 		turn(motion.screen_relative)
 
 

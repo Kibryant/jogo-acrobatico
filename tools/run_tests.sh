@@ -59,5 +59,24 @@ if [ "$status" -eq 0 ]; then
 		fi
 	fi
 	echo "user://replays/ untouched by the tests: ${replays:-not checked}"
+	# The player's options file gets the same guard (TASK-10.9): a test prints where
+	# user://options.cfg is (test/ui/options/options_store_test.gd), and the tests write their
+	# options in temporary files.
+	anchor='options: user://options.cfg is '
+	options_file="$(sed -e "s/${esc}\[[0-9;]*[A-Za-z]//g" -e 's/\r$//' "$log" |
+		grep -m 1 -F "$anchor" | sed -e "s|^.*${anchor}||" || true)"
+	if [ -z "$options_file" ] && [ "$#" -eq 0 ]; then
+		echo "no test said where user://options.cfg is (test/ui/options/options_store_test.gd): the"
+		echo "check that the gate never writes there has no file to check (TASK-10.9)"
+		exit 1
+	fi
+	if [ -n "$options_file" ] && [ -e "$options_file" ] && [ "$options_file" -nt "$stamp" ]; then
+		echo "$options_file"
+		echo "the tests wrote the player's options file (TASK-10.9): give the OptionsStore, or the"
+		echo "Main's options_path, a temporary file. If the game ran on this PC during the run and"
+		echo "its options changed, run the gate again."
+		exit 1
+	fi
+	echo "user://options.cfg untouched by the tests: ${options_file:-not checked}"
 fi
 exit "$status"

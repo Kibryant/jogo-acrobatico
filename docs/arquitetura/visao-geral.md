@@ -203,6 +203,7 @@ flowchart TB
   match --> fighters["Fighter × N<br/>2 no 1v1, 16 no 8v8"]
   match --> cam["CameraRig<br/>só para o lutador de quem joga"]
   match --> hud["Hud<br/>só com tela: a stamina, o modo, as recargas<br/>do dash e do gancho e a mira"]
+  match --> options["OptionsScreen<br/>só com tela: o Esc abre as teclas,<br/>a sensibilidade e a escala (TASK-10.9)"]
   match --> cues["ManeuverCues<br/>os sinais das manobras; desenham só com tela"]
 ```
 

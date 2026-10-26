@@ -1,6 +1,6 @@
 ---
 revisado_em: 2026-10-26
-fontes: [F-050, F-051, F-052, F-053, F-054, F-056, F-058, F-059, F-061, F-062, F-063, F-100, F-121, F-122, F-137, F-139, F-140, F-141, F-146, F-147, F-148, F-152, F-153, F-156, F-157, F-158]
+fontes: [F-050, F-051, F-052, F-053, F-054, F-056, F-058, F-059, F-061, F-062, F-063, F-100, F-121, F-122, F-137, F-139, F-140, F-141, F-146, F-147, F-148, F-152, F-153, F-156, F-157, F-158, F-161, F-162]
 ---
 
 # Visual e áudio
@@ -269,6 +269,20 @@ A cara "Dia claro", escolhida pelo Arthur na vitrine "A cara da arena" (F-158), 
 
 - **O céu quase não aparece:** a borda de 50 m o esconde de quase todo ponto da arena. Ele ainda conta, porque é ele que pinta a luz ambiente.
 - **Os 60 fps em 1080p** no PC do Arthur seguem valendo, medidos com o `tools/measure_fps.sh` (DEC-0002).
+
+### A tela de opções (TASK-10.9)
+
+A tela que a DEC-0031 §8 promete a quem joga, com as escolhas do Arthur (F-161) e as leituras v0 do Claude (DEC-0017). Vitrine "A tela de opções".
+
+- **Onde abre:** com o Esc, no Sozinho e online, onde quem joga tem tela; por cima do jogo e do HUD. O Esc ou o botão "Fechar (Esc)" fecham.
+- **Aberta:** o jogo não pausa; o lutador de quem joga fica parado, porque as teclas vão para a tela; o mouse aparece. Fechada, o mouse volta para a câmera (F-161).
+- **O layout:** o título "Opções" e três grupos, nesta ordem. Teclas: "Andar para a frente", "Andar para trás", "Andar para a esquerda", "Andar para a direita", "Pular", "Dash" e "Gancho", cada uma com o rótulo da sua tecla. Mouse: "Sensibilidade". Interface: "Escala". Embaixo, "Voltar ao padrão" e "Fechar (Esc)".
+- **O rótulo da tecla:** o da tecla física no teclado ativo (`DisplayServer.keyboard_get_label_from_physical`): o lugar do W mostra "Z" num teclado francês. Os botões do mouse aparecem como "Mouse 3" (o do meio), "Mouse 4" e "Mouse 5" (os laterais).
+- **Remapear:** clicar numa tecla mostra "Aperte a nova tecla para <ação>. O Esc cancela."; a próxima tecla, ou o botão do meio ou um lateral do mouse, toma o lugar. O esquerdo e o direito do mouse não valem: ficam para o combate. Uma tecla que já é de outra ação não troca, e a tela diz "<tecla> já é de <ação>. Escolha outra tecla ou troque <ação> primeiro."
+- **A sensibilidade:** de 0,02 a 0,20 grau por pixel, de 0,005 em 0,005, com o padrão 0,06 (`movimento.md`, "Câmera"); ao lado, "Uma volta inteira com uns N cm de mouse, a 800 DPI", com N = 360 ÷ sensibilidade ÷ 800 × 2,54, arredondado.
+- **A escala:** de 0,8 a 1,5, de 0,1 em 0,1, com o padrão 1,0, pelo `content_scale_factor` (DEC-0031 §8). Multiplica a barra, os textos, as recargas e a mira; a mira segue no centro da tela com a câmera livre.
+- **Vale na hora e fica salvo:** toda mudança aplica e grava no `user://options.cfg`. Uma entrada ruim volta ao padrão, com um aviso no log; "Voltar ao padrão" restaura tudo.
+- **O visual:** o Theme único e as chaves do `GameText`, em pt-BR e en (DEC-0031 §8). Nenhum ativo novo (DEC-0029).
 
 ## Em aberto
 

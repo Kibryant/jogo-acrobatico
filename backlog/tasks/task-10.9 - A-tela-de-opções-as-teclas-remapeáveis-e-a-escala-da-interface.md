@@ -1,10 +1,10 @@
 ---
 id: TASK-10.9
 title: 'A tela de opções: as teclas remapeáveis e a escala da interface'
-status: Ready
+status: In Progress
 assignee: []
 created_date: '2026-10-19 13:47'
-updated_date: '2026-10-26 20:38'
+updated_date: '2026-10-26 20:40'
 labels:
   - jogo
 milestone: m-1

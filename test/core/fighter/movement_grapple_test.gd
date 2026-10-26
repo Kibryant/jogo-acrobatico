@@ -903,7 +903,10 @@ func _first_contact_index(rig: MovementRig, record: GrappleRecord, id: StringNam
 	var last := record.pull_ticks() - 1
 	for index: int in record.pull_ticks():
 		var end := record.release_start if index == last else record.starts[index + 1]
-		if absf(wall.distance(end)) <= MovementRig.WALL_PROBE_DISTANCE:
+		# On the plane itself, where the rig clamped a move that crossed it: a tick ending a hair
+		# short of the wall (the pull tilts up after the fall while the cable flies) is no contact
+		# (F-143).
+		if absf(wall.distance(end)) <= MovementRig.LANDING_HAIR:
 			return index
 	return -1
 

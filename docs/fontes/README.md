@@ -146,3 +146,4 @@ O que chegou ao projeto e como chegou. Uma fonte não muda: só mudam `status`, 
 | [F-140](F-140-arthur-abre-a-task-10-6-e-escolhe-a-conferencia-aberta.md) | 2026-10-24 | O Arthur abre a TASK-10.6, escolhe o Q para o gancho, erra três conferências de múltipla escolha pela primeira opção, acerta a aberta e escolhe a conferência aberta |
 | [F-141](F-141-arthur-aprova-o-plano-do-gancho.md) | 2026-10-24 | O Arthur acerta por que o núcleo pede o raio e aprova o plano da TASK-10.6, o gancho, no plan mode |
 | [F-142](F-142-arthur-registra-o-apelo-pelo-arco-duas-espadas-e-sniper.md) | 2026-10-24 | O Arthur registra o apelo pelo arco, pelas duas espadas e pelo sniper, para depois |
+| [F-143](F-143-arthur-libera-a-correcao-do-teste-da-parede-que-para-a-puxada.md) | 2026-10-26 | O Arthur libera a correção de uma linha no teste travado da parede que para a puxada |

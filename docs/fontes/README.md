@@ -154,3 +154,5 @@ O que chegou ao projeto e como chegou. Uma fonte não muda: só mudam `status`, 
 | [F-148](F-148-arthur-aprova-o-plano-da-mira-no-ombro.md) | 2026-10-26 | O Arthur aprova o plano da mira no ombro no modo de plano |
 | [F-149](F-149-arthur-joga-a-mira-no-ombro.md) | 2026-10-26 | O Arthur joga a mira no ombro, diz que "deu pra mirar melhor" e "ficou massa", sente a câmera "um pouco antinatural" na parede e no dash, quer ver com um oponente, e pergunta pela escalada vertical |
 | [F-150](F-150-arthur-libera-fechar-a-mira-no-ombro.md) | 2026-10-26 | O Arthur libera fechar a TASK-10.11 com diário, push, PR e merge |
+| [F-151](F-151-arthur-responde-a-conferencia-da-cabeca.md) | 2026-10-26 | O Arthur responde à conferência da cabeça do outro: com o pulo duplo guardado, ele sai, porque a cabeça conta como ar |
+| [F-152](F-152-arthur-escolhe-proibir-a-cabeca-sem-plataforma-e-com-rastro.md) | 2026-10-26 | O Arthur escolhe começar a Q-16 proibida, tirar o outro lutador das plataformas e dar ao escorregão o rastro curto |

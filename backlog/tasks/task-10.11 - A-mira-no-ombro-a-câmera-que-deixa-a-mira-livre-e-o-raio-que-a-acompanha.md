@@ -4,7 +4,7 @@ title: 'A mira no ombro: a câmera que deixa a mira livre e o raio que a acompan
 status: In Progress
 assignee: []
 created_date: '2026-10-26 14:09'
-updated_date: '2026-10-26 16:01'
+updated_date: '2026-10-26 16:24'
 labels:
   - jogo
 milestone: m-1
@@ -48,14 +48,14 @@ Confirmadas pelo Arthur (F-147):
 - [x] #1 Quando o jogador mira o gancho, o próprio corpo não cobre a mira: a câmera fica por cima do ombro, e o centro da tela mostra o ponto que o raio vai achar (F-144; F-145)
 - [x] #2 Quando o raio da mira sai, ele passa pelo centro da tela, e o servidor refaz a mesma conta sem câmera, pelo estado, pelo input e pelos dados (DEC-0044)
 - [x] #3 Quando a sonda do raio e a SyncTest rodam com a câmera nova, dão zero divergência (rede.md §4 e §8)
-- [ ] #4 Quando o Arthur joga o gancho nas torres e no pilar, a mira mostra onde ele vai prender, e o que ele sentiu vai para uma fonte (F-041)
+- [x] #4 Quando o Arthur joga o gancho nas torres e no pilar, a mira mostra onde ele vai prender, e o que ele sentiu vai para uma fonte (F-041)
 - [x] #5 Quando o raio da mira acha um ponto que o ombro não vê (uma quina entre o ombro e o ponto), o gancho não prende e a mira não ganha o ponto (F-147)
 - [x] #6 Quando uma parede fica à direita do corpo, como na corrida na parede, a câmera fica a 3,5 m e o ombro desliza para o centro, sem entrar na parede; quando a câmera é empurrada por uma parede, a mira na tela acompanha o raio (F-147)
 <!-- AC:END -->
 
 ## Definition of Done
 <!-- DOD:BEGIN -->
-- [ ] #1 Critérios de aceite verificados
+- [x] #1 Critérios de aceite verificados
 - [x] #2 Teste automatizado para toda regra do núcleo (core/)
 - [ ] #3 Diário da sessão escrito e glossário atualizado
 - [x] #4 Mudanças registradas em docs/mudancas.md

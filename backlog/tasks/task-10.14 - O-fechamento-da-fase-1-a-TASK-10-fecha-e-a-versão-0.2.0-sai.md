@@ -4,10 +4,12 @@ title: 'O fechamento da fase 1: a TASK-10 fecha e a versão 0.2.0 sai'
 status: To Refine
 assignee: []
 created_date: '2026-10-26 23:04'
+updated_date: '2026-10-26 23:44'
 labels: []
 dependencies:
   - TASK-10.8
   - TASK-10.13
+  - TASK-10.15
 parent_task_id: TASK-10
 ordinal: 23000
 ---
@@ -16,10 +18,10 @@ ordinal: 23000
 
 <!-- SECTION:DESCRIPTION:BEGIN -->
 ### Por quê
-A fase 1 termina quando o teste dela passa (DEC-0028 §3), e o teste passou: o Arthur continuaria jogando (F-166 §2). Antes de fechar, ele pediu a regra da mesma parede (TASK-10.13) e a medida dos cantos da borda (TASK-10.8) (F-167 §2). Esta filha fecha a TASK-10 depois delas, sobe a versão para 0.2.0 e publica a segunda release, pública (F-165 §1).
+A fase 1 termina quando o teste dela passa (DEC-0028 §3), e o teste passou: o Arthur continuaria jogando (F-166 §2). Antes de fechar, ele pediu a regra da mesma parede (TASK-10.13) e a medida dos cantos da borda (TASK-10.8) (F-167 §2). A medida mostrou a saída da arena pelo canto, e o plano de morte virou a TASK-10.15. Esta filha fecha a TASK-10 depois das três, sobe a versão para 0.2.0 e publica a segunda release, pública (F-165 §1).
 
 ### Perguntas em aberto
-- Se a sonda do canto da TASK-10.8 mostrar que o Z passa dos 50 m da borda, o plano de morte vira filha da TASK-10 e entra nas dependências desta (F-167 §2).
+Nenhuma.
 
 ### Escolhas a confirmar
 Confirmadas pelo Arthur (F-165 §1; F-167 §2): a 0.2.0 é pública, com os builds e as notas em português tiradas do diário, e o push da tag espera o ok dele.

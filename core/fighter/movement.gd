@@ -168,6 +168,13 @@ static func after_move(
 	return next
 
 
+# Whether the body stands on a floor of its own (movimento.md, "O corpo": "A cabeça do outro";
+# TASK-10.7): the engine's floor, and not another fighter's head. Declared before the head rule
+# (TASK-10.7, round A): no rule asks it yet.
+static func stands(state: FighterState) -> bool:
+	return state.on_floor and state.slide_off_dir == Vector3.ZERO
+
+
 # The jump of the floor, before any jump of the flight: standing on the floor, or within the
 # coyote window after leaving a ledge without jumping (movimento.md, "Perdão"). A press on the
 # floor fires on its own tick; one made in the air fires on the first tick that starts on the

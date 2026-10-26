@@ -104,6 +104,9 @@ var aim_height: float
 # m to the right of the yaw, signed: from the shoulder to the point O, the camera's shoulder
 # (DEC-0045 §2). Negative is the left shoulder.
 var aim_side: float
+# m/s: the slide off another fighter's head (movimento.md, "O corpo": "Escorregar da cabeça";
+# TASK-10.7).
+var head_slide_speed: float
 
 
 # The jump is two parabolas sampled on the ticks: the body is at the apex, jump_height_m up, at
@@ -207,4 +210,6 @@ static func create(data: MovementData, tickrate: int) -> MovementConfig:
 	config.aim_height = data.aim_height_m
 	# A metre, not a time: copied as it is, sign included.
 	config.aim_side = data.aim_side_m
+	# A speed, not a time: copied as it is (TASK-10.7).
+	config.head_slide_speed = data.head_slide_speed_mps
 	return config

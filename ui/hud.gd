@@ -1,12 +1,13 @@
 # The HUD of whoever plays on this PC (TASK-10.2): the stamina as a bar with its number beside
 # it, the mode as text and, while the dash recharges, an arc with the tenths of a second left
 # (TASK-10.4), in the bottom-left corner; above it, the grapple's own arc and time (TASK-10.6);
-# and at the screen's centre the grapple's reticle, a ring that gains a dot when the Q would hook
-# now (visual-e-audio.md, "O gancho na tela"). It keeps no time of its own, no Timer and no
-# counter: every frame it reads the displayed state of the fighter it follows and netfox's tick,
-# computes the bar with Stamina.at and the arcs from the stamps, so a rollback that rewrites the
-# state rewrites the bar and the arcs with it (DEC-0031 §2; F-051 §3.4). The reticle's ray is the
-# screen's only: cast from the displayed body along the camera, it never enters the state. Nothing
+# and the grapple's reticle, a ring that gains a dot when the Q would hook now, where the aim's
+# ray shows on screen: the centre with the camera free (visual-e-audio.md, "O gancho na tela").
+# It keeps no time of its own, no Timer and no counter: every frame it reads the displayed state
+# of the fighter it follows and netfox's tick, computes the bar with Stamina.at and the arcs from
+# the stamps, so a rollback that rewrites the state rewrites the bar and the arcs with it
+# (DEC-0031 §2; F-051 §3.4). The reticle's ray is the screen's only: cast from the displayed
+# body's point O along the camera, it never enters the state. Nothing
 # shows by colour alone: below the cost of the double jump the number gains an underline, a shape
 # (DEC-0031 §2); the reticle's dot is a shape too. Its
 # look comes from the one Theme of the project (ui/theme/game_theme.tres, DEC-0031 §8): its nodes
@@ -142,8 +143,8 @@ func _init() -> void:
 	_low_mark.visible = false
 	mark_slot.add_child(_low_mark)
 
-	# The reticle at the screen's centre, where the ray from the shoulder goes with the camera
-	# centred (DEC-0044 §2).
+	# The reticle at the screen's centre, where the aim's ray from the point O goes with the camera
+	# free (DEC-0045 §2); with a camera, _show_reticle moves it to where the ray shows on screen.
 	_reticle.name = "Reticle"
 	_reticle.theme_type_variation = RETICLE_TYPE
 	_reticle.set_anchors_preset(Control.PRESET_CENTER)
@@ -240,18 +241,33 @@ func _show_grapple_cooldown(tick: int) -> void:
 	_grapple_cooldown.text = pattern.format({ "whole": whole, "tenth": tenths % 10 })
 
 
-# The dot shows when the Q would hook now (visual-e-audio.md, "O gancho na tela"): a press now,
-# on netfox's next tick, could fire by the core's own rule, and the ray of the screen, from the
-# displayed shoulder along the camera, finds the world within the grapple's reach. The ray only
-# asks the physics space: nothing of it goes into the state.
+# The ring sits where the aim's ray shows on screen, and its dot shows when the Q would hook now
+# (visual-e-audio.md, "O gancho na tela"). The ray of the screen leaves the displayed body's
+# point O along the camera (Fighter.aim_ray, with the corner's second ray): the ring goes where
+# the camera sees its end, the point it finds or, on a miss, the end of the grapple's range. With
+# the camera free its optical axis passes through O, so that is the screen's centre; when a wall
+# pushes the camera in, back or by the shoulder, the ring follows the ray instead (DEC-0045 §4).
+# The dot: a press now, on netfox's next tick, could fire by the core's own rule, and the ray
+# finds the world within the grapple's reach of O. The ray only asks the physics space: nothing of
+# it goes into the state. With the canvas_items stretch, unproject_position gives the point in the
+# viewport's visible rect, the base the HUD's own pixels are in, so it needs no conversion.
 func _show_reticle(tick: int) -> void:
 	var dot := false
-	if _camera != null and Movement.can_grapple(_fighter.state, tick, _config):
+	if _camera != null:
 		var feet := _fighter.global_position
-		var hit := _fighter.aim_ray(feet, _camera.yaw, _camera.pitch)
+		var yaw := _camera.yaw
+		var origin := Aim.origin(feet, yaw, _config.aim_height, _config.aim_side)
+		var far := origin + Aim.direction(yaw, _camera.pitch) * _config.grapple_range
+		var hit := _fighter.aim_ray(feet, yaw, _camera.pitch)
 		if not hit.is_empty():
 			var point: Vector3 = hit["position"]
-			dot = Movement.in_reach(point, feet, _config)
+			far = point
+			var can_fire := Movement.can_grapple(_fighter.state, tick, _config)
+			dot = can_fire and Movement.in_reach(point, feet, yaw, _config)
+		# A point behind the camera would unproject mirrored: the ring stays where it was.
+		var view := _camera.camera
+		if not view.is_position_behind(far):
+			_reticle.position = view.unproject_position(far) - RETICLE_SIZE / 2.0
 	if _reticle.dotted != dot:
 		_reticle.dotted = dot
 		_reticle.queue_redraw()
@@ -351,10 +367,10 @@ class CooldownArc:
 		draw_arc(center, radius, top, end, points, get_theme_color(&"arc_color"), thickness, true)
 
 
-# The grapple's reticle (visual-e-audio.md, "O gancho na tela"): a ring at the screen's centre in
-# the HUD's white over a dark translucent outline, and, when the Q would hook now, a dot in its
-# middle: a shape, not a colour (DEC-0031 §2). Its colours and stroke come from the Theme's
-# Reticle (DEC-0031 §8).
+# The grapple's reticle (visual-e-audio.md, "O gancho na tela"): a ring where the aim's ray shows
+# on screen, the centre with the camera free, in the HUD's white over a dark translucent outline,
+# and, when the Q would hook now, a dot in its middle: a shape, not a colour (DEC-0031 §2). Its
+# colours and stroke come from the Theme's Reticle (DEC-0031 §8).
 class Reticle:
 	extends Control
 

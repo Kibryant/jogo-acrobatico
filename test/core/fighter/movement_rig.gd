@@ -271,7 +271,8 @@ func step(input: TickInput) -> MovePlan:
 		facts.wall_normal = contact.normal
 		facts.wall_id = contact.id
 	# The feet after the move, on every tick, and the aim only on a tick whose plan asked for it:
-	# the adapter casts the ray from the shoulder after move_and_slide() (TASK-10.6 plan; DEC-0044).
+	# the adapter casts the ray from the point O after move_and_slide() (TASK-10.6 plan; DEC-0044;
+	# DEC-0045 §2).
 	facts.position = next
 	if plan.aim_request:
 		facts.aim_hit = aim_hit

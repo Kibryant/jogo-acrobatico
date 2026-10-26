@@ -87,8 +87,9 @@ var wall_lean: float
 var wall_lean_s: float
 
 # The grapple (movimento.md, "Gancho"). A point hooks from grapple_min_range to grapple_range off
-# the shoulder, aim_height above the feet; the cable flies grapple_attach_ticks, and the next one
-# may fire grapple_cooldown_ticks after the release.
+# the point O, aim_height above the feet and aim_side to the right of the yaw (Aim.origin;
+# DEC-0045 §2); the cable flies grapple_attach_ticks, and the next one may fire
+# grapple_cooldown_ticks after the release.
 var grapple_range: float # m
 var grapple_min_range: float # m
 var grapple_attach_ticks: int
@@ -98,8 +99,11 @@ var grapple_pull_speed: float
 var grapple_block_speed: float
 # m: the feet this close to the point release the hook.
 var grapple_release_distance: float
-# m above the feet: the shoulder the aim leaves from (DEC-0044 §3).
+# m above the feet: the shoulder, the height of the point O (DEC-0044 §3).
 var aim_height: float
+# m to the right of the yaw, signed: from the shoulder to the point O, the camera's shoulder
+# (DEC-0045 §2). Negative is the left shoulder.
+var aim_side: float
 
 
 # The jump is two parabolas sampled on the ticks: the body is at the apex, jump_height_m up, at
@@ -201,4 +205,6 @@ static func create(data: MovementData, tickrate: int) -> MovementConfig:
 	config.grapple_block_speed = data.grapple_pull_speed_mps * data.grapple_block_pct / 100.0
 	config.grapple_release_distance = data.grapple_release_distance_m
 	config.aim_height = data.aim_height_m
+	# A metre, not a time: copied as it is, sign included.
+	config.aim_side = data.aim_side_m
 	return config

@@ -52,8 +52,8 @@ const DASH_AFTER := 30
 const GRAPPLE_EVERY := 135
 const GRAPPLE_AFTER := 40
 ## rad: the camera looks down between PITCH_LOW and PITCH_HIGH, on a wave of PITCH_WAVE rad a loop:
-## from the shoulder, 1,6 m up, the ray meets the floor 5,3 to 15,9 m ahead, within the grapple's
-## reach (movimento.md, "Gancho": "Alcance").
+## from the point O, 1,6 m up and 0,8 m to the right, the ray meets the floor 5,3 to 15,9 m ahead,
+## within the grapple's reach (movimento.md, "Gancho": "Alcance"; DEC-0045 §2).
 const PITCH_HIGH := -0.1
 const PITCH_LOW := -0.3
 const PITCH_WAVE := 0.0731

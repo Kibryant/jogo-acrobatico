@@ -12,7 +12,8 @@
 ; The head ray and the lean on screen came on 2026-10-24 (TASK-10.10): the route still touches
 ; no wall in the air, and the lean is never in the state, so its trace did not move. The eight
 ; numbers of the grapple came on the same day (TASK-10.6): the route never presses the grapple,
-; so its trace did not move.
+; so its trace did not move. The aim's side came on 2026-10-26 (TASK-10.11): only the grapple's
+; aim reads it, so its trace did not move either.
 
 [ext_resource type="Script" path="res://data/movement_data.gd" id="1_yx5js"]
 
@@ -62,3 +63,4 @@ grapple_release_distance_m = 1.5
 grapple_block_pct = 50.0
 grapple_cooldown_ms = 6000
 aim_height_m = 1.6
+aim_side_m = 0.8

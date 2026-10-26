@@ -48,3 +48,4 @@ grapple_release_distance_m = 1.5
 grapple_block_pct = 50.0
 grapple_cooldown_ms = 6000
 aim_height_m = 1.6
+aim_side_m = 0.8

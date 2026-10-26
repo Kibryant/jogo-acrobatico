@@ -1,8 +1,9 @@
 # The camera numbers of docs/design/movimento.md, "Câmera", in the units of the paper: metres,
 # degrees and degrees per mouse pixel. A .tres of this class is design data, immutable at runtime;
-# the CameraRig reads it once, at setup. The camera is centred and collides with the world: those
-# two lines of the table are not numbers, so they live in the CameraRig. The defaults are zero on
-# purpose: the numbers live in the .tres (camera_v0.tres), never here.
+# the CameraRig reads it once, at setup. The camera sits over the right shoulder and collides with
+# the world in two steps, back and then sideways (DEC-0045 §1); that it collides is not a number,
+# so it lives in the CameraRig. The defaults are zero on purpose: the numbers live in the .tres
+# (camera_v0.tres), never here.
 class_name CameraData
 extends Resource
 
@@ -10,6 +11,13 @@ extends Resource
 @export var distance_m: float
 ## The pivot above the feet, at the shoulder (movimento.md, "Câmera").
 @export var pivot_height_m: float
+## The camera to the right of the pivot, at its height: positive is the right shoulder, negative
+## the left, 0 centred (movimento.md, "Câmera": "Ombro"; DEC-0045 §1). The aim's point O sits on
+## the same line, so MovementData.aim_side_m copies it, and a data test keeps the two equal.
+@export var shoulder_m: float
+## Each step of the camera's collision, back and sideways, stops this far before the wall
+## (movimento.md, "Câmera": "Margem da colisão").
+@export var collision_margin_m: float
 ## Godot measures the field of view vertically (movimento.md, "Câmera").
 @export var vertical_fov_deg: float
 ## The default; a player setting later (movimento.md, "Câmera").
@@ -26,6 +34,7 @@ func validate() -> PackedStringArray:
 	var checks: Array[String] = [
 		_positive_error("distance_m", distance_m, "a third-person camera sits behind the pivot"),
 		_not_negative_error("pivot_height_m", pivot_height_m, "the pivot sits on the body"),
+		_margin_error(),
 		_fov_error(),
 		_positive_error("sensitivity_deg_per_px", sensitivity_deg_per_px, "the mouse must turn"),
 		_pitch_error(),
@@ -44,6 +53,21 @@ func _fov_error() -> String:
 			"vertical_fov_deg is %s: a field of view is above 0 and below 180 degrees"
 			% vertical_fov_deg
 		)
+	return ""
+
+
+# The margin is a distance, and at the camera's distance or beyond no step could ever leave the
+# camera behind the pivot. Against a distance that is not positive, which has its own message,
+# only the sign is checked.
+func _margin_error() -> String:
+	if collision_margin_m < 0.0:
+		return (
+			"collision_margin_m is %s: the camera stops before the wall, never past it"
+			% collision_margin_m
+		)
+	if distance_m > 0.0 and collision_margin_m >= distance_m:
+		var why := "below distance_m (%s), or the camera never sits behind the pivot" % distance_m
+		return "collision_margin_m is %s: it must stay %s" % [collision_margin_m, why]
 	return ""
 
 

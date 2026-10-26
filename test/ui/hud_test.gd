@@ -11,6 +11,7 @@ extends GdUnitTestSuite
 
 const NetfoxTicks := preload("res://test/support/netfox_ticks.gd")
 const MATCH_SCENE := preload("res://match/match.tscn")
+const AimAt := preload("res://test/support/aim_at.gd")
 
 ## px at the 1920 x 1080 base: the full bar (visual-e-audio.md, "O HUD"; TASK-10.2).
 const FULL_BAR := Vector2(300, 12)
@@ -313,19 +314,18 @@ func _add_target() -> void:
 	_match.arena.add_child(wall)
 
 
-# Turns the camera so the ray from the fighter's shoulder goes through point.
+# Turns the camera so the aim's ray, leaving the fighter's point O, goes through point (DEC-0045 §2;
+# test/support/aim_at.gd).
 func _aim(camera: CameraRig, point: Vector3) -> void:
-	var shoulder := _fighter.global_position + Vector3.UP * _match.config.aim_height
-	var toward := (point - shoulder).normalized()
-	camera.yaw = atan2(-toward.x, -toward.z)
-	camera.pitch = asin(toward.y)
+	var feet := _fighter.global_position
+	camera.yaw = AimAt.yaw_to(feet, point, _match.config)
+	camera.pitch = AimAt.pitch_to(feet, point, _match.config)
 
 
-# The reticle (visual-e-audio.md, "O gancho na tela"): a 24 px ring at the screen's centre that
-# gains its dot when the Q would hook now: the screen's own ray, from the displayed shoulder along
-# the camera the Match gave, finds the world from 3 to 25 m, and the grapple can fire by the
-# core's rule, out of the dash, with no cable in the air and the cooldown over. The ray never
-# touches the state.
+# The reticle (visual-e-audio.md, "O gancho na tela"): a 24 px ring that gains its dot when the Q
+# would hook now: the screen's own ray, from the displayed point O along the camera the Match gave,
+# finds the world from 3 to 25 m of O, and the grapple can fire by the core's rule, out of the
+# dash, with no cable in the air and the cooldown over. The ray never touches the state.
 func test_the_reticle_gains_its_dot_when_the_q_would_hook_now() -> void:
 	_add_target()
 	_fighter.position = BEFORE_THE_TARGET
@@ -390,3 +390,143 @@ func test_the_reticle_gains_its_dot_when_the_q_would_hook_now() -> void:
 	hud.follow(_fighter, _match.config)
 	hud.show_at(SPENT_AT + cooldown + 1)
 	assert_bool(hud.shows_reticle_dot()).is_false()
+
+
+# A wall to the right of the fighter standing before the target, behind it, along the camera's
+# arm: its face 0,6 m right of the feet, from 1 m behind them to 8 m, 4 m tall. The arm stays free
+# and the shoulder stops 0,3 m before the face, about 0,73 m left of the free camera, so the aim's
+# ray from O shows right of the screen's centre. Behind the body, it is out of both rays' paths.
+const RIGHT_WALL_CENTRE := Vector3(29.1, 2, 36.5)
+const RIGHT_WALL_SIZE := Vector3(1, 4, 7)
+# The corner: a fin 0,2 m thick on the shoulder's line to the target, from z = 24 to 30, that the
+# ray from O, 0,8 m to the right at the body and closing in on the point, passes beside.
+const FIN_CENTRE := Vector3(28, 2.5, 27)
+const FIN_SIZE := Vector3(0.2, 5, 6)
+## px at the base: the ring's centre is within a pixel of where it should be.
+const PIXEL := 1.0
+
+
+func _add_box(box_name: String, centre: Vector3, size: Vector3) -> void:
+	var wall := StaticBody3D.new()
+	wall.name = box_name
+	wall.position = centre
+	var collision := CollisionShape3D.new()
+	var box := BoxShape3D.new()
+	box.size = size
+	collision.shape = box
+	wall.add_child(collision)
+	_match.arena.add_child(wall)
+
+
+# The HUD of the fighter standing before the target, with the camera the Match gave it, once the
+# walls and the body joined the physics space.
+func _hud_before_the_target() -> Hud:
+	_add_target()
+	_fighter.position = BEFORE_THE_TARGET
+	var camera := _match.watch(_fighter)
+	await get_tree().physics_frame
+	var hud: Hud = auto_free(Hud.new())
+	add_child(hud)
+	hud.follow(_fighter, _match.config, camera)
+	return hud
+
+
+# The camera follows the aim: the rig turns in its _process and the two arms reach their ends in
+# the physics step that comes after.
+func _settle() -> void:
+	await get_tree().process_frame
+	await get_tree().physics_frame
+	await get_tree().physics_frame
+	await get_tree().process_frame
+
+
+# The ring's centre, in the HUD's pixels.
+func _ring_centre(hud: Hud) -> Vector2:
+	var node := hud.get_node(^"Reticle")
+	assert(node is Control, "the reticle is a Control")
+	var ring := node as Control
+	return ring.position + ring.size / 2.0
+
+
+# The centre of the screen, in the HUD's pixels: the viewport's visible rect, the 1920 x 1080 base
+# with the canvas_items stretch, whatever the window (project.godot).
+func _screen_centre(hud: Hud) -> Vector2:
+	return hud.get_viewport().get_visible_rect().size / 2.0
+
+
+func _assert_near(found: Vector2, expected: Vector2, why: String) -> void:
+	var message := "%s: the ring at %s, expected %s" % [why, found, expected]
+	assert_float(found.distance_to(expected)).override_failure_message(message).is_less_equal(PIXEL)
+
+
+# Criterion 1 of TASK-10.11: with the camera free, the ring sits at the screen's centre, within a
+# pixel, and that is where the camera sees the point the aim's ray finds: the centre of the screen
+# shows the point the ray will find (DEC-0045 §2 and §4).
+func test_with_the_camera_free_the_ring_sits_at_the_screens_centre_on_the_rays_point() -> void:
+	var hud := await _hud_before_the_target()
+	var camera := _match.camera_rig
+	_aim(camera, TARGET_POINT)
+	await _settle()
+	hud.show_at(SPENT_AT)
+	assert_bool(hud.shows_reticle_dot()).override_failure_message("aimed at the wall").is_true()
+	var ring := _ring_centre(hud)
+	_assert_near(ring, _screen_centre(hud), "the camera free")
+	_assert_near(ring, camera.camera.unproject_position(TARGET_POINT), "the ray's point")
+
+
+# Criterion 6 of TASK-10.11: a wall to the right of the body pushes the shoulder in, the camera
+# slides toward the centre, and the ring follows the ray instead of the centre: it sits where the
+# camera sees the ray's point, more than 10 px right of the centre and level with it, and the dot
+# still says the Q would hook (DEC-0045 §4: the ray always leaves O).
+func test_when_a_wall_pushes_the_camera_in_the_ring_follows_the_ray() -> void:
+	var hud := await _hud_before_the_target()
+	_add_box("ParedeDaDireita", RIGHT_WALL_CENTRE, RIGHT_WALL_SIZE)
+	var camera := _match.camera_rig
+	_aim(camera, TARGET_POINT)
+	await _settle()
+	hud.show_at(SPENT_AT)
+	var data := _match.camera_data
+	var view := Basis(Vector3.UP, camera.yaw) * Basis(Vector3.RIGHT, camera.pitch)
+	var pivot := _fighter.global_position + Vector3.UP * data.pivot_height_m
+	var free_camera := pivot + view * Vector3(data.shoulder_m, 0, data.distance_m)
+	var pushed := (free_camera - camera.camera.global_position).dot(view.x)
+	var message := "the shoulder slid %.3f m toward the centre" % pushed
+	assert_float(pushed).override_failure_message(message).is_greater(0.5)
+	assert_bool(hud.shows_reticle_dot()).override_failure_message("aimed at the wall").is_true()
+	var ring := _ring_centre(hud)
+	_assert_near(ring, camera.camera.unproject_position(TARGET_POINT), "pushed, the ray's point")
+	var centre := _screen_centre(hud)
+	var right := "the ring is %.1f px right of the centre" % (ring.x - centre.x)
+	print("Reticle, a wall at the right: the shoulder slid %.3f m, %s" % [pushed, right])
+	assert_float(ring.x - centre.x).override_failure_message(right).is_greater(10.0)
+	assert_float(absf(ring.y - centre.y)).is_less_equal(PIXEL)
+
+
+# Criterion 5 of TASK-10.11: a point the shoulder does not see is no point. The ray from O finds the
+# target, but the fin stands between the shoulder and it, so the ring shows no dot: the reticle
+# never promises a hook the rule refuses (DEC-0045 §3).
+func test_on_a_corner_the_shoulder_does_not_see_the_ring_shows_no_dot() -> void:
+	var hud := await _hud_before_the_target()
+	_add_box("Quina", FIN_CENTRE, FIN_SIZE)
+	await get_tree().physics_frame
+	var camera := _match.camera_rig
+	_aim(camera, TARGET_POINT)
+	var config := _match.config
+	var feet := _fighter.global_position
+	var origin := Aim.origin(feet, camera.yaw, config.aim_height, config.aim_side)
+	var reach := Aim.direction(camera.yaw, camera.pitch) * config.grapple_range
+	var query := PhysicsRayQueryParameters3D.create(
+		origin,
+		origin + reach,
+		PhysicsLayers.WORLD,
+		[_fighter.get_rid()],
+	)
+	var first := _fighter.get_world_3d().direct_space_state.intersect_ray(query)
+	assert_bool(first.is_empty()).override_failure_message("the ray from O found nothing") \
+			.is_false()
+	if not first.is_empty():
+		var point: Vector3 = first["position"]
+		assert_vector(point).is_equal_approx(TARGET_POINT, Vector3.ONE * 1e-3)
+	hud.show_at(SPENT_AT)
+	assert_bool(hud.shows_reticle_dot()).override_failure_message("the corner showed a dot") \
+			.is_false()

@@ -107,9 +107,10 @@ const CHECKED_TICKRATES: Array[int] = [30, 60]
 @export var wall_lean_ms: int
 
 @export_group("Grapple")
-## The ray's length, measured from the shoulder along the aim (movimento.md, "Gancho": "Alcance").
+## The ray's length, measured from the point O along the aim (movimento.md, "Gancho": "Alcance";
+## DEC-0045 §2).
 @export var grapple_range_m: float
-## A point nearer the shoulder than this is a miss (movimento.md, "Gancho": "Alcance mínimo").
+## A point nearer O than this is a miss (movimento.md, "Gancho": "Alcance mínimo").
 @export var grapple_min_range_m: float
 ## The cable flies this long before the pull (movimento.md, "Gancho": "Tempo até prender").
 @export var grapple_attach_ms: int
@@ -123,10 +124,15 @@ const CHECKED_TICKRATES: Array[int] = [30, 60]
 @export var grapple_block_pct: float
 ## From a release until the next grapple may fire (movimento.md, "Gancho": "Recarga").
 @export var grapple_cooldown_ms: int
-## The shoulder the aim leaves from, above the feet: a copy of the camera's pivot height, which a
+## The aim's height above the feet, the shoulder: a copy of the camera's pivot height, which a
 ## data test keeps equal to camera_v0.tres (movimento.md, "Gancho": "De onde sai a mira";
 ## DEC-0044 §3).
 @export var aim_height_m: float
+## The point O, where the aim leaves from, this far to the right of the yaw from the shoulder: a
+## copy of the camera's shoulder, sign included (negative is the left one, 0 the shoulder itself),
+## which a data test keeps equal to camera_v0.tres (movimento.md, "Gancho": "De onde sai a mira";
+## DEC-0045 §2). No value of it is impossible.
+@export var aim_side_m: float
 
 
 # The data check, layer 3 of DEC-0027 §2: one message per impossible number, empty when every
@@ -223,7 +229,7 @@ func validate() -> PackedStringArray:
 		_grapple_release_distance_error(),
 		_range_error("grapple_block_pct", grapple_block_pct, 100.0, "a percentage"),
 		_time_error("grapple_cooldown_ms", grapple_cooldown_ms, false),
-		_positive_error("aim_height_m", aim_height_m, "the aim leaves the shoulder above the feet"),
+		_positive_error("aim_height_m", aim_height_m, "the aim leaves from above the feet"),
 	]
 	var errors := PackedStringArray()
 	for message: String in checks:

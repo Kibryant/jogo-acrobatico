@@ -10,9 +10,15 @@
 # jump (TASK-10.2; F-109; movimento.md, "Métricas de nível"), on free
 # floor, away from the reference route and the SyncTest's scenarios. South of the spawn points,
 # RéguaDoDash marks the floor every 4 m, a dash's length (movimento.md, "Dash"), from x = -10 to
-# x = 30: strips only seen, never collided with, to count a dash by eye (TASK-10.4). Everything
-# sits on PhysicsLayers.WORLD, Godot's default layer. The floor's top is y = 0, so a spawn point
-# at y = 0 stands on it.
+# x = 30: strips only seen, never collided with, to count a dash by eye (TASK-10.4). East of the
+# blocks, ParedeLonga, the corridor of CorredorOeste and CorredorLeste and its 3 m landing serve
+# the wall run (TASK-10.5). Past the blocks toward -Z, around z = -30 to -37, the grapple's pieces
+# (TASK-10.6; movimento.md, "Métricas de nível"): TorreA at x = -8 and TorreB at x = 12, both
+# 4 x 6 x 4 m centred at z = -30 with 16 m between their faces, more than the ≈ 7 m of the double
+# jump, so only the grapple crosses; and Pilar10m at x = 2 and z = -36, 2 x 10 x 2 m, whose top
+# only the grapple reaches. They stand on free floor, away from the reference route and the
+# SyncTest's scenarios, in the blocks' grey. Everything sits on PhysicsLayers.WORLD, Godot's
+# default layer. The floor's top is y = 0, so a spawn point at y = 0 stands on it.
 class_name Arena
 extends Node3D
 

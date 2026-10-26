@@ -162,3 +162,5 @@ O que chegou ao projeto e como chegou. Uma fonte não muda: só mudam `status`, 
 | [F-156](F-156-arthur-joga-a-cabeca-do-outro-e-quer-o-jogo-instagramavel.md) | 2026-10-26 | O Arthur joga a cabeça do outro, acha que "tá tudo bem do jeito que tá", gosta das paredes da borda e do boneco, acha o jogo "muito branco" e "pálido" e quer deixá-lo "mais instagramável", porque posta o projeto no Instagram como diário visual |
 | [F-157](F-157-arthur-fecha-a-cabeca-do-outro-e-pede-o-visual-como-proxima.md) | 2026-10-26 | O Arthur libera fechar a TASK-10.7 e escolhe uma task própria para o visual do jogo, a próxima, antes da tela de opções |
 | [F-158](F-158-arthur-escolhe-o-dia-claro.md) | 2026-10-26 | O Arthur escolhe a cara "Dia claro" para a arena e responde à conferência do contraste de valor |
+| [F-159](F-159-arthur-joga-o-dia-claro.md) | 2026-10-26 | O Arthur joga a arena com a cara do dia claro, acha que "ficou bem melhor", libera fechar a TASK-10.12 e grava o vídeo mais tarde |
+| [F-160](F-160-medicao-de-fps-com-a-cara-do-dia-claro.md) | 2026-10-26 | A medição de fps com a cara do dia claro: 153,04 fps de média e 116,84 nos 1% piores, em 1080p no PC do Arthur |

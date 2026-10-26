@@ -1,10 +1,10 @@
 ---
 id: TASK-10.12
 title: 'O visual da arena: o jogo bonito de ver, sem ativo novo'
-status: In Progress
+status: Done
 assignee: []
 created_date: '2026-10-26 19:31'
-updated_date: '2026-10-26 20:03'
+updated_date: '2026-10-26 20:25'
 labels:
   - jogo
 milestone: m-1
@@ -39,16 +39,22 @@ Confirmadas: nenhum ativo novo, só o céu procedural, a luz, a neblina e as cor
 
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
-- [ ] #1 Quando o Arthur abre o Sozinho, a arena tem a cara "Dia claro" da vitrine: o céu procedural, o sol, a luz do céu, o tonemapping, a neblina, os ajustes de cor e as cores do chão, das peças, das torres e do pilar e da borda com os números do `visual-e-audio.md`, e um teste de cena confere cada um (F-158)
-- [ ] #2 Quando dois lutadores estão na arena, o tom de quem joga fica mais claro que toda superfície do cenário e o do outro mais escuro que toda superfície, e um teste confere os tons contra as cores dos materiais (F-156 §3; F-158)
-- [ ] #3 Quando o visual novo roda no PC do Arthur, o `tools/measure_fps.sh` dá 60 fps de média em 1080p, e nenhum ativo novo entra no repositório (DEC-0002; DEC-0029)
-- [ ] #4 Quando o Arthur joga e grava um vídeo, o que ele sentiu vai para uma fonte (F-041)
+- [x] #1 Quando o Arthur abre o Sozinho, a arena tem a cara "Dia claro" da vitrine: o céu procedural, o sol, a luz do céu, o tonemapping, a neblina, os ajustes de cor e as cores do chão, das peças, das torres e do pilar e da borda com os números do `visual-e-audio.md`, e um teste de cena confere cada um (F-158)
+- [x] #2 Quando dois lutadores estão na arena, o tom de quem joga fica mais claro que toda superfície do cenário e o do outro mais escuro que toda superfície, e um teste confere os tons contra as cores dos materiais (F-156 §3; F-158)
+- [x] #3 Quando o visual novo roda no PC do Arthur, o `tools/measure_fps.sh` dá 60 fps de média em 1080p, e nenhum ativo novo entra no repositório (DEC-0002; DEC-0029)
+- [x] #4 Quando o Arthur joga e grava um vídeo, o que ele sentiu vai para uma fonte (F-041)
 <!-- AC:END -->
 
 ## Definition of Done
 <!-- DOD:BEGIN -->
-- [ ] #1 Critérios de aceite verificados
-- [ ] #2 Teste automatizado para toda regra do núcleo (core/)
-- [ ] #3 Diário da sessão escrito e glossário atualizado
-- [ ] #4 Mudanças registradas em docs/mudancas.md
+- [x] #1 Critérios de aceite verificados
+- [x] #2 Teste automatizado para toda regra do núcleo (core/)
+- [x] #3 Diário da sessão escrito e glossário atualizado
+- [x] #4 Mudanças registradas em docs/mudancas.md
 <!-- DOD:END -->
+
+## Final Summary
+
+<!-- SECTION:FINAL_SUMMARY:BEGIN -->
+A arena ganhou a cara "Dia claro" ajustada (F-158): céu procedural, luz do céu, Filmic, neblina leve e cores por grupo de peça, com quem joga mais claro e o outro mais escuro que toda superfície. 153 fps de média em 1080p no PC do Arthur (F-160). O Arthur aprovou jogando (F-159); o vídeo dele fica para mais tarde, por escolha dele.
+<!-- SECTION:FINAL_SUMMARY:END -->

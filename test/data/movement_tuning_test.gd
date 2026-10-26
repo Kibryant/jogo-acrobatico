@@ -1,11 +1,11 @@
 # Criterion 2 of TASK-10 (DEC-0017; DEC-0004, rule 3): a movement number changed in a copy of the
-# Resource changes the game without touching code. The double jump goes from 1,0 to 1,5 m on a
+# Resource changes the game without touching code. The double jump goes from 1.0 to 1.5 m on a
 # duplicate() of movement_v0.tres; the copy passes validate(), its configuration is made the way
 # the Match makes it at load (MovementConfig.create), and the top of a double jump, measured
-# through the simulation, is 1,5 m above the press within 1 cm at 60 ticks. The simulation is the
+# through the simulation, is 1.5 m above the press within 1 cm at 60 ticks. The simulation is the
 # core with the engine's slice of the tick played by MovementRig on a flat floor, as the movement
 # tests fly a body (test/core/fighter/movement_rig.gd). The cached movement_v0.tres still says
-# 1,0 m afterwards, and its own configuration still tops 1,0 m: the copy never reaches it. It
+# 1.0 m afterwards, and its own configuration still tops 1.0 m: the copy never reaches it. It
 # prints the measured top for the docs.
 extends GdUnitTestSuite
 

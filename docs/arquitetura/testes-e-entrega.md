@@ -284,6 +284,7 @@ O plano Free não impõe nada disso: o pre-push continua sendo a trava, e o CI n
 - **O tempo do portão:** na TASK-9, ele levou de 61 a 114 s neste PC, conforme o PC estava quieto ou ocupado, contra o limite de 90 s do pre-push (DEC-0027). Os passos que mais pesam são o import e os testes; a referência soma uns 1,1 s.
   - Na TASK-10.1, medido em silêncio: 72 s na rodada A, 76 s na rodada B e 78 s no fechamento, com os testes em uns 34 s, contra os 90 s (DEC-0027 §1).
   - Na TASK-10.4: 165 s na rodada A, com o PC ocupado (os testes em 134 s), e 113 s na rodada B, com o PC quieto (os testes em 79 s). Passa dos 90 s do pre-push nos dois; a divisão do CI da DEC-0027 §4 volta ao Arthur como DEC se ficar assim. Com o PC ocupado, o revisor mediu 103 s e 116 s, com a SyncTest de 4 s subindo para 6 a 11 s: o pre-push de quem trabalha com outra coisa aberta pode passar do limite. A divisão do CI da DEC-0027 §4 ainda não precisou entrar.
+  - Na TASK-10.8: 369 s, com o PC quieto (CPU a 1 %), os testes em 5 min 28 s e 1.453 casos: quatro vezes os 90 s do pre-push. A divisão da DEC-0027 §4 volta ao Arthur (Q-46).
 - **Q-20:** a assinatura do `.exe`, antes de alguém de fora testar.
 - **Canários** para o formato, o lint, as travas, o import e o log limpo, se um furo aparecer ali.
 - **Um job do CI fora do pre-push,** quando uma camada não couber nos 90 s.

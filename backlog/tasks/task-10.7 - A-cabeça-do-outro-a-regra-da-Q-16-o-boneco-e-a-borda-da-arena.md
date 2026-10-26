@@ -4,7 +4,7 @@ title: 'A cabeça do outro: a regra da Q-16, o boneco e a borda da arena'
 status: In Progress
 assignee: []
 created_date: '2026-10-19 13:47'
-updated_date: '2026-10-26 18:35'
+updated_date: '2026-10-26 19:21'
 labels:
   - jogo
 milestone: m-1
@@ -49,21 +49,21 @@ Fechados pelo Claude (DEC-0017), mostrados na vitrine; vão para o `movimento.md
 
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
-- [ ] #1 Quando um lutador cai sobre a cabeça de outro, o núcleo não conta o topo da cápsula como chão: ele fica no ar, sem pulo do chão nem dash, sem renovar o pulo, o pulo duplo nem a última parede e sem coyote, com o pulo duplo guardado e o gancho saindo como no ar, e escorrega para fora a 3 m/s (`head_slide_speed_mps`), saindo da cabeça em até 12 ticks a 60 contados do tick seguinte ao pouso; de lado, o choque segue como o empurrão da TASK-9 (leitura do Claude para a Q-16, a confirmar jogando; F-152; `pendencias.md`, Q-16)
-- [ ] #2 Quando a sonda C roda o código de antes da regra com o rollback de 7 ticks e um lutador dando pulo duplo sobre a cabeça do outro, ela anota quantas divergências e o erro máximo, se o snap segura o de cima no domo, quantos ticks na cabeça o motor diz chão sem colisão do movimento, se a normal do chão sai igual no tick novo e no refeito, e a velocidade de plataforma antes e depois de `platform_floor_layers`, só no cenário; a sonda falha se nenhum pouso na cabeça acontecer (F-025 §3; `rede.md` §4)
-- [ ] #3 Quando a SyncTest roda o cenário da cabeça (um parado, o outro pula e dá o pulo duplo sobre ele, duas vezes) com o rollback de 7 ticks a cada tick, ela acha zero divergências no estado inteiro, como a sonda C já achou no código de hoje (a DEC-0037 zerou as 6 a 32 da sonda do Desenho 2); o cenário conta pelo menos 2 pousos na cabeça, 2 escorregões, 1 pulo recusado e zero ticks com a cabeça como chão para as regras; esconder `:state:slide_off_dir` faz ela acusar (F-025 §3; `rede.md` §8)
-- [ ] #4 Quando o `Fighter` nasce, ele só aceita o cenário como plataforma (`platform_floor_layers`) e não herda velocidade ao sair de outro corpo, e um teste de cena prova os dois valores; a mudança leva uma linha no `mudancas.md` (F-152; DEC-0025; DEC-0037)
-- [ ] #5 Quando o Arthur abre o Sozinho, um boneco parado espera no segundo ponto de nascimento, sem câmera, desligável por `--dummy=off`, e o replay grava o input dos dois lutadores; sem tela, no portão, o `main_test` segue verde (DEC-0027 §5)
+- [x] #1 Quando um lutador cai sobre a cabeça de outro, o núcleo não conta o topo da cápsula como chão: ele fica no ar, sem pulo do chão nem dash, sem renovar o pulo, o pulo duplo nem a última parede e sem coyote, com o pulo duplo guardado e o gancho saindo como no ar, e escorrega para fora a 3 m/s (`head_slide_speed_mps`), saindo da cabeça em até 12 ticks a 60 contados do tick seguinte ao pouso; de lado, o choque segue como o empurrão da TASK-9 (leitura do Claude para a Q-16, a confirmar jogando; F-152; `pendencias.md`, Q-16)
+- [x] #2 Quando a sonda C roda o código de antes da regra com o rollback de 7 ticks e um lutador dando pulo duplo sobre a cabeça do outro, ela anota quantas divergências e o erro máximo, se o snap segura o de cima no domo, quantos ticks na cabeça o motor diz chão sem colisão do movimento, se a normal do chão sai igual no tick novo e no refeito, e a velocidade de plataforma antes e depois de `platform_floor_layers`, só no cenário; a sonda falha se nenhum pouso na cabeça acontecer (F-025 §3; `rede.md` §4)
+- [x] #3 Quando a SyncTest roda o cenário da cabeça (um parado, o outro pula e dá o pulo duplo sobre ele, duas vezes) com o rollback de 7 ticks a cada tick, ela acha zero divergências no estado inteiro, como a sonda C já achou no código de hoje (a DEC-0037 zerou as 6 a 32 da sonda do Desenho 2); o cenário conta pelo menos 2 pousos na cabeça, 2 escorregões, 1 pulo recusado e zero ticks com a cabeça como chão para as regras; esconder `:state:slide_off_dir` faz ela acusar (F-025 §3; `rede.md` §8)
+- [x] #4 Quando o `Fighter` nasce, ele só aceita o cenário como plataforma (`platform_floor_layers`) e não herda velocidade ao sair de outro corpo, e um teste de cena prova os dois valores; a mudança leva uma linha no `mudancas.md` (F-152; DEC-0025; DEC-0037)
+- [x] #5 Quando o Arthur abre o Sozinho, um boneco parado espera no segundo ponto de nascimento, sem câmera, desligável por `--dummy=off`, e o replay grava o input dos dois lutadores; sem tela, no portão, o `main_test` segue verde (DEC-0027 §5)
 - [ ] #6 Quando a arena ganha a borda de quatro paredes de 50 m sem sombra, ninguém cai para fora, as paredes aceitam a corrida, um gancho do topo do pilar para cima da borda norte não passa dela, a referência e os cenários seguem verdes (ou a referência é regravada com o motivo no commit), e o Arthur sobe na cabeça do boneco, escorrega em ≈ 0,2 s e não pula de cima dela; o que ele sentiu vai para uma fonte (`movimento.md`, "Métricas de nível"; F-041)
-- [ ] #7 Quando um lutador escorrega de uma cabeça, o rastro curto do dash, da parede e da puxada o acompanha e some em 200 ms depois de ele sair, uma vez por pouso, e sob rollback os sinais apresentados são tantos quanto os pousos (F-139; F-152; DEC-0031 §6)
+- [x] #7 Quando um lutador escorrega de uma cabeça, o rastro curto do dash, da parede e da puxada o acompanha e some em 200 ms depois de ele sair, uma vez por pouso, e sob rollback os sinais apresentados são tantos quanto os pousos (F-139; F-152; DEC-0031 §6)
 <!-- AC:END -->
 
 ## Definition of Done
 <!-- DOD:BEGIN -->
 - [ ] #1 Critérios de aceite verificados
-- [ ] #2 Teste automatizado para toda regra do núcleo (core/)
+- [x] #2 Teste automatizado para toda regra do núcleo (core/)
 - [ ] #3 Diário da sessão escrito e glossário atualizado
-- [ ] #4 Mudanças registradas em docs/mudancas.md
+- [x] #4 Mudanças registradas em docs/mudancas.md
 <!-- DOD:END -->
 
 ## Implementation Notes

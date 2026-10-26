@@ -4,7 +4,7 @@ title: 'A tela de opções: as teclas remapeáveis e a escala da interface'
 status: In Progress
 assignee: []
 created_date: '2026-10-19 13:47'
-updated_date: '2026-10-26 20:40'
+updated_date: '2026-10-26 21:31'
 labels:
   - jogo
 milestone: m-1
@@ -47,21 +47,21 @@ Confirmadas:
 
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
-- [ ] #1 Quando o jogador abre as opções com o Esc, no Sozinho ou online, cada uma das sete ações aparece com o rótulo da tecla física no teclado ativo, e apertar outra tecla, ou o botão do meio ou um lateral do mouse, a remapeia; a mudança vale na hora e sobrevive ao fechar e abrir o jogo, salva em `user://options.cfg` (DEC-0031 §8; F-161)
-- [ ] #2 Quando o jogador muda a escala, a interface escala de 0,8 a 1,5 sem cortar a barra de stamina, as recargas nem a mira, a mira segue no centro da tela com a câmera livre, e o valor sobrevive ao reiniciar (DEC-0031 §8)
-- [ ] #3 Quando o jogador muda a sensibilidade, de 0,02 a 0,20 grau por pixel, a câmera gira com ela na hora, a tela mostra a volta em cm a 800 DPI, e o valor sobrevive ao reiniciar (F-161; `movimento.md`, "Câmera")
-- [ ] #4 Quando a tela está aberta, o jogo não pausa, o lutador de quem joga fica parado e o mouse aparece; ao fechar, o mouse volta para a câmera e as teclas voltam ao lutador (F-161)
-- [ ] #5 Quando o arquivo de opções está corrompido, tem uma tecla inválida, uma escala ou uma sensibilidade fora da faixa, o jogo volta ao padrão de cada entrada ruim, avisa no log e não trava; "Voltar ao padrão" restaura tudo
-- [ ] #6 Quando duas ações recebem a mesma tecla, a tela diz de qual ação ela já é, e a troca não vale até o conflito sumir
+- [x] #1 Quando o jogador abre as opções com o Esc, no Sozinho ou online, cada uma das sete ações aparece com o rótulo da tecla física no teclado ativo, e apertar outra tecla, ou o botão do meio ou um lateral do mouse, a remapeia; a mudança vale na hora e sobrevive ao fechar e abrir o jogo, salva em `user://options.cfg` (DEC-0031 §8; F-161)
+- [x] #2 Quando o jogador muda a escala, a interface escala de 0,8 a 1,5 sem cortar a barra de stamina, as recargas nem a mira, a mira segue no centro da tela com a câmera livre, e o valor sobrevive ao reiniciar (DEC-0031 §8)
+- [x] #3 Quando o jogador muda a sensibilidade, de 0,02 a 0,20 grau por pixel, a câmera gira com ela na hora, a tela mostra a volta em cm a 800 DPI, e o valor sobrevive ao reiniciar (F-161; `movimento.md`, "Câmera")
+- [x] #4 Quando a tela está aberta, o jogo não pausa, o lutador de quem joga fica parado e o mouse aparece; ao fechar, o mouse volta para a câmera e as teclas voltam ao lutador (F-161)
+- [x] #5 Quando o arquivo de opções está corrompido, tem uma tecla inválida, uma escala ou uma sensibilidade fora da faixa, o jogo volta ao padrão de cada entrada ruim, avisa no log e não trava; "Voltar ao padrão" restaura tudo
+- [x] #6 Quando duas ações recebem a mesma tecla, a tela diz de qual ação ela já é, e a troca não vale até o conflito sumir
 - [ ] #7 Quando o Arthur remapeia o dash e o gancho, muda a escala e a sensibilidade e joga, o que ele sentiu vai para uma fonte (F-041)
 <!-- AC:END -->
 
 ## Definition of Done
 <!-- DOD:BEGIN -->
 - [ ] #1 Critérios de aceite verificados
-- [ ] #2 Teste automatizado para toda regra do núcleo (core/)
+- [x] #2 Teste automatizado para toda regra do núcleo (core/)
 - [ ] #3 Diário da sessão escrito e glossário atualizado
-- [ ] #4 Mudanças registradas em docs/mudancas.md
+- [x] #4 Mudanças registradas em docs/mudancas.md
 <!-- DOD:END -->
 
 ## Implementation Notes

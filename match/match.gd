@@ -191,7 +191,7 @@ func _show_hud(fighter: Fighter) -> void:
 		hud = Hud.new()
 		add_child(hud)
 	if hud != null:
-		hud.follow(fighter, config)
+		hud.follow(fighter, config, camera_rig)
 
 
 # A camera on fighter, looking where it looks; with takes_mouse, the mouse turns it.

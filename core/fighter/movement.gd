@@ -8,7 +8,11 @@
 # (GROUND to DASH, the wall jump from WALL_RUN to AIR), and by contact in after_move, where the
 # engine's verdict comes in (GROUND, AIR and the entry into WALL_RUN). A committed mode only ends
 # by its own rule: the dash in before_move; the wall run by its time or the wall jump in
-# before_move, and by the contact it loses in after_move (movimento.md, "Corrida na parede").
+# before_move, and by the contact it loses in after_move (movimento.md, "Corrida na parede"); the
+# grapple's pull by its releases in before_move (movimento.md, "Gancho").
+# The grapple is the one rule that asks the scenery (DEC-0044): while a press that can fire waits
+# in the slot, before_move sets MovePlan.aim_request, the node casts the aim's ray after the move,
+# and after_move fires on the answer in MoveFacts.
 class_name Movement
 extends RefCounted
 
@@ -17,14 +21,14 @@ extends RefCounted
 const TURN_HAIR := 1e-4
 
 
-# Puts the presses in the slot and ends a dash whose ticks ran out; inside a dash nothing else
-# happens. A wall run runs on its wall, or ends by its time. Otherwise it applies the acceleration
-# and gravity, then fires the slot: the jump from the floor or the coyote, otherwise the double
-# jump, or the dash from the floor. The position is unused until the grapple aims from it
-# (DEC-0039; TASK-10.6).
+# Puts the presses in the slot. A grapple whose cable has flown pulls, or releases and leaves a
+# free tick. A dash whose ticks ran out ends; inside a dash nothing else happens. A wall run runs
+# on its wall, or ends by its time. Otherwise it applies the acceleration and gravity, then fires
+# the slot: the jump from the floor or the coyote, otherwise the double jump, or the dash from the
+# floor; a grapple that can fire asks for the aim (DEC-0039; DEC-0044).
 static func before_move(
 	state: FighterState,
-	_position: Vector3,
+	position: Vector3,
 	velocity: Vector3,
 	input: TickInput,
 	config: MovementConfig,
@@ -34,8 +38,11 @@ static func before_move(
 	# The body looks where the camera looks (movimento.md, "Princípios").
 	next.facing_yaw = input.yaw
 	# One slot for every command: a new press takes it and the older one is gone (movimento.md,
-	# "Perdão": "Um buffer só, para todo comando"; DEC-0039). The dash is written before the jump,
-	# so a tie on one tick leaves the jump ("No mesmo tick, o pulo vence o dash"; DEC-0039 §4).
+	# "Perdão": "Um buffer só, para todo comando"; DEC-0039). The grapple is written first and the
+	# jump last, so a tie on one tick leaves the jump, then the dash, then the grapple ("No mesmo
+	# tick, o pulo vence o dash, que vence o gancho"; DEC-0039 §4).
+	if input.grapple:
+		_take_slot(next, FighterCommand.GRAPPLE, tick)
 	if input.dash:
 		_take_slot(next, FighterCommand.DASH, tick)
 	if input.jump:
@@ -43,6 +50,22 @@ static func before_move(
 	if not _within(next.buffered_tick, tick, config.buffer_ticks):
 		# A press whose window closed never fires, so it leaves the slot (DEC-0039).
 		_clear_slot(next)
+	if next.grapple_fired_tick != FighterState.NEVER:
+		var pull_from := next.grapple_fired_tick + config.grapple_attach_ticks
+		if tick >= pull_from:
+			# The cable has flown (movimento.md, "Gancho": "Tempo até prender"): the pull is a
+			# committed mode that ends whatever mode the body was in (DEC-0041).
+			if next.mode != FighterState.Mode.GRAPPLE:
+				next.mode = FighterState.Mode.GRAPPLE
+				next.mode_since = tick
+			if not _releases(next, position, velocity, config, tick):
+				return _pull(next, position, config)
+			# The release ("Como solta"): the end stamped for the cooldown, no cable in the air, the
+			# mode of the floor's verdict, and this tick runs free on the incoming velocity.
+			next.grapple_end_tick = tick
+			next.grapple_fired_tick = FighterState.NEVER
+			next.mode = FighterState.Mode.GROUND if state.on_floor else FighterState.Mode.AIR
+			next.mode_since = tick
 	if next.mode == FighterState.Mode.WALL_RUN:
 		if tick - next.mode_since < config.wall_run_max_ticks:
 			return _wall_run(next, velocity, input, config, tick)
@@ -100,13 +123,15 @@ static func before_move(
 		# Otherwise the press waits in the slot while its window lives: in the air, in the
 		# cooldown or with the bar short, it dashes on the first tick it can (movimento.md, "Dash"
 		# and "Perdão").
-	return _plan(next, horizontal, vertical)
+	return _asking(_plan(next, horizontal, vertical), config, tick)
 
 
 # Reads the engine's verdict: the floor renews the jump and the double jump, clears the last wall
 # and ends a wall run, and leaving the floor stamps the tick the coyote counts from. The contact
-# changes the mode between GROUND and AIR, but never ends the dash: it goes on off a ledge
-# (DEC-0041 §3). In the air, the wall facts start, carry on or end a wall run.
+# changes the mode between GROUND and AIR, but never ends the dash or the grapple's pull: the dash
+# goes on off a ledge, and the pull along or off the floor (DEC-0041 §3). In the air, the wall
+# facts start, carry on or end a wall run. Last, a grapple that asked for the aim fires on the
+# answer (DEC-0044).
 static func after_move(
 	state: FighterState,
 	facts: MoveFacts,
@@ -114,7 +139,8 @@ static func after_move(
 	tick: int,
 ) -> FighterState:
 	var next := state.copy()
-	var by_contact := state.mode != FighterState.Mode.DASH
+	var pulled := state.mode == FighterState.Mode.GRAPPLE
+	var by_contact := state.mode != FighterState.Mode.DASH and not pulled
 	if facts.on_floor:
 		# Touching the floor renews the double jump (movimento.md, "Pulo e ar"), and the same wall
 		# accepts a run again ("Corrida na parede": "Mesma parede").
@@ -129,10 +155,16 @@ static func after_move(
 		if by_contact:
 			next.mode = FighterState.Mode.AIR
 			next.mode_since = tick
-		next.left_floor_tick = tick
+		# The pull has no coyote (movimento.md, "Gancho": "Coyote do gancho": "não existe"):
+		# leaving the floor pulled stamps nothing, so after the release the first press in the air
+		# is the double jump.
+		if not pulled:
+			next.left_floor_tick = tick
 	next.on_floor = facts.on_floor
 	if by_contact and not facts.on_floor:
 		_read_wall(next, facts, config, tick)
+	if _hooks(state, facts, config, tick):
+		_fire(next, facts.aim_point, tick)
 	return next
 
 
@@ -164,13 +196,112 @@ static func _can_double_jump(state: FighterState, tick: int, config: MovementCon
 # the jump, not the dash), once the cooldown after the last dash's end has passed ("Recarga"),
 # and when the bar can pay its cost ("Stamina": nothing is paid otherwise). The cooldown reads
 # the stamp: the last dash started dash_ticks + dash_cooldown_ticks ago or earlier, and NEVER is
-# far enough in the past to count as free.
+# far enough in the past to count as free. With a grapple's cable in the air the dash waits in the
+# slot: one committed mode at a time ("Gancho": "Tempo até prender"; DEC-0041).
 static func _can_dash(state: FighterState, tick: int, config: MovementConfig) -> bool:
 	if state.mode != FighterState.Mode.GROUND or not state.on_floor:
+		return false
+	if state.grapple_fired_tick != FighterState.NEVER:
 		return false
 	if tick - state.dash_tick < config.dash_ticks + config.dash_cooldown_ticks:
 		return false
 	return Stamina.at(state, config, tick) >= config.dash_cost
+
+
+# The grapple may fire from the floor, the air and a wall run, never in the dash nor with another
+# cable in the air, flying or pulling, and only once its cooldown after the last release has passed
+# (movimento.md, "Gancho": "De onde dispara", "Recarga"). The cooldown reads the stamp, as the
+# dash's does: NEVER is far enough in the past to count as free. Public, so the reticle on screen
+# reads the same rule (visual-e-audio.md, "O gancho na tela").
+static func can_grapple(state: FighterState, tick: int, config: MovementConfig) -> bool:
+	if state.mode == FighterState.Mode.DASH or state.mode == FighterState.Mode.GRAPPLE:
+		return false
+	if state.grapple_fired_tick != FighterState.NEVER:
+		return false
+	return tick - state.grapple_end_tick >= config.grapple_cooldown_ticks
+
+
+# The aim request (DEC-0044 §1): a grapple press that can fire waits in the slot of the plan, so
+# the node casts the ray after the move, on every tick of its window until it hooks (movimento.md,
+# "Gancho": "O erro": the aim is cast again on every tick, with that tick's direction).
+static func _asking(plan: MovePlan, config: MovementConfig, tick: int) -> MovePlan:
+	var waiting := plan.state.buffered_command == FighterCommand.GRAPPLE
+	plan.aim_request = waiting and can_grapple(plan.state, tick, config)
+	return plan
+
+
+# The fire (movimento.md, "Gancho": "Alcance", "Alcance mínimo", "O erro"): the plan asked, and the
+# ray found the scenery from grapple_min_range to grapple_range off the shoulder, aim_height above
+# the feet after the move, both limits inclusive. Otherwise nothing happens: the press keeps
+# waiting while its window lives, and the cooldown does not count.
+static func _hooks(
+	state: FighterState,
+	facts: MoveFacts,
+	config: MovementConfig,
+	tick: int,
+) -> bool:
+	if state.buffered_command != FighterCommand.GRAPPLE or not facts.aim_hit:
+		return false
+	if not can_grapple(state, tick, config):
+		return false
+	return in_reach(facts.aim_point, facts.position, config)
+
+
+# A point the hook can bite from these feet: from grapple_min_range to grapple_range off the
+# shoulder, aim_height above them, both limits inclusive (movimento.md, "Gancho": "Alcance",
+# "Alcance mínimo"). Public, so the reticle on screen reads the same rule.
+static func in_reach(point: Vector3, feet: Vector3, config: MovementConfig) -> bool:
+	var distance := point.distance_to(feet + Vector3.UP * config.aim_height)
+	return distance >= config.grapple_min_range and distance <= config.grapple_range
+
+
+# The hook bites: the cable flies from this tick toward the point, fixed now ("Tempo até
+# prender"), and the press is spent. A wall run ends on the fire ("De onde dispara": "Na parede, a
+# corrida acaba no disparo"); any other mode goes on until the pull starts.
+static func _fire(next: FighterState, point: Vector3, tick: int) -> void:
+	next.grapple_fired_tick = tick
+	next.grapple_point = point
+	_clear_slot(next)
+	if next.mode == FighterState.Mode.WALL_RUN:
+		_leave_wall(next, tick)
+
+
+# The releases of the pull, checked at the start of every attached tick, its first included, in
+# this order (movimento.md, "Gancho": "Como solta", "Trava", "O pulo na puxada"):
+# (a) a jump pressed on or after the pull's first tick, spent here: no jump comes out, and the
+#     next press in the air is the double jump. A jump pressed while the cable flew does not
+#     release; it dies with its window;
+# (b) the feet within the release distance of the point;
+# (c) from the pull's second tick, the incoming velocity toward the point below the block speed:
+#     a wall or a slide ate more than half of the pull.
+static func _releases(
+	next: FighterState,
+	position: Vector3,
+	velocity: Vector3,
+	config: MovementConfig,
+	tick: int,
+) -> bool:
+	var pull_from := next.grapple_fired_tick + config.grapple_attach_ticks
+	var jumped := next.buffered_command == FighterCommand.JUMP
+	if jumped and next.buffered_tick >= pull_from:
+		_clear_slot(next)
+		return true
+	if position.distance_to(next.grapple_point) <= config.grapple_release_distance:
+		return true
+	if tick - pull_from < 1:
+		return false
+	var toward := (next.grapple_point - position).normalized()
+	return velocity.dot(toward) < config.grapple_block_speed
+
+
+# A tick of the pull (movimento.md, "Gancho": "Velocidade da puxada", "O que a puxada leva ao
+# ponto"): the feet go toward the point at the pull's speed, the direction taken again from where
+# they are on every tick, with no gravity and no input.
+static func _pull(next: FighterState, position: Vector3, config: MovementConfig) -> MovePlan:
+	var plan := MovePlan.new()
+	plan.state = next
+	plan.velocity = (next.grapple_point - position).normalized() * config.grapple_pull_speed
+	return plan
 
 
 # Where the dash goes, fixed on its first tick (movimento.md, "Dash": "Direção"): the pointed
@@ -272,7 +403,7 @@ static func _wall_run(
 		next.mode = FighterState.Mode.AIR
 		next.mode_since = tick
 		_clear_slot(next)
-	return _plan(next, horizontal, vertical)
+	return _asking(_plan(next, horizontal, vertical), config, tick)
 
 
 # The turn of the wall jump (movimento.md, "Corrida na parede": "A volta no pulo da parede";
@@ -325,8 +456,10 @@ static func _read_wall(
 
 # The entry (movimento.md, "Corrida na parede": "Como entra", "O que decide a entrada", "Mesma
 # parede"): a wall that is not the last one, the same collider within the same-face angle, with
-# the speed along its plane at least the entry speed. It renews the double jump; the next tick
-# zeroes the vertical and sets the speed (_wall_run).
+# the speed along its plane at least the entry speed. It renews the double jump and clears the
+# floor's coyote, so a run that starts and ends within 100 ms of the floor leaves the double jump,
+# never the full one ("O coyote do chão na entrada"; Q-35); the next tick zeroes the vertical and
+# sets the speed (_wall_run).
 static func _enter_wall(
 	next: FighterState,
 	facts: MoveFacts,
@@ -344,6 +477,7 @@ static func _enter_wall(
 	next.mode_since = tick
 	next.jumps_used = 0
 	next.double_jump_tick = FighterState.NEVER
+	next.left_floor_tick = FighterState.NEVER
 	next.wall_id = facts.wall_id
 	next.wall_normal = normal
 

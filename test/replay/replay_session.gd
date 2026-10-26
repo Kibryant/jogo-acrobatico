@@ -7,8 +7,11 @@
 # holds presses (criterion 6). From TASK-10.5 it opens with a wall run and a wall jump (WallPhase),
 # so the trace holds the wall's fields with a wall in them: on ParedeLonga's east face since
 # TASK-10.10, because PlataformaVaoA, 2 m tall, no longer rises above the head (movimento.md,
-# "Corrida na parede": "A parede passa da cabeça"). Optionally the clock jumps once, as
-# netfox's does after a stall.
+# "Corrida na parede": "A parede passa da cabeça"). From TASK-10.6 the camera also looks down by a
+# pitch with many digits on every loop, and twice the script presses the grapple: looking down,
+# the ray finds the floor some metres ahead, so the file's pitch and grapple columns hold real
+# aims and the trace holds a pull. Optionally the clock jumps once, as netfox's does after a
+# stall.
 # The run is the reference's (test/reference/reference_run.gd): the real Match in Sozinho, in a
 # SubViewport with its own physics world, with netfox's ticks by hand inside a physics frame
 # (test/support/netfox_ticks.gd), starting on FIRST_TICK.
@@ -44,6 +47,16 @@ const DOUBLE_AFTER := 9
 ## DASH_AFTER loops after each jump, about 47 ticks, a press of the dash: on the floor again after
 ## the double jump's landing, or kept in the slot for it.
 const DASH_AFTER := 30
+## Every GRAPPLE_EVERY loops, GRAPPLE_AFTER loops after a jump, about 60 ticks, on the floor again:
+## a press of the grapple (TASK-10.6).
+const GRAPPLE_EVERY := 135
+const GRAPPLE_AFTER := 40
+## rad: the camera looks down between PITCH_LOW and PITCH_HIGH, on a wave of PITCH_WAVE rad a loop:
+## from the shoulder, 1,6 m up, the ray meets the floor 5,3 to 15,9 m ahead, within the grapple's
+## reach (movimento.md, "Gancho": "Alcance").
+const PITCH_HIGH := -0.1
+const PITCH_LOW := -0.3
+const PITCH_WAVE := 0.0731
 ## Ticks the clock jumps by, when it jumps.
 const CLOCK_JUMP := 30
 ## The wall phase (TASK-10.5; TASK-10.10): from the spawn point the fighter runs to WALL_FROM,
@@ -73,6 +86,8 @@ class Result:
 	## Wall runs the fighter started and wall jumps it made.
 	var wall_runs := 0
 	var wall_jumps := 0
+	## Grapples the fighter fired.
+	var grapples := 0
 	## Ticks and loops run, and µs of wall clock for them.
 	var ticks := 0
 	var loops := 0
@@ -117,16 +132,19 @@ func record(host: Node, path: String, ticks := TICKS, jump_before_loop := -1) ->
 		else:
 			var step := loop - script_from
 			for move: Vector2 in frames_of(step):
-				fighter.input.sample_frame(move, yaw_of(step))
+				fighter.input.sample_frame(move, yaw_of(step), pitch_of(step))
 			if presses_at(step):
 				fighter.input.press_jump()
 			if dashes_at(step):
 				fighter.input.press_dash()
+			if grapples_at(step):
+				fighter.input.press_grapple()
 		var size := mini(LOOPS[loop % LOOPS.size()], ticks - result.ticks)
 		var stamp := fighter.state.double_jump_tick
 		var dash_stamp := fighter.state.dash_tick
 		var wall_stamp := fighter.state.wall_jump_tick
 		var run_stamp := _run_stamp(fighter.state)
+		var grapple_stamp := fighter.state.grapple_fired_tick
 		NetfoxTicks.run_loop(size)
 		var stamped := fighter.state.double_jump_tick
 		if stamped != stamp and stamped != FighterState.NEVER:
@@ -138,6 +156,9 @@ func record(host: Node, path: String, ticks := TICKS, jump_before_loop := -1) ->
 		var run_now := _run_stamp(fighter.state)
 		if run_now != run_stamp and run_now != FighterState.NEVER:
 			result.wall_runs += 1
+		var fired := fighter.state.grapple_fired_tick
+		if fired != grapple_stamp and fired != FighterState.NEVER:
+			result.grapples += 1
 		result.ticks += size
 		result.loops += 1
 	result.record_usec = Time.get_ticks_usec() - started_usec
@@ -176,6 +197,16 @@ static func presses_at(loop: int) -> bool:
 
 static func dashes_at(loop: int) -> bool:
 	return loop > 0 and loop % PRESS_EVERY == DASH_AFTER
+
+
+static func grapples_at(loop: int) -> bool:
+	return loop > 0 and loop % GRAPPLE_EVERY == GRAPPLE_AFTER
+
+
+# How far down the camera looks on loop: a wave between PITCH_HIGH and PITCH_LOW, never round.
+static func pitch_of(loop: int) -> float:
+	var share := 0.5 + 0.5 * sin(loop * PITCH_WAVE)
+	return lerpf(PITCH_HIGH, PITCH_LOW, share)
 
 
 # The opening of the session (TASK-10.5): a scripted player, reading the state on screen before

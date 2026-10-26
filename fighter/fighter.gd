@@ -1,9 +1,10 @@
 # The fighter node (visao-geral.md, "As cenas"; DEC-0022): a thin adapter between netfox, the
 # engine and the pure core. In _rollback_tick it only calls Movement and mirrors the result: the
 # core decides, move_and_slide() moves and collides, the core confers with the facts the engine
-# gives back, the floor and the wall (the tick sandwich; DEC-0042). The two rollback contours of
-# DEC-0025 live here because they touch the engine, never the core. The same code runs in
-# Sozinho, on the server and on the clients (DEC-0026 §5).
+# gives back, the floor, the wall and, when the core asks, what the aim finds (the tick sandwich;
+# DEC-0042; DEC-0044). The two rollback contours of DEC-0025 live here because they touch the
+# engine, never the core. The same code runs in Sozinho, on the server and on the clients
+# (DEC-0026 §5).
 class_name Fighter
 extends CharacterBody3D
 
@@ -181,6 +182,15 @@ func _rollback_tick(_delta: float, tick: int, _is_fresh: bool) -> void:
 	facts.on_floor = is_on_floor()
 	facts.velocity = velocity
 	_wall_contact(plan.state, facts)
+	facts.position = global_position
+	# The aim request (DEC-0044 §1): a grapple press that can fire waits, so the ray leaves the
+	# shoulder after the move, along this tick's yaw and pitch. A resimulated tick casts it again
+	# from the restored body and input: probe B measured the same answer there (rede.md §4).
+	if plan.aim_request:
+		var hit := aim_ray(global_position, tick_input.yaw, tick_input.pitch)
+		facts.aim_hit = not hit.is_empty()
+		if facts.aim_hit:
+			facts.aim_point = hit["position"]
 	state = Movement.after_move(plan.state, facts, config, tick)
 
 
@@ -243,6 +253,25 @@ func covers_body(face_normal: Vector3) -> bool:
 		return false
 	var normal: Vector3 = hit["normal"]
 	return _flat(normal).dot(face) >= config.wall_same_face_cos
+
+
+## The aim's ray (DEC-0044 §1; movimento.md, "Gancho": "De onde sai a mira"): from the shoulder,
+## aim_height above feet, along Aim.direction(yaw, pitch), as far as the grapple's range, only
+## against the world: the fighters are not on its mask, so it passes through them, and the body's
+## own RID is excluded too. A query of the physics space, like covers_body: it moves nothing, and
+## the world it reads never moves, so a resimulated tick gets the same answer (probe B, rede.md
+## §4). The intersect_ray result, empty when it finds nothing: the tick casts it when the core
+## asks, and the reticle on screen from the displayed body (Hud).
+func aim_ray(feet: Vector3, yaw: float, pitch: float) -> Dictionary:
+	var shoulder := feet + Vector3.UP * config.aim_height
+	var reach := Aim.direction(yaw, pitch) * config.grapple_range
+	var query := PhysicsRayQueryParameters3D.create(
+		shoulder,
+		shoulder + reach,
+		PhysicsLayers.WORLD,
+		[get_rid()],
+	)
+	return get_world_3d().direct_space_state.intersect_ray(query)
 
 
 # The move's own collisions (DEC-0042 §1): of the colliders that are not a fighter, the one with

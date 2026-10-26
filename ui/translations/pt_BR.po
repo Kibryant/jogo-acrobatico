@@ -54,6 +54,11 @@ msgstr "No gancho"
 msgid "HUD_DASH_COOLDOWN"
 msgstr "{whole},{tenth} s"
 
+# The HUD's time until the next grapple, beside its arc, above the dash's row: {whole} and
+# {tenth} are the digits of the seconds, rounded up to the tenth (TASK-10.6).
+msgid "HUD_GRAPPLE_COOLDOWN"
+msgstr "Gancho {whole},{tenth} s"
+
 # Every tick of the replay played in the window has played (--watch; TASK-10.3).
 msgid "REPLAY_ENDED"
 msgstr "Fim do replay. Feche a janela para sair."

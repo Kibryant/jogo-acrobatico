@@ -1,6 +1,7 @@
 # The cues of the maneuvers (DEC-0031 §6; TASK-10.4): a puff under the feet when a double jump
-# comes out, a trail behind a dash, a mark on the wall a wall jump leaves (TASK-10.5) and a short
-# trail behind a wall run (TASK-10.10; movimento.md, "O que se vê na parede"), each
+# comes out, a trail behind a dash, a mark on the wall a wall jump leaves (TASK-10.5), a short
+# trail behind a wall run (TASK-10.10; movimento.md, "O que se vê na parede"), and the grapple's
+# cable and the short trail of its pull (TASK-10.6; visual-e-audio.md, "O gancho na tela"), each
 # played once per event, by its key: the fighter, the kind and the stamp, the tick the state
 # carries for it. Like the `key` of a list in React, the
 # key says "this one already showed": after every tick loop it reads the displayed state, and a
@@ -12,6 +13,8 @@
 # The mark of the wall jump is the puff stood up against the wall: Claude's v0 reading (DEC-0017).
 # The wall run's trail is the dash's, cut short to the body's last dash duration of path, with
 # the same material: Claude's v0 reading of "um rastro curto" (DEC-0017; no new asset, DEC-0029).
+# The grapple's pull wears the same short trail. Its cable is the one opaque cue: a line from the
+# shoulder to the point, drawn by Godot's own shapes too (visual-e-audio.md, "O gancho na tela").
 # It also counts, for the SyncTest, the events the simulation made on its fresh ticks: there,
 # with the rollback forced on every tick, the cues presented must equal the events (DEC-0031 §6;
 # rede.md §4).
@@ -24,6 +27,8 @@ enum Kind {
 	DASH,
 	WALL_JUMP,
 	WALL_RUN,
+	GRAPPLE_CABLE,
+	GRAPPLE_PULL,
 }
 
 ## The cue's opacity when it appears; it fades to nothing. Claude's v0 reading (DEC-0017): seen
@@ -34,6 +39,8 @@ const OPACITY := 0.4
 const PUFF_GROWTH := 3.0
 ## m: the puff is a disc this thin, as thin as the ruler's strips (TASK-10.4, "Arena").
 const DISC_THICKNESS := 0.01
+## m: the grapple's cable, a line this thick (visual-e-audio.md, "O gancho na tela").
+const CABLE_THICKNESS := 0.03
 
 ## Cues played: one per key, when its event first shows in the displayed state.
 var presented := 0
@@ -81,9 +88,11 @@ func forget(fighter: Fighter) -> void:
 
 # The events fighter's state shows now: the double jump of this flight, by its stamp; the dash
 # while it lasts, by the tick it began; the wall jump during the flight it began, the air since
-# its stamp; and the wall run while it lasts, by the tick it began, so a seam, which keeps the
-# run's clock, is the same run (F-129). A dash_tick or a wall_jump_tick that stays after its
-# maneuver shows no cue, so a fighter seen for the first time long after never plays an old one.
+# its stamp; the wall run while it lasts, by the tick it began, so a seam, which keeps the run's
+# clock, is the same run (F-129); the grapple's cable while it is in the air, flying or pulling,
+# by the tick it was fired; and the pull while it lasts, by the tick it began. A dash_tick or a
+# wall_jump_tick that stays after its maneuver shows no cue, so a fighter seen for the first time
+# long after never plays an old one; grapple_fired_tick goes back to NEVER on the release.
 static func shown_events(fighter: Fighter) -> Array[Event]:
 	var shown: Array[Event] = []
 	var state := fighter.state
@@ -97,6 +106,10 @@ static func shown_events(fighter: Fighter) -> Array[Event]:
 			shown.append(Event.new(fighter, Kind.WALL_JUMP, state.wall_jump_tick))
 	if state.mode == FighterState.Mode.WALL_RUN:
 		shown.append(Event.new(fighter, Kind.WALL_RUN, state.mode_since))
+	if state.grapple_fired_tick != FighterState.NEVER:
+		shown.append(Event.new(fighter, Kind.GRAPPLE_CABLE, state.grapple_fired_tick))
+	if state.mode == FighterState.Mode.GRAPPLE:
+		shown.append(Event.new(fighter, Kind.GRAPPLE_PULL, state.mode_since))
 	return shown
 
 
@@ -151,6 +164,10 @@ func _draw(fighter: Fighter, kind: Kind) -> void:
 			add_child(Trail.new(fighter, _config, Kind.DASH))
 		Kind.WALL_RUN:
 			add_child(Trail.new(fighter, _config, Kind.WALL_RUN))
+		Kind.GRAPPLE_PULL:
+			add_child(Trail.new(fighter, _config, Kind.GRAPPLE_PULL))
+		Kind.GRAPPLE_CABLE:
+			add_child(Cable.new(fighter, _config))
 		Kind.WALL_JUMP:
 			add_child(Puff.new(fighter, _config, fighter.state.wall_normal))
 		_:
@@ -179,11 +196,32 @@ static func material_of(fighter: Fighter) -> StandardMaterial3D:
 	return material
 
 
+# The same tone, opaque: the cable is a line, and a line seen through would vanish against the sky.
+static func solid_material_of(fighter: Fighter) -> StandardMaterial3D:
+	var material := StandardMaterial3D.new()
+	material.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	material.albedo_color = Color(fighter.tone, 1.0)
+	return material
+
+
+# The basis of a box of size thickness x height x length laid from from to to, its length along
+# the segment: the trails and the cable stretch a unit box this way.
+static func stretch(from: Vector3, to: Vector3, across: float, height: float) -> Transform3D:
+	var along := to - from
+	var length := along.length()
+	var forward := along / length
+	var up := Vector3.UP if absf(forward.dot(Vector3.UP)) < 0.99 else Vector3.BACK
+	var turn := Basis.looking_at(forward, up)
+	return Transform3D(turn.scaled_local(Vector3(across, height, length)), (from + to) / 2.0)
+
+
 # The trail of a dash: the space the capsule swept, from where the dash first showed to where
 # the body is, as wide and as tall as the capsule. It follows the body while that dash lasts,
 # then fades over the dash's own duration. The trail of a wall run is the same box, short: it
 # covers only the path of the body's last dash duration, so it follows the body along the wall
-# instead of drawing the whole run, and fades the same way once the run ends.
+# instead of drawing the whole run, and fades the same way once the run ends. The grapple's pull
+# wears the wall run's short trail, from where the body was 200 ms ago, and fades 200 ms after
+# the release (visual-e-audio.md, "O gancho na tela").
 class Trail:
 	extends MeshInstance3D
 
@@ -205,9 +243,16 @@ class Trail:
 
 
 	func _init(fighter: Fighter, config: MovementConfig, kind: Kind) -> void:
-		assert(kind == Kind.DASH or kind == Kind.WALL_RUN, "a trail follows a dash or a wall run")
+		var trailed := kind == Kind.DASH or kind == Kind.WALL_RUN or kind == Kind.GRAPPLE_PULL
+		assert(trailed, "a trail follows a dash, a wall run or a grapple's pull")
 		_kind = kind
-		name = "DashTrail" if kind == Kind.DASH else "WallRunTrail"
+		match kind:
+			Kind.DASH:
+				name = "DashTrail"
+			Kind.WALL_RUN:
+				name = "WallRunTrail"
+			_:
+				name = "GrapplePullTrail"
 		_fighter = fighter
 		_stamp = fighter.state.dash_tick if kind == Kind.DASH else fighter.state.mode_since
 		_from = fighter.global_position
@@ -229,7 +274,7 @@ class Trail:
 		if _left_s < 0.0:
 			if is_instance_valid(_fighter) and _in_its_maneuver():
 				var to := _fighter.global_position
-				if _kind == Kind.WALL_RUN:
+				if _kind != Kind.DASH:
 					_from = _tail(to)
 				_reach(to)
 				return
@@ -243,13 +288,16 @@ class Trail:
 
 	func _in_its_maneuver() -> bool:
 		var state := _fighter.state
-		if _kind == Kind.WALL_RUN:
-			return state.mode == FighterState.Mode.WALL_RUN and state.mode_since == _stamp
+		match _kind:
+			Kind.WALL_RUN:
+				return state.mode == FighterState.Mode.WALL_RUN and state.mode_since == _stamp
+			Kind.GRAPPLE_PULL:
+				return state.mode == FighterState.Mode.GRAPPLE and state.mode_since == _stamp
 		return state.mode == FighterState.Mode.DASH and state.dash_tick == _stamp
 
 
-	# Where the body was the dash's duration ago, or where the run first showed while it is
-	# younger.
+	# Where the body was the dash's duration ago, or where the run or the pull first showed while
+	# it is younger.
 	func _tail(to: Vector3) -> Vector3:
 		var now := NetworkTime.tick
 		_seen_tick.append(now)
@@ -262,16 +310,76 @@ class Trail:
 
 	# Stretches the box from where the dash showed to the feet at to.
 	func _reach(to: Vector3) -> void:
-		var along := to - _from
-		var length := along.length()
-		visible = length > 0.0
+		visible = to != _from
 		if not visible:
 			return
-		var middle := (_from + to) / 2.0 + Vector3.UP * _height / 2.0
-		var forward := along / length
-		var up := Vector3.UP if absf(forward.dot(Vector3.UP)) < 0.99 else Vector3.BACK
-		var turn := Basis.looking_at(forward, up)
-		global_transform = Transform3D(turn.scaled_local(Vector3(_width, _height, length)), middle)
+		var lift := Vector3.UP * _height / 2.0
+		global_transform = ManeuverCues.stretch(_from + lift, to + lift, _width, _height)
+
+
+# The grapple's cable (visual-e-audio.md, "O gancho na tela"): a line CABLE_THICKNESS thick, opaque
+# and unlit in the fighter's tone, from the displayed shoulder, aim_height above the feet, to its
+# tip. While the cable flies, the tip goes from the shoulder to the point over grapple_attach_ticks,
+# counted in netfox's ticks from the fire, so it reaches the point on the pull's first tick at any
+# frame rate; during the pull it stays on the point; on the release the cable goes at once.
+class Cable:
+	extends MeshInstance3D
+
+	var _fighter: Fighter
+	var _stamp: int
+	var _point: Vector3
+	var _shoulder: float
+	var _attach_ticks: int
+
+
+	func _init(fighter: Fighter, config: MovementConfig) -> void:
+		name = "GrappleCable"
+		_fighter = fighter
+		_stamp = fighter.state.grapple_fired_tick
+		_point = fighter.state.grapple_point
+		_shoulder = config.aim_height
+		_attach_ticks = config.grapple_attach_ticks
+		var box := BoxMesh.new()
+		box.size = Vector3.ONE
+		box.material = ManeuverCues.solid_material_of(fighter)
+		mesh = box
+		cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+		top_level = true
+		visible = false
+
+
+	func _process(_delta: float) -> void:
+		var out := is_instance_valid(_fighter) and _fighter.state.grapple_fired_tick == _stamp
+		if not out:
+			queue_free()
+			return
+		_follow()
+
+
+	# How far the tip has gone from the shoulder to the point, 0 to 1: the ticks the state on
+	# screen has run since the fire, over the cable's ticks. The state on screen is the one of the
+	# tick before netfox's clock.
+	func reach() -> float:
+		if _attach_ticks <= 0:
+			return 1.0
+		var flown := NetworkTime.tick - 1 - _stamp
+		return clampf(float(flown) / _attach_ticks, 0.0, 1.0)
+
+
+	func tip() -> Vector3:
+		return shoulder().lerp(_point, reach())
+
+
+	func shoulder() -> Vector3:
+		return _fighter.global_position + Vector3.UP * _shoulder
+
+
+	func _follow() -> void:
+		var from := shoulder()
+		var to := tip()
+		visible = from.distance_to(to) > CABLE_THICKNESS
+		if visible:
+			global_transform = ManeuverCues.stretch(from, to, CABLE_THICKNESS, CABLE_THICKNESS)
 
 
 # The puff of a double jump: a flat disc under the feet where the jump came out, growing from the

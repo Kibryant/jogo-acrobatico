@@ -1,10 +1,12 @@
 # Criterion 5 of TASK-10.4: the double jump and the dash each play one visual cue, once per key
 # (fighter, kind, stamp), when they first show in the displayed state, and never again when a
 # rollback runs their tick again (DEC-0031 §6); TASK-10.5 adds the wall jump's mark, and
-# TASK-10.10 the short trail of a wall run (movimento.md, "O que se vê na parede"). The real
-# Match runs in Sozinho with netfox's ticks by hand (test/support/netfox_ticks.gd; DEC-0027 §3);
-# the SyncTest checks the same count under the forced rollback of every tick
-# (fighter_sync_test.gd, the dash, pulo duplo and parede scenarios).
+# TASK-10.10 the short trail of a wall run (movimento.md, "O que se vê na parede"), and
+# TASK-10.6 the grapple's cable and the short trail of its pull (visual-e-audio.md, "O gancho na
+# tela"). The real Match runs in Sozinho with netfox's ticks by hand
+# (test/support/netfox_ticks.gd; DEC-0027 §3); the SyncTest checks the same count under the
+# forced rollback of every tick (fighter_sync_test.gd, the dash, pulo duplo, parede and gancho
+# scenarios).
 extends GdUnitTestSuite
 
 const NetfoxTicks := preload("res://test/support/netfox_ticks.gd")
@@ -306,6 +308,169 @@ func test_the_wall_run_shows_only_while_it_lasts() -> void:
 	assert_int(shown[0].stamp).is_equal(40)
 	state.mode = FighterState.Mode.AIR
 	assert_array(ManeuverCues.shown_events(_fighter)).is_empty()
+
+
+# The grapple's cues (TASK-10.6; visual-e-audio.md, "O gancho na tela"): a target of the test's
+# own in the arena's empty south-east, away from its shapes: a wall 16 m wide and 10 m tall whose
+# face looks south at z = 20, and the fighter standing 12 m south of it. The aim goes from the
+# shoulder to TARGET_POINT, 12,6 m off: within the reach.
+const TARGET_FACE_Z := 20.0
+const TARGET_START := Vector3(28, 0, 32)
+const TARGET_POINT := Vector3(28, 4, 20)
+
+
+func _start_before_a_target(cues_draw: bool) -> ManeuverCues:
+	var node := MATCH_SCENE.instantiate()
+	assert(node is Match, "match.tscn must have a Match at its root")
+	_match = auto_free(node)
+	add_child(_match)
+	var wall := StaticBody3D.new()
+	wall.name = "AlvoDoGancho"
+	wall.position = Vector3(TARGET_POINT.x, 5, TARGET_FACE_Z - 0.5)
+	var collision := CollisionShape3D.new()
+	var box := BoxShape3D.new()
+	box.size = Vector3(16, 10, 1)
+	collision.shape = box
+	wall.add_child(collision)
+	_match.arena.add_child(wall)
+	_fighter = _match.spawn_fighter(0, multiplayer.get_unique_id())
+	_fighter.position = TARGET_START
+	_first_tick = NetworkTime.tick
+	await get_tree().process_frame
+	await get_tree().physics_frame
+	var cues := ManeuverCues.new(_match.config, cues_draw)
+	_match.add_child(cues)
+	cues.watch(_fighter)
+	return cues
+
+
+# Aims from the shoulder at TARGET_POINT and presses the grapple on the next tick: it fires there.
+func _fire_at_the_target() -> int:
+	var shoulder := _fighter.global_position + Vector3.UP * _match.config.aim_height
+	var toward := (TARGET_POINT - shoulder).normalized()
+	_fighter.input.sample_frame(Vector2.ZERO, atan2(-toward.x, -toward.z), asin(toward.y))
+	_fighter.input.press_grapple()
+	var fire_tick := NetworkTime.tick
+	NetfoxTicks.run_loop()
+	assert_int(_fighter.state.grapple_fired_tick).override_failure_message("no fire").is_equal(
+		fire_tick
+	)
+	return fire_tick
+
+
+# Stands until the state shows mode, or fails after limit ticks.
+func _stand_until_mode(mode: FighterState.Mode, limit: int) -> void:
+	for _tick: int in limit:
+		if _fighter.state.mode == mode:
+			return
+		_stand(1)
+	assert_int(_fighter.state.mode).is_equal(mode)
+
+
+func _only_cable(cues: ManeuverCues) -> ManeuverCues.Cable:
+	var cables := cues.find_children("GrappleCable*", "MeshInstance3D", false, false)
+	assert_int(cables.size()).is_equal(1)
+	assert(cables[0] is ManeuverCues.Cable, "the grapple's cable is a Cable")
+	return cables[0] as ManeuverCues.Cable
+
+
+# The cable is in the air while grapple_fired_tick is, by that stamp; the pull while the mode is
+# GRAPPLE, by the tick it began; after the release, neither (TASK-10.6 notes, "Cues").
+func test_the_grapple_shows_its_cable_while_out_and_its_pull_while_it_lasts() -> void:
+	await _start()
+	var state := _fighter.state
+	assert_array(ManeuverCues.shown_events(_fighter)).is_empty()
+	state.grapple_fired_tick = 70
+	state.mode = FighterState.Mode.AIR
+	var shown := ManeuverCues.shown_events(_fighter)
+	assert_int(shown.size()).is_equal(1)
+	assert_int(shown[0].kind).is_equal(ManeuverCues.Kind.GRAPPLE_CABLE)
+	assert_int(shown[0].stamp).is_equal(70)
+	state.mode = FighterState.Mode.GRAPPLE
+	state.mode_since = 76
+	shown = ManeuverCues.shown_events(_fighter)
+	assert_int(shown.size()).is_equal(2)
+	assert_int(shown[1].kind).is_equal(ManeuverCues.Kind.GRAPPLE_PULL)
+	assert_int(shown[1].stamp).is_equal(76)
+	state.grapple_fired_tick = FighterState.NEVER
+	state.grapple_end_tick = 90
+	state.mode = FighterState.Mode.AIR
+	state.mode_since = 90
+	assert_array(ManeuverCues.shown_events(_fighter)).is_empty()
+
+
+# With a screen, a grapple draws its cable: opaque, 3 cm thick, unlit, in the fighter's tone, from
+# the displayed shoulder; its tip goes from the shoulder to the point over the cable's ticks,
+# counted in netfox's ticks, and stays there through the pull, which plays the short trail; on
+# the release the cable goes at once and the trail fades in 200 ms (visual-e-audio.md, "O gancho
+# na tela").
+func test_with_a_screen_the_grapple_draws_its_cable_and_the_pull_its_trail() -> void:
+	var cues := await _start_before_a_target(true)
+	_stand(STAND_TICKS)
+	var fire_tick := _fire_at_the_target()
+	var config := _match.config
+	var cable := _only_cable(cues)
+	assert(cable.mesh is PrimitiveMesh, "the cable's mesh is a primitive")
+	var primitive := cable.mesh as PrimitiveMesh
+	assert(primitive.material is StandardMaterial3D, "the cable wears a StandardMaterial3D")
+	var material := primitive.material as StandardMaterial3D
+	assert_str(str(material.albedo_color)).is_equal(str(Color(_fighter.tone, 1.0)))
+	assert_int(material.transparency).is_equal(BaseMaterial3D.TRANSPARENCY_DISABLED)
+	assert_int(material.shading_mode).is_equal(BaseMaterial3D.SHADING_MODE_UNSHADED)
+	var shoulder := _fighter.global_position + Vector3.UP * config.aim_height
+	assert_vector(cable.shoulder()).is_equal_approx(shoulder, Vector3.ONE * 1e-4)
+	assert_float(cable.reach()).is_equal(0.0)
+	for flown: int in range(1, config.grapple_attach_ticks + 1):
+		_stand(1)
+		var expected := float(flown) / config.grapple_attach_ticks
+		assert_float(cable.reach()).is_equal_approx(expected, 1e-6)
+	assert_int(_fighter.state.mode).is_equal(FighterState.Mode.GRAPPLE)
+	assert_int(_fighter.state.mode_since).is_equal(fire_tick + config.grapple_attach_ticks)
+	assert_vector(cable.tip()).is_equal_approx(_fighter.state.grapple_point, Vector3.ONE * 1e-4)
+	# A frame's process_frame comes before its _process: the second one has drawn the cable.
+	await get_tree().process_frame
+	await get_tree().process_frame
+	assert_bool(cable.visible).is_true()
+	var thickness := cable.global_transform.basis.x.length()
+	assert_float(thickness).is_equal_approx(ManeuverCues.CABLE_THICKNESS, 1e-4)
+	await get_tree().physics_frame
+	var trails := cues.find_children("GrapplePullTrail*", "MeshInstance3D", false, false)
+	assert_int(trails.size()).is_equal(1)
+	assert_str(_tone_of(trails[0])).is_equal(str(Color(_fighter.tone, ManeuverCues.OPACITY)))
+	assert_int(cues.presented).is_equal(2)
+	for _tick: int in 2 * config.tickrate:
+		if _fighter.state.grapple_fired_tick == FighterState.NEVER:
+			break
+		_stand(1)
+	assert_int(_fighter.state.grapple_fired_tick).override_failure_message("never released") \
+			.is_equal(FighterState.NEVER)
+	await get_tree().process_frame
+	await get_tree().process_frame
+	var cables := cues.find_children("GrappleCable*", "MeshInstance3D", false, false)
+	assert_int(cables.size()).override_failure_message("the cable stayed after the release") \
+			.is_equal(0)
+	# The trail fades over 200 ms, the dash's duration.
+	await get_tree().create_timer(0.5).timeout
+	assert_int(cues.get_child_count()).is_equal(0)
+	assert_int(cues.presented).is_equal(2)
+	cues.free()
+
+
+# With netfox rolling back DEPTH ticks on every loop, the fire and the pull's start are simulated
+# again and again, the ray cast again on each, and each still plays once: one cable, one trail
+# (DEC-0031 §6).
+func test_a_rollback_that_runs_the_grapple_again_plays_its_cues_once() -> void:
+	var cues := await _start_before_a_target(false)
+	_stand(STAND_TICKS)
+	NetworkRollback.before_loop.connect(_force_rollback)
+	var fire_tick := _fire_at_the_target()
+	_stand_until_mode(FighterState.Mode.GRAPPLE, _match.config.grapple_attach_ticks + 1)
+	_stand(DEPTH + 2)
+	NetworkRollback.before_loop.disconnect(_force_rollback)
+	assert_int(_fighter.state.grapple_fired_tick).is_equal(fire_tick)
+	assert_int(cues.presented).is_equal(2)
+	assert_int(cues.events).is_equal(2)
+	cues.free()
 
 
 # The colour a cue's mesh wears, as text.

@@ -62,6 +62,11 @@ const WALL_SLIDE_GRAVITY_PER_TICK: Dictionary[int, float] = { 30: 0.0595, 60: 0.
 const WALL_JUMP_SPEED_MPS: Dictionary[int, float] = { 30: 6.25, 60: 6.69 }
 const FOUR_DECIMALS := 1e-4 # the design rounds these to four decimals, not a design number
 
+# TASK-10.7 (movimento.md, "O corpo"): the slide off another fighter's head, a speed in m/s
+# copied as it is, the same at 30 and at 60.
+const HEAD_SLIDE_SPEED_MPS := 3.0 # "Escorregar da cabeça"
+const OTHER_HEAD_SLIDE_MPS := 4.5 # another value for the copy, not a design number
+
 
 func _data() -> MovementData:
 	var resource: Resource = load(MOVEMENT_V0)
@@ -401,3 +406,32 @@ func test_the_ray_stands_2_1_m_above_the_feet_and_the_lean_is_15_degrees_in_100_
 	assert_float(config.wall_ray_height).is_greater(CAPSULE_HEIGHT_M)
 	assert_float(config.wall_lean).is_equal_approx(deg_to_rad(15.0), HAIR)
 	assert_float(config.wall_lean_s).is_equal_approx(0.1, HAIR)
+
+
+# TASK-10.7: the head's slide speed is a metre per second, not a time: copied as it is, with no
+# tick conversion, the same at 30 and at 60, and a duplicated resource with another value is
+# copied the same way (movimento.md, "O corpo": "Escorregar da cabeça"; TASK-10.7 plan, Config:
+# "copied from head_slide_speed_mps with no conversion").
+func test_the_head_slide_speed_is_copied_as_is_at_30_and_60(
+	tickrate: int,
+	_test_parameters := [[30], [60]],
+) -> void:
+	var config := MovementConfig.create(_data(), tickrate)
+	var message := "head_slide_speed at %d ticks is %s, expected %s" % [
+		tickrate,
+		config.head_slide_speed,
+		HEAD_SLIDE_SPEED_MPS,
+	]
+	assert_float(config.head_slide_speed).override_failure_message(message).is_equal_approx(
+		HEAD_SLIDE_SPEED_MPS,
+		HAIR,
+	)
+	assert_float(config.head_slide_speed).is_equal_approx(_data().head_slide_speed_mps, HAIR)
+	var copy: Resource = _data().duplicate()
+	assert(copy is MovementData, "a duplicate of %s must still be a MovementData" % MOVEMENT_V0)
+	var other := copy as MovementData
+	other.head_slide_speed_mps = OTHER_HEAD_SLIDE_MPS
+	assert_array(other.validate()).is_empty()
+	var other_config := MovementConfig.create(other, tickrate)
+	assert_float(other_config.head_slide_speed).is_equal_approx(OTHER_HEAD_SLIDE_MPS, HAIR)
+	assert_float(other_config.head_slide_speed).is_not_equal(config.head_slide_speed)

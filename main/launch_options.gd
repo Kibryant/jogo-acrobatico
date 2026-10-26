@@ -11,6 +11,8 @@
 # --measure-fps=PATH measures the frame rate in fullscreen once the game's own fighter plays.
 # With a screen, --watch=FILE [--force] [--trace=PATH] plays a replay in Sozinho instead of the
 # keyboard, and records none.
+# Sozinho puts a still dummy at the second spawn point to stand on and bump into (TASK-10.7);
+# --dummy=off leaves it out.
 # When netfox's network simulator connects the game (SimulatorLink), the address is its own: an
 # address in the arguments that differs is refused, and so is Sozinho, which has no network.
 # An argument this build does not know, or one that does not fit the mode, is an error: a typo
@@ -41,6 +43,7 @@ const NO_REPLAY := "no-replay"
 const WATCH := "watch"
 const TRACE := "trace"
 const FORCE := "force"
+const DUMMY := "dummy"
 ## The arguments this build knows, by name.
 const KNOWN: Array[String] = [
 	SERVER,
@@ -57,6 +60,7 @@ const KNOWN: Array[String] = [
 	WATCH,
 	TRACE,
 	FORCE,
+	DUMMY,
 ]
 ## The ones that take no value.
 const FLAGS: Array[String] = [SERVER, BOT, NO_REPLAY, FORCE]
@@ -64,6 +68,9 @@ const FLAGS: Array[String] = [SERVER, BOT, NO_REPLAY, FORCE]
 const SOLO_ONLY: Array[String] = [REPLAY, REPLAY_DIR, NO_REPLAY, WATCH, TRACE, FORCE]
 ## The values of --half.
 const HALVES: Array[String] = ["left", "right"]
+## The values of --dummy: Sozinho's dummy stands at the second spawn point, or not (TASK-10.7).
+const DUMMY_ON := "on"
+const DUMMY_OFF := "off"
 
 var mode := Mode.SOLO
 ## The server listens on it; a client connects to it.
@@ -95,6 +102,9 @@ var watch := ""
 var trace := ""
 ## With --watch: plays a replay of another build anyway (ReplayFile's refusals).
 var force := false
+## Sozinho's still dummy at the second spawn point (TASK-10.7); --dummy=off leaves it out. Only
+## Sozinho's own play has one: a server, a client and --watch never do.
+var dummy := false
 ## netfox's network simulator, when it connects the game; null otherwise.
 var simulator: SimulatorLink
 ## One line per problem with the arguments; the game opens only when there is none.
@@ -197,6 +207,7 @@ func _read_mode(
 		else:
 			measure_fps = given[MEASURE_FPS]
 	_read_replay(given, has_screen)
+	_read_dummy(given)
 	if simulator != null:
 		_check_simulator_address()
 
@@ -246,6 +257,26 @@ func _read_replay(given: Dictionary[String, String], has_screen: bool) -> void:
 	if not watch.is_empty():
 		trace = given.get(TRACE, "")
 		force = given.has(FORCE)
+
+
+# Sozinho's dummy (TASK-10.7): on unless --dummy=off, and only in Sozinho's own play; --watch
+# plays the fighters of its file.
+func _read_dummy(given: Dictionary[String, String]) -> void:
+	var playing := mode == Mode.SOLO and watch.is_empty() and not given.has(WATCH)
+	if not given.has(DUMMY):
+		dummy = playing
+		return
+	var value := given[DUMMY]
+	if value != DUMMY_ON and value != DUMMY_OFF:
+		errors.append("--dummy is on or off, not %s" % value)
+	elif mode != Mode.SOLO:
+		errors.append("--dummy goes with Sozinho: the server and the clients have no dummy")
+	elif given.has(WATCH):
+		errors.append(
+			"--dummy goes with Sozinho's own play: --watch plays the fighters of its file"
+		)
+	else:
+		dummy = value == DUMMY_ON
 
 
 # HOST or HOST:PORT. An IPv6 address, with its own colons, is not read here.

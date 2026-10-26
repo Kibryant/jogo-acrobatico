@@ -1,6 +1,6 @@
 ---
 revisado_em: 2026-10-26
-fontes: [F-001, F-012, F-013, F-015, F-084, F-086, F-088, F-100, F-108, F-109, F-121, F-122, F-127, F-128, F-129, F-131, F-132, F-135, F-136, F-140, F-141, F-146, F-147, F-148]
+fontes: [F-001, F-012, F-013, F-015, F-084, F-086, F-088, F-100, F-108, F-109, F-121, F-122, F-127, F-128, F-129, F-131, F-132, F-135, F-136, F-140, F-141, F-146, F-147, F-148, F-151, F-152, F-153]
 ---
 
 # Movimento
@@ -40,6 +40,8 @@ Cada número tem uma origem, e nem todos têm a mesma firmeza; a vitrine mostra 
 | Raio da cápsula | 0,35 | m | Passa folgado por uma porta de 1 m |
 | Rampa máxima | 45 | ° | Acima disso não é chão |
 | Degrau | nenhum | — | A arena usa rampa |
+| A cabeça do outro | não é chão para as regras | — | A Q-16 começa proibida, como no CoD: quem cai sobre a cabeça de outro lutador fica no ar. Sem pulo do chão nem dash, sem renovar o pulo, o pulo duplo nem a última parede, sem coyote e com a gravidade do ar; o pulo duplo guardado e o gancho saem como no ar. O motor segue dizendo chão até 45° no domo, e o contorno D lê essa resposta (DEC-0025 §2; DEC-0037); as regras perguntam outra coisa (`Movement.stands`). De lado, o choque segue como o empurrão da TASK-9. A cabeça não é plataforma: não carrega quem está em cima nem passa a velocidade dela na saída. Escolha do Arthur para o v0, decidida de vez jogando na TASK-10.8 (F-152; Q-16) |
+| Escorregar da cabeça | 3,0 | m/s | Para longe do eixo do outro, pela normal do contato achatada no plano; num pouso exato no centro, para as costas de onde o corpo olha. Com raios de 0,35 m, o domo deixa de ser chão além de 45°, a 0,495 m do eixo: do centro, 10 ticks a 60, uns 0,2 s. Leitura v0 do Claude (TASK-10.7; vitrine "A cabeça do outro") |
 
 ## Chão
 
@@ -76,7 +78,7 @@ Cada número tem uma origem, e nem todos têm a mesma firmeza; a vitrine mostra 
 
 | Número | Valor | Unidade | Nota |
 |---|---|---|---|
-| Coyote time | 100 | ms | Ainda pula logo depois de sair da beirada |
+| Coyote time | 100 | ms | Ainda pula logo depois de sair da beirada. A cabeça de outro lutador nunca abre o coyote, nem ao sair do chão para ela, nem ao escorregar dela ("O corpo": "A cabeça do outro"; TASK-10.7) |
 | Buffer de input | 150 | ms | Um buffer só, para todo comando (DEC-0016): uma vaga, e o último aperto vence; um aperto que ainda não pode sair espera na vaga pelos 150 ms (DEC-0039; leitura v0 do Claude, TASK-10.1). No mesmo tick, o pulo vence o dash, que vence o gancho (TASK-10.4; TASK-10.6) |
 
 ## Corrida na parede
@@ -187,6 +189,7 @@ Cada número tem uma origem, e nem todos têm a mesma firmeza; a vitrine mostra 
 - **Corredor estreito (TASK-10.10):** com a volta no pulo da parede, ir e voltar num corredor de vão de até 4 m sobe ≈ 0,54 m por travessia, sem fim. O mapa limita: a altura das paredes de um corredor estreito é a altura que se quer alcançar, porque a corrida termina quando o raio, 30 cm acima da cabeça, passa do topo. O corredor da arena tem 5 m. Escolha do Arthur (F-135).
 - **O gancho (TASK-10.6):** de 3 a 25 m, a 18 m/s: os 16 m entre as torres levam ≈ 1 s. Com os pés indo ao ponto, o topo de uma torre de 6 m se alcança do chão mirando a face logo abaixo da borda, de uns 6 a 14 m dela; de mais longe, com o pulo duplo depois da soltura. Mirando a própria borda de perto, o embalo passa por cima de uma torre de 4 m, e soltar antes com o pulo resolve. Simulação 2D de lado, a cápsula contra caixas, na vitrine "A puxada do gancho"; o motor difere em centímetros. Leitura v0 do Claude (F-141).
 - **As torres e o pilar (TASK-10.6):** a `TorreA` (centro em x = −8, z = −30) e a `TorreB` (x = 12, z = −30), de 4 × 6 × 4 m, deixam 16 m entre as faces, mais que os ≈ 7 m do pulo duplo: só o gancho cruza. O `Pilar10m` (x = 2, z = −36), de 2 × 10 × 2 m, tem o topo a 10 m. Ficam em chão livre, longe do percurso da referência e das cenas da SyncTest, e um teste de cena prova isso. Leitura v0 do Claude (F-141).
+- **A borda (TASK-10.7):** quatro paredes de 50 m de altura e 1 m de espessura fecham os 80 × 80 m do chão, com a face de dentro em ±40 m: a `BordaNorte` e a `BordaSul` (82 × 50 × 1 m, centros em z = ∓40,5) e a `BordaLeste` e a `BordaOeste` (1 × 50 × 82 m, em x = ±40,5). São do cenário, corríveis e ganchoáveis como qualquer parede, e não fazem sombra: com o sol a 50° de altura, 50 m escureceriam 42 m da arena. A altura sai do gancho que conserva os 18 m/s: um gancho para cima da borda leva os pés uns 7,4 m acima do ponto, com o pulo duplo no topo; do chão, o ponto mais alto ao alcance fica a 26,2 m e os pés chegam a 33,6 m; do topo do pilar, a 3 m da borda norte, o ponto fica a 36,2 m e os pés chegam a 43,6 m. Os 50 m deixam 6,4 m de folga. No motor, o teste da borda mediu o gancho do topo do pilar prendendo a 35,99 m e os pés a 43,34 m, 6,66 m abaixo do topo (`test/arena/arena_border_test.gd`). O rascunho de 30 m era de antes da velocidade conservada (simulação de lado, a 60 ticks, na vitrine "A cabeça do outro"). Um especialista talvez escape por um canto, com o elevador da parede ("Corredor estreito") e um gancho lá em cima; não foi medido, e o plano de morte entraria numa task própria. Leitura v0 do Claude (F-152).
 
 ## O que o esqueleto andante usa (TASK-9)
 

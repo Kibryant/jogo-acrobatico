@@ -13,7 +13,9 @@
 # cues of the maneuvers: played once per event, as many as the events (DEC-0031 §6). The wall
 # scenario, parede (TASK-10.5, criterion 7), runs on walls it builds in the arena, away from the
 # arena's own shapes, and has a test of its own; so does the grapple's, gancho (TASK-10.6,
-# criterion 8), whose ray the fighter casts again on every resimulated tick that asks for it.
+# criterion 8), whose ray the fighter casts again on every resimulated tick that asks for it. The
+# head's, cabeca (TASK-10.7, criterion 3), lands a fighter on another's head twice, where the rule
+# slides it off, and has a test of its own too.
 extends GdUnitTestSuite
 
 const NetfoxTicks := preload("res://test/support/netfox_ticks.gd")
@@ -202,6 +204,27 @@ const GANCHO_LOOPS := 300
 # The self-test needs only the east fighter's first fire and a few ticks of its cable.
 const GANCHO_SELF_TEST_LOOPS := 30
 
+# Cabeca (TASK-10.7, criterion 3): in the arena's empty north-west, away from its shapes, the
+# fighter below stands still at CABECA_HEAD, and the other runs at it from CABECA_RUN_UP off its
+# axis, jumps CABECA_JUMP_FROM before it, double jumps at the apex with no direction and lands on
+# its head, as probe C does (test/fighter/head_probe_test.gd). There it presses the jump, which
+# the double jump spent leaves in the slot, and the rule slides it off at 3 m/s (movimento.md, "O
+# corpo": "A cabeça do outro", "Escorregar da cabeça"). Once on the floor it walks away from the
+# axis to CABECA_RUN_UP, stops and does it again from there: two passes.
+const CABECA_HEAD := Vector3(-28, 0, -26)
+const CABECA_RUN_UP := 2.5
+const CABECA_JUMP_FROM := 2.0
+# m/s: the run-up, as probe C's: 50 ticks of the jump and the double jump cover the 2 m.
+const CABECA_RUN_SPEED := 2.4
+# m/s: the walk back out to the next run-up.
+const CABECA_WALK_SPEED := 3.5
+# m: feet resting this high are on the other's head, its top 1,8 m above the floor.
+const CABECA_HEAD_MIN_Y := 1.0
+const CABECA_PASSES := 2
+const CABECA_LOOPS := 400
+# The self-test needs the first landing and a few ticks on the head.
+const CABECA_SELF_TEST_LOOPS := 100
+
 # The first tick of the run and the tick of the fighters' first recorded state.
 var _first_tick := 0
 var _first_state_tick := 0
@@ -388,6 +411,34 @@ func test_the_grapple_point_netfox_does_not_record_makes_the_sync_test_diverge()
 	assert_int(observer.mismatches).is_greater(0)
 
 
+# Criterion 3 of TASK-10.7: the head under the rollback of 7 ticks on every tick, with zero
+# divergence in the whole state, as probe C found on the code before the rule (rede.md §4, "A
+# sonda C"): two landings on the head, two slides off it, a jump pressed on the head and refused
+# there, and no tick where the rules stood on it. As many cues as double jumps and slides, one
+# slide per landing (DEC-0031 §6).
+func test_the_head_scenario_resimulates_with_zero_divergence() -> void:
+	var cabeca := await _cabeca(CABECA_LOOPS)
+	var message := "%s diverged:\n%s" % [cabeca.scenario, "\n".join(cabeca.shown)]
+	assert_int(cabeca.mismatches).override_failure_message(message).is_equal(0)
+	assert_int(cabeca.paths["head_landings"]).is_greater_equal(2)
+	assert_int(cabeca.paths["slide_offs"]).is_greater_equal(2)
+	assert_int(cabeca.paths["head_jump_refusals"]).is_greater_equal(1)
+	assert_int(cabeca.paths["head_floor_ticks"]).is_equal(0)
+	assert_int(cabeca.collisions).is_greater_equal(1)
+	assert_int(cabeca.paths["bots_done"]).is_equal(1)
+	assert_int(cabeca.paths["head_slides"]).is_equal(cabeca.paths["head_landings"])
+	_assert_cues(cabeca, cabeca.paths["double_jumps"] + cabeca.paths["head_slides"])
+
+
+# The slide's direction in the state: out of the recording, a rollback across the landing brings
+# the present's direction back on the ticks before it, where the body was not on the head, and the
+# slide pushes it there.
+func test_the_slide_off_dir_netfox_does_not_record_makes_the_sync_test_diverge() -> void:
+	var observer := await _cabeca(CABECA_SELF_TEST_LOOPS, ":state:slide_off_dir")
+	assert_int(observer.paths["head_landings"]).is_greater_equal(1)
+	assert_int(observer.mismatches).is_greater(0)
+
+
 func _rampa() -> SyncObserver:
 	var game_match := await _match_with([RAMPA_START])
 	var bot := Bot.new(game_match.fighters[0])
@@ -568,6 +619,30 @@ func _gancho(loops: int, hidden := "") -> SyncObserver:
 	observer.paths["bots_done"] = 0
 	for bot: DashBot in bots:
 		observer.paths["bots_done"] += 1 if bot.done() else 0
+	_add_cues(observer, game_match)
+	return _finish(observer, game_match)
+
+
+func _cabeca(loops: int, hidden := "") -> SyncObserver:
+	var starts: Array[Vector3] = [CABECA_HEAD + Vector3(0, 0, CABECA_RUN_UP), CABECA_HEAD]
+	var game_match := await _match_with(starts, hidden)
+	var config := game_match.config
+	var top := game_match.fighters[0]
+	var below := Bot.new(game_match.fighters[1])
+	var bot := HeadBot.new(top, CABECA_HEAD, config)
+	var scenario := "cabeca" if hidden.is_empty() else "cabeca without " + hidden
+	var observer := _start(game_match, scenario)
+	var heads := Heads.new(top)
+	for _loop: int in loops:
+		if bot.done():
+			break
+		bot.drive()
+		below.run(Vector3.ZERO)
+		NetfoxTicks.run_loop()
+		heads.observe()
+	heads.add_to(observer.paths)
+	observer.paths["head_jump_refusals"] = bot.refusals
+	observer.paths["bots_done"] = 1 if bot.done() else 0
 	_add_cues(observer, game_match)
 	return _finish(observer, game_match)
 
@@ -786,8 +861,13 @@ class Bot:
 		if direction == Vector3.ZERO:
 			fighter.input.sample_frame(Vector2.ZERO, fighter.state.facing_yaw)
 			return
-		# yaw 0 looks down -Z, and forward turned by yaw is (-sin(yaw), 0, -cos(yaw)).
-		fighter.input.sample_frame(FORWARD, atan2(-direction.x, -direction.z))
+		fighter.input.sample_frame(FORWARD, yaw_along(direction))
+
+
+	# The yaw that looks along a horizontal world direction: yaw 0 looks down -Z, and forward
+	# turned by yaw is (-sin(yaw), 0, -cos(yaw)).
+	static func yaw_along(direction: Vector3) -> float:
+		return atan2(-direction.x, -direction.z)
 
 
 # Runs off the platform's west ledge once per entry of press_ages and jumps back onto it from the
@@ -1855,3 +1935,154 @@ class Grapples:
 			and Movement.can_grapple(before, tick - 1, _config)
 		):
 			misses += 1
+
+
+# The head's route (cabeca): from CABECA_RUN_UP off the axis it runs at it, jumps CABECA_JUMP_FROM
+# before it, double jumps at the apex with no direction, lands on the head and presses the jump
+# there, then waits for the slide and the fall; on the floor it walks straight away from the axis
+# back to CABECA_RUN_UP, stops, and goes again, CABECA_PASSES times.
+class HeadBot:
+	extends Bot
+
+	## m/s: slower than this on the floor, the body has stopped.
+	const STILL_MPS := 0.01
+
+	enum Phase {
+		TO_START,
+		STOP,
+		RUN,
+		RISE,
+		DOUBLE,
+		ON_HEAD,
+		OFF_HEAD,
+		DONE,
+	}
+
+	## Jumps pressed on the head that did not fire there: they stayed in the slot.
+	var refusals := 0
+
+	var _axis: Vector3
+	var _config: MovementConfig
+	var _phase := Phase.STOP
+	var _passes := 0
+	var _pressed_on_head := false
+	var _press_checked := false
+	var _yaw := 0.0
+
+
+	func _init(played: Fighter, axis: Vector3, config: MovementConfig) -> void:
+		super(played)
+		_axis = axis
+		_config = config
+
+
+	func done() -> bool:
+		return _phase == Phase.DONE
+
+
+	func drive() -> void:
+		var state := fighter.state
+		var off_axis := Vector3(fighter.position.x - _axis.x, 0, fighter.position.z - _axis.z)
+		match _phase:
+			Phase.TO_START:
+				if state.on_floor and off_axis.length() >= CABECA_RUN_UP:
+					_phase = Phase.STOP
+					_sample(Vector2.ZERO)
+				else:
+					_yaw = Bot.yaw_along(off_axis)
+					_sample(FORWARD * CABECA_WALK_SPEED / _config.run_speed)
+			Phase.STOP:
+				_sample(Vector2.ZERO)
+				var speed := Vector3(fighter.velocity.x, 0, fighter.velocity.z).length()
+				if state.on_floor and speed < STILL_MPS:
+					_yaw = Bot.yaw_along(-off_axis)
+					_phase = Phase.RUN
+			Phase.RUN:
+				_yaw = Bot.yaw_along(-off_axis)
+				_sample(FORWARD * CABECA_RUN_SPEED / _config.run_speed)
+				if state.on_floor and off_axis.length() <= CABECA_JUMP_FROM:
+					fighter.input.press_jump()
+					_phase = Phase.RISE
+			Phase.RISE:
+				if not state.on_floor and state.jumps_used == 1 and fighter.velocity.y <= 0.0:
+					_sample(Vector2.ZERO)
+					fighter.input.press_jump()
+					_phase = Phase.DOUBLE
+				else:
+					_sample(FORWARD * CABECA_RUN_SPEED / _config.run_speed)
+			Phase.DOUBLE:
+				_sample(Vector2.ZERO)
+				if _on_head():
+					_pressed_on_head = false
+					_press_checked = false
+					_phase = Phase.ON_HEAD
+				elif state.on_floor:
+					_phase = Phase.OFF_HEAD
+			Phase.ON_HEAD:
+				_sample(Vector2.ZERO)
+				# The tick after the press: the jump waits in the slot, both jumps used, and the
+				# body did not rise.
+				if _pressed_on_head and not _press_checked:
+					_press_checked = true
+					var waits := state.buffered_command == FighterCommand.JUMP
+					if waits and state.jumps_used == 2 and fighter.velocity.y <= 0.0:
+						refusals += 1
+				if not _on_head():
+					_phase = Phase.OFF_HEAD
+				elif not _pressed_on_head:
+					fighter.input.press_jump()
+					_pressed_on_head = true
+			Phase.OFF_HEAD:
+				_sample(Vector2.ZERO)
+				if state.on_floor and fighter.position.y < CABECA_HEAD_MIN_Y:
+					_passes += 1
+					_phase = Phase.DONE if _passes >= CABECA_PASSES else Phase.TO_START
+
+
+	func _on_head() -> bool:
+		return fighter.state.on_floor and fighter.position.y > CABECA_HEAD_MIN_Y
+
+
+	func _sample(move: Vector2) -> void:
+		fighter.input.sample_frame(move, _yaw)
+
+
+# Counts what the head did on the fresh ticks of one fighter, from the state on screen after each
+# loop: the landings on a head, the slides off it, the slides' keys (head_landing_tick), the double
+# jumps, and the ticks on a head where the rules stood, which the rule forbids.
+class Heads:
+	var _fighter: Fighter
+	var _was_on_head := false
+	var _landings := 0
+	var _slide_offs := 0
+	var _floor_ticks := 0
+	var _slides: Dictionary[int, bool] = { }
+	var _double_jumps: Dictionary[int, bool] = { }
+
+
+	func _init(watched: Fighter) -> void:
+		_fighter = watched
+
+
+	func observe() -> void:
+		var state := _fighter.state
+		var on_head := state.on_floor and _fighter.position.y > CABECA_HEAD_MIN_Y
+		if on_head and not _was_on_head:
+			_landings += 1
+		if _was_on_head and not on_head and state.slide_off_dir == Vector3.ZERO:
+			_slide_offs += 1
+		if on_head and Movement.stands(state):
+			_floor_ticks += 1
+		if state.slide_off_dir != Vector3.ZERO:
+			_slides[state.head_landing_tick] = true
+		if state.double_jump_tick != FighterState.NEVER:
+			_double_jumps[state.double_jump_tick] = true
+		_was_on_head = on_head
+
+
+	func add_to(paths: Dictionary[String, int]) -> void:
+		paths["head_landings"] = _landings
+		paths["slide_offs"] = _slide_offs
+		paths["head_floor_ticks"] = _floor_ticks
+		paths["head_slides"] = _slides.size()
+		paths["double_jumps"] = _double_jumps.size()

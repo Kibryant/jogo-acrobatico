@@ -10,7 +10,7 @@ milestone: m-1
 dependencies:
   - TASK-10.2
 parent_task_id: TASK-10
-ordinal: 20000
+ordinal: 18700
 ---
 
 ## Description

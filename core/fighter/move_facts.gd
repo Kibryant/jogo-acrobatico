@@ -21,3 +21,9 @@ var position := Vector3.ZERO
 # point behind a corner, false and Vector3.ZERO.
 var aim_hit := false
 var aim_point := Vector3.ZERO
+# Another fighter's head (TASK-10.7): the engine's floor this tick is only the head of another
+# fighter, and the normal of that contact laid flat, away from the fighter below (it may be about
+# zero at the very centre). The adapter reads them from the move's collisions at a floor angle, or
+# from its test-only probe down when the floor came only from the snap (rede.md §4, "A sonda C").
+var floor_is_fighter := false
+var fighter_away := Vector3.ZERO

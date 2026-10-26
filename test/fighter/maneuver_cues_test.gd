@@ -6,7 +6,8 @@
 # tela"). The real Match runs in Sozinho with netfox's ticks by hand
 # (test/support/netfox_ticks.gd; DEC-0027 §3); the SyncTest checks the same count under the
 # forced rollback of every tick (fighter_sync_test.gd, the dash, pulo duplo, parede and gancho
-# scenarios).
+# scenarios). TASK-10.7 adds the same short trail on a slide off another fighter's head
+# (visual-e-audio.md, "A cabeça do outro na tela"; the SyncTest's cabeca scenario).
 extends GdUnitTestSuite
 
 const NetfoxTicks := preload("res://test/support/netfox_ticks.gd")
@@ -477,6 +478,79 @@ func test_a_rollback_that_runs_the_grapple_again_plays_its_cues_once() -> void:
 
 
 # The colour a cue's mesh wears, as text.
+# The slide off a head shows while it lasts, by the tick the contact with that head began; off
+# the head it is gone (visual-e-audio.md, "A cabeça do outro na tela"; TASK-10.7, criterion 7).
+func test_the_head_slide_shows_only_while_it_lasts() -> void:
+	await _start()
+	var state := _fighter.state
+	state.mode = FighterState.Mode.AIR
+	state.slide_off_dir = Vector3.RIGHT
+	state.head_landing_tick = 40
+	var shown := ManeuverCues.shown_events(_fighter)
+	assert_int(shown.size()).is_equal(1)
+	assert_int(shown[0].kind).is_equal(ManeuverCues.Kind.HEAD_SLIDE)
+	assert_int(shown[0].stamp).is_equal(40)
+	state.slide_off_dir = Vector3.ZERO
+	state.head_landing_tick = FighterState.NEVER
+	assert_array(ManeuverCues.shown_events(_fighter)).is_empty()
+
+
+# The head of the test: a second fighter standing in the arena's empty north-west, away from its
+# shapes, and the first one dropped onto it 10 cm off its axis, so it slides off toward +X.
+const HEAD_AXIS := Vector3(-28, 0, -26)
+const DROP_FROM := Vector3(-27.9, 2.4, -26)
+
+
+# Criterion 7 of TASK-10.7: a slide off a head draws one short trail in the fighter's tone, by the
+# key of its landing; it lasts while the body is on the head and goes away by itself 200 ms after
+# it leaves (visual-e-audio.md, "A cabeça do outro na tela").
+func test_with_a_screen_a_slide_off_a_head_draws_one_short_trail_that_goes_away() -> void:
+	var node := MATCH_SCENE.instantiate()
+	assert(node is Match, "match.tscn must have a Match at its root")
+	_match = auto_free(node)
+	add_child(_match)
+	_fighter = _match.spawn_fighter(0, multiplayer.get_unique_id())
+	var below := _match.spawn_fighter(1, multiplayer.get_unique_id())
+	below.position = HEAD_AXIS
+	_fighter.position = DROP_FROM
+	_fighter.state.on_floor = false
+	_fighter.state.mode = FighterState.Mode.AIR
+	_first_tick = NetworkTime.tick
+	await get_tree().process_frame
+	await get_tree().physics_frame
+	var cues := ManeuverCues.new(_match.config, true)
+	_match.add_child(cues)
+	cues.watch(_fighter)
+	for _tick: int in 60:
+		if _fighter.state.slide_off_dir != Vector3.ZERO:
+			break
+		_stand(1)
+	assert_vector(_fighter.state.slide_off_dir).override_failure_message("never on the head") \
+			.is_not_equal(Vector3.ZERO)
+	var landing := _fighter.state.head_landing_tick
+	var trails := cues.find_children("HeadSlideTrail*", "MeshInstance3D", false, false)
+	assert_int(trails.size()).is_equal(1)
+	assert_int(cues.presented).is_equal(1)
+	assert_str(_tone_of(trails[0])).is_equal(str(Color(_fighter.tone, ManeuverCues.OPACITY)))
+	for _tick: int in 60:
+		if _fighter.state.slide_off_dir == Vector3.ZERO:
+			break
+		await get_tree().physics_frame
+		_stand(1)
+		await get_tree().process_frame
+		assert_int(_fighter.state.head_landing_tick).is_in([landing, FighterState.NEVER])
+	assert_vector(_fighter.state.slide_off_dir).override_failure_message("still on the head") \
+			.is_equal(Vector3.ZERO)
+	trails = cues.find_children("HeadSlideTrail*", "MeshInstance3D", false, false)
+	assert_int(trails.size()).is_equal(1)
+	assert_int(cues.presented).is_equal(1)
+	# The trail fades over the dash's duration, 200 ms, once the body is off the head.
+	await get_tree().create_timer(0.6).timeout
+	trails = cues.find_children("HeadSlideTrail*", "MeshInstance3D", false, false)
+	assert_int(trails.size()).is_equal(0)
+	cues.free()
+
+
 func _tone_of(cue: Node) -> String:
 	assert(cue is MeshInstance3D, "a cue is a MeshInstance3D")
 	var mesh := (cue as MeshInstance3D).mesh

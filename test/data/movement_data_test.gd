@@ -127,6 +127,7 @@ func _design_data() -> MovementData:
 	data.grapple_cooldown_ms = 6000 # "Gancho": "Recarga"
 	data.aim_height_m = 1.6 # "Gancho": "De onde sai a mira"
 	data.aim_side_m = 0.8 # "Gancho": "De onde sai a mira"; "Câmera": "Ombro" (DEC-0045 §2)
+	data.head_slide_speed_mps = 3.0 # "O corpo": "Escorregar da cabeça" (TASK-10.7)
 	return data
 
 
@@ -209,6 +210,53 @@ func test_movement_v0_holds_the_numbers_of_movimento_md() -> void:
 	assert_int(data.grapple_cooldown_ms).is_equal(design.grapple_cooldown_ms)
 	assert_float(data.aim_height_m).is_equal_approx(design.aim_height_m, HAIR)
 	assert_float(data.aim_side_m).is_equal_approx(design.aim_side_m, HAIR)
+	assert_float(data.head_slide_speed_mps).is_equal_approx(design.head_slide_speed_mps, HAIR)
+
+
+# TASK-10.7: the slide off another fighter's head is 3,0 m/s in movement_v0.tres and in the
+# design, as a MovementData field (movimento.md, "O corpo": "Escorregar da cabeça"; TASK-10.7
+# plan, Data).
+func test_movement_v0_holds_the_head_slide_speed_of_3_mps() -> void:
+	assert_float(_load_v0().head_slide_speed_mps).is_equal_approx(3.0, HAIR)
+	assert_float(_design_data().head_slide_speed_mps).is_equal_approx(3.0, HAIR)
+
+
+# TASK-10.7: the slide needs a speed, or whoever lands on a head would never leave it
+# (movimento.md, "O corpo": "Escorregar da cabeça"; TASK-10.7 plan, Data: "positive"): 0 and a
+# negative value are rejected with one message naming the field.
+func test_a_head_slide_speed_that_is_not_positive_is_rejected(
+	mps: float,
+	_test_parameters := [[0.0], [-3.0], [-0.01]],
+) -> void:
+	var data := _design_data()
+	data.head_slide_speed_mps = mps
+	_assert_one_message_naming(
+		data.validate(),
+		"head_slide_speed_mps",
+		"a head slide of %.2f m/s must be rejected" % mps,
+	)
+
+
+func test_a_positive_head_slide_speed_is_allowed(
+	mps: float,
+	_test_parameters := [[0.01], [3.0], [30.0]],
+) -> void:
+	var data := _design_data()
+	data.head_slide_speed_mps = mps
+	var message := "a head slide of %.2f m/s must pass" % mps
+	assert_array(data.validate()).override_failure_message(message).is_empty()
+
+
+# Many: the head slide wrong together with another number gives one message each, naming its
+# own field.
+func test_a_bad_head_slide_speed_and_a_bad_dash_cost_give_two_messages() -> void:
+	var data := _design_data()
+	data.head_slide_speed_mps = 0.0
+	data.dash_cost = -15.0
+	var errors := data.validate()
+	assert_array(errors).override_failure_message("%s" % [errors]).has_size(2)
+	_assert_some_message_names(errors, "head_slide_speed_mps")
+	_assert_some_message_names(errors, "dash_cost")
 
 
 # TASK-10.11: the aim's side is signed, 0 the shoulder and negative the left one, so no value

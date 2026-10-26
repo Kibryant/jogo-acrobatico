@@ -11,7 +11,8 @@
 # of the entry, so the ray stays where the case puts it. The feet heights are where a body meets
 # these faces in the air: 0,15 m, the second tick of a jump; 0,5 m, early in a jump; 1,2 m, the
 # jump's apex (movimento.md, "Pulo e ar"). The jump pressed into a low block plays with the real
-# gravity, from the feet on the floor.
+# gravity, from the feet on the floor. TASK-10.7 adds the border's four walls, which accept the
+# run like any wall of the scenery.
 extends GdUnitTestSuite
 
 const NetfoxTicks := preload("res://test/support/netfox_ticks.gd")
@@ -31,6 +32,10 @@ const LOW_FEET := 0.15
 const EARLY_FEET := 0.5
 const APEX_FEET := 1.2 # movimento.md, "Pulo e ar": the jump's 1,2 m
 const HIGH_FEET := 2.5 # on a corridor wall, after a climb: the ray at 4,6 m, below its 5 m
+# The border (TASK-10.7; movimento.md, "Métricas de nível": "A borda"): inner faces at ±40 m, 50 m
+# tall.
+const BORDER_INNER := 40.0
+const BORDER_TOP := 50.0
 
 # The faces of arena.tscn ("Métricas de nível": "Onde ficam na arena"; arena.gd): the blocks span
 # z -14..-10, so their south faces look down +Z from z = -10 (Block1m over x -10..-6, Block2m over
@@ -134,6 +139,31 @@ func test_the_long_wall_and_the_corridor_walls_accept_the_run(
 	var flight_name := "%s, face at x %.1f, feet at %.1f m" % [wall, face_x, feet]
 	await flight.fly(self, flight_name, _arena(), config, start, velocity, face, LOOPS)
 	_assert_runs_on(flight, wall, top)
+
+
+# Criterion 6 of TASK-10.7: the border's four walls are scenery like any wall: each inner face
+# accepts the run at the apex of a jump, its 50 m far above the ray (movimento.md, "Métricas de
+# nível": "A borda"). Each flight starts at the middle of the face and runs along it, away from
+# the arena's pieces.
+func test_the_border_walls_accept_the_run(
+	wall: String,
+	normal: Vector3,
+	_test_parameters := [
+		["BordaNorte", Vector3.BACK],
+		["BordaSul", Vector3.FORWARD],
+		["BordaLeste", Vector3.LEFT],
+		["BordaOeste", Vector3.RIGHT],
+	],
+) -> void:
+	var config := _config()
+	var face := -normal * BORDER_INNER
+	var start := face + normal * (config.capsule_radius + START_GAP) + Vector3.UP * APEX_FEET
+	var along := normal.cross(Vector3.UP)
+	var velocity := -normal * INTO + along * ALONG
+	var flight := WallFlight.new()
+	var flight_name := "%s, feet at %.1f m" % [wall, APEX_FEET]
+	await flight.fly(self, flight_name, _arena(), config, start, velocity, normal, LOOPS)
+	_assert_runs_on(flight, wall, BORDER_TOP)
 
 
 # The narrow corridor's metric (movimento.md, "Métricas de nível": "Corredor estreito"): the inner

@@ -74,6 +74,12 @@ var grapple_point := Vector3.ZERO
 # The tick of the last release: the cooldown counts from it, as the dash's counts from its end
 # ("Recarga"). It stays after the release; NEVER is a grapple that never happened.
 var grapple_end_tick := NEVER
+# Another fighter's head under the feet (movimento.md, "O corpo": "A cabeça do outro"; TASK-10.7):
+# the horizontal unit vector away from the fighter below while the body is on its head, ZERO off
+# it; and the tick the contact with that head began, the key its cue plays by (DEC-0031), NEVER
+# off it. after_move writes them from the head facts; before_move slides along slide_off_dir.
+var slide_off_dir := Vector3.ZERO
+var head_landing_tick := NEVER
 
 
 # An equal and independent state: the rules change the copy, never the state they receive.
@@ -98,4 +104,6 @@ func copy() -> FighterState:
 	other.grapple_fired_tick = grapple_fired_tick
 	other.grapple_point = grapple_point
 	other.grapple_end_tick = grapple_end_tick
+	other.slide_off_dir = slide_off_dir
+	other.head_landing_tick = head_landing_tick
 	return other

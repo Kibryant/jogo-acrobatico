@@ -1,10 +1,10 @@
 # The fighter node (visao-geral.md, "As cenas"; DEC-0022): a thin adapter between netfox, the
 # engine and the pure core. In _rollback_tick it only calls Movement and mirrors the result: the
 # core decides, move_and_slide() moves and collides, the core confers with the facts the engine
-# gives back, the floor, the wall and, when the core asks, what the aim finds (the tick sandwich;
-# DEC-0042; DEC-0044). The two rollback contours of DEC-0025 live here because they touch the
-# engine, never the core. The same code runs in Sozinho, on the server and on the clients
-# (DEC-0026 §5).
+# gives back, the floor, the wall, another fighter's head under the feet and, when the core asks,
+# what the aim finds (the tick sandwich; DEC-0042; DEC-0044; TASK-10.7). The two rollback contours
+# of DEC-0025 live here because they touch the engine, never the core. The same code runs in
+# Sozinho, on the server and on the clients (DEC-0026 §5).
 class_name Fighter
 extends CharacterBody3D
 
@@ -27,6 +27,16 @@ const WALL_PROBE_DISTANCE := 0.05
 # engine tolerance, not a game number: that ray ends on the very face the first one found, and the
 # engine may report the face there, a hair before the point; a corner stops it well before.
 const SIGHT_TOLERANCE := 0.05
+# m: when the engine's floor came only from its snap, with no collision of the move at a floor
+# angle, how far down the test-only probe looks for what holds the feet. It moves nothing. Probe C
+# measured such ticks on another fighter's head, 9 of 49 standing on it and 29 of 31 when the head
+# walked away, and this probe named the fighter below on every one of them (rede.md §4, "A sonda
+# C"). The wall run's distance.
+const HEAD_PROBE_DISTANCE := 0.05
+# rad: the slack the engine adds to floor_max_angle when it judges a floor (character_body_3d.cpp,
+# FLOOR_ANGLE_THRESHOLD, Godot 4.7.2): a collision within it is a floor collision. An engine
+# number, not a game one.
+const FLOOR_ANGLE_THRESHOLD := 0.01
 
 ## The input box, recorded by netfox as Input:move, Input:yaw, Input:pitch, Input:jump,
 ## Input:dash and Input:grapple.
@@ -104,6 +114,13 @@ func setup(
 	# reads its verdict in MoveFacts.on_floor.
 	floor_max_angle = config.floor_max_angle
 	floor_snap_length = floor_snap_for(config, safe_margin)
+	# Only the scenery carries a body standing on it, and leaving a body adds nothing: another
+	# fighter's head is not floor for the rules (movimento.md, "O corpo": "A cabeça do outro"), so
+	# it is no moving platform either (TASK-10.7, choice 2; F-152). Probe C measured no platform
+	# velocity on a head either way, a still head or a walking one (rede.md §4, "A sonda C"): the
+	# setting writes the rule down rather than curing anything.
+	platform_floor_layers = PhysicsLayers.WORLD
+	platform_on_leave = CharacterBody3D.PLATFORM_ON_LEAVE_DO_NOTHING
 	position = spawn_position
 	state = FighterState.new()
 	state.facing_yaw = spawn_yaw
@@ -114,6 +131,14 @@ func setup(
 	synchronizer.visibility_filter.default_visibility = false
 	_shape_capsule()
 	tone = OWN_TONE if own else OTHER_TONE
+	_paint(tone)
+
+
+## Paints the body, and the cues it plays from now on, in tone (OWN_TONE or OTHER_TONE). setup()
+## picks it by who drives the fighter; Sozinho's dummy, driven by this PC but not the player's,
+## wears the other's (Match.solo_tone).
+func wear(new_tone: Color) -> void:
+	tone = new_tone
 	_paint(tone)
 
 
@@ -186,6 +211,7 @@ func _rollback_tick(_delta: float, tick: int, _is_fresh: bool) -> void:
 	facts.on_floor = is_on_floor()
 	facts.velocity = velocity
 	_wall_contact(plan.state, facts)
+	_head_contact(facts)
 	facts.position = global_position
 	# The aim request (DEC-0044 §1): a grapple press that can fire waits, so the ray leaves the
 	# point O after the move, along this tick's yaw and pitch, the yaw before_move copied into
@@ -306,6 +332,40 @@ func _read_slide_contact(facts: MoveFacts) -> void:
 			flattest = absf(normal.y)
 			facts.wall_normal = normal
 			facts.wall_id = _wall_id_of(collider)
+
+
+# The head facts (TASK-10.7 plan, "Os fatos da cabeça"), read right after the move: whether the
+# engine's floor this tick is only another fighter's head, and the normal of that contact laid
+# flat, away from the fighter below. Of the move's collisions at a floor angle, one with the
+# scenery wins: that is real floor. With only fighters there, the first one's normal. With the
+# engine on the floor and no collision of the move at a floor angle, the floor came from the snap,
+# and the test-only probe HEAD_PROBE_DISTANCE down names it. The probe moves nothing and changes no
+# flag of the CharacterBody3D (physics_body_3d.cpp, move_and_collide), and probe C measured its
+# answer equal on every resimulated tick (rede.md §4, "A sonda C").
+func _head_contact(facts: MoveFacts) -> void:
+	if not facts.on_floor:
+		return
+	var floor_angle := floor_max_angle + FLOOR_ANGLE_THRESHOLD
+	var found := false
+	var normal := Vector3.ZERO
+	for slide: int in get_slide_collision_count():
+		var collision := get_slide_collision(slide)
+		for index: int in collision.get_collision_count():
+			var contact := collision.get_normal(index)
+			if contact.angle_to(up_direction) > floor_angle:
+				continue
+			if not (collision.get_collider(index) is Fighter):
+				return
+			if not found:
+				found = true
+				normal = contact
+	if not found:
+		var hit := move_and_collide(Vector3.DOWN * HEAD_PROBE_DISTANCE, true)
+		if hit == null or not (hit.get_collider() is Fighter):
+			return
+		normal = hit.get_normal()
+	facts.floor_is_fighter = true
+	facts.fighter_away = Vector3(normal.x, 0.0, normal.z)
 
 
 # A normal laid flat: the horizontal unit vector a wall faces; zero for a floor or a ceiling.

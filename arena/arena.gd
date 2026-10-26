@@ -17,7 +17,10 @@
 # 4 x 6 x 4 m centred at z = -30 with 16 m between their faces, more than the ≈ 7 m of the double
 # jump, so only the grapple crosses; and Pilar10m at x = 2 and z = -36, 2 x 10 x 2 m, whose top
 # only the grapple reaches. They stand on free floor, away from the reference route and the
-# SyncTest's scenarios, in the blocks' grey. Everything sits on PhysicsLayers.WORLD, Godot's
+# SyncTest's scenarios, in the blocks' grey. Around it all, the border (TASK-10.7; movimento.md,
+# "Métricas de nível": "A borda"): BordaNorte, BordaSul, BordaLeste and BordaOeste, four walls 50 m
+# tall and 1 m thick with their inner faces at ±40 m on the floor's edges, scenery like any wall,
+# in the blocks' grey and casting no shadow. Everything sits on PhysicsLayers.WORLD, Godot's
 # default layer. The floor's top is y = 0, so a spawn point at y = 0 stands on it.
 class_name Arena
 extends Node3D

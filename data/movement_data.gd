@@ -133,6 +133,9 @@ const CHECKED_TICKRATES: Array[int] = [30, 60]
 ## which a data test keeps equal to camera_v0.tres (movimento.md, "Gancho": "De onde sai a mira";
 ## DEC-0045 §2). No value of it is impossible.
 @export var aim_side_m: float
+## Whoever lands on another fighter's head slides off it at least this fast (movimento.md, "O
+## corpo": "Escorregar da cabeça"; TASK-10.7).
+@export var head_slide_speed_mps: float
 
 
 # The data check, layer 3 of DEC-0027 §2: one message per impossible number, empty when every
@@ -230,6 +233,12 @@ func validate() -> PackedStringArray:
 		_range_error("grapple_block_pct", grapple_block_pct, 100.0, "a percentage"),
 		_time_error("grapple_cooldown_ms", grapple_cooldown_ms, false),
 		_positive_error("aim_height_m", aim_height_m, "the aim leaves from above the feet"),
+		# Another fighter's head (TASK-10.7).
+		_positive_error(
+			"head_slide_speed_mps",
+			head_slide_speed_mps,
+			"whoever lands on a head would never leave it",
+		),
 	]
 	var errors := PackedStringArray()
 	for message: String in checks:

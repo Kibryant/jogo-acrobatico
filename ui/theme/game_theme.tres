@@ -9,6 +9,13 @@ bg_color = Color(0.92, 0.92, 0.92, 1)
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_low_mark"]
 bg_color = Color(0.92, 0.92, 0.92, 1)
 
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_options_panel"]
+content_margin_left = 24.0
+content_margin_top = 24.0
+content_margin_right = 24.0
+content_margin_bottom = 24.0
+bg_color = Color(0, 0, 0, 0.55)
+
 [resource]
 default_font_size = 16
 Label/colors/font_color = Color(0.92, 0.92, 0.92, 1)
@@ -36,3 +43,5 @@ Reticle/colors/ring_color = Color(0.92, 0.92, 0.92, 1)
 Reticle/colors/outline_color = Color(0, 0, 0, 0.55)
 Reticle/constants/thickness = 2
 Reticle/constants/outline_size = 1
+OptionsPanel/base_type = &"PanelContainer"
+OptionsPanel/styles/panel = SubResource("StyleBoxFlat_options_panel")

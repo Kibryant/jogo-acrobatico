@@ -62,3 +62,86 @@ msgstr "Grapple {whole}.{tenth} s"
 # Every tick of the replay played in the window has played (--watch; TASK-10.3).
 msgid "REPLAY_ENDED"
 msgstr "End of the replay. Close the window to leave."
+
+# The title of the options screen, opened with the Esc (TASK-10.9).
+msgid "OPTIONS_TITLE"
+msgstr "Options"
+
+# The group of the seven actions and their keys.
+msgid "OPTIONS_GROUP_KEYS"
+msgstr "Keys"
+
+# The group of the mouse's sensitivity. The same word in both languages.
+msgid "OPTIONS_GROUP_MOUSE"
+msgstr "Mouse"
+
+# The group of the interface's scale. The same word in both languages.
+msgid "OPTIONS_GROUP_INTERFACE"
+msgstr "Interface"
+
+# The action move_forward.
+msgid "OPTIONS_ACTION_MOVE_FORWARD"
+msgstr "Move forward"
+
+# The action move_back.
+msgid "OPTIONS_ACTION_MOVE_BACK"
+msgstr "Move back"
+
+# The action move_left.
+msgid "OPTIONS_ACTION_MOVE_LEFT"
+msgstr "Move left"
+
+# The action move_right.
+msgid "OPTIONS_ACTION_MOVE_RIGHT"
+msgstr "Move right"
+
+# The action jump.
+msgid "OPTIONS_ACTION_JUMP"
+msgstr "Jump"
+
+# The action dash. The maneuver's name in both languages.
+msgid "OPTIONS_ACTION_DASH"
+msgstr "Dash"
+
+# The action grapple.
+msgid "OPTIONS_ACTION_GRAPPLE"
+msgstr "Grapple"
+
+# The mouse's sensitivity, from 0.02 to 0.20 degrees per pixel (F-161).
+msgid "OPTIONS_SENSITIVITY"
+msgstr "Sensitivity"
+
+# Beside the sensitivity: {cm} is the mouse's travel for a full turn at 800 DPI, in whole
+# centimetres.
+msgid "OPTIONS_SENSITIVITY_TURN"
+msgstr "A full turn with about {cm} cm of mouse, at 800 DPI"
+
+# The interface's scale, from 0.8 to 1.5 (DEC-0031 §8).
+msgid "OPTIONS_SCALE"
+msgstr "Scale"
+
+# Beside the scale: {whole} and {tenth} are the digits of its value.
+msgid "OPTIONS_SCALE_VALUE"
+msgstr "{whole}.{tenth}"
+
+# The button that puts every option back to its default.
+msgid "OPTIONS_RESTORE"
+msgstr "Restore defaults"
+
+# The button that closes the screen, as the Esc does.
+msgid "OPTIONS_CLOSE"
+msgstr "Close (Esc)"
+
+# A key was clicked: the screen waits for the new key of {action}.
+msgid "OPTIONS_WAITING"
+msgstr "Press the new key for {action}. Esc cancels."
+
+# The new key, {key}, is already the key of {action}: nothing changes (TASK-10.9,
+# criterion 6).
+msgid "OPTIONS_TAKEN"
+msgstr "{key} already belongs to {action}. Choose another key or change {action} first."
+
+# A mouse button on an action: {number} is 3 for the middle one, 4 and 5 for the side ones.
+# The same words in both languages.
+msgid "OPTIONS_MOUSE_BUTTON"
+msgstr "Mouse {number}"

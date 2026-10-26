@@ -47,13 +47,21 @@ func test_every_message_of_each_language_is_a_key_the_code_shows() -> void:
 			assert_bool(known).override_failure_message(failure).is_true()
 
 
-# The English file is not a copy of the Portuguese one.
+# The English file is not a copy of the Portuguese one. A few words are the same in both, as
+# "Dash" and "Mouse" on the options screen (TASK-10.9): GameText names each of them, and only
+# those may match.
 func test_the_two_languages_say_each_message_their_own_way() -> void:
 	var portuguese := GameText.load_language("pt_BR")
 	var english := GameText.load_language("en")
+	# A short list of exceptions, never a way out of the check.
+	assert_int(GameText.SAME_IN_BOTH.size() * 4).is_less(GameText.KEYS.size())
 	for key: StringName in GameText.KEYS:
-		var failure := "%s is the same in pt_BR and en" % key
 		var same := portuguese.get_message(key) == english.get_message(key)
+		if GameText.SAME_IN_BOTH.has(key):
+			var stale := "%s is in GameText.SAME_IN_BOTH but differs in pt_BR and en" % key
+			assert_bool(same).override_failure_message(stale).is_true()
+			continue
+		var failure := "%s is the same in pt_BR and en" % key
 		assert_bool(same).override_failure_message(failure).is_false()
 
 

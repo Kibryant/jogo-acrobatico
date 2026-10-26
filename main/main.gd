@@ -88,6 +88,11 @@ var current_match: Match
 var options: LaunchOptions
 ## The arguments after "--" the Main reads when it enters the tree; a test sets them before.
 var arguments := OS.get_cmdline_user_args()
+## The player's options file (TASK-10.9); a test points it at a temporary file before the Main
+## enters the tree, so the player's own is never touched.
+var options_path := OptionsStore.DEFAULT_PATH
+## The player's options, read before the match; null on the server, which has no player.
+var player_options: OptionsStore
 
 var _status: StatusMessage
 # Kept here: SceneMultiplayer holds their callbacks without keeping them alive.
@@ -120,9 +125,10 @@ func _ready() -> void:
 	# Closing the window comes to _notification instead of quitting at once, so the session ends
 	# cleanly first (DEC-0026 §6).
 	get_tree().auto_accept_quit = false
-	# The server shows no text; its log is for whoever runs it.
+	# The server shows no text and has no player; its log is for whoever runs it.
 	if options.mode != LaunchOptions.Mode.SERVER:
 		GameText.install()
+		_load_player_options()
 	if not options.half.is_empty():
 		_place_window(options.half == "right")
 	if not options.measure_fps.is_empty():
@@ -470,13 +476,29 @@ func _remove_fighter(slot: int) -> void:
 
 
 # The match of the session; movement_data, when given, replaces movement_v0.tres, as a replay's
-# numbers do.
+# numbers do. The player's options go with it, for the camera and the options screen.
 func _start_match(movement_data: MovementData = null) -> void:
 	var node := MATCH_SCENE.instantiate()
 	assert(node is Match, "match.tscn must have a Match at its root")
 	current_match = node as Match
 	current_match.movement_data = movement_data
+	current_match.options = player_options
 	add_child(current_match)
+
+
+# The player's options file (TASK-10.9; DEC-0031 §8), before any match: the keys go into the
+# InputMap and the scale onto the window, so the first frame already plays with them; the
+# sensitivity waits for the camera (Match.watch). A bad entry falls back to its default with a
+# warning in the log (OptionsStore).
+func _load_player_options() -> void:
+	player_options = OptionsStore.new(options_path)
+	player_options.load_file()
+	player_options.apply_keys()
+	player_options.apply_scale(get_window())
+	var where := ProjectSettings.globalize_path(options_path)
+	var bad := player_options.warnings.size()
+	var fallback := "" if bad == 0 else ", %d entries back to their default" % bad
+	_log("%s: options from %s%s" % [_role(), where, fallback])
 
 
 # Sozinho records the session as a replay (TASK-10.3; F-112 §2): in user://replays/, in

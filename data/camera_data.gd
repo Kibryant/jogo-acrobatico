@@ -20,7 +20,7 @@ extends Resource
 @export var collision_margin_m: float
 ## Godot measures the field of view vertically (movimento.md, "Câmera").
 @export var vertical_fov_deg: float
-## The default; a player setting later (movimento.md, "Câmera").
+## The default; the player's own comes from the options file (OptionsStore; TASK-10.9; F-161).
 @export var sensitivity_deg_per_px: float
 ## How far the camera looks up or down. Not on the paper: Claude's v0 reading, so the camera never
 ## turns upside down (TASK-9 plan, round B).

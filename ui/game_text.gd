@@ -24,7 +24,34 @@ const HUD_DASH_COOLDOWN := &"HUD_DASH_COOLDOWN"
 const HUD_GRAPPLE_COOLDOWN := &"HUD_GRAPPLE_COOLDOWN"
 # Every row of a replay played in the window has played (--watch; TASK-10.3).
 const REPLAY_ENDED := &"REPLAY_ENDED"
-## Every key the code shows; StatusMessage and the HUD take no other.
+# The options screen (TASK-10.9; visual-e-audio.md, "A tela de opções"): its title, its three
+# groups, the seven actions, the two sliders and the two buttons.
+const OPTIONS_TITLE := &"OPTIONS_TITLE"
+const OPTIONS_GROUP_KEYS := &"OPTIONS_GROUP_KEYS"
+const OPTIONS_GROUP_MOUSE := &"OPTIONS_GROUP_MOUSE"
+const OPTIONS_GROUP_INTERFACE := &"OPTIONS_GROUP_INTERFACE"
+const OPTIONS_ACTION_MOVE_FORWARD := &"OPTIONS_ACTION_MOVE_FORWARD"
+const OPTIONS_ACTION_MOVE_BACK := &"OPTIONS_ACTION_MOVE_BACK"
+const OPTIONS_ACTION_MOVE_LEFT := &"OPTIONS_ACTION_MOVE_LEFT"
+const OPTIONS_ACTION_MOVE_RIGHT := &"OPTIONS_ACTION_MOVE_RIGHT"
+const OPTIONS_ACTION_JUMP := &"OPTIONS_ACTION_JUMP"
+const OPTIONS_ACTION_DASH := &"OPTIONS_ACTION_DASH"
+const OPTIONS_ACTION_GRAPPLE := &"OPTIONS_ACTION_GRAPPLE"
+const OPTIONS_SENSITIVITY := &"OPTIONS_SENSITIVITY"
+# Beside the sensitivity: the mouse's travel for a full turn at 800 DPI, {cm} whole centimetres.
+const OPTIONS_SENSITIVITY_TURN := &"OPTIONS_SENSITIVITY_TURN"
+const OPTIONS_SCALE := &"OPTIONS_SCALE"
+# Beside the scale: its value, {whole} and {tenth} its digits, with the language's separator.
+const OPTIONS_SCALE_VALUE := &"OPTIONS_SCALE_VALUE"
+const OPTIONS_RESTORE := &"OPTIONS_RESTORE"
+const OPTIONS_CLOSE := &"OPTIONS_CLOSE"
+# A key clicked: the screen waits for the new one for {action}.
+const OPTIONS_WAITING := &"OPTIONS_WAITING"
+# The new key, {key}, is already the key of another action, {action}: nothing changes.
+const OPTIONS_TAKEN := &"OPTIONS_TAKEN"
+# A mouse button on an action: {number} is 3 for the middle one, 4 and 5 for the side ones.
+const OPTIONS_MOUSE_BUTTON := &"OPTIONS_MOUSE_BUTTON"
+## Every key the code shows; StatusMessage, the HUD and the options screen take no other.
 const KEYS: Array[StringName] = [
 	CONNECTING,
 	ROOM_FULL,
@@ -39,6 +66,34 @@ const KEYS: Array[StringName] = [
 	HUD_DASH_COOLDOWN,
 	HUD_GRAPPLE_COOLDOWN,
 	REPLAY_ENDED,
+	OPTIONS_TITLE,
+	OPTIONS_GROUP_KEYS,
+	OPTIONS_GROUP_MOUSE,
+	OPTIONS_GROUP_INTERFACE,
+	OPTIONS_ACTION_MOVE_FORWARD,
+	OPTIONS_ACTION_MOVE_BACK,
+	OPTIONS_ACTION_MOVE_LEFT,
+	OPTIONS_ACTION_MOVE_RIGHT,
+	OPTIONS_ACTION_JUMP,
+	OPTIONS_ACTION_DASH,
+	OPTIONS_ACTION_GRAPPLE,
+	OPTIONS_SENSITIVITY,
+	OPTIONS_SENSITIVITY_TURN,
+	OPTIONS_SCALE,
+	OPTIONS_SCALE_VALUE,
+	OPTIONS_RESTORE,
+	OPTIONS_CLOSE,
+	OPTIONS_WAITING,
+	OPTIONS_TAKEN,
+	OPTIONS_MOUSE_BUTTON,
+]
+## The keys whose message is the same word in pt-BR and in en: a loanword or a name the two
+## languages share, not a copy of the other file.
+const SAME_IN_BOTH: Array[StringName] = [
+	OPTIONS_GROUP_MOUSE,
+	OPTIONS_GROUP_INTERFACE,
+	OPTIONS_ACTION_DASH,
+	OPTIONS_MOUSE_BUTTON,
 ]
 ## The messages of each language, by locale.
 const FILES: Dictionary[String, String] = {

@@ -283,6 +283,8 @@ A tela que a DEC-0031 §8 promete a quem joga, com as escolhas do Arthur (F-161)
 - **A escala:** de 0,8 a 1,5, de 0,1 em 0,1, com o padrão 1,0, pelo `content_scale_factor` (DEC-0031 §8). Multiplica a barra, os textos, as recargas e a mira; a mira segue no centro da tela com a câmera livre.
 - **Vale na hora e fica salvo:** toda mudança aplica e grava no `user://options.cfg`. Uma entrada ruim volta ao padrão, com um aviso no log; "Voltar ao padrão" restaura tudo.
 - **O visual:** o Theme único e as chaves do `GameText`, em pt-BR e en (DEC-0031 §8). Nenhum ativo novo (DEC-0029).
+- **Detalhes do implementer** (TASK-10.9, leituras v0): a escala mostra o valor ao lado ("1,2"); arrastando a escala, ela vale ao soltar o mouse, para o controle não fugir de baixo dele, e um clique ou as setas valem na hora; um valor do arquivo entre dois passos vai para o passo mais perto, sem aviso; o painel reusa o preto a 55 % e a margem de 24 px do HUD, os controles têm 300 px de largura, e os botões e os controles usam o visual padrão do Godot. Os textos em inglês estão no `ui/translations/en.po`; "Dash", "Mouse", "Interface" e "Mouse {n}" são iguais nas duas línguas (`GameText.SAME_IN_BOTH`).
+- **Fora da tela:** o `--watch` de um replay não tem a tela de opções.
 
 ## Em aberto
 

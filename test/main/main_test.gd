@@ -20,15 +20,25 @@ const HAIR := 1e-4
 const PLAY_S := 0.3
 
 var _folder := ""
+# The options file of the Main in these tests: a temporary one, never user://options.cfg
+# (TASK-10.9), which tools/run_tests.sh checks after the run.
+var _options_path := ""
 
 
 func before_test() -> void:
 	NetfoxTicks.reset()
+	_options_path = OS.get_temp_dir().path_join(
+		"jogo-acrobatico-main-options-%d.cfg" % Time.get_ticks_usec(),
+	)
 
 
 func after_test() -> void:
 	NetfoxTicks.reset()
 	get_tree().auto_accept_quit = true
+	if FileAccess.file_exists(_options_path):
+		DirAccess.remove_absolute(_options_path)
+	InputMap.load_from_project_settings()
+	get_tree().root.content_scale_factor = 1.0
 	if not _folder.is_empty():
 		for file: String in DirAccess.get_files_at(_folder):
 			DirAccess.remove_absolute(_folder.path_join(file))
@@ -42,6 +52,7 @@ func _main(arguments: Array[String]) -> Main:
 	assert(node is Main, "main.tscn must have a Main at its root")
 	var main := node as Main
 	main.arguments = PackedStringArray(arguments)
+	main.options_path = _options_path
 	add_child(main)
 	return main
 
@@ -177,3 +188,34 @@ func test_sozinho_opened_before_a_physics_step_records_from_its_first_tick() -> 
 	assert_int(played.ticks).is_equal(replay.tick_count())
 	assert_bool(played.checked).is_true()
 	assert_int(played.first_apart).is_equal(-1)
+
+
+# TASK-10.9, criteria 1 to 3: before the match, the Main reads the player's options file and puts
+# its keys in the InputMap and its scale on the window; the match's camera turns at its
+# sensitivity, and the match keeps the same options for its screen.
+func test_the_main_applies_the_options_file_before_the_match() -> void:
+	var file := ConfigFile.new()
+	file.set_value("keys", "dash", "mouse:%d" % MOUSE_BUTTON_XBUTTON2)
+	file.set_value("keys", "grapple", "key:%d" % KEY_E)
+	file.set_value("mouse", "sensitivity", 0.1)
+	file.set_value("interface", "scale", 1.2)
+	assert_int(file.save(_options_path)).is_equal(OK)
+	var written := FileAccess.get_file_as_string(_options_path)
+	var main := _main(["--no-replay"])
+	await get_tree().process_frame
+	assert_object(main.player_options).is_not_null()
+	assert_array(main.player_options.warnings).is_empty()
+	assert_object(main.current_match.options).is_same(main.player_options)
+	var dash := InputMap.action_get_events(&"dash")
+	assert_int(dash.size()).is_equal(1)
+	assert_bool(dash[0] is InputEventMouseButton).is_true()
+	var side := dash[0] as InputEventMouseButton
+	assert_int(side.button_index).is_equal(MOUSE_BUTTON_XBUTTON2)
+	var grapple := InputMap.action_get_events(&"grapple")
+	assert_bool(grapple[0] is InputEventKey).is_true()
+	var key := grapple[0] as InputEventKey
+	assert_int(key.physical_keycode).is_equal(KEY_E)
+	assert_float(get_tree().root.content_scale_factor).is_equal_approx(1.2, 1e-6)
+	assert_float(main.current_match.camera_rig.sensitivity_deg_per_px).is_equal_approx(0.1, 1e-6)
+	# Reading the file wrote nothing into it.
+	assert_str(FileAccess.get_file_as_string(_options_path)).is_equal(written)

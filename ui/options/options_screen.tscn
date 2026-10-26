@@ -1,0 +1,104 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://ui/options/options_screen.gd" id="1_opts"]
+
+[node name="OptionsScreen" type="CanvasLayer" unique_id=1834016627 node_paths=PackedStringArray("keys", "prompt", "sensitivity_slider", "turn_label", "scale_slider", "scale_label", "restore_button", "close_button")]
+layer = 2
+visible = false
+script = ExtResource("1_opts")
+keys = NodePath("Backdrop/Panel/Content/Keys")
+prompt = NodePath("Backdrop/Panel/Content/Prompt")
+sensitivity_slider = NodePath("Backdrop/Panel/Content/SensitivityRow/Sensitivity")
+turn_label = NodePath("Backdrop/Panel/Content/SensitivityRow/Turn")
+scale_slider = NodePath("Backdrop/Panel/Content/ScaleRow/Scale")
+scale_label = NodePath("Backdrop/Panel/Content/ScaleRow/ScaleValue")
+restore_button = NodePath("Backdrop/Panel/Content/Buttons/Restore")
+close_button = NodePath("Backdrop/Panel/Content/Buttons/Close")
+
+[node name="Backdrop" type="Control" parent="." unique_id=402219561]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Panel" type="PanelContainer" parent="Backdrop" unique_id=1290547718]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+grow_horizontal = 2
+grow_vertical = 2
+theme_type_variation = &"OptionsPanel"
+
+[node name="Content" type="VBoxContainer" parent="Backdrop/Panel" unique_id=980741923]
+layout_mode = 2
+
+[node name="Title" type="Label" parent="Backdrop/Panel/Content" unique_id=1559470346]
+layout_mode = 2
+text = "OPTIONS_TITLE"
+
+[node name="KeysGroup" type="Label" parent="Backdrop/Panel/Content" unique_id=716295510]
+layout_mode = 2
+text = "OPTIONS_GROUP_KEYS"
+
+[node name="Keys" type="GridContainer" parent="Backdrop/Panel/Content" unique_id=1406388231]
+layout_mode = 2
+columns = 2
+
+[node name="Prompt" type="Label" parent="Backdrop/Panel/Content" unique_id=1977024368]
+layout_mode = 2
+auto_translate_mode = 2
+autowrap_mode = 3
+
+[node name="MouseGroup" type="Label" parent="Backdrop/Panel/Content" unique_id=286601044]
+layout_mode = 2
+text = "OPTIONS_GROUP_MOUSE"
+
+[node name="SensitivityRow" type="HBoxContainer" parent="Backdrop/Panel/Content" unique_id=1171563508]
+layout_mode = 2
+
+[node name="SensitivityName" type="Label" parent="Backdrop/Panel/Content/SensitivityRow" unique_id=627388146]
+layout_mode = 2
+text = "OPTIONS_SENSITIVITY"
+
+[node name="Sensitivity" type="HSlider" parent="Backdrop/Panel/Content/SensitivityRow" unique_id=1630920431]
+layout_mode = 2
+size_flags_vertical = 4
+
+[node name="Turn" type="Label" parent="Backdrop/Panel/Content/SensitivityRow" unique_id=339815094]
+layout_mode = 2
+auto_translate_mode = 2
+
+[node name="InterfaceGroup" type="Label" parent="Backdrop/Panel/Content" unique_id=1755603980]
+layout_mode = 2
+text = "OPTIONS_GROUP_INTERFACE"
+
+[node name="ScaleRow" type="HBoxContainer" parent="Backdrop/Panel/Content" unique_id=503877209]
+layout_mode = 2
+
+[node name="ScaleName" type="Label" parent="Backdrop/Panel/Content/ScaleRow" unique_id=1123540872]
+layout_mode = 2
+text = "OPTIONS_SCALE"
+
+[node name="Scale" type="HSlider" parent="Backdrop/Panel/Content/ScaleRow" unique_id=2009361774]
+layout_mode = 2
+size_flags_vertical = 4
+
+[node name="ScaleValue" type="Label" parent="Backdrop/Panel/Content/ScaleRow" unique_id=884301287]
+layout_mode = 2
+auto_translate_mode = 2
+
+[node name="Buttons" type="HBoxContainer" parent="Backdrop/Panel/Content" unique_id=1499127005]
+layout_mode = 2
+
+[node name="Restore" type="Button" parent="Backdrop/Panel/Content/Buttons" unique_id=1046631781]
+layout_mode = 2
+text = "OPTIONS_RESTORE"
+
+[node name="Close" type="Button" parent="Backdrop/Panel/Content/Buttons" unique_id=72530516]
+layout_mode = 2
+text = "OPTIONS_CLOSE"

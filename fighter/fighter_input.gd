@@ -20,6 +20,8 @@ var grapple := false
 var _sampler := InputSampler.new()
 # The camera of whoever plays this fighter on this PC; null when nobody here does.
 var _camera: CameraRig
+# True while a screen over the game takes the keys (TASK-10.9): the devices feed neutral frames.
+var _muted := false
 # The replay's rows that fill the box instead of the sampler; null when nothing replays.
 var _rows: ReplaySource
 # The fields of the box, the TickInput's, by name: a replay row fills each of them.
@@ -59,6 +61,17 @@ func face(start_yaw: float) -> void:
 # where it aims (DEC-0044).
 func use_devices(camera: CameraRig) -> void:
 	_camera = camera
+
+
+# While muted, as with the options screen open (TASK-10.9; F-161), the devices feed neutral frames:
+# no move and no press, with the camera's yaw and pitch, which stand still meanwhile, so the
+# fighter stands still while the game goes on. Unmuted, the keys and the mouse are back.
+func mute_devices(muted: bool) -> void:
+	_muted = muted
+
+
+func devices_muted() -> bool:
+	return _muted
 
 
 # From now on the rows of a replay fill the box, tick by tick, instead of the sampler: the box of
@@ -105,21 +118,27 @@ func to_tick_input() -> TickInput:
 func _physics_process(_delta: float) -> void:
 	if _camera == null:
 		return
-	# Keys by physical position (DEC-0031): the InputMap actions use physical_keycode.
+	if _muted:
+		sample_frame(Vector2.ZERO, _camera.yaw, _camera.pitch)
+		return
+	# Keys by physical position (DEC-0031): the InputMap actions use physical_keycode, which the
+	# options remap (OptionsStore).
 	var keys := Input.get_vector(&"move_left", &"move_right", &"move_back", &"move_forward")
 	sample_frame(keys, _camera.yaw, _camera.pitch)
 
 
 # A held key repeats as echo events, which is_action_pressed leaves out: a hold is one press.
 func _unhandled_input(event: InputEvent) -> void:
-	if _camera == null:
+	if _camera == null or _muted:
 		return
 	if event.is_action_pressed(&"jump"):
 		press_jump()
-	# The left Shift, by physical position (project.godot, [input]; movimento.md, "Dash": "Tecla").
+	# The left Shift by default, by physical position (project.godot, [input]; movimento.md,
+	# "Dash": "Tecla"), or the player's key or mouse button (OptionsStore).
 	if event.is_action_pressed(&"dash"):
 		press_dash()
-	# The Q, by physical position (project.godot, [input]; movimento.md, "Gancho": "Tecla"; F-140).
+	# The Q by default, by physical position (project.godot, [input]; movimento.md, "Gancho":
+	# "Tecla"; F-140), or the player's key or mouse button (OptionsStore).
 	if event.is_action_pressed(&"grapple"):
 		press_grapple()
 

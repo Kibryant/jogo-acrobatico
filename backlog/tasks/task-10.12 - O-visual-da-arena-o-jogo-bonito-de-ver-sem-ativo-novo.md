@@ -1,7 +1,7 @@
 ---
 id: TASK-10.12
 title: 'O visual da arena: o jogo bonito de ver, sem ativo novo'
-status: Ready
+status: In Progress
 assignee: []
 created_date: '2026-10-26 19:31'
 updated_date: '2026-10-26 20:03'

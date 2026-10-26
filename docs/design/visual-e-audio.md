@@ -1,6 +1,6 @@
 ---
 revisado_em: 2026-10-26
-fontes: [F-050, F-051, F-052, F-053, F-054, F-056, F-058, F-059, F-061, F-062, F-063, F-100, F-121, F-122, F-137, F-139, F-140, F-141, F-146, F-147, F-148, F-152, F-153]
+fontes: [F-050, F-051, F-052, F-053, F-054, F-056, F-058, F-059, F-061, F-062, F-063, F-100, F-121, F-122, F-137, F-139, F-140, F-141, F-146, F-147, F-148, F-152, F-153, F-156, F-157, F-158]
 ---
 
 # Visual e áudio
@@ -240,8 +240,35 @@ Leituras v0 do Claude, que o Arthur julga jogando (DEC-0017; F-152). O sinal nas
 - **O escorregão:** o rastro curto do dash, da parede e da puxada, a mesma caixa translúcida a 40 %, acompanha quem escorrega de uma cabeça, do ponto em que o corpo estava há 200 ms até ele. Some em 200 ms depois de ele sair. Toca uma vez por pouso, pelo tick em que o contato com a cabeça começou (DEC-0031 §6). Ele lê como "o jogo me empurrou", e não como um bug.
 - **O modo:** o HUD diz "No ar" em cima de uma cabeça, porque para as regras é ar.
 - **O boneco:** o segundo lutador do Sozinho, parado no `SpawnB`, usa o tom do outro lutador, o mais escuro, como um adversário.
-- **A borda:** as quatro paredes de 50 m usam o cinza dos blocos, sem cor nova, e não fazem sombra (`movimento.md`, "Métricas de nível").
+- **A borda:** as quatro paredes de 50 m não fazem sombra (`movimento.md`, "Métricas de nível"); a cor delas está em "A cara da arena" (TASK-10.12).
 - **Nenhum ativo novo** entra (DEC-0029).
+
+### A cara da arena (TASK-10.12)
+
+A cara "Dia claro", escolhida pelo Arthur na vitrine "A cara da arena" (F-158), no ajuste v0 do Claude: o sol um pouco mais quente, a luz do céu mais fraca, as peças num concreto neutro e a cápsula de quem joga em 0,86, para estourar menos (DEC-0017). Nenhum ativo novo: o céu procedural, a luz, a neblina e as cores dos materiais do próprio Godot (F-157; DEC-0029). O cenário fica em tons médios e pouco saturados, atrás dos sinais do combate (DEC-0031; "A paleta"). As cores são `Color` do Godot, de 0 a 1.
+
+| O quê | Valor | Nota |
+|---|---|---|
+| Fundo | o céu procedural | Antes, uma cor chapada |
+| Céu, topo | (0,12, 0,32, 0,72) | Azul de dia claro |
+| Céu, horizonte | (0,62, 0,74, 0,88) | |
+| Chão do céu, fundo | (0,14, 0,14, 0,15) | Neutro, para a luz de baixo não azular as sombras |
+| Chão do céu, horizonte | (0,45, 0,47, 0,50) | |
+| Disco do sol, ângulo máximo | 25° | |
+| Luz ambiente | do céu, energia 0,4 | O céu pinta as sombras de azul; mais forte, a arena inteira azula |
+| Tonemapping | Filmic, exposição 0,9 | Comprime as luzes fortes antes da tela; com 1,0, a cápsula estourava |
+| Neblina | ligada, cor (0,66, 0,74, 0,86), densidade 0,0015, efeito no céu 0,15 | Leve: só dá profundidade à borda |
+| Ajustes de cor | saturação 1,05, contraste 1,08 | |
+| Sol | 50° de altura, 30° de giro (`rotation_degrees` = (−50, 30, 0)), cor (1,0, 0,95, 0,86), energia 1,5, com sombra | Branco um pouco quente |
+| Chão | (0,18, 0,18, 0,19) | Asfalto neutro, mais escuro que tudo, menos o outro lutador |
+| Peças: blocos, plataformas, rampa, paredes, corredor, patamar e a régua do dash | (0,56, 0,54, 0,50) | Concreto neutro, um pouco quente |
+| Torres e pilar | (0,32, 0,36, 0,44) | Cinza-azulado: as peças altas se separam dos blocos |
+| Borda | (0,13, 0,15, 0,19), sem sombra | Uma moldura escura, que não toma o quadro |
+| Quem joga | (0,86, 0,86, 0,84) | Mais claro que toda superfície da arena (F-156 §3) |
+| O outro, e o boneco | (0,11, 0,11, 0,13) | Mais escuro que toda superfície da arena |
+
+- **O céu quase não aparece:** a borda de 50 m o esconde de quase todo ponto da arena. Ele ainda conta, porque é ele que pinta a luz ambiente.
+- **Os 60 fps em 1080p** no PC do Arthur seguem valendo, medidos com o `tools/measure_fps.sh` (DEC-0002).
 
 ## Em aberto
 

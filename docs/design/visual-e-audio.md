@@ -1,6 +1,6 @@
 ---
 revisado_em: 2026-10-26
-fontes: [F-050, F-051, F-052, F-053, F-054, F-056, F-058, F-059, F-061, F-062, F-063, F-100, F-121, F-122, F-137, F-139, F-140, F-141, F-146, F-147, F-148, F-152, F-153]
+fontes: [F-050, F-051, F-052, F-053, F-054, F-056, F-058, F-059, F-061, F-062, F-063, F-100, F-121, F-122, F-137, F-139, F-140, F-141, F-146, F-147, F-148, F-152, F-153, F-156, F-157, F-158]
 ---
 
 # Visual e áudio
@@ -207,7 +207,7 @@ Leituras v0 do Claude, que o Arthur julga jogando (DEC-0017; TASK-10.4).
   - **A baforada do pulo duplo:** um disco fino sob os pés, onde o pulo duplo saiu, que cresce do raio da cápsula até 3 raios e some na subida do pulo, 350 ms.
   - Os dois são translúcidos, a 40 %, sem luz, e usam o tom neutro do próprio lutador: o cinza claro de quem joga, o escuro do outro. Nenhum usa cor de token, nem o branco do flash da reação (DEC-0031 §1 e §3).
   - Tocam uma vez por chave (lutador, tipo, carimbo), quando aparecem pela primeira vez no estado exibido, e nunca na re-simulação (DEC-0031 §6). Sem tela, como no servidor dedicado e no portão, contam e não desenham.
-- **A régua do dash:** faixas de 0,1 × 0,01 × 2 m a cada 4 m, a distância do dash, em x de −10 a 30 e em z de 14 a 16, ao sul dos pontos de nascimento, no cinza dos blocos. São só malha, sem colisão, e ficam fora do percurso da referência e das cenas da SyncTest (TASK-10.4).
+- **A régua do dash:** faixas de 0,1 × 0,01 × 2 m a cada 4 m, a distância do dash, em x de −10 a 30 e em z de 14 a 16, ao sul dos pontos de nascimento, na cor das peças ("A cara da arena"). São só malha, sem colisão, e ficam fora do percurso da referência e das cenas da SyncTest (TASK-10.4).
 
 ### A parede na tela (TASK-10.5)
 
@@ -218,7 +218,7 @@ Leituras v0 do Claude, que o Arthur julga jogando (DEC-0017; TASK-10.5).
 - **A inclinação da cápsula (TASK-10.10):** na corrida, a malha da cápsula e a viseira inclinam 15° para longe da parede, com o pivô nos pés, entrando em 100 ms na entrada e saindo em 100 ms no fim, de forma linear, a cada quadro exibido. Ao sair, ela volta inclinando para longe da parede que deixou. Só na tela: o estado, o corpo e a cápsula de colisão não mudam, e o rollback, o replay e a SyncTest não a veem (`movimento.md`, "O que se vê na parede"; DEC-0031 §6; Q-37).
 - **O rastro da corrida (TASK-10.10):** o rastro do dash, curto. A mesma caixa translúcida no tom do lutador, mas só do ponto em que o corpo estava há 200 ms, a duração do dash, até o corpo: uns 1,6 m a 8 m/s, que acompanham a corrida em vez de desenhar a parede inteira. O comprimento conta os ticks do netfox, não o tempo do quadro, para ser o mesmo em qualquer fps. Some em 200 ms depois do fim da corrida. Toca uma vez por chave, pelo tick em que a corrida começou, então uma emenda continua o mesmo rastro, e o rollback não o duplica. "Curto" sem número no papel: a duração do dash é a leitura v0 do Claude (DEC-0017), e nenhum ativo novo entra (DEC-0029).
 - **A câmera** não inclina na corrida no v0 (`movimento.md`, "Corrida na parede").
-- **As peças da arena:** a `ParedeLonga`, o `CorredorOeste`, o `CorredorLeste` e o `PatamarDoCorredor` usam o cinza dos blocos, sem cor nova (`movimento.md`, "Métricas de nível").
+- **As peças da arena:** a `ParedeLonga`, o `CorredorOeste`, o `CorredorLeste` e o `PatamarDoCorredor` usam a cor das peças ("A cara da arena"; `movimento.md`, "Métricas de nível").
 
 ### O gancho na tela (TASK-10.6)
 
@@ -231,7 +231,7 @@ Leituras v0 do Claude, que o Arthur julga jogando (DEC-0017; F-141). O sinal nas
 - **O cabo:** uma linha de 3 cm de espessura, opaca, sem luz, no tom neutro do próprio lutador, do ombro exibido (1,6 m acima dos pés) até a ponta. Nos 100 ms de voo, a ponta vai do ombro ao ponto, contando os ticks do netfox; na puxada, fica no ponto; na soltura, o cabo some. Toca uma vez por chave, pelo `grapple_fired_tick` (DEC-0031 §6).
 - **A puxada:** o rastro curto da corrida na parede, a mesma caixa translúcida a 40 %, do ponto em que o corpo estava há 200 ms até ele, enquanto o modo é o gancho. Some em 200 ms depois da soltura. Toca uma vez por chave, pelo tick em que a puxada começou.
 - **Nenhum ativo novo** entra: o anel, o ponto, a linha e a caixa são formas do Godot (DEC-0029). O som do cabo espera a Q-32.
-- **As peças da arena:** a `TorreA`, a `TorreB` e o `Pilar10m` usam o cinza dos blocos, sem cor nova (`movimento.md`, "Métricas de nível").
+- **As peças da arena:** a `TorreA`, a `TorreB` e o `Pilar10m` usam o cinza-azulado das peças altas, que as separa dos blocos ("A cara da arena"; TASK-10.12; `movimento.md`, "Métricas de nível").
 
 ### A cabeça do outro na tela (TASK-10.7)
 
@@ -240,8 +240,35 @@ Leituras v0 do Claude, que o Arthur julga jogando (DEC-0017; F-152). O sinal nas
 - **O escorregão:** o rastro curto do dash, da parede e da puxada, a mesma caixa translúcida a 40 %, acompanha quem escorrega de uma cabeça, do ponto em que o corpo estava há 200 ms até ele. Some em 200 ms depois de ele sair. Toca uma vez por pouso, pelo tick em que o contato com a cabeça começou (DEC-0031 §6). Ele lê como "o jogo me empurrou", e não como um bug.
 - **O modo:** o HUD diz "No ar" em cima de uma cabeça, porque para as regras é ar.
 - **O boneco:** o segundo lutador do Sozinho, parado no `SpawnB`, usa o tom do outro lutador, o mais escuro, como um adversário.
-- **A borda:** as quatro paredes de 50 m usam o cinza dos blocos, sem cor nova, e não fazem sombra (`movimento.md`, "Métricas de nível").
+- **A borda:** as quatro paredes de 50 m não fazem sombra (`movimento.md`, "Métricas de nível"); a cor delas está em "A cara da arena" (TASK-10.12).
 - **Nenhum ativo novo** entra (DEC-0029).
+
+### A cara da arena (TASK-10.12)
+
+A cara "Dia claro", escolhida pelo Arthur na vitrine "A cara da arena" (F-158), no ajuste v0 do Claude: o sol um pouco mais quente, a luz do céu mais fraca, as peças num concreto neutro e a cápsula de quem joga em 0,86, para estourar menos (DEC-0017). Nenhum ativo novo: o céu procedural, a luz, a neblina e as cores dos materiais do próprio Godot (F-157; DEC-0029). O cenário fica em tons médios e pouco saturados, atrás dos sinais do combate (DEC-0031; "A paleta"). As cores são `Color` do Godot, de 0 a 1.
+
+| O quê | Valor | Nota |
+|---|---|---|
+| Fundo | o céu procedural | Antes, uma cor chapada |
+| Céu, topo | (0,12, 0,32, 0,72) | Azul de dia claro |
+| Céu, horizonte | (0,62, 0,74, 0,88) | |
+| Chão do céu, fundo | (0,14, 0,14, 0,15) | Neutro, para a luz de baixo não azular as sombras |
+| Chão do céu, horizonte | (0,45, 0,47, 0,50) | |
+| Disco do sol, ângulo máximo | 25° | |
+| Luz ambiente | do céu, energia 0,4 | O céu pinta as sombras de azul; mais forte, a arena inteira azula |
+| Tonemapping | Filmic, exposição 0,9 | Comprime as luzes fortes antes da tela; com 1,0, a cápsula estourava |
+| Neblina | ligada, cor (0,66, 0,74, 0,86), densidade 0,0015, efeito no céu 0,15 | Leve: só dá profundidade à borda |
+| Ajustes de cor | saturação 1,05, contraste 1,08 | |
+| Sol | 50° de altura, 30° de giro (`rotation_degrees` = (−50, 30, 0)), cor (1,0, 0,95, 0,86), energia 1,5, com sombra | Branco um pouco quente |
+| Chão | (0,18, 0,18, 0,19) | Asfalto neutro, mais escuro que tudo, menos o outro lutador |
+| Peças: blocos, plataformas, rampa, paredes, corredor, patamar e a régua do dash | (0,56, 0,54, 0,50) | Concreto neutro, um pouco quente |
+| Torres e pilar | (0,32, 0,36, 0,44) | Cinza-azulado: as peças altas se separam dos blocos |
+| Borda | (0,13, 0,15, 0,19), sem sombra | Uma moldura escura, que não toma o quadro |
+| Quem joga | (0,86, 0,86, 0,84) | Mais claro que toda superfície da arena (F-156 §3) |
+| O outro, e o boneco | (0,11, 0,11, 0,13) | Mais escuro que toda superfície da arena |
+
+- **O céu quase não aparece:** a borda de 50 m o esconde de quase todo ponto da arena. Ele ainda conta, porque é ele que pinta a luz ambiente.
+- **Os 60 fps em 1080p** no PC do Arthur seguem valendo, medidos com o `tools/measure_fps.sh` (DEC-0002).
 
 ## Em aberto
 

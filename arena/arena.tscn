@@ -2,18 +2,36 @@
 
 [ext_resource type="Script" path="res://arena/arena.gd" id="1_dkqtx"]
 
+[sub_resource type="ProceduralSkyMaterial" id="ProceduralSkyMaterial_dia"]
+sky_top_color = Color(0.12, 0.32, 0.72, 1)
+sky_horizon_color = Color(0.62, 0.74, 0.88, 1)
+ground_bottom_color = Color(0.14, 0.14, 0.15, 1)
+ground_horizon_color = Color(0.45, 0.47, 0.5, 1)
+sun_angle_max = 25.0
+
+[sub_resource type="Sky" id="Sky_dia"]
+sky_material = SubResource("ProceduralSkyMaterial_dia")
+
 [sub_resource type="Environment" id="Environment_u13ga"]
-background_mode = 1
-background_color = Color(0.18, 0.2, 0.23, 1)
-ambient_light_source = 2
-ambient_light_color = Color(1, 1, 1, 1)
+background_mode = 2
+sky = SubResource("Sky_dia")
+ambient_light_source = 3
 ambient_light_energy = 0.4
+tonemap_mode = 2
+tonemap_exposure = 0.9
+fog_enabled = true
+fog_light_color = Color(0.66, 0.74, 0.86, 1)
+fog_density = 0.0015
+fog_sky_affect = 0.15
+adjustment_enabled = true
+adjustment_saturation = 1.05
+adjustment_contrast = 1.08
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_dotur"]
 size = Vector3(80, 1, 80)
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_0gwdx"]
-albedo_color = Color(0.3, 0.33, 0.36, 1)
+albedo_color = Color(0.18, 0.18, 0.19, 1)
 
 [sub_resource type="BoxMesh" id="BoxMesh_44uaw"]
 material = SubResource("StandardMaterial3D_0gwdx")
@@ -23,7 +41,7 @@ size = Vector3(80, 1, 80)
 size = Vector3(6, 1, 6)
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_x52g8"]
-albedo_color = Color(0.62, 0.64, 0.66, 1)
+albedo_color = Color(0.56, 0.54, 0.5, 1)
 
 [sub_resource type="BoxMesh" id="BoxMesh_8m4co"]
 material = SubResource("StandardMaterial3D_x52g8")
@@ -88,33 +106,39 @@ size = Vector3(3.5, 3, 4)
 [sub_resource type="BoxShape3D" id="BoxShape3D_torre"]
 size = Vector3(4, 6, 4)
 
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_alto"]
+albedo_color = Color(0.32, 0.36, 0.44, 1)
+
 [sub_resource type="BoxMesh" id="BoxMesh_torre"]
-material = SubResource("StandardMaterial3D_x52g8")
+material = SubResource("StandardMaterial3D_alto")
 size = Vector3(4, 6, 4)
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_pilar"]
 size = Vector3(2, 10, 2)
 
 [sub_resource type="BoxMesh" id="BoxMesh_pilar"]
-material = SubResource("StandardMaterial3D_x52g8")
+material = SubResource("StandardMaterial3D_alto")
 size = Vector3(2, 10, 2)
 
 [sub_resource type="BoxMesh" id="BoxMesh_regua"]
 material = SubResource("StandardMaterial3D_x52g8")
 size = Vector3(0.1, 0.01, 2)
 
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_borda"]
+albedo_color = Color(0.13, 0.15, 0.19, 1)
+
 [sub_resource type="BoxShape3D" id="BoxShape3D_borda_ns"]
 size = Vector3(82, 50, 1)
 
 [sub_resource type="BoxMesh" id="BoxMesh_borda_ns"]
-material = SubResource("StandardMaterial3D_x52g8")
+material = SubResource("StandardMaterial3D_borda")
 size = Vector3(82, 50, 1)
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_borda_lo"]
 size = Vector3(1, 50, 82)
 
 [sub_resource type="BoxMesh" id="BoxMesh_borda_lo"]
-material = SubResource("StandardMaterial3D_x52g8")
+material = SubResource("StandardMaterial3D_borda")
 size = Vector3(1, 50, 82)
 
 [node name="Arena" type="Node3D" unique_id=450802812]
@@ -122,7 +146,8 @@ script = ExtResource("1_dkqtx")
 
 [node name="Sun" type="DirectionalLight3D" parent="." unique_id=861069864]
 transform = Transform3D(0.8660254, -0.38302222, 0.32139382, 0, 0.64278764, 0.76604444, -0.5, -0.66341394, 0.5566704, 0, 0, 0)
-light_energy = 0.8
+light_color = Color(1, 0.95, 0.86, 1)
+light_energy = 1.5
 shadow_enabled = true
 
 [node name="World" type="WorldEnvironment" parent="." unique_id=933102353]

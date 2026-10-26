@@ -1,9 +1,10 @@
 ---
 id: TASK-10.12
 title: 'O visual da arena: o jogo bonito de ver, sem ativo novo'
-status: To Refine
+status: Done
 assignee: []
 created_date: '2026-10-26 19:31'
+updated_date: '2026-10-26 20:25'
 labels:
   - jogo
 milestone: m-1
@@ -20,14 +21,10 @@ ordinal: 18500
 O Arthur jogou a cabeça do outro e achou o jogo "muito branco", "tudo muito pálido", e quer deixá-lo "mais instagramável": ele posta o projeto no Instagram como diário visual e quer mostrar as atualizações (F-156 §1). A arena ainda é cinza de protótipo, e a borda de 50 m, num cinza muito claro e sem sombra, piorou o quadro: ela toma o lugar do céu, e a cápsula branca do jogador some contra ela (F-156 §3; o print). Ele escolheu uma task própria, a próxima, antes da tela de opções (F-157).
 
 ### Perguntas em aberto
-- Que cara a arena ganha? O Claude mostra 2 ou 3 caras numa vitrine, com o mesmo quadro do print, e o Arthur escolhe (DEC-0019).
-- O céu: o procedural do Godot, com que cor e que horário de sol?
-- Os tons dos lutadores: o seu, claro, e o do outro, escuro, seguem, ou mudam para destacar contra a arena nova?
+Nenhuma. O Arthur escolheu a cara "Dia claro" na vitrine "A cara da arena" (https://claude.ai/artifact/MAbArQTm8dNrmKcbartwBp), contra a recomendação do Claude (o fim de tarde), e a conferência acertou (F-158). O Claude fechou o "Dia claro ajustado" como v0: o céu procedural azul, o sol a 50° um pouco quente, a luz do céu mais fraca, as peças num concreto neutro, as torres e o pilar num cinza-azulado, a borda escura, a cápsula de quem joga em 0,86 e a do outro em 0,11. Os números vão para o `visual-e-audio.md` antes do código.
 
 ### Escolhas a confirmar
-1. Nenhum ativo novo: só o céu procedural, a luz, o ambiente e as cores dos materiais do próprio Godot (DEC-0029). Padrão: sim.
-2. A paleta do combate (DEC-0031; `visual-e-audio.md`, "A paleta") não muda: o cenário fica atrás dos tokens, com contraste mínimo de 3:1 contra os sinais. Padrão: sim.
-3. Os 60 fps em 1080p na máquina mínima seguem valendo, medidos com o `--measure-fps` (DEC-0002). Padrão: sim.
+Confirmadas: nenhum ativo novo, só o céu procedural, a luz, a neblina e as cores dos materiais do Godot (F-157; DEC-0029); a paleta do combate não muda, e o cenário fica atrás dos sinais (DEC-0031); os 60 fps em 1080p na máquina mínima seguem valendo, medidos com o `tools/measure_fps.sh` (DEC-0002).
 
 ### Fora do escopo
 - Modelos, texturas, animação e som: a fase de arte, com as licenças da DEC-0029.
@@ -42,16 +39,22 @@ O Arthur jogou a cabeça do outro e achou o jogo "muito branco", "tudo muito pá
 
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
-- [ ] #1 Quando o Arthur abre o Sozinho, a arena tem céu, luz e uma paleta com contraste entre o chão, as paredes, as peças e a borda, na cara que ele escolheu numa vitrine (F-156; F-157)
-- [ ] #2 Quando a cápsula do jogador fica na frente de qualquer peça da arena ou da borda, ela se destaca do fundo, com contraste conferido no quadro (F-156 §3)
-- [ ] #3 Quando o visual novo roda na máquina mínima, o Sozinho segue a 60 fps em 1080p, medido com o --measure-fps, e nenhum ativo novo entra (DEC-0002; DEC-0029)
-- [ ] #4 Quando o Arthur joga e grava um vídeo, o que ele sentiu vai para uma fonte (F-041)
+- [x] #1 Quando o Arthur abre o Sozinho, a arena tem a cara "Dia claro" da vitrine: o céu procedural, o sol, a luz do céu, o tonemapping, a neblina, os ajustes de cor e as cores do chão, das peças, das torres e do pilar e da borda com os números do `visual-e-audio.md`, e um teste de cena confere cada um (F-158)
+- [x] #2 Quando dois lutadores estão na arena, o tom de quem joga fica mais claro que toda superfície do cenário e o do outro mais escuro que toda superfície, e um teste confere os tons contra as cores dos materiais (F-156 §3; F-158)
+- [x] #3 Quando o visual novo roda no PC do Arthur, o `tools/measure_fps.sh` dá 60 fps de média em 1080p, e nenhum ativo novo entra no repositório (DEC-0002; DEC-0029)
+- [x] #4 Quando o Arthur joga e grava um vídeo, o que ele sentiu vai para uma fonte (F-041)
 <!-- AC:END -->
 
 ## Definition of Done
 <!-- DOD:BEGIN -->
-- [ ] #1 Critérios de aceite verificados
-- [ ] #2 Teste automatizado para toda regra do núcleo (core/)
-- [ ] #3 Diário da sessão escrito e glossário atualizado
-- [ ] #4 Mudanças registradas em docs/mudancas.md
+- [x] #1 Critérios de aceite verificados
+- [x] #2 Teste automatizado para toda regra do núcleo (core/)
+- [x] #3 Diário da sessão escrito e glossário atualizado
+- [x] #4 Mudanças registradas em docs/mudancas.md
 <!-- DOD:END -->
+
+## Final Summary
+
+<!-- SECTION:FINAL_SUMMARY:BEGIN -->
+A arena ganhou a cara "Dia claro" ajustada (F-158): céu procedural, luz do céu, Filmic, neblina leve e cores por grupo de peça, com quem joga mais claro e o outro mais escuro que toda superfície. 153 fps de média em 1080p no PC do Arthur (F-160). O Arthur aprovou jogando (F-159); o vídeo dele fica para mais tarde, por escolha dele.
+<!-- SECTION:FINAL_SUMMARY:END -->

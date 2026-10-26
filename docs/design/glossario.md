@@ -119,6 +119,9 @@ A linguagem ubíqua do jogo (DEC-0004, regra 5): o mesmo termo na conversa, no d
 | Plataforma móvel | O que o motor faz com um corpo em pé sobre outro que se mexe: leva junto e, na saída, passa a velocidade dele. Os lutadores só tratam o cenário como plataforma (F-152) | — | `platform_floor_layers`, `platform_on_leave` |
 | Boneco | O segundo lutador do Sozinho, parado no `SpawnB`, para julgar sozinho uma regra de dois corpos. Desliga com `--dummy=off` | — | `--dummy` |
 | Borda da arena | As quatro paredes de 50 m que fecham o chão de 80 × 80 m, altas o bastante para um gancho não passar por cima (`movimento.md`, "Métricas de nível") | m | `BordaNorte`, `BordaSul`, `BordaLeste`, `BordaOeste` |
+| Contraste de valor | O claro contra o escuro, que faz uma forma ser lida, mais do que a cor. No LoL, o mapa é apagado para os campeões e as magias saltarem; aqui, o cenário fica em tons médios e os corpos se destacam (F-158; `visual-e-audio.md`, "A cara da arena") | — | as cores dos materiais |
+| Tonemapping | A curva que comprime as luzes fortes antes da tela, como o filtro de uma câmera que não deixa o branco estourar. A arena usa o Filmic (`visual-e-audio.md`, "A cara da arena") | — | `Environment.tonemap_mode` |
+| Luz do céu | A luz ambiente que o céu procedural pinta: num dia claro, ela deixa as sombras azuis (`visual-e-audio.md`, "A cara da arena") | — | `AMBIENT_SOURCE_SKY` |
 | Trava do gancho | A soltura de quem bateu: a partir do segundo tick da puxada, a velocidade rumo ao ponto abaixo de 9 m/s, a metade da puxada (`movimento.md`, "Gancho") | % | `grapple_block_pct` |
 | No chão | Superestado do modo: o lutador apoiado no chão, parado, correndo ou no dash (`movimento.md`). É onde a defesa vale | — | `is_grounded(mode)` |
 | No ar | Superestado do modo: pulo e gancho; ninguém se defende. Se a corrida na parede conta como ar no combate é a Q-14 | — | `is_airborne(mode)` |

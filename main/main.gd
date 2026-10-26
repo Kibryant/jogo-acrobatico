@@ -524,14 +524,20 @@ func _start_replay(fighters: Array[Fighter]) -> void:
 	)
 
 
-# The session ends: the replay's last rows go to the disk.
+# The session ends: the replay's last rows go to the disk. The log counts the session's ticks, and
+# the rows beside them, one per tick and fighter: with the dummy, twice the ticks (TASK-10.7;
+# TASK-10.8, criterion 6).
 func _close_replay() -> void:
 	if _replay == null:
 		return
 	_replay.close()
 	_log(
-		"sozinho: replay of %d ticks saved to %s"
-		% [_replay.rows_written, ProjectSettings.globalize_path(_replay.path)],
+		"sozinho: replay of %d ticks (%d rows, one per tick and fighter) saved to %s"
+		% [
+			_replay.ticks_written,
+			_replay.rows_written,
+			ProjectSettings.globalize_path(_replay.path),
+		],
 	)
 	_replay.queue_free()
 	_replay = null

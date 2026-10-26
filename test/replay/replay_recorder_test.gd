@@ -120,3 +120,25 @@ func test_an_abrupt_close_loses_at_most_the_last_second() -> void:
 	assert_array(saved.warnings).is_empty()
 	assert_int(saved.tick_count()).is_equal(TICKS)
 	assert_int(recorder.rows_written).is_equal(TICKS)
+	assert_int(recorder.ticks_written).is_equal(TICKS)
+
+
+# TASK-10.8, criterion 6: with Sozinho's dummy beside the player (TASK-10.7) every tick writes two
+# rows, and the recorder counts the session's ticks once, which the Main's log prints.
+func test_a_session_with_the_dummy_counts_each_tick_once_and_a_row_per_fighter() -> void:
+	var game_match := _match()
+	game_match.spawn_fighter(Match.DUMMY_SLOT, multiplayer.get_unique_id())
+	var recorder := _recorder()
+	var path := _folder.path_join("dummy.replay")
+	assert_int(recorder.start(game_match, game_match.fighters, path)).is_equal(OK)
+	await get_tree().process_frame
+	await get_tree().physics_frame
+	for _tick: int in TICKS:
+		NetfoxTicks.run_loop()
+	recorder.close()
+	assert_int(game_match.fighters.size()).is_equal(2)
+	assert_int(recorder.ticks_written).is_equal(TICKS)
+	assert_int(recorder.rows_written).is_equal(2 * TICKS)
+	var saved := ReplayFile.parse(FileAccess.get_file_as_string(path))
+	assert_array(saved.errors).is_empty()
+	assert_int(saved.tick_count()).is_equal(TICKS)

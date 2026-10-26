@@ -190,7 +190,8 @@ func _rollback_tick(_delta: float, tick: int, _is_fresh: bool) -> void:
 		var hit := aim_ray(global_position, tick_input.yaw, tick_input.pitch)
 		facts.aim_hit = not hit.is_empty()
 		if facts.aim_hit:
-			facts.aim_point = hit["position"]
+			var point: Vector3 = hit["position"]
+			facts.aim_point = point
 	state = Movement.after_move(plan.state, facts, config, tick)
 
 

@@ -1,7 +1,7 @@
 ---
 id: TASK-10.8
 title: 'O teste dos 15 minutos: o bot com manobras, a Q-16 online e a versão 0.2.0'
-status: Ready
+status: In Progress
 assignee: []
 created_date: '2026-10-19 13:47'
 updated_date: '2026-10-26 21:49'

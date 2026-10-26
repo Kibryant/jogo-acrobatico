@@ -167,3 +167,4 @@ O que chegou ao projeto e como chegou. Uma fonte não muda: só mudam `status`, 
 | [F-161](F-161-arthur-escolhe-a-sensibilidade-sem-pausa-e-os-botoes-do-mouse.md) | 2026-10-26 | O Arthur põe a sensibilidade do mouse na tela de opções, escolhe que o Sozinho não pausa com a tela aberta e libera o botão do meio e os laterais do mouse para as ações |
 | [F-162](F-162-arthur-aprova-o-plano-da-tela-de-opcoes.md) | 2026-10-26 | O Arthur aprova o plano da tela de opções no modo de plano |
 | [F-163](F-163-arthur-aceita-os-dois-testes-afrouxados.md) | 2026-10-26 | O Arthur aceita os dois testes afrouxados da TASK-10.9: a lista com nome das palavras iguais em pt-BR e en, e o silêncio do motor na leitura do arquivo corrompido |
+| [F-164](F-164-arthur-joga-a-tela-de-opcoes.md) | 2026-10-26 | O Arthur joga com a tela de opções, põe o pulo num botão lateral do mouse, confere que os rótulos batem com o teclado dele e libera fechar a TASK-10.9 |

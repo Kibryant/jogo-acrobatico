@@ -1,10 +1,10 @@
 ---
 id: TASK-10.9
 title: 'A tela de opções: as teclas remapeáveis e a escala da interface'
-status: In Progress
+status: Done
 assignee: []
 created_date: '2026-10-19 13:47'
-updated_date: '2026-10-26 21:31'
+updated_date: '2026-10-26 21:38'
 labels:
   - jogo
 milestone: m-1
@@ -53,14 +53,14 @@ Confirmadas:
 - [x] #4 Quando a tela está aberta, o jogo não pausa, o lutador de quem joga fica parado e o mouse aparece; ao fechar, o mouse volta para a câmera e as teclas voltam ao lutador (F-161)
 - [x] #5 Quando o arquivo de opções está corrompido, tem uma tecla inválida, uma escala ou uma sensibilidade fora da faixa, o jogo volta ao padrão de cada entrada ruim, avisa no log e não trava; "Voltar ao padrão" restaura tudo
 - [x] #6 Quando duas ações recebem a mesma tecla, a tela diz de qual ação ela já é, e a troca não vale até o conflito sumir
-- [ ] #7 Quando o Arthur remapeia o dash e o gancho, muda a escala e a sensibilidade e joga, o que ele sentiu vai para uma fonte (F-041)
+- [x] #7 Quando o Arthur remapeia o dash e o gancho, muda a escala e a sensibilidade e joga, o que ele sentiu vai para uma fonte (F-041)
 <!-- AC:END -->
 
 ## Definition of Done
 <!-- DOD:BEGIN -->
-- [ ] #1 Critérios de aceite verificados
+- [x] #1 Critérios de aceite verificados
 - [x] #2 Teste automatizado para toda regra do núcleo (core/)
-- [ ] #3 Diário da sessão escrito e glossário atualizado
+- [x] #3 Diário da sessão escrito e glossário atualizado
 - [x] #4 Mudanças registradas em docs/mudancas.md
 <!-- DOD:END -->
 
@@ -88,3 +88,9 @@ Abrir as opções, trocar o dash e o gancho de tecla, mudar a escala, fechar e a
 ## Docs a atualizar
 `visual-e-audio.md` (a tela e os passos da escala); `glossario.md` (Tela de opções); `testes-e-entrega.md` (o arquivo em `user://`); `mudancas.md` (a tela como filha própria antes da v0.2.0, F-100 §1).
 <!-- SECTION:NOTES:END -->
+
+## Final Summary
+
+<!-- SECTION:FINAL_SUMMARY:BEGIN -->
+A tela de opções abre com o Esc, no Sozinho e online: as sete ações remapeáveis por posição física, com o botão do meio e os laterais do mouse, a sensibilidade de 0,02 a 0,20 e a escala de 0,8 a 1,5, salvas em user://options.cfg (DEC-0031 §8; F-161). Com a tela aberta, o jogo não pausa e o lutador fica parado. O Arthur jogou com o pulo no botão lateral e aprovou (F-164).
+<!-- SECTION:FINAL_SUMMARY:END -->

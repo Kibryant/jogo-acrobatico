@@ -10,7 +10,10 @@
 # (movimento.md, "Métricas de nível"), on free floor too, the grapple scenario's included, and
 # every piece of the arena stays off that scenario's ground. From TASK-10.7 (criterion 6), the
 # border: four walls 50 m tall and 1 m thick close the 80 x 80 m floor, their inner faces at ±40 m,
-# in the blocks' grey and casting no shadow (movimento.md, "Métricas de nível": "A borda").
+# casting no shadow (movimento.md, "Métricas de nível": "A borda"). From TASK-10.12, the towers and
+# the pillar share one material of their own and the border walls another, so the tall pieces and
+# the border stand apart from the blocks (visual-e-audio.md, "A cara da arena"); their colours are
+# checked in arena_look_test.gd.
 extends GdUnitTestSuite
 
 const ARENA_SCENE := preload("res://arena/arena.tscn")
@@ -426,10 +429,13 @@ func test_the_gap_platforms_and_the_ruler_stay_clear_of_the_wall_scenario() -> v
 
 
 # Criterion 9 of TASK-10.6: each grapple piece has one name under the arena, is a box on the
-# world's layer whose collision is its mesh, in the blocks' grey, standing on the floor's top.
+# world's layer whose collision is its mesh, standing on the floor's top. From TASK-10.12, the
+# three share one material, not the blocks' grey (visual-e-audio.md, "A cara da arena").
 func test_each_grapple_piece_is_one_named_world_box_whose_collision_matches_its_mesh() -> void:
 	var arena := _arena()
 	var grey := _grey_of(_body(arena, GREY_BLOCK))
+	var tall := _grey_of(_body(arena, "TorreA"))
+	assert_object(tall).is_not_same(grey)
 	for piece: String in GRAPPLE_PIECES:
 		var found := arena.find_children(piece, "", true, false)
 		var failure := "%s is named %d times under Arena" % [piece, found.size()]
@@ -453,7 +459,7 @@ func test_each_grapple_piece_is_one_named_world_box_whose_collision_matches_its_
 		var mesh_at := (mesh_node as MeshInstance3D).transform
 		assert_bool(collision_at.is_equal_approx(Transform3D.IDENTITY)).is_true()
 		assert_bool(mesh_at.is_equal_approx(Transform3D.IDENTITY)).is_true()
-		assert_object(_grey_of(body)).is_same(grey)
+		assert_object(_grey_of(body)).is_same(tall)
 		assert_float(_box(body).position.y).is_equal_approx(0.0, HAIR)
 
 
@@ -531,11 +537,15 @@ func test_the_grapple_scenario_ground_is_free_of_every_piece_of_the_arena() -> v
 
 
 # Criterion 6 of TASK-10.7: each border wall has one name under the arena, is a box on the world's
-# layer whose collision is its mesh, in the blocks' grey and casting no shadow, standing on the
-# floor's top and 50 m tall.
+# layer whose collision is its mesh, casting no shadow, standing on the floor's top and 50 m tall.
+# From TASK-10.12, the four share one material, not the blocks' grey nor the tall pieces'
+# (visual-e-audio.md, "A cara da arena").
 func test_each_border_wall_is_one_named_world_box_50_m_tall_that_casts_no_shadow() -> void:
 	var arena := _arena()
 	var grey := _grey_of(_body(arena, GREY_BLOCK))
+	var border := _grey_of(_body(arena, "BordaNorte"))
+	assert_object(border).is_not_same(grey)
+	assert_object(border).is_not_same(_grey_of(_body(arena, "TorreA")))
 	for wall: String in BORDER:
 		var found := arena.find_children(wall, "", true, false)
 		var failure := "%s is named %d times under Arena" % [wall, found.size()]
@@ -556,7 +566,7 @@ func test_each_border_wall_is_one_named_world_box_50_m_tall_that_casts_no_shadow
 		var mesh := mesh_instance.mesh
 		assert_bool(mesh is BoxMesh).is_true()
 		assert_vector((mesh as BoxMesh).size).is_equal(BORDER_SIZES[wall])
-		assert_object(_grey_of(body)).is_same(grey)
+		assert_object(_grey_of(body)).is_same(border)
 		var shadow := "%s casts a shadow" % wall
 		assert_int(mesh_instance.cast_shadow).override_failure_message(shadow).is_equal(
 			GeometryInstance3D.SHADOW_CASTING_SETTING_OFF

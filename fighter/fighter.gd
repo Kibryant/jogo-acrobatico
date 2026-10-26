@@ -9,12 +9,13 @@ class_name Fighter
 extends CharacterBody3D
 
 # Neutral tones, outside the colours of the combat tokens (visual-e-audio.md; DEC-0031): the
-# fighter of whoever plays on this PC lighter, any other darker (TASK-9, "Números v0 do Claude").
-# The light grey stays short of white, the reaction token's flash, and shows its roundness under
-# the arena's light; the dark one is darker than the floor. The camera following one's own
-# fighter tells them apart without relying on colour alone.
-const OWN_TONE := Color(0.62, 0.62, 0.6)
-const OTHER_TONE := Color(0.16, 0.16, 0.18)
+# fighter of whoever plays on this PC lighter than every surface of the arena, any other darker
+# than every one, the floor and the border included (visual-e-audio.md, "A cara da arena";
+# F-156 §3; F-158). The light grey stays short of white, the reaction token's flash, so it does
+# not burn out under the sun and the Filmic tonemapping. The camera following one's own fighter
+# tells them apart without relying on colour alone.
+const OWN_TONE := Color(0.86, 0.86, 0.84)
+const OTHER_TONE := Color(0.11, 0.11, 0.13)
 # m/s: the probe move of contour D (DEC-0025 §2), the speed of the Desenho 3 probe whose SyncTest
 # proved it (netfox-sonda, probe_fighter.gd; F-025 §4). For one tick it moves the body 0.83 mm at
 # 60 ticks, and the body goes back right after.

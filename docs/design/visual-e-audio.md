@@ -207,7 +207,7 @@ Leituras v0 do Claude, que o Arthur julga jogando (DEC-0017; TASK-10.4).
   - **A baforada do pulo duplo:** um disco fino sob os pés, onde o pulo duplo saiu, que cresce do raio da cápsula até 3 raios e some na subida do pulo, 350 ms.
   - Os dois são translúcidos, a 40 %, sem luz, e usam o tom neutro do próprio lutador: o cinza claro de quem joga, o escuro do outro. Nenhum usa cor de token, nem o branco do flash da reação (DEC-0031 §1 e §3).
   - Tocam uma vez por chave (lutador, tipo, carimbo), quando aparecem pela primeira vez no estado exibido, e nunca na re-simulação (DEC-0031 §6). Sem tela, como no servidor dedicado e no portão, contam e não desenham.
-- **A régua do dash:** faixas de 0,1 × 0,01 × 2 m a cada 4 m, a distância do dash, em x de −10 a 30 e em z de 14 a 16, ao sul dos pontos de nascimento, no cinza dos blocos. São só malha, sem colisão, e ficam fora do percurso da referência e das cenas da SyncTest (TASK-10.4).
+- **A régua do dash:** faixas de 0,1 × 0,01 × 2 m a cada 4 m, a distância do dash, em x de −10 a 30 e em z de 14 a 16, ao sul dos pontos de nascimento, na cor das peças ("A cara da arena"). São só malha, sem colisão, e ficam fora do percurso da referência e das cenas da SyncTest (TASK-10.4).
 
 ### A parede na tela (TASK-10.5)
 
@@ -218,7 +218,7 @@ Leituras v0 do Claude, que o Arthur julga jogando (DEC-0017; TASK-10.5).
 - **A inclinação da cápsula (TASK-10.10):** na corrida, a malha da cápsula e a viseira inclinam 15° para longe da parede, com o pivô nos pés, entrando em 100 ms na entrada e saindo em 100 ms no fim, de forma linear, a cada quadro exibido. Ao sair, ela volta inclinando para longe da parede que deixou. Só na tela: o estado, o corpo e a cápsula de colisão não mudam, e o rollback, o replay e a SyncTest não a veem (`movimento.md`, "O que se vê na parede"; DEC-0031 §6; Q-37).
 - **O rastro da corrida (TASK-10.10):** o rastro do dash, curto. A mesma caixa translúcida no tom do lutador, mas só do ponto em que o corpo estava há 200 ms, a duração do dash, até o corpo: uns 1,6 m a 8 m/s, que acompanham a corrida em vez de desenhar a parede inteira. O comprimento conta os ticks do netfox, não o tempo do quadro, para ser o mesmo em qualquer fps. Some em 200 ms depois do fim da corrida. Toca uma vez por chave, pelo tick em que a corrida começou, então uma emenda continua o mesmo rastro, e o rollback não o duplica. "Curto" sem número no papel: a duração do dash é a leitura v0 do Claude (DEC-0017), e nenhum ativo novo entra (DEC-0029).
 - **A câmera** não inclina na corrida no v0 (`movimento.md`, "Corrida na parede").
-- **As peças da arena:** a `ParedeLonga`, o `CorredorOeste`, o `CorredorLeste` e o `PatamarDoCorredor` usam o cinza dos blocos, sem cor nova (`movimento.md`, "Métricas de nível").
+- **As peças da arena:** a `ParedeLonga`, o `CorredorOeste`, o `CorredorLeste` e o `PatamarDoCorredor` usam a cor das peças ("A cara da arena"; `movimento.md`, "Métricas de nível").
 
 ### O gancho na tela (TASK-10.6)
 
@@ -231,7 +231,7 @@ Leituras v0 do Claude, que o Arthur julga jogando (DEC-0017; F-141). O sinal nas
 - **O cabo:** uma linha de 3 cm de espessura, opaca, sem luz, no tom neutro do próprio lutador, do ombro exibido (1,6 m acima dos pés) até a ponta. Nos 100 ms de voo, a ponta vai do ombro ao ponto, contando os ticks do netfox; na puxada, fica no ponto; na soltura, o cabo some. Toca uma vez por chave, pelo `grapple_fired_tick` (DEC-0031 §6).
 - **A puxada:** o rastro curto da corrida na parede, a mesma caixa translúcida a 40 %, do ponto em que o corpo estava há 200 ms até ele, enquanto o modo é o gancho. Some em 200 ms depois da soltura. Toca uma vez por chave, pelo tick em que a puxada começou.
 - **Nenhum ativo novo** entra: o anel, o ponto, a linha e a caixa são formas do Godot (DEC-0029). O som do cabo espera a Q-32.
-- **As peças da arena:** a `TorreA`, a `TorreB` e o `Pilar10m` usam o cinza dos blocos, sem cor nova (`movimento.md`, "Métricas de nível").
+- **As peças da arena:** a `TorreA`, a `TorreB` e o `Pilar10m` usam o cinza-azulado das peças altas, que as separa dos blocos ("A cara da arena"; TASK-10.12; `movimento.md`, "Métricas de nível").
 
 ### A cabeça do outro na tela (TASK-10.7)
 

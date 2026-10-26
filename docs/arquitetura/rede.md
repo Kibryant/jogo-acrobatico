@@ -241,7 +241,7 @@ Na primeira rodada (24/10/2026), com um raio só, do ombro: as mesmas 333 de 333
 - **O netfox grava** `:state:grapple_fired_tick`, `:state:grapple_point` e `:state:grapple_end_tick`, e o input em `Input:pitch` e `Input:grapple` (`fighter/fighter.tscn`). Nenhum RID entra no estado: o ponto é um `Vector3`.
 - **A mira da tela** lança a mesma mira, só da tela, do ponto O exibido, pelo yaw e pelo pitch da câmera, a cada quadro, com o segundo raio. O anel fica onde a câmera vê o fim do raio: o centro, com a câmera livre, e fora dele quando uma parede empurra a câmera (DEC-0045 §4). Ela lê as mesmas regras públicas do núcleo, `Movement.can_grapple` e `Movement.in_reach`, e nunca entra no estado (`visual-e-audio.md`, "O gancho na tela").
 - **A previsão, na fase 3:** hoje nenhum lutador prevê input (DEC-0026 §2), então o servidor só simula um lutador num tick cujo input chegou. Um tick previsto reaproveita o último input, e um `grapple` de um toque dispararia de novo nele. A fase 3 decide o raio nesses ticks (DEC-0044, "Consequências"; TASK-10.6, "Fora do escopo").
-- **Na rede:** o `net_run` de 26/10/2026, a ping 100, passou com o input novo, sem nenhum tick corrigido nem faltando (§10). O bot da rede ainda não usa o gancho (TASK-10.8).
+- **Na rede:** o `net_run` de 26/10/2026, a ping 100, passou com o input novo, sem nenhum tick corrigido nem faltando (§10). O bot da rede não usa o gancho nem a parede: os dois esperam a fase 3, que precisa de um alvo na rota do bot e da regra do raio nos ticks previstos (DEC-0044; F-165).
 
 ### A sonda C da cabeça (TASK-10.7, critério 2; F-025 §3)
 

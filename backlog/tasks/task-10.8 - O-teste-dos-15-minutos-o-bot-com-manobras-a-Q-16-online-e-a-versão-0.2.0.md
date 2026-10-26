@@ -1,10 +1,10 @@
 ---
 id: TASK-10.8
 title: 'O teste dos 15 minutos: o bot com manobras, a Q-16 online e a versão 0.2.0'
-status: To Refine
+status: Ready
 assignee: []
 created_date: '2026-10-19 13:47'
-updated_date: '2026-10-26 19:31'
+updated_date: '2026-10-26 21:49'
 labels:
   - jogo
 milestone: m-1
@@ -20,39 +20,41 @@ ordinal: 19000
 
 <!-- SECTION:DESCRIPTION:BEGIN -->
 ### Por quê
-O teste da fase é "divertido sozinho por 15 min?" (`roteiro.md`:13; F-001), o critério 1 da TASK-10. Antes dele, a rede precisa conhecer as manobras novas: o bot da corrida de 30 s ganha o pulo duplo e o dash, e a ping 100 o servidor e os clientes têm de bater em todos os ticks (`rede.md` §8 e §10). A Q-16 se decide com você jogando online contra o bot, e vira DEC (DEC-0036; DEC-0015). O critério 2 da TASK-10 ganha o seu teste pela cópia do Resource (DEC-0017). Se os 15 minutos disserem "não", o motivo vira fonte e as filhas de ajuste nascem com `-p TASK-10`; se disserem "sim", esta filha fecha a TASK-10 e sobe a versão para 0.2.0 no mesmo PR (DEC-0028 §3 e §4.3).
+O teste da fase é "divertido sozinho por 15 min?" (`roteiro.md`:13; F-001), o critério 1 da TASK-10. Antes dele, a rede precisa conhecer as manobras: o bot da corrida de 30 s, que já dá o dash (TASK-10.4), ganha o pulo duplo, e a ping 100 o servidor e os clientes têm de bater em todos os ticks (`rede.md` §8 e §10). A Q-16 foi decidida jogando e virou a DEC-0046: a cabeça do outro é ar, pelo jogo e não pela rede (F-155; F-156; F-165); a sessão online só confere o escorregão a ping 100. O critério 2 da TASK-10 ganha o seu teste pela cópia do Resource (DEC-0017). Se os 15 minutos disserem "não", o motivo vira fonte e as filhas de ajuste nascem com `-p TASK-10`; se disserem "sim", esta filha fecha a TASK-10 e sobe a versão para 0.2.0 no mesmo PR, com a release pública (DEC-0028 §3 e §4.3; F-165).
 
 ### Perguntas em aberto
-Nenhuma; a Q-16 e a Q-07 se respondem jogando aqui.
+Nenhuma. Os 15 minutos respondem as pendências que esperavam por eles: as técnicas achadas (Q-07), o dash no ar (Q-34), o "boost" ao soltar o gancho perto da parede (Q-40), o ponto O dentro da parede à direita (Q-42), a câmera "um pouco antinatural" na parede e no dash (Q-43) e a escalada vertical (Q-44).
 
 ### Escolhas a confirmar
-1. O bot da corrida em rede ganha o pulo duplo (350 ms depois do pulo de cada perna) e o dash (no meio de cada perna, já da TASK-10.4); a parede e o gancho online esperam a fase 3. Padrão: sim, porque as duas cabem na rota reta do bot sem geometria nova, e a parede e o gancho online dependem da pergunta do tick previsto (TASK-10.6, "Fora do escopo").
-2. A TASK-10 fecha no PR desta filha, com a versão 0.2.0 e a tag `v0.2.0` como segunda release, com o seu ok. Padrão: sim, porque a fase termina quando o teste dela passa (DEC-0028 §3), e as filhas de ajuste, se houver, nascem antes do fechamento.
+Confirmadas pelo Arthur em 26/10/2026 (F-165):
+1. O bot da corrida em rede ganha só o pulo duplo, no topo do pulo de cada perna (350 ms depois), ao lado do dash que já tem; a parede e o gancho online esperam a fase 3, que precisa de um alvo na rota do bot e da regra do raio nos ticks previstos (DEC-0044).
+2. Quando os 15 minutos passarem, a TASK-10 fecha no PR desta filha, com a versão 0.2.0 e a tag `v0.2.0` como segunda release pública no GitHub, com os builds e as notas em português tiradas do diário; o push da tag espera o ok do Arthur no fim.
 
 ### Números v0 do Claude
 Fechados pelo Claude (DEC-0017).
-- A corrida de 30 s exige zero ticks corrigidos e zero faltando a ping 100, como na TASK-9, com o tempo do portão anotado contra os 90 s (`rede.md` §10).
+- A corrida de 30 s exige zero ticks corrigidos e zero faltando a ping 100, como na TASK-9, com o tempo do portão anotado (`rede.md` §10).
 - O teste do critério 2 da TASK-10 muda o pulo duplo de 1,0 para 1,5 m numa cópia do Resource e mede o topo pela simulação, sem tocar no código.
-- O ajuste fino só por dados: o que você pedir muda no `.tres`, no `movimento.md` e na vitrine, no mesmo link (DEC-0019); nenhum número muda no código.
+- O ajuste fino só por dados: o que o Arthur pedir muda no `.tres`, no `movimento.md` e na vitrine, no mesmo link (DEC-0019); nenhum número muda no código.
 - Os 15 minutos são cronometrados, no Sozinho com o boneco, com o kit inteiro: pulo duplo, dash, parede e gancho.
 
 ### Fora do escopo
 - O combate (fase 2). O bot que reage. O percurso cronometrado com fantasma (fase 2).
-- A bancada do Mac (Q-24, task pequena separada). A Q-13, só se você falar dela.
+- A parede e o gancho do bot online (fase 3).
+- A bancada do Mac (Q-24, task pequena separada). A Q-13, só se o Arthur falar dela.
 
 ### O que você vai aprender
 - Decidir uma regra jogando: o que muda entre "achei estranho" e "é assim".
 - O que o teste da fase mede, e o que fazer quando ele diz "não".
-- O netcode com manobras: por que um bot que dá dash a ping 100 prova mais que mil testes do núcleo.
+- O netcode com manobras: por que um bot que dá pulo duplo e dash a ping 100 prova mais que mil testes do núcleo.
 <!-- SECTION:DESCRIPTION:END -->
 
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
-- [ ] #1 Quando o `tools/net_run.sh` roda 30 s com os bots dando pulo duplo e dash, a corrida passa a ping 100 com zero ticks corrigidos e zero faltando, e o tempo do portão fica anotado contra o limite de 90 s (`rede.md` §8 e §10; DEC-0027 §1).
-- [ ] #2 Quando um número de movimento muda numa cópia do Resource (o pulo duplo de 1,0 para 1,5 m), o jogo muda sem tocar no código, e um teste prova isso pela cópia (TASK-10, critério 2; DEC-0017; DEC-0004, regra 3).
-- [ ] #3 Quando o Arthur sobe na cabeça do boneco e joga online contra o bot pelo `tools/play_online.sh 100`, o que ele sentiu sobre a Q-16 vai para uma fonte e a decisão vira DEC, com a pendência datada; se ele decidir o contrário da regra, a filha de ajuste nasce com `-p TASK-10` (DEC-0036; DEC-0015).
-- [ ] #4 Quando o Arthur joga 15 minutos cronometrados sozinho na arena com o kit inteiro, ele quer continuar; o que ele sentiu e as técnicas que achou vão para uma fonte (Q-07), e os números que ele pedir mudam no `.tres`, no `movimento.md` e na vitrine, no mesmo link, sem tocar no código; quando ele não quer continuar, o motivo vira fonte e as filhas de ajuste nascem com `-p TASK-10` (F-001; TASK-10, critério 1; DEC-0017; DEC-0019).
-- [ ] #5 Quando os 15 minutos passam e o Arthur dá o ok, o PR marca os critérios 1 e 2 da TASK-10, fecha a TASK-10, sobe a versão para 0.2.0 no mesmo commit, e a tag `v0.2.0` vira a segunda release com notas em português tiradas do diário (DEC-0028 §3 e §4.3; DEC-0033).
+- [ ] #1 Quando o `tools/net_run.sh` roda 30 s com os bots dando pulo duplo e dash, a corrida passa a ping 100 com zero ticks corrigidos e zero faltando, cada bot dá ao menos um pulo duplo e um dash, e o tempo do portão fica anotado (`rede.md` §8 e §10; DEC-0027 §1; F-165)
+- [ ] #2 Quando um número de movimento muda numa cópia do Resource (o pulo duplo de 1,0 para 1,5 m), o jogo muda sem tocar no código, e um teste prova isso pela cópia (TASK-10, critério 2; DEC-0017; DEC-0004, regra 3)
+- [ ] #3 Quando o Arthur sobe na cabeça do bot online pelo `tools/play_online.sh 100`, ele escorrega como no Sozinho, sem o corpo voltar para cima por uma correção, e o que ele sentiu vai para uma fonte; um problema ali é bug de rede, corrigido sem mudar a DEC-0046 (DEC-0046; F-165)
+- [ ] #4 Quando o Arthur joga 15 minutos cronometrados sozinho na arena com o kit inteiro, ele quer continuar; o que ele sentiu e as técnicas que achou vão para uma fonte, as pendências Q-07, Q-34, Q-40, Q-42, Q-43 e Q-44 ganham a resposta datada, e os números que ele pedir mudam no `.tres`, no `movimento.md` e na vitrine, no mesmo link, sem tocar no código; quando ele não quer continuar, o motivo vira fonte e as filhas de ajuste nascem com `-p TASK-10` (F-001; TASK-10, critério 1; DEC-0017; DEC-0019)
+- [ ] #5 Quando os 15 minutos passam e o Arthur dá o ok, o PR marca os critérios 1 e 2 da TASK-10, fecha a TASK-10, sobe a versão para 0.2.0 no mesmo commit, e a tag `v0.2.0` vira a segunda release pública, com os builds e as notas em português tiradas do diário; o push da tag espera o ok do Arthur (DEC-0028 §3 e §4.3; DEC-0033; F-165)
 <!-- AC:END -->
 
 ## Definition of Done

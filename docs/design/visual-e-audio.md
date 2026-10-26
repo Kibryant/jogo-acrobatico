@@ -1,6 +1,6 @@
 ---
 revisado_em: 2026-10-26
-fontes: [F-050, F-051, F-052, F-053, F-054, F-056, F-058, F-059, F-061, F-062, F-063, F-100, F-121, F-122, F-137, F-139, F-140, F-141, F-146, F-147, F-148]
+fontes: [F-050, F-051, F-052, F-053, F-054, F-056, F-058, F-059, F-061, F-062, F-063, F-100, F-121, F-122, F-137, F-139, F-140, F-141, F-146, F-147, F-148, F-152, F-153]
 ---
 
 # Visual e áudio
@@ -232,6 +232,16 @@ Leituras v0 do Claude, que o Arthur julga jogando (DEC-0017; F-141). O sinal nas
 - **A puxada:** o rastro curto da corrida na parede, a mesma caixa translúcida a 40 %, do ponto em que o corpo estava há 200 ms até ele, enquanto o modo é o gancho. Some em 200 ms depois da soltura. Toca uma vez por chave, pelo tick em que a puxada começou.
 - **Nenhum ativo novo** entra: o anel, o ponto, a linha e a caixa são formas do Godot (DEC-0029). O som do cabo espera a Q-32.
 - **As peças da arena:** a `TorreA`, a `TorreB` e o `Pilar10m` usam o cinza dos blocos, sem cor nova (`movimento.md`, "Métricas de nível").
+
+### A cabeça do outro na tela (TASK-10.7)
+
+Leituras v0 do Claude, que o Arthur julga jogando (DEC-0017; F-152). O sinal nasce com a regra (F-139).
+
+- **O escorregão:** o rastro curto do dash, da parede e da puxada, a mesma caixa translúcida a 40 %, acompanha quem escorrega de uma cabeça, do ponto em que o corpo estava há 200 ms até ele. Some em 200 ms depois de ele sair. Toca uma vez por pouso, pelo tick em que o contato com a cabeça começou (DEC-0031 §6). Ele lê como "o jogo me empurrou", e não como um bug.
+- **O modo:** o HUD diz "No ar" em cima de uma cabeça, porque para as regras é ar.
+- **O boneco:** o segundo lutador do Sozinho, parado no `SpawnB`, usa o tom do outro lutador, o mais escuro, como um adversário.
+- **A borda:** as quatro paredes de 50 m usam o cinza dos blocos, sem cor nova, e não fazem sombra (`movimento.md`, "Métricas de nível").
+- **Nenhum ativo novo** entra (DEC-0029).
 
 ## Em aberto
 

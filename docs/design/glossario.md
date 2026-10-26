@@ -1,6 +1,6 @@
 ---
 revisado_em: 2026-10-26
-fontes: [F-001, F-002, F-005, F-007, F-012, F-013, F-020, F-021, F-025, F-026, F-028, F-030, F-032, F-038, F-039, F-044, F-045, F-046, F-050, F-051, F-052, F-053, F-056, F-058, F-066, F-068, F-069, F-070, F-073, F-078, F-079, F-081, F-083, F-085, F-086, F-087, F-088, F-090, F-091, F-093, F-094, F-095, F-097, F-100, F-112, F-121, F-122, F-129, F-141, F-146, F-147, F-148]
+fontes: [F-001, F-002, F-005, F-007, F-012, F-013, F-020, F-021, F-025, F-026, F-028, F-030, F-032, F-038, F-039, F-044, F-045, F-046, F-050, F-051, F-052, F-053, F-056, F-058, F-066, F-068, F-069, F-070, F-073, F-078, F-079, F-081, F-083, F-085, F-086, F-087, F-088, F-090, F-091, F-093, F-094, F-095, F-097, F-100, F-112, F-121, F-122, F-129, F-141, F-146, F-147, F-148, F-152]
 ---
 
 # Glossário
@@ -114,6 +114,11 @@ A linguagem ubíqua do jogo (DEC-0004, regra 5): o mesmo termo na conversa, no d
 | Cabo | O voo do gancho até o ponto, 100 ms, e a linha que liga o ombro ao ponto enquanto o gancho vale. Na tela, uma linha de 3 cm (`visual-e-audio.md`, "O gancho na tela") | ms | `grapple_fired_tick`, `grapple_attach_ms` |
 | Puxada | O modo do gancho preso: os pés vão ao ponto a 18 m/s, sem gravidade e sem input, até a soltura (`movimento.md`, "Gancho") | m/s | `Mode.GRAPPLE`, `grapple_pull_speed_mps` |
 | Soltura | O fim da puxada: com os pés a 1,5 m do ponto, pela trava ou pelo pulo. Conserva a velocidade, e a recarga conta dela (`movimento.md`, "Gancho") | m | `grapple_end_tick`, `grapple_release_distance_m` |
+| Escorregar da cabeça | O que acontece com quem cai sobre a cabeça de outro lutador: a cabeça conta como ar, e ele escorrega para fora a 3 m/s, em uns 0,2 s. Como no CoD; no CS, ficar na cabeça do colega é o "boost" (`movimento.md`, "O corpo"; Q-16) | m/s | `slide_off_dir`, `head_slide_speed_mps`, `head_landing_tick` |
+| Em pé e no chão | Duas perguntas diferentes. No chão (`on_floor`) é o veredito do motor: encostado numa superfície de até 45°. Em pé (`stands`) é a regra: no chão e não numa cabeça. Como `user.exists` e `user.canLogin` no TypeScript (`movimento.md`, "O corpo") | — | `FighterState.on_floor`, `Movement.stands` |
+| Plataforma móvel | O que o motor faz com um corpo em pé sobre outro que se mexe: leva junto e, na saída, passa a velocidade dele. Os lutadores só tratam o cenário como plataforma (F-152) | — | `platform_floor_layers`, `platform_on_leave` |
+| Boneco | O segundo lutador do Sozinho, parado no `SpawnB`, para julgar sozinho uma regra de dois corpos. Desliga com `--dummy=off` | — | `--dummy` |
+| Borda da arena | As quatro paredes de 50 m que fecham o chão de 80 × 80 m, altas o bastante para um gancho não passar por cima (`movimento.md`, "Métricas de nível") | m | `BordaNorte`, `BordaSul`, `BordaLeste`, `BordaOeste` |
 | Trava do gancho | A soltura de quem bateu: a partir do segundo tick da puxada, a velocidade rumo ao ponto abaixo de 9 m/s, a metade da puxada (`movimento.md`, "Gancho") | % | `grapple_block_pct` |
 | No chão | Superestado do modo: o lutador apoiado no chão, parado, correndo ou no dash (`movimento.md`). É onde a defesa vale | — | `is_grounded(mode)` |
 | No ar | Superestado do modo: pulo e gancho; ninguém se defende. Se a corrida na parede conta como ar no combate é a Q-14 | — | `is_airborne(mode)` |

@@ -1,10 +1,10 @@
 ---
 id: TASK-10.7
 title: 'A cabeça do outro: a regra da Q-16, o boneco e a borda da arena'
-status: Ready
+status: In Progress
 assignee: []
 created_date: '2026-10-19 13:47'
-updated_date: '2026-10-26 17:00'
+updated_date: '2026-10-26 17:03'
 labels:
   - jogo
 milestone: m-1

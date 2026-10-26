@@ -915,12 +915,17 @@ func test_a_faster_component_along_the_slide_is_kept_and_the_one_across_it_is_no
 		expected,
 		Vector3.ONE * GEOMETRY_HAIR,
 	)
-	while rig.last_facts.floor_is_fighter:
+	# Bounded by the criterion's own limit (F-155): a wrong rule fails here instead of hanging.
+	var slide_ticks := 1
+	while rig.last_facts.floor_is_fighter and slide_ticks < EXIT_WITHIN_TICKS[tickrate]:
 		var dir := rig.state.slide_off_dir
 		var next := rig.step(MovementRig.idle())
+		slide_ticks += 1
 		assert_float(_horizontal(next.velocity).dot(dir)).is_greater_equal(
 			HEAD_SLIDE_SPEED_MPS - HAIR
 		)
+	message = "still on the head %d ticks after the landing" % slide_ticks
+	assert_bool(rig.last_facts.floor_is_fighter).override_failure_message(message).is_false()
 
 
 # Limit: from an exactly centred landing the feet leave the dome's floor radius within 12 ticks

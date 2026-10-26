@@ -157,3 +157,5 @@ O que chegou ao projeto e como chegou. Uma fonte não muda: só mudam `status`, 
 | [F-151](F-151-arthur-responde-a-conferencia-da-cabeca.md) | 2026-10-26 | O Arthur responde à conferência da cabeça do outro: com o pulo duplo guardado, ele sai, porque a cabeça conta como ar |
 | [F-152](F-152-arthur-escolhe-proibir-a-cabeca-sem-plataforma-e-com-rastro.md) | 2026-10-26 | O Arthur escolhe começar a Q-16 proibida, tirar o outro lutador das plataformas e dar ao escorregão o rastro curto |
 | [F-153](F-153-arthur-aprova-o-plano-da-cabeca-do-outro.md) | 2026-10-26 | O Arthur aprova o plano da cabeça do outro no modo de plano |
+| [F-154](F-154-arthur-responde-a-conferencia-da-cabeca-como-chao.md) | 2026-10-26 | O Arthur responde à conferência da cabeça como chão: ela traria todas as consequências do chão, e o pulo duplo renovado encadearia pulo duplo, cabeça, pulo duplo |
+| [F-155](F-155-arthur-mantem-a-cabeca-proibida-e-libera-a-linha-do-teste.md) | 2026-10-26 | O Arthur mantém a cabeça do outro proibida no v0, agora pelo jogo e não pela rede, e libera a correção de uma linha no teste travado que podia travar o portão |

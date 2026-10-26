@@ -1,8 +1,27 @@
 # The third-person camera of whoever plays on this PC (DEC-0013; movimento.md, "Câmera"), only
-# for their own fighter: a pivot on the fighter's interpolated position, an arm behind it that
-# collides with the world, and the camera at its end. The mouse turns the yaw and the pitch; the
-# yaw is what FighterInput samples, so the body looks where the camera looks (movimento.md,
-# "Princípios"). The camera is centred: the shoulder offset arrives with the ranged weapons.
+# for their own fighter: a pivot on the fighter's interpolated position, an arm behind it, a
+# shoulder from the arm's end to the right, and the camera at the shoulder's end, over the right
+# shoulder, the body in the bottom-left corner and the screen's centre free (DEC-0045 §1). The
+# mouse turns the yaw and the pitch; the yaw is what FighterInput samples, so the body looks where
+# the camera looks (movimento.md, "Princípios").
+#
+# The collision comes in two steps, both the engine's SpringArm3D and both only against the world,
+# so a fighter pushes nothing: the arm pulls the camera in when a wall is behind, and the shoulder,
+# cast from wherever the arm stopped, slides it toward the centre when a wall is beside, as in a
+# wall run with the wall on the right; each stops collision_margin_m before the wall. A SpringArm3D
+# moves its children to its end keeping their global rotation, and with a Camera3D as its direct
+# child it casts the camera's near-plane pyramid instead of a ray, so each arm moves an "End" node
+# of identity rotation: both cast a ray, and the turns of the shoulder and of the camera are
+# never rewritten by the engine. Free, the camera sits shoulder_m to the right of the pivot and
+# distance_m behind it, looking along the view, so its optical axis passes through the aim's
+# point O, Aim.origin of the same feet and yaw (DEC-0045 §2).
+#
+# CameraRig (pivot; rotation.y = yaw)
+# └ Arm (SpringArm3D; rotation.x = pitch; casts along its +Z, behind)
+#   └ ArmEnd (Node3D; the arm moves it to its end)
+#     └ Shoulder (SpringArm3D; a quarter turn about Y, so its +Z is the rig's right)
+#       └ ShoulderEnd (Node3D; the shoulder moves it to its end)
+#         └ Camera3D (the quarter turn undone: it looks along the view)
 class_name CameraRig
 extends Node3D
 
@@ -15,8 +34,11 @@ var pitch := 0.0
 ## mouse nor turns with it, so a player can use another window beside this one (TASK-9, part 2).
 var takes_mouse := true
 
-## Rotates with the pitch and pulls the camera in when a wall is in the way.
+## Rotates with the pitch and pulls the camera in when a wall is behind: the first step.
 @export var arm: SpringArm3D
+## At the arm's end, turned to the shoulder's side: slides the camera toward the centre when a
+## wall is beside it, the second step.
+@export var shoulder: SpringArm3D
 @export var camera: Camera3D
 
 # What the rig follows: the fighter of whoever plays here.
@@ -37,7 +59,17 @@ func setup(data: CameraData, target: Node3D, start_yaw: float, mouse := true) ->
 	yaw = start_yaw
 	pitch = 0.0
 	arm.spring_length = data.distance_m
+	arm.margin = data.collision_margin_m
 	arm.collision_mask = PhysicsLayers.WORLD
+	# A quarter turn toward the shoulder's side: +90° about Y points the shoulder's +Z, where a
+	# SpringArm3D casts, to the rig's right (+X), and -90° to its left for a negative shoulder_m.
+	# The camera turns back by as much, so it looks along the view.
+	var quarter := -PI / 2.0 if data.shoulder_m < 0.0 else PI / 2.0
+	shoulder.rotation = Vector3(0.0, quarter, 0.0)
+	shoulder.spring_length = absf(data.shoulder_m)
+	shoulder.margin = data.collision_margin_m
+	shoulder.collision_mask = PhysicsLayers.WORLD
+	camera.rotation = Vector3(0.0, -quarter, 0.0)
 	camera.keep_aspect = Camera3D.KEEP_HEIGHT
 	camera.fov = data.vertical_fov_deg
 

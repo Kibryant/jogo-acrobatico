@@ -18,6 +18,7 @@ extends GdUnitTestSuite
 
 const NetfoxTicks := preload("res://test/support/netfox_ticks.gd")
 const SyncObserver := preload("res://test/support/sync_observer.gd")
+const AimAt := preload("res://test/support/aim_at.gd")
 const MATCH_SCENE := preload("res://match/match.tscn")
 
 ## Ticks netfox rolls back on every loop: the depth of a 220 ms ping at 60 ticks (rede.md §4).
@@ -186,8 +187,9 @@ const GANCHO_SOUTH_FACE_Z := 38.0
 const GANCHO_LOW_WALL := Vector3(32, 0.5, 27.75)
 const GANCHO_LOW_WALL_SIZE := Vector3(4, 1, 0.5)
 # The points the fighters aim at: on the north face 5 m up; on the north face 1,3 m up, so the ray
-# from the shoulder passes 1,47 m over the low wall's top while the feet's line meets its face;
-# and on the south face.
+# from O, and the shoulder's second ray too, cross the low wall 1,47 m up, over its 1 m top, while
+# the feet's line meets its face; and on the south face. Every point is at least 3 m from the feet,
+# horizontally, so the camera aims at it from O (test/support/aim_at.gd; DEC-0045 §2).
 const GANCHO_NORTH_HIGH := Vector3(24, 5, 20)
 const GANCHO_NORTH_LOW := Vector3(32, 1.3, 20)
 const GANCHO_SOUTH_WEST := Vector3(24, 2.5, 38)
@@ -1617,12 +1619,12 @@ class HookBot:
 	var _pressed_tick := FighterState.NEVER
 
 
-	# Samples a frame whose camera looks from the shoulder through point, no push, and presses the
-	# grapple: its press is this loop's tick.
+	# Samples a frame whose camera aims the ray from the point O through point (DEC-0045 §2;
+	# test/support/aim_at.gd), no push, and presses the grapple: its press is this loop's tick.
 	func _hook(point: Vector3) -> void:
-		var shoulder := fighter.position + Vector3.UP * _config.aim_height
-		var toward := (point - shoulder).normalized()
-		fighter.input.sample_frame(Vector2.ZERO, atan2(-toward.x, -toward.z), asin(toward.y))
+		var feet := fighter.position
+		var yaw := AimAt.yaw_to(feet, point, _config)
+		fighter.input.sample_frame(Vector2.ZERO, yaw, AimAt.pitch_to(feet, point, _config))
 		fighter.input.press_grapple()
 		_pressed_tick = NetworkTime.tick
 

@@ -1,6 +1,6 @@
 ---
-revisado_em: 2026-10-24
-fontes: [F-001, F-012, F-013, F-015, F-084, F-086, F-088, F-100, F-108, F-109, F-121, F-122, F-127, F-128, F-129, F-131, F-132, F-135, F-136, F-140, F-141]
+revisado_em: 2026-10-26
+fontes: [F-001, F-012, F-013, F-015, F-084, F-086, F-088, F-100, F-108, F-109, F-121, F-122, F-127, F-128, F-129, F-131, F-132, F-135, F-136, F-140, F-141, F-146, F-147, F-148]
 ---
 
 # Movimento
@@ -133,10 +133,11 @@ Cada número tem uma origem, e nem todos têm a mesma firmeza; a vitrine mostra 
 
 | Número | Valor | Unidade | Nota |
 |---|---|---|---|
-| Alcance | 25 | m | Do estudo (F-001). Medido do ombro, ao longo da mira |
-| Alcance mínimo | 3 | m | Mais perto que isso é erro. Encostado numa parede, mirando reto, os pés iriam ao ponto e subiriam 8 m de uma vez (vitrine "A puxada do gancho"). Leitura v0 do Claude (TASK-10.6; F-141) |
-| De onde sai a mira | do ombro, 1,6 m acima dos pés, pelo yaw e pelo pitch da câmera | — | A altura do pivô ("Câmera"). Com a câmera centralizada, o raio do ombro passa pelo centro da tela. O raio só pergunta ao cenário e passa pelos lutadores (DEC-0044). Leitura v0 do Claude (TASK-10.6) |
+| Alcance | 25 | m | Do estudo (F-001). Medido do ponto O, ao longo da mira ("De onde sai a mira"; DEC-0045) |
+| Alcance mínimo | 3 | m | Medido do ponto O. Mais perto que isso é erro. Encostado numa parede, mirando reto, os pés iriam ao ponto e subiriam 8 m de uma vez (vitrine "A puxada do gancho"). Leitura v0 do Claude (TASK-10.6; F-141) |
+| De onde sai a mira | do ponto O: os pés, mais 1,6 m para cima, mais 0,8 m para a direita do yaw; pelo yaw e pelo pitch da câmera | — | O é a linha do centro da tela na profundidade do corpo: a altura do pivô e o ombro da câmera ("Câmera"). O núcleo o calcula do estado, do input e dos dados, sem câmera, e o servidor refaz a conta (DEC-0044 §1; DEC-0045). O raio só pergunta ao cenário e passa pelos lutadores. Leitura v0 do Claude (TASK-10.6; TASK-10.11) |
 | Onde prende | numa superfície do cenário, no ponto da mira | — | Puxar outro jogador fica para o combate |
+| A quina | um ponto que o ombro não vê não vale | — | Um segundo raio, do ombro (1,6 m acima dos pés) ao ponto, só quando o primeiro acha cenário: se bate em algo antes do ponto, é erro, e a mira não ganha o ponto. Sem ele, o raio que sai ao lado do corpo prenderia atrás de uma quina, e o cabo atravessaria a parede. Escolha do Arthur (F-147; DEC-0045) |
 | O erro | céu, além de 25 m ou aquém de 3 m | — | Nada acontece, e a recarga não conta: o aperto espera na vaga pelos 150 ms, e a mira é refeita a cada tick, com a direção daquele tick (DEC-0039). Leitura v0 do Claude (TASK-10.6) |
 | De onde dispara | do chão, do ar e da parede | — | Na parede, a corrida acaba no disparo. Não dispara no dash nem com outro gancho no ar, voando ou puxando: o aperto espera na vaga (DEC-0041). Leitura v0 do Claude (TASK-10.6) |
 | Tempo até prender | 100 | ms | O tempo do cabo voar: 6 ticks a 60 e 3 a 30. O ponto fica fixo no disparo, e o corpo segue as regras do seu modo enquanto o cabo voa; o dash espera na vaga. Leitura v0 do Claude (TASK-10.6) |
@@ -167,9 +168,10 @@ Cada número tem uma origem, e nem todos têm a mesma firmeza; a vitrine mostra 
 |---|---|---|---|
 | Distância | 3,5 | m | |
 | Altura do pivô | 1,6 | m | No ombro |
-| Ombro | centralizada | — | O deslocamento para o ombro entra com a mira das armas de longe |
+| Ombro | 0,8 | m à direita, na altura do pivô | A câmera do Fortnite: o corpo fica no canto inferior esquerdo e o centro da tela livre, com 90 px entre a cápsula e a mira a 1080p (vitrine "A mira no ombro"). Nada para cima: subir empurra os pés para fora da tela. Com sinal: negativo seria o ombro esquerdo, e a troca de ombro fica para as armas de longe (Q-41). Escolha do Arthur (F-147; DEC-0045) |
 | Campo de visão | 70 | ° na vertical | ≈ 102° na horizontal em 16:9; o Godot mede na vertical |
-| Colisão | sim | — | Aproxima quando uma parede fica no meio |
+| Colisão | sim, em duas etapas | — | Para trás, do pivô até 3,5 m, e depois para o lado, até o ombro; as duas só contra o cenário. Uma parede atrás aproxima a câmera; uma parede ao lado, como na corrida na parede, desliza o ombro para o centro e a câmera fica a 3,5 m (vitrine "A mira no ombro"). Leitura v0 do Claude (TASK-10.11; DEC-0045) |
+| Margem da colisão | 0,3 | m | Cada etapa para antes da parede, para o plano próximo da câmera (5 cm) não cortá-la. Leitura v0 do Claude (TASK-10.11) |
 | Sensibilidade padrão | 0,06 | ° por pixel do mouse | Ajuste do jogador |
 | Inclinação máxima | 80 | ° para cima e para baixo | Leitura v0 do Claude (DEC-0017): sem limite, a câmera vira de ponta-cabeça (TASK-9) |
 

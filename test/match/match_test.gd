@@ -111,6 +111,33 @@ func test_view_gives_a_replayed_fighter_a_camera_that_only_follows() -> void:
 	assert_int(Input.mouse_mode).is_not_equal(Input.MOUSE_MODE_CAPTURED)
 
 
+# TASK-10.11: the camera of the player, of a replay and of the bot is one rig, over the right
+# shoulder with its two steps of collision, set from the match's camera_v0.tres (movimento.md,
+# "Câmera"; DEC-0045 §1).
+func test_watch_view_and_the_bot_get_the_same_camera_over_the_shoulder(
+	how: String,
+	_test_parameters := [["watch"], ["view"], ["bot"]],
+) -> void:
+	var game_match := await _match_with_fighters(1)
+	var fighter := game_match.fighters[0]
+	match how:
+		"watch":
+			game_match.watch(fighter)
+		"view":
+			game_match.view(fighter)
+		_:
+			game_match.let_bot_play(fighter)
+	var rig := game_match.camera_rig
+	var data := game_match.camera_data
+	assert_float(data.shoulder_m).is_equal_approx(0.8, HAIR)
+	assert_float(rig.arm.spring_length).is_equal_approx(data.distance_m, HAIR)
+	assert_float(rig.shoulder.spring_length).is_equal_approx(data.shoulder_m, HAIR)
+	assert_float(rig.arm.margin).is_equal_approx(data.collision_margin_m, HAIR)
+	assert_float(rig.shoulder.margin).is_equal_approx(data.collision_margin_m, HAIR)
+	assert_float(rig.shoulder.rotation.y).is_equal_approx(PI / 2.0, HAIR)
+	assert_float(rig.camera.rotation.y).is_equal_approx(-PI / 2.0, HAIR)
+
+
 # The two spawn points: 10 m apart, each looking at the other (TASK-9, "Números v0 do Claude").
 func test_the_two_fighters_spawn_10_m_apart_facing_each_other() -> void:
 	var game_match := await _match_with_fighters(2)

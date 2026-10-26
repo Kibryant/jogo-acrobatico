@@ -204,40 +204,42 @@ A parede é o primeiro fato do motor lido além do chão, e o chão tinha estado
 
 ### A sonda B da mira (TASK-10.6, critério 1; DEC-0044 §4)
 
-O gancho é a primeira regra que pergunta ao cenário algo além do contato do próprio movimento: o que tem na mira, a até 25 m. Por isso a sonda B rodou antes de qualquer regra do gancho, como a sonda A antes da parede (DEC-0042 §4). Ela fica no portão (`test/fighter/aim_probe_test.gd`).
+O gancho é a primeira regra que pergunta ao cenário algo além do contato do próprio movimento: o que tem na mira, a até 25 m. Por isso a sonda B rodou antes de qualquer regra do gancho, como a sonda A antes da parede (DEC-0042 §4). Ela fica no portão (`test/fighter/aim_probe_test.gd`). Com a câmera no ombro, ela rodou de novo com o raio do ponto O e o segundo raio da quina (TASK-10.11, critério 3; DEC-0045, "Revisitar se").
 
 **Como ela mede:**
 
 - **O lutador é o de verdade:** o `fighter.tscn`, no tick do netfox avançado à mão e com o rollback de 7 ticks a cada loop. O observador da SyncTest compara junto o corpo e o estado inteiro.
-- **O corpo anda:** uma cópia da configuração sem gravidade faz o lutador voar a 8 m/s sem perder altura. O ombro muda de lugar a cada tick, de x = −4 a 3,87.
-- **O mundo é de teste:** a `WallNorth`, 15 m à frente; a `WallWest`, de 8 a 16 m à esquerda; e a `WallFar`, 28 m atrás, além do alcance.
-- **A mira viaja no input:** cinco miras em rodízio, uma por tick, entram pelo `sample_frame`, como a câmera. O netfox as grava em `Input:yaw` e `Input:pitch` e as restaura em cada tick refeito. Duas miram a `WallNorth`, uma a `WallWest`, e duas erram: para trás, na `WallFar` além dos 25 m, e para o céu.
-- **O raio é o do adaptador** (DEC-0044 §1): `intersect_ray` do ombro, 1,6 m acima dos pés, 25 m por `Aim.direction(yaw, pitch)`, só na máscara do mundo e sem o RID do próprio corpo.
-- **O que se compara:** acertou, o ponto, a normal e o caminho do colisor relativo à `Arena`. O tick refeito tem de dar o do tick novo: o ombro, o ponto e a normal até 0,000001, e o resto igual. O mesmo raio, lançado de novo depois de um quadro de processo, como a mira da tela lança, também.
+- **O corpo anda:** uma cópia da configuração sem gravidade faz o lutador voar a 8 m/s sem perder altura. O ponto O muda de lugar a cada tick, de x = −4,4 a 4,53.
+- **O mundo é de teste:** a `WallNorth`, 15 m à frente; a `WallWest`, de 8 a 16 m à esquerda; a `WallEast`, de 12 a 20 m à direita; a `WallFar`, 28 m atrás, além do alcance; e a `CornerFin`, uma parede fina de 10 cm ao longo do voo, de 0,5 a 0,6 m à direita, entre o ombro e a `WallEast`.
+- **A mira viaja no input:** seis miras em rodízio, uma por tick, entram pelo `sample_frame`, como a câmera. O netfox as grava em `Input:yaw` e `Input:pitch` e as restaura em cada tick refeito. Duas miram a `WallNorth`, uma a `WallWest`, e três erram: para trás, na `WallFar` além dos 25 m; para o céu; e a quina, para a `WallEast`, onde o primeiro raio, de O, 0,8 m à direita, passa ao lado da `CornerFin` e acha a parede, e o raio do ombro bate na `CornerFin` 3 m ou mais antes do ponto.
+- **O raio é o do adaptador** (DEC-0044 §1; DEC-0045 §2 e §3): a sonda chama o próprio `Fighter.aim_ray` dos pés e do yaw e do pitch do input, não uma cópia. O primeiro raio sai de O, os pés mais 1,6 m para cima e 0,8 m para a direita do yaw, 25 m por `Aim.direction(yaw, pitch)`; se acha cenário, o segundo vai do ombro, 1,6 m acima dos pés, ao ponto. Os dois só na máscara do mundo e sem o RID do próprio corpo.
+- **O que se compara:** acertou, o ponto, a normal e o caminho do colisor relativo à `Arena`. O tick refeito tem de dar o do tick novo: os pés, o ponto e a normal até 0,000001, e o resto igual. A mesma mira, lançada de novo depois de um quadro de processo, como a mira da tela lança, também.
 - **Dois jeitos de rodar:** com um passo de física e um quadro de processo entre dois laços, como o jogo (DEC-0040), e com todos os laços num quadro de física só, como a SyncTest.
-- **As precondições,** provadas em cada voo: o netfox refez todo tick devido, houve acerto e erro, e cada mira achou a parede que devia.
+- **As precondições,** provadas em cada voo: o netfox refez todo tick devido, houve acerto e erro, cada mira achou a parede que devia, e cada tick da quina foi uma quina: lançados sozinhos, o primeiro raio achou a `WallEast` e o do ombro parou na `CornerFin`, mais de 5 cm antes do ponto.
 
-**O que ela achou (24/10/2026):**
+**O que ela achou (26/10/2026, com o ponto O e o segundo raio; TASK-10.11):**
 
 | Pergunta | Resposta |
 |---|---|
-| O raio sai igual no tick novo e no refeito? | **Sim.** 0 divergência em 333 de 333 conferências em cada um dos dois voos, e 0 no corpo e no estado |
+| A mira sai igual no tick novo e no refeito? | **Sim.** 0 divergência em 333 de 333 conferências em cada um dos dois voos, e 0 no corpo e no estado |
 | E num quadro de processo? | **Sim.** 0 divergência em 60 de 60 em cada voo |
-| Acertos e erros | 36 acertos (24 na `WallNorth`, 12 na `WallWest`) e 24 erros, nenhum na parede errada; os acertos de 8,394 a 18,432 m do ombro |
-| Quanto custa | 1.000 raios de 25 m em 7,3 a 7,9 ms, uns 7,6 µs por raio; só acertos, 8,8 a 9,4 µs; só erros, 4,4 a 5,3 µs |
-| Por que não há estado escondido | O raio só lê o espaço da física: as paredes nunca se movem, os lutadores não estão na máscara, e a pergunta não mexe em nenhum flag do `CharacterBody3D`, como o raio da cabeça (TASK-10.10) |
+| Acertos e erros | 30 acertos (20 na `WallNorth`, 10 na `WallWest`) e 30 erros (10 atrás, 10 no céu, 10 na quina), nenhum na parede errada; as 10 quinas provadas; os acertos de 8,394 a 17,941 m de O |
+| Quanto custa | 1.000 miras de 25 m, as seis em rodízio, em 8,7 a 10,5 ms, uns 9 a 10 µs por mira, em quatro rodadas (três do implementer e a do revisor); só acertos, com os dois raios, 10,7 a 10,8 µs; só erros, um raio, 4,3 a 5,3 µs; só quinas, 10,6 a 12,9 µs. O segundo raio, curto, custa uns 2 µs |
+| Por que não há estado escondido | Os dois raios só leem o espaço da física: as paredes nunca se movem, os lutadores não estão na máscara, e a pergunta não mexe em nenhum flag do `CharacterBody3D`, como o raio da cabeça (TASK-10.10) |
+
+Na primeira rodada (24/10/2026), com um raio só, do ombro: as mesmas 333 de 333 e 60 de 60 sem divergência; 36 acertos e 24 erros, de 8,394 a 18,432 m do ombro; 1.000 raios em 7,3 a 7,9 ms, só acertos 8,8 a 9,4 µs.
 
 **O que isso decidiu:**
 
 - O pedido de mira fica no tick (DEC-0044 §1). A reserva, o raio no `_process` com o acerto no input, não entra.
-- **O custo com 16 lutadores** (DEC-0004, regra 6): no pior caso, todos têm um aperto esperando, e um laço com rollback de 7 ticks lança um raio por tick refeito, 16 × 7 × 9 µs ≈ 1 ms, 6 % de um tick de 16,7 ms. Só acontece nos 150 ms em que o aperto espera.
+- **O custo com 16 lutadores** (DEC-0004, regra 6): no pior caso, todos têm um aperto esperando, e um laço com rollback de 7 ticks lança uma mira por tick refeito, com os dois raios desde a TASK-10.11, 16 × 7 × 11 µs ≈ 1,2 ms, 7 % de um tick de 16,7 ms. Só acontece nos 150 ms em que o aperto espera.
 
 ### O gancho no tick e na rede (TASK-10.6; DEC-0044)
 
-- **O pedido de mira:** o `before_move` liga o `MovePlan.aim_request` em todo tick em que a vaga guarda um aperto de gancho que pode sair (`Movement.can_grapple`): fora do dash e da puxada, sem cabo no ar e com a recarga livre. O nó move, lê a parede e preenche o `MoveFacts.position` em todo tick. Só com o pedido, ele lança o raio do ombro pelo `yaw` e pelo `pitch` do input do tick (`Fighter.aim_ray`). O `after_move` dispara se o ponto está de 3 a 25 m do ombro (`Movement.in_reach`).
+- **O pedido de mira:** o `before_move` liga o `MovePlan.aim_request` em todo tick em que a vaga guarda um aperto de gancho que pode sair (`Movement.can_grapple`): fora do dash e da puxada, sem cabo no ar e com a recarga livre. O nó move, lê a parede e preenche o `MoveFacts.position` em todo tick. Só com o pedido, ele lança o raio do ponto O pelo `yaw` e pelo `pitch` do input do tick e, se ele acha cenário, o segundo raio, do ombro ao ponto, que recusa a quina (`Fighter.aim_ray`; DEC-0045 §2 e §3). O `after_move` dispara se o ponto está de 3 a 25 m de O, calculado dos pés depois do movimento e do `facing_yaw`, o yaw do input que o `before_move` copiou (`Movement.in_reach`; `Aim.origin`).
 - **Cada tick refeito lança o raio de novo,** com o corpo e o input restaurados. Na cena `gancho` (§8), cada um dos 4 disparos saiu de novo nos seus 6 ticks refeitos: 24 vezes, o que só um raio lançado de novo dá.
 - **O netfox grava** `:state:grapple_fired_tick`, `:state:grapple_point` e `:state:grapple_end_tick`, e o input em `Input:pitch` e `Input:grapple` (`fighter/fighter.tscn`). Nenhum RID entra no estado: o ponto é um `Vector3`.
-- **A mira da tela** lança outro raio, só da tela, do ombro exibido, pela câmera, a cada quadro. Ela lê as mesmas regras públicas do núcleo, `Movement.can_grapple` e `Movement.in_reach`, e nunca entra no estado (`visual-e-audio.md`, "O gancho na tela").
+- **A mira da tela** lança a mesma mira, só da tela, do ponto O exibido, pelo yaw e pelo pitch da câmera, a cada quadro, com o segundo raio. O anel fica onde a câmera vê o fim do raio: o centro, com a câmera livre, e fora dele quando uma parede empurra a câmera (DEC-0045 §4). Ela lê as mesmas regras públicas do núcleo, `Movement.can_grapple` e `Movement.in_reach`, e nunca entra no estado (`visual-e-audio.md`, "O gancho na tela").
 - **A previsão, na fase 3:** hoje nenhum lutador prevê input (DEC-0026 §2), então o servidor só simula um lutador num tick cujo input chegou. Um tick previsto reaproveita o último input, e um `grapple` de um toque dispararia de novo nele. A fase 3 decide o raio nesses ticks (DEC-0044, "Consequências"; TASK-10.6, "Fora do escopo").
 - **Na rede:** o `net_run` de 26/10/2026, a ping 100, passou com o input novo, sem nenhum tick corrigido nem faltando (§10). O bot da rede ainda não usa o gancho (TASK-10.8).
 
@@ -361,6 +363,7 @@ O modelo bate com o que o Arthur fez a 60 ticks: 72 % sem lag e 13 % com ping 10
   - O dash veio na TASK-10.4: a cena do dash, o veneno do `dash_tick` e os sinais das manobras contados sob rollback (§4).
   - O gancho veio na TASK-10.6: a cena `gancho`, num teste próprio, com paredes que ela constrói na arena, longe das formas dela, numa cópia do `movement_v0.tres` com a recarga de 500 ms, para a cena ficar curta. Um lutador erra no céu, é solto pela distância, tem um aperto recusado na recarga e é solto pelo pulo. O outro é solto pela trava, contra uma mureta de 1 m que o raio passa por cima e os pés não, e depois pela distância.
     - No portão de 26/10/2026: `grapple_fires=4 attaches=4 releases_by_distance=2 releases_by_jump=1 releases_by_block=1 misses=1 refused_grapples=1 resimulated_fires=24 bots_done=2 cues_presented=8 cue_events=8`, com 0 divergência em 3.558 conferências, em uns 1,4 s.
+    - Com a mira saindo do ponto O (TASK-10.11): os bots miram de O, com o yaw virado de asin(0,8 / D) para o raio passar pelo ponto (`test/support/aim_at.gd`), e a geometria da cena não mudou. No portão de 26/10/2026, os mesmos contadores, `grapple_fires=4 attaches=4 releases_by_distance=2 releases_by_jump=1 releases_by_block=1 misses=1 refused_grapples=1 resimulated_fires=24 bots_done=2 cues_presented=8 cue_events=8`, com 0 divergência em 3.558 conferências, em 1,1 s.
     - Tirar o `:state:grapple_point` do que o netfox grava a faz acusar: 30 divergências em 30 laços.
     - O cabo e o rastro da puxada tocam uma vez por chave: 8 sinais para 4 disparos e 4 puxadas (DEC-0031 §6).
   - Desde a TASK-10.1, ela compara o estado inteiro (§4): um campo novo do `FighterState` entra na comparação no dia em que existe, sem ninguém lembrar de pôr.

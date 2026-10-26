@@ -23,6 +23,10 @@ const FLOOR_PROBE_SPEED := 0.05
 # moves nothing; probe A measured it holding the contact on every tick beside the wall, a seam's
 # included, from 0 to 4.5 cm off the face (rede.md §4, "A sonda A da parede").
 const WALL_PROBE_DISTANCE := 0.05
+# m: how far before the aim's point the shoulder's ray may stop and still see it (aim_ray). An
+# engine tolerance, not a game number: that ray ends on the very face the first one found, and the
+# engine may report the face there, a hair before the point; a corner stops it well before.
+const SIGHT_TOLERANCE := 0.05
 
 ## The input box, recorded by netfox as Input:move, Input:yaw, Input:pitch, Input:jump,
 ## Input:dash and Input:grapple.
@@ -184,8 +188,9 @@ func _rollback_tick(_delta: float, tick: int, _is_fresh: bool) -> void:
 	_wall_contact(plan.state, facts)
 	facts.position = global_position
 	# The aim request (DEC-0044 §1): a grapple press that can fire waits, so the ray leaves the
-	# shoulder after the move, along this tick's yaw and pitch. A resimulated tick casts it again
-	# from the restored body and input: probe B measured the same answer there (rede.md §4).
+	# point O after the move, along this tick's yaw and pitch, the yaw before_move copied into
+	# facing_yaw (DEC-0045 §2). A resimulated tick casts it again from the restored body and input:
+	# probe B measured the same answer there (rede.md §4).
 	if plan.aim_request:
 		var hit := aim_ray(global_position, tick_input.yaw, tick_input.pitch)
 		facts.aim_hit = not hit.is_empty()
@@ -256,22 +261,34 @@ func covers_body(face_normal: Vector3) -> bool:
 	return _flat(normal).dot(face) >= config.wall_same_face_cos
 
 
-## The aim's ray (DEC-0044 §1; movimento.md, "Gancho": "De onde sai a mira"): from the shoulder,
-## aim_height above feet, along Aim.direction(yaw, pitch), as far as the grapple's range, only
-## against the world: the fighters are not on its mask, so it passes through them, and the body's
-## own RID is excluded too. A query of the physics space, like covers_body: it moves nothing, and
-## the world it reads never moves, so a resimulated tick gets the same answer (probe B, rede.md
-## §4). The intersect_ray result, empty when it finds nothing: the tick casts it when the core
-## asks, and the reticle on screen from the displayed body (Hud).
+## The aim's ray (DEC-0044 §1; DEC-0045 §2 and §3; movimento.md, "Gancho": "De onde sai a mira",
+## "A quina"): from the point O of feet and yaw (Aim.origin), on the line of the screen's centre,
+## along Aim.direction(yaw, pitch), as far as the grapple's range. When it finds the world, a
+## second ray goes from the shoulder, aim_height above feet, to the point: stopped by anything
+## more than SIGHT_TOLERANCE before it, the shoulder does not see the point, a corner between the
+## body and it, and the aim finds nothing. Both rays ask only the world: the fighters are not on
+## their mask, so they pass through them, and the body's own RID is excluded too. Queries of the
+## physics space, like covers_body: they move nothing, and the world they read never moves, so a
+## resimulated tick gets the same answer (probe B, rede.md §4). The first ray's intersect_ray
+## result, empty on a miss or a corner: the tick casts it when the core asks, and the reticle on
+## screen from the displayed body, along the camera (Hud).
 func aim_ray(feet: Vector3, yaw: float, pitch: float) -> Dictionary:
-	var shoulder := feet + Vector3.UP * config.aim_height
-	var reach := Aim.direction(yaw, pitch) * config.grapple_range
-	var query := PhysicsRayQueryParameters3D.create(
-		shoulder,
-		shoulder + reach,
-		PhysicsLayers.WORLD,
-		[get_rid()],
-	)
+	var origin := Aim.origin(feet, yaw, config.aim_height, config.aim_side)
+	var hit := _world_ray(origin, origin + Aim.direction(yaw, pitch) * config.grapple_range)
+	if hit.is_empty():
+		return hit
+	var point: Vector3 = hit["position"]
+	var sight := _world_ray(feet + Vector3.UP * config.aim_height, point)
+	if not sight.is_empty():
+		var stop: Vector3 = sight["position"]
+		if stop.distance_to(point) > SIGHT_TOLERANCE:
+			return { }
+	return hit
+
+
+# A ray of the physics space from from to to, only against the world, the body's own RID excluded.
+func _world_ray(from: Vector3, to: Vector3) -> Dictionary:
+	var query := PhysicsRayQueryParameters3D.create(from, to, PhysicsLayers.WORLD, [get_rid()])
 	return get_world_3d().direct_space_state.intersect_ray(query)
 
 

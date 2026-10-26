@@ -2,11 +2,18 @@
 
 [ext_resource type="Script" path="res://fighter/camera_rig.gd" id="1_ys80s"]
 
-[node name="CameraRig" type="Node3D" unique_id=1511595431 node_paths=PackedStringArray("arm", "camera")]
+[node name="CameraRig" type="Node3D" unique_id=1511595431 node_paths=PackedStringArray("arm", "shoulder", "camera")]
 script = ExtResource("1_ys80s")
-arm = NodePath("SpringArm3D")
-camera = NodePath("SpringArm3D/Camera3D")
+arm = NodePath("Arm")
+shoulder = NodePath("Arm/ArmEnd/Shoulder")
+camera = NodePath("Arm/ArmEnd/Shoulder/ShoulderEnd/Camera3D")
 
-[node name="SpringArm3D" type="SpringArm3D" parent="." unique_id=1714848641]
+[node name="Arm" type="SpringArm3D" parent="." unique_id=1714848641]
 
-[node name="Camera3D" type="Camera3D" parent="SpringArm3D" unique_id=1463115897]
+[node name="ArmEnd" type="Node3D" parent="Arm" unique_id=887956368]
+
+[node name="Shoulder" type="SpringArm3D" parent="Arm/ArmEnd" unique_id=644629189]
+
+[node name="ShoulderEnd" type="Node3D" parent="Arm/ArmEnd/Shoulder" unique_id=166074227]
+
+[node name="Camera3D" type="Camera3D" parent="Arm/ArmEnd/Shoulder/ShoulderEnd" unique_id=1463115897]

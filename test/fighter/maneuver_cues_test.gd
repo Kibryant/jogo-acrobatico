@@ -11,6 +11,7 @@ extends GdUnitTestSuite
 
 const NetfoxTicks := preload("res://test/support/netfox_ticks.gd")
 const MATCH_SCENE := preload("res://match/match.tscn")
+const AimAt := preload("res://test/support/aim_at.gd")
 
 ## Ticks netfox rolls back on every loop in the rollback test: the SyncTest's depth (rede.md §4).
 const DEPTH := 7
@@ -313,7 +314,7 @@ func test_the_wall_run_shows_only_while_it_lasts() -> void:
 # The grapple's cues (TASK-10.6; visual-e-audio.md, "O gancho na tela"): a target of the test's
 # own in the arena's empty south-east, away from its shapes: a wall 16 m wide and 10 m tall whose
 # face looks south at z = 20, and the fighter standing 12 m south of it. The aim goes from the
-# shoulder to TARGET_POINT, 12,6 m off: within the reach.
+# point O to TARGET_POINT, 12,2 m off: within the reach (DEC-0045 §2).
 const TARGET_FACE_Z := 20.0
 const TARGET_START := Vector3(28, 0, 32)
 const TARGET_POINT := Vector3(28, 4, 20)
@@ -344,11 +345,13 @@ func _start_before_a_target(cues_draw: bool) -> ManeuverCues:
 	return cues
 
 
-# Aims from the shoulder at TARGET_POINT and presses the grapple on the next tick: it fires there.
+# Aims from the point O at TARGET_POINT (test/support/aim_at.gd) and presses the grapple on the
+# next tick: it fires there.
 func _fire_at_the_target() -> int:
-	var shoulder := _fighter.global_position + Vector3.UP * _match.config.aim_height
-	var toward := (TARGET_POINT - shoulder).normalized()
-	_fighter.input.sample_frame(Vector2.ZERO, atan2(-toward.x, -toward.z), asin(toward.y))
+	var feet := _fighter.global_position
+	var yaw := AimAt.yaw_to(feet, TARGET_POINT, _match.config)
+	var pitch := AimAt.pitch_to(feet, TARGET_POINT, _match.config)
+	_fighter.input.sample_frame(Vector2.ZERO, yaw, pitch)
 	_fighter.input.press_grapple()
 	var fire_tick := NetworkTime.tick
 	NetfoxTicks.run_loop()
@@ -400,10 +403,10 @@ func test_the_grapple_shows_its_cable_while_out_and_its_pull_while_it_lasts() ->
 
 
 # With a screen, a grapple draws its cable: opaque, 3 cm thick, unlit, in the fighter's tone, from
-# the displayed shoulder; its tip goes from the shoulder to the point over the cable's ticks,
-# counted in netfox's ticks, and stays there through the pull, which plays the short trail; on
-# the release the cable goes at once and the trail fades in 200 ms (visual-e-audio.md, "O gancho
-# na tela").
+# the displayed shoulder, not from O, the aim's parallax shown (DEC-0045 §5); its tip goes from the
+# shoulder to the point over the cable's ticks, counted in netfox's ticks, and stays there through
+# the pull, which plays the short trail; on the release the cable goes at once and the trail fades
+# in 200 ms (visual-e-audio.md, "O gancho na tela").
 func test_with_a_screen_the_grapple_draws_its_cable_and_the_pull_its_trail() -> void:
 	var cues := await _start_before_a_target(true)
 	_stand(STAND_TICKS)

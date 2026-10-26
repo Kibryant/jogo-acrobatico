@@ -1,8 +1,10 @@
 # Criteria 3 to 6 of TASK-10.6: the grapple (movimento.md, "Gancho"), the first rule that asks
 # the scenery from inside the tick (DEC-0044): a legal press in the slot sets MovePlan.aim_request,
 # the engine answers in the MoveFacts after the move, after_move fires when the hit is 3 to 25 m
-# from the shoulder, the cable flies 100 ms, and the pull, a committed mode (DEC-0041), takes the
-# feet to the point at 18 m/s until one of three releases, with the cooldown of 6 s counted from
+# from the point O (TASK-10.11; DEC-0045: the feet after the move, plus 1,6 m up, plus 0,8 m to
+# the right of the tick's yaw), the cable flies 100 ms, and the pull, a committed mode
+# (DEC-0041), takes the feet to the point at 18 m/s until one of three releases, with the
+# cooldown of 6 s counted from
 # the release and the single slot of the buffer (DEC-0039; movimento.md, "Perdão"). Through the
 # public interface of core/fighter, with the engine's slice of the tick played by MovementRig: the
 # test sets what the ray would find (visao-geral.md, "O tick por dentro: o sanduíche"). Every
@@ -15,18 +17,32 @@ const MovementRig := preload("res://test/core/fighter/movement_rig.gd")
 const FIRST_TICK := 1000 # any tick: the rules read stamps, not counts (visao-geral.md)
 
 # movimento.md, "Gancho".
-const GRAPPLE_RANGE_M := 25.0 # "Alcance", measured from the shoulder along the aim
-const GRAPPLE_MIN_RANGE_M := 3.0 # "Alcance mínimo": closer is a miss
-const AIM_HEIGHT_M := 1.6 # "De onde sai a mira": the shoulder, 1,6 m above the feet
+const GRAPPLE_RANGE_M := 25.0 # "Alcance", measured from the point O along the aim (DEC-0045)
+const GRAPPLE_MIN_RANGE_M := 3.0 # "Alcance mínimo": closer to O is a miss
+# "De onde sai a mira": O is 1,6 m above the feet ("Câmera": "Altura do pivô") and 0,8 m to the
+# right of the yaw ("Câmera": "Ombro").
+const AIM_HEIGHT_M := 1.6
+const AIM_SIDE_M := 0.8
 const GRAPPLE_ATTACH_MS := 100 # "Tempo até prender": the cable's flight
 const GRAPPLE_PULL_SPEED_MPS := 18.0 # "Velocidade da puxada"
 const GRAPPLE_RELEASE_DISTANCE_M := 1.5 # "Como solta": the feet 1,5 m from the point
 const GRAPPLE_BLOCK_PCT := 50.0 # "Trava": below 50 % of the pull
 const GRAPPLE_BLOCK_SPEED_MPS := 9.0 # "Trava": 9 m/s, the half of 18
 const GRAPPLE_COOLDOWN_MS := 6000 # "Recarga": 6 s from the release
-# Just outside the range, both ends: TASK-10.6, criterion 3 ("a 2,99 m, a 25,01 m").
+# Just outside the range, both ends: TASK-10.6, criterion 3 ("a 2,99 m, a 25,01 m"), and a hair
+# outside, TASK-10.11 plan ("2,999 m and 25,001 m from O do not"): arithmetic on the limits.
 const JUST_BELOW_MIN_M := 2.99
 const JUST_ABOVE_RANGE_M := 25.01
+const A_HAIR_BELOW_MIN_M := 2.999
+const A_HAIR_ABOVE_RANGE_M := 25.001
+# A point straight ahead of the shoulder, 25 m off, is 25,0128 m from O (sqrt(25² + 0,8²)), out
+# of reach; one 2,9 m ahead of the shoulder is 3,0083 m from O, in reach (TASK-10.11 plan).
+const AHEAD_OF_THE_SHOULDER_OUT_M := 25.0
+const AHEAD_OF_THE_SHOULDER_IN_M := 2.9
+# A move on the fire tick that tells the feet before and after apart: the run's 7 m/s moves
+# 0,117 m at 60 ticks and 0,233 at 30 (movimento.md, "Chão"), so a point this far past a limit
+# at the start of the tick is on the other side of it after the move. Arithmetic.
+const MOVE_MARGIN_M := 0.05
 
 # movimento.md, "Pulo e ar", "Perdão", "Dash" and "Corrida na parede", as the other suites read
 # them.
@@ -45,8 +61,8 @@ const COYOTE_TICKS: Dictionary[int, int] = { 30: 3, 60: 6 }
 const DASH_TICKS: Dictionary[int, int] = { 30: 6, 60: 12 }
 
 # The geometry of the rig, not design numbers. From the feet at rest, the point up and ahead is
-# 10 m away (6 up, 8 ahead) and 9,13 m from the shoulder, well inside 3 to 25 m; the point along
-# the floor is 20 m ahead, 20,06 m from the shoulder.
+# 10 m away (6 up, 8 ahead) and 9,17 m from O (sqrt(0,8² + 4,4² + 8²)), well inside 3 to 25 m;
+# the point along the floor is 20 m ahead, 20,08 m from O.
 const POINT_UP_AHEAD := Vector3(0.0, 6.0, -8.0)
 const POINT_ALONG_FLOOR := Vector3(0.0, 0.0, -20.0)
 const START_HEIGHT_M := 10.0 # the air starts, far above the floor
@@ -54,7 +70,7 @@ const PULL_AHEAD_M := 12.0 # the horizontal pull of the wall cases, 12 m ahead
 const BLOCKER_Z := -3.0 # the stopping wall, 3 m ahead of the air start
 const SLIDER_Z := -1.0 # the sliding faces, 1 m ahead of the air start
 const SHORT_FACE_M := 0.6 # how far along the 60° face runs past the first contact
-const RELEASE_BELOW_FEET_M := 1.45 # a point under the feet: 1,45 m down, 3,05 m from the shoulder
+const RELEASE_BELOW_FEET_M := 1.45 # a point under the feet: 1,45 m down, 3,15 m from O
 const NUDGE := Vector3(1.0, 0.0, 0.0) # the engine moved the body sideways during the pull
 # The sliding faces: the slide keeps 18 sin² θ m/s toward the point, so 40° leaves 7,4 m/s, below
 # the 9 of the block, and 60° leaves 13,5, above it (arithmetic on the design's 18 and 50 %).
@@ -109,14 +125,39 @@ func _air_rig(tickrate: int) -> MovementRig:
 	return rig
 
 
+# The point O the reach is measured from (movimento.md, "Gancho": "De onde sai a mira";
+# DEC-0045 §2): the feet, plus 1,6 m up, plus 0,8 m to the right of the yaw. By hand, not through
+# Aim.origin, so the fire rule is checked against the paper: for yaw θ the right is
+# (cos θ, 0, -sin θ), the +X the move's Basis(UP, yaw) turns (TASK-9 plan; TASK-10.11 plan).
+func _origin_of(feet: Vector3, yaw := 0.0) -> Vector3:
+	var right := Vector3(cos(yaw), 0.0, -sin(yaw))
+	return feet + Vector3.UP * AIM_HEIGHT_M + right * AIM_SIDE_M
+
+
+# The shoulder the ray used to leave (DEC-0044 §2, superseded by DEC-0045): 1,6 m above the feet,
+# O with no side. Only for the cases that tell O and the shoulder apart.
 func _shoulder_of(feet: Vector3) -> Vector3:
 	return feet + Vector3.UP * AIM_HEIGHT_M
 
 
-# The point this far from the shoulder, straight ahead (-Z), for a body that does not move on the
-# fire tick.
-func _point_ahead(rig: MovementRig, distance_from_shoulder: float) -> Vector3:
-	return _shoulder_of(rig.position) + Vector3.FORWARD * distance_from_shoulder
+# The point this far from O, straight ahead (-Z), for a body at rest with yaw 0 on the fire tick:
+# only z differs from O, so the distance is exact in 32-bit floats even at the inclusive limits.
+func _point_ahead(rig: MovementRig, distance_from_origin: float) -> Vector3:
+	return _origin_of(rig.position) + Vector3.FORWARD * distance_from_origin
+
+
+# A copy of movement_v0.tres with another aim side, as a config: the shoulder (0) or the left
+# one (negative), to prove the rule reads the number instead of knowing it.
+func _config_with_aim_side(side_m: float, tickrate: int) -> MovementConfig:
+	var resource: Resource = load(MovementRig.MOVEMENT_V0)
+	assert(resource is MovementData, "%s must load as a MovementData" % MovementRig.MOVEMENT_V0)
+	var copy: Resource = (resource as MovementData).duplicate()
+	assert(copy is MovementData, "a duplicate must still be a MovementData")
+	var data := copy as MovementData
+	data.aim_side_m = side_m
+	assert_array(data.validate()).override_failure_message("a side of %s must pass" % side_m) \
+			.is_empty()
+	return MovementConfig.create(data, tickrate)
 
 
 func _aim_at(rig: MovementRig, point: Vector3) -> void:
@@ -463,6 +504,7 @@ func test_the_config_carries_the_grapple_numbers_of_the_design(
 		HAIR,
 	)
 	assert_float(config.aim_height).is_equal_approx(AIM_HEIGHT_M, HAIR)
+	assert_float(config.aim_side).is_equal_approx(AIM_SIDE_M, HAIR)
 	assert_float(config.double_jump_cost).is_equal_approx(DOUBLE_JUMP_COST, HAIR)
 
 
@@ -526,9 +568,10 @@ func test_a_legal_press_asks_for_the_aim_on_its_tick(
 	_assert_not_fired(rig.state)
 
 
-# Criterion 3, the range: a hit exactly 3 m and exactly 25 m from the shoulder fires (the limits
-# are inclusive); 2,99 m and 25,01 m do not, and the press stays in the slot asking again
-# (movimento.md, "Gancho": "Alcance", "Alcance mínimo", "O erro").
+# Criterion 3 of TASK-10.6, the range, measured from O since TASK-10.11 (DEC-0045 §2): a hit
+# exactly 3 m and exactly 25 m from O fires (the limits are inclusive); 2,99 m, 25,01 m and even
+# 2,999 m and 25,001 m do not, and the press stays in the slot asking again (movimento.md,
+# "Gancho": "Alcance", "Alcance mínimo", "O erro").
 func test_a_hit_at_the_range_limits_fires_and_just_outside_does_not(
 	tickrate: int,
 	distance_m: float,
@@ -542,6 +585,10 @@ func test_a_hit_at_the_range_limits_fires_and_just_outside_does_not(
 		[60, JUST_BELOW_MIN_M, false],
 		[30, JUST_ABOVE_RANGE_M, false],
 		[60, JUST_ABOVE_RANGE_M, false],
+		[30, A_HAIR_BELOW_MIN_M, false],
+		[60, A_HAIR_BELOW_MIN_M, false],
+		[30, A_HAIR_ABOVE_RANGE_M, false],
+		[60, A_HAIR_ABOVE_RANGE_M, false],
 		[30, 10.0, true],
 		[60, 10.0, true],
 	],
@@ -553,8 +600,8 @@ func test_a_hit_at_the_range_limits_fires_and_just_outside_does_not(
 	var plan := rig.step(MovementRig.press_grapple())
 	assert_bool(plan.aim_request).is_true()
 	assert_vector(rig.last_facts.position).is_equal_approx(Vector3.ZERO, Vector3.ONE * HAIR)
-	var shoulder_distance := point.distance_to(_shoulder_of(rig.last_facts.position))
-	assert_float(shoulder_distance).override_failure_message("the rig's geometry drifted") \
+	var origin_distance := point.distance_to(_origin_of(rig.last_facts.position))
+	assert_float(origin_distance).override_failure_message("the rig's geometry drifted") \
 			.is_equal_approx(distance_m, GEOMETRY_HAIR)
 	if fires:
 		_assert_fired(rig.state, press_tick, point)
@@ -565,6 +612,228 @@ func test_a_hit_at_the_range_limits_fires_and_just_outside_does_not(
 		assert_bool(again.aim_request).override_failure_message("did not ask again").is_true()
 		_assert_not_fired(rig.state)
 	assert_int(rig.state.grapple_end_tick).is_equal(FighterState.NEVER)
+
+
+# Criterion 2 of TASK-10.11: the reach is measured from O, not from the shoulder (DEC-0045 §2).
+# A point straight ahead of the shoulder, exactly 25 m from it, is 25,0128 m from O and does not
+# fire; one 2,9 m ahead of the shoulder, under the old minimum, is 3,0083 m from O and fires.
+func test_the_reach_is_measured_from_o_and_not_from_the_shoulder(
+	tickrate: int,
+	ahead_of_the_shoulder_m: float,
+	fires: bool,
+	_test_parameters := [
+		[30, AHEAD_OF_THE_SHOULDER_OUT_M, false],
+		[60, AHEAD_OF_THE_SHOULDER_OUT_M, false],
+		[30, AHEAD_OF_THE_SHOULDER_IN_M, true],
+		[60, AHEAD_OF_THE_SHOULDER_IN_M, true],
+	],
+) -> void:
+	var rig := _rig(tickrate)
+	var point := _shoulder_of(rig.position) + Vector3.FORWARD * ahead_of_the_shoulder_m
+	_aim_at(rig, point)
+	var press_tick := rig.tick
+	var plan := rig.step(MovementRig.press_grapple())
+	assert_bool(plan.aim_request).is_true()
+	var feet := rig.last_facts.position
+	assert_vector(feet).is_equal_approx(Vector3.ZERO, Vector3.ONE * HAIR)
+	assert_float(point.distance_to(_shoulder_of(feet))).is_equal_approx(
+		ahead_of_the_shoulder_m,
+		GEOMETRY_HAIR,
+	)
+	var from_origin := point.distance_to(_origin_of(feet))
+	var expected := sqrt(
+		ahead_of_the_shoulder_m * ahead_of_the_shoulder_m + AIM_SIDE_M * AIM_SIDE_M
+	)
+	assert_float(from_origin).override_failure_message("the rig's geometry drifted") \
+			.is_equal_approx(expected, GEOMETRY_HAIR)
+	if fires:
+		assert_float(from_origin).is_between(GRAPPLE_MIN_RANGE_M, GRAPPLE_RANGE_M)
+		_assert_fired(rig.state, press_tick, point)
+	else:
+		assert_float(from_origin).is_greater(GRAPPLE_RANGE_M)
+		_assert_not_fired(rig.state)
+		_assert_slot(rig.state, FighterCommand.GRAPPLE, press_tick)
+
+
+# O turns with the yaw of the tick (before_move copies the input's yaw into facing_yaw, and the
+# fire rule measures from it; DEC-0045 §2): the same world point, 3 m straight ahead of O at yaw
+# 0, is 2,34 m from O at yaw +90° (O moved to (0, 1,6, -0,8)) and out of reach; the point 25 m
+# ahead of O at yaw 0 is 25,05 m from O at yaw 180° (O at (-0,8, 1,6, 0)) and out of reach.
+func test_o_turns_with_the_yaw_of_the_tick_at_both_limits(
+	tickrate: int,
+	limit_m: float,
+	yaw_deg: float,
+	fires: bool,
+	_test_parameters := [
+		[30, GRAPPLE_MIN_RANGE_M, 0.0, true],
+		[60, GRAPPLE_MIN_RANGE_M, 0.0, true],
+		[30, GRAPPLE_MIN_RANGE_M, 90.0, false],
+		[60, GRAPPLE_MIN_RANGE_M, 90.0, false],
+		[30, GRAPPLE_RANGE_M, 0.0, true],
+		[60, GRAPPLE_RANGE_M, 0.0, true],
+		[30, GRAPPLE_RANGE_M, 180.0, false],
+		[60, GRAPPLE_RANGE_M, 180.0, false],
+	],
+) -> void:
+	var rig := _rig(tickrate)
+	var point := _origin_of(rig.position, 0.0) + Vector3.FORWARD * limit_m
+	var yaw := deg_to_rad(yaw_deg)
+	_aim_at(rig, point)
+	var press_tick := rig.tick
+	var plan := rig.step(MovementRig.press_grapple(yaw))
+	assert_bool(plan.aim_request).is_true()
+	assert_float(plan.state.facing_yaw).is_equal_approx(yaw, HAIR)
+	var feet := rig.last_facts.position
+	assert_vector(feet).is_equal_approx(Vector3.ZERO, Vector3.ONE * HAIR)
+	var from_origin := point.distance_to(_origin_of(feet, yaw))
+	var message := "the point is %.4f m from O at yaw %.0f°" % [from_origin, yaw_deg]
+	if fires:
+		assert_float(from_origin).override_failure_message(message).is_between(
+			GRAPPLE_MIN_RANGE_M,
+			GRAPPLE_RANGE_M,
+		)
+		_assert_fired(rig.state, press_tick, point)
+	else:
+		var outside := from_origin < GRAPPLE_MIN_RANGE_M or from_origin > GRAPPLE_RANGE_M
+		assert_bool(outside).override_failure_message(message).is_true()
+		_assert_not_fired(rig.state)
+		_assert_slot(rig.state, FighterCommand.GRAPPLE, press_tick)
+
+
+# One press, two yaws: pressed at yaw +90° on the point 3 m ahead of O at yaw 0, nothing fires
+# (2,34 m from that tick's O); the press waits in the slot, and the next tick, aimed at yaw 0,
+# brings O within reach of the same world point and fires there (movimento.md, "Gancho": "O
+# erro": "a mira é refeita a cada tick, com a direção daquele tick").
+func test_the_same_press_fires_on_the_tick_whose_yaw_brings_o_within_reach(
+	tickrate: int,
+	_test_parameters := [[30], [60]],
+) -> void:
+	var rig := _rig(tickrate)
+	var point := _origin_of(rig.position, 0.0) + Vector3.FORWARD * GRAPPLE_MIN_RANGE_M
+	_aim_at(rig, point)
+	var press_tick := rig.tick
+	var turned := rig.step(MovementRig.press_grapple(deg_to_rad(90.0)))
+	assert_bool(turned.aim_request).is_true()
+	_assert_not_fired(rig.state)
+	_assert_slot(rig.state, FighterCommand.GRAPPLE, press_tick)
+	var straight := rig.step(MovementRig.run(Vector2.ZERO, 0.0))
+	assert_bool(straight.aim_request).override_failure_message("did not ask again").is_true()
+	_assert_fired(rig.state, press_tick + 1, point)
+
+
+# The fire rule measures from the feet after the move, MoveFacts.position, as before (DEC-0044
+# §1; DEC-0045 §2): running forward at 7 m/s, a point 25,05 m ahead of O at the start of the tick
+# is out of reach there and within 25 m of O after the tick's move (0,12 m at 60, 0,23 at 30), so
+# it fires; a point 3,05 m ahead is in reach at the start and under 3 m after the move, so it does
+# not.
+func test_the_reach_is_measured_from_o_at_the_feet_after_the_move(
+	tickrate: int,
+	ahead_m: float,
+	fires: bool,
+	_test_parameters := [
+		[30, GRAPPLE_RANGE_M + MOVE_MARGIN_M, true],
+		[60, GRAPPLE_RANGE_M + MOVE_MARGIN_M, true],
+		[30, GRAPPLE_MIN_RANGE_M + MOVE_MARGIN_M, false],
+		[60, GRAPPLE_MIN_RANGE_M + MOVE_MARGIN_M, false],
+	],
+) -> void:
+	var rig := _rig(tickrate)
+	for _step: int in 2 * rig.config.accel_ticks:
+		rig.step(MovementRig.run(FORWARD))
+	var start := rig.position
+	var point := _origin_of(start) + Vector3.FORWARD * ahead_m
+	_aim_at(rig, point)
+	var press_tick := rig.tick
+	var plan := rig.step(MovementRig.press_grapple_toward(FORWARD))
+	assert_bool(plan.aim_request).is_true()
+	var feet := rig.last_facts.position
+	var moved := feet.distance_to(start)
+	assert_float(moved).override_failure_message("the body moved %.3f m on the fire tick" % moved) \
+			.is_between(MOVE_MARGIN_M + GEOMETRY_HAIR, 1.0)
+	var from_start := point.distance_to(_origin_of(start))
+	var from_end := point.distance_to(_origin_of(feet))
+	var where := "%.4f m from O at the start, %.4f m after the move" % [from_start, from_end]
+	if fires:
+		assert_float(from_start).override_failure_message(where).is_greater(GRAPPLE_RANGE_M)
+		assert_float(from_end).override_failure_message(where).is_between(
+			GRAPPLE_MIN_RANGE_M,
+			GRAPPLE_RANGE_M,
+		)
+		_assert_fired(rig.state, press_tick, point)
+	else:
+		assert_float(from_start).override_failure_message(where).is_between(
+			GRAPPLE_MIN_RANGE_M,
+			GRAPPLE_RANGE_M,
+		)
+		assert_float(from_end).override_failure_message(where).is_less(GRAPPLE_MIN_RANGE_M)
+		_assert_not_fired(rig.state)
+		_assert_slot(rig.state, FighterCommand.GRAPPLE, press_tick)
+
+
+# Movement.in_reach itself (TASK-10.11 plan): the distance from O, the feet plus the aim's height
+# and side turned by the yaw, from 3 to 25 m inclusive. The exact limits sit straight ahead of O
+# at yaw 0, where only one coordinate differs; the turned yaws use points with a margin.
+func test_in_reach_measures_from_o_with_the_yaw_inclusive_at_both_limits(
+	yaw_deg: float,
+	offset_from_origin: Vector3,
+	expected: bool,
+	_test_parameters := [
+		[0.0, Vector3(0.0, 0.0, -GRAPPLE_MIN_RANGE_M), true],
+		[0.0, Vector3(0.0, 0.0, -GRAPPLE_RANGE_M), true],
+		[0.0, Vector3(0.0, 0.0, -A_HAIR_BELOW_MIN_M), false],
+		[0.0, Vector3(0.0, 0.0, -A_HAIR_ABOVE_RANGE_M), false],
+		[0.0, Vector3(0.0, 10.0, 0.0), true],
+		[0.0, Vector3(0.0, -10.0, 0.0), true],
+		[0.0, Vector3.ZERO, false],
+		[90.0, Vector3(-10.0, 0.0, 0.0), true],
+		[90.0, Vector3(-JUST_BELOW_MIN_M, 0.0, 0.0), false],
+		[180.0, Vector3(0.0, 0.0, JUST_ABOVE_RANGE_M), false],
+		[-90.0, Vector3(JUST_ABOVE_RANGE_M - 0.02, 0.0, 0.0), true],
+	],
+) -> void:
+	var feet := Vector3(3.0, 1.0, -2.0)
+	var yaw := deg_to_rad(yaw_deg)
+	var point := _origin_of(feet, yaw) + offset_from_origin
+	for tickrate: int in [30, 60]:
+		var config := MovementRig.load_config(tickrate)
+		var message := "in_reach for %s at yaw %.0f° (%.4f m from O) at %d ticks" % [
+			offset_from_origin,
+			yaw_deg,
+			offset_from_origin.length(),
+			tickrate,
+		]
+		assert_bool(Movement.in_reach(point, feet, yaw, config)).override_failure_message(message) \
+				.is_equal(expected)
+
+
+# in_reach reads the side from the config: with a side of 0 O is the shoulder, and the point 25 m
+# straight ahead of it is in reach; with the right shoulder it is 25,0128 m off and out; with the
+# left shoulder (-0,8) the mirror point, ahead of the left O, is in reach and the right one's out.
+func test_in_reach_follows_the_aim_side_of_the_config(
+	tickrate: int,
+	_test_parameters := [[30], [60]],
+) -> void:
+	var feet := Vector3(3.0, 1.0, -2.0)
+	var ahead_of_the_shoulder := _shoulder_of(feet) + Vector3.FORWARD * GRAPPLE_RANGE_M
+	var right := MovementRig.load_config(tickrate)
+	var centre := _config_with_aim_side(0.0, tickrate)
+	var left := _config_with_aim_side(-AIM_SIDE_M, tickrate)
+	assert_float(centre.aim_side).is_equal_approx(0.0, HAIR)
+	assert_float(left.aim_side).is_equal_approx(-AIM_SIDE_M, HAIR)
+	assert_bool(Movement.in_reach(ahead_of_the_shoulder, feet, 0.0, right)) \
+			.override_failure_message("the right shoulder reached the shoulder's own 25 m") \
+			.is_false()
+	assert_bool(Movement.in_reach(ahead_of_the_shoulder, feet, 0.0, centre)) \
+			.override_failure_message("a side of 0 did not measure from the shoulder") \
+			.is_true()
+	var ahead_of_the_left := _shoulder_of(feet) - Vector3.RIGHT * AIM_SIDE_M \
+			+ Vector3.FORWARD * GRAPPLE_RANGE_M
+	assert_bool(Movement.in_reach(ahead_of_the_left, feet, 0.0, left)) \
+			.override_failure_message("the left shoulder did not measure from the left O") \
+			.is_true()
+	assert_bool(Movement.in_reach(ahead_of_the_left, feet, 0.0, right)) \
+			.override_failure_message("the right shoulder reached the left O's 25 m") \
+			.is_false()
 
 
 # Criterion 3, the miss: against the sky the press waits in the slot and the aim is cast again on
@@ -976,8 +1245,8 @@ func test_feet_already_within_1_5_m_when_the_pull_would_start_release_at_once(
 	rig.airborne(Vector3(0.0, START_HEIGHT_M, 0.0), Vector3.ZERO)
 	var point := Vector3(0.0, START_HEIGHT_M - RELEASE_BELOW_FEET_M, 0.0)
 	var fire_tick := _fire(rig, point)
-	var shoulder_distance := point.distance_to(_shoulder_of(rig.last_facts.position))
-	assert_float(shoulder_distance).override_failure_message("the fire was out of range") \
+	var origin_distance := point.distance_to(_origin_of(rig.last_facts.position))
+	assert_float(origin_distance).override_failure_message("the fire was out of range") \
 			.is_greater_equal(GRAPPLE_MIN_RANGE_M)
 	var record := _record_grapple(rig, fire_tick, ATTACH_TICKS[tickrate] + 2)
 	assert_int(record.release_tick).is_equal(fire_tick + ATTACH_TICKS[tickrate])

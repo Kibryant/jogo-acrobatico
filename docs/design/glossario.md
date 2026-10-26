@@ -1,6 +1,6 @@
 ---
-revisado_em: 2026-10-24
-fontes: [F-001, F-002, F-005, F-007, F-012, F-013, F-020, F-021, F-025, F-026, F-028, F-030, F-032, F-038, F-039, F-044, F-045, F-046, F-050, F-051, F-052, F-053, F-056, F-058, F-066, F-068, F-069, F-070, F-073, F-078, F-079, F-081, F-083, F-085, F-086, F-087, F-088, F-090, F-091, F-093, F-094, F-095, F-097, F-100, F-112, F-121, F-122, F-129, F-141]
+revisado_em: 2026-10-26
+fontes: [F-001, F-002, F-005, F-007, F-012, F-013, F-020, F-021, F-025, F-026, F-028, F-030, F-032, F-038, F-039, F-044, F-045, F-046, F-050, F-051, F-052, F-053, F-056, F-058, F-066, F-068, F-069, F-070, F-073, F-078, F-079, F-081, F-083, F-085, F-086, F-087, F-088, F-090, F-091, F-093, F-094, F-095, F-097, F-100, F-112, F-121, F-122, F-129, F-141, F-146, F-147, F-148]
 ---
 
 # Glossário
@@ -103,9 +103,13 @@ A linguagem ubíqua do jogo (DEC-0004, regra 5): o mesmo termo na conversa, no d
 |---|---|---|---|
 | Corrida na parede | Correr pela parede por um tempo limitado | s | `wall_run` |
 | Dash | Arrancada curta, só no chão e sem invulnerabilidade. No v0, separada da esquiva (`movimento.md`) | m, ms | `dash` |
-| Gancho | Puxa os pés do jogador até um ponto do cenário, de 3 a 25 m do ombro, pela mira (`movimento.md`, "Gancho") | m | `grapple` |
-| Mira | A direção para onde a câmera olha, pelo yaw e pelo pitch, saindo do ombro, 1,6 m acima dos pés. Na tela, um anel no centro que ganha um ponto quando o Q prenderia agora; como a mira do CoD, é o centro da tela (`movimento.md`, "Gancho"; DEC-0044) | m | `Aim.direction`, `aim_height_m`, `pitch` |
-| Alcance mínimo | A distância do ombro abaixo da qual a mira não prende: 3 m. Mais perto, é erro, como o céu, e a recarga não conta (`movimento.md`, "Gancho") | m | `grapple_min_range_m` |
+| Gancho | Puxa os pés do jogador até um ponto do cenário, de 3 a 25 m do ponto O, pela mira (`movimento.md`, "Gancho") | m | `grapple` |
+| Mira | A direção para onde a câmera olha, pelo yaw e pelo pitch, saindo do ponto O. Na tela, um anel que ganha um ponto quando o Q prenderia agora; como a mira do CoD, é o centro da tela, e acompanha o raio quando uma parede empurra a câmera (`movimento.md`, "Gancho"; DEC-0045) | m | `Aim.direction`, `Aim.origin`, `pitch` |
+| Ponto O | De onde o raio da mira sai: os pés, mais 1,6 m para cima, mais 0,8 m para a direita do yaw. É a linha do centro da tela na profundidade do corpo, calculada pelo núcleo sem câmera, como um backend que recalcula o preço pela tabela em vez de confiar no front (`movimento.md`, "Gancho"; DEC-0045) | m | `Aim.origin`, `aim_height_m`, `aim_side_m` |
+| Ombro da câmera | O quanto a câmera fica ao lado do pivô: 0,8 m à direita, como no Fortnite, para o corpo não cobrir a mira. Com sinal: negativo é o esquerdo (`movimento.md`, "Câmera") | m | `shoulder_m` |
+| Paralaxe da mira | A câmera e o ombro olham para o mesmo lado, de lugares diferentes: a mira marca a linha da câmera, e o cabo, que sai do ombro, chega no ponto com um ângulo, grande de perto e nenhum de longe (DEC-0045) | ° | — |
+| Segundo raio | O raio do ombro ao ponto que o primeiro raio achou: se bate em algo antes, o ponto está atrás de uma quina e não vale (`movimento.md`, "Gancho", "A quina") | m | `Fighter.aim_ray` |
+| Alcance mínimo | A distância do ponto O abaixo da qual a mira não prende: 3 m. Mais perto, é erro, como o céu, e a recarga não conta (`movimento.md`, "Gancho") | m | `grapple_min_range_m` |
 | Ponto do gancho | Onde o raio da mira tocou o cenário no tick do disparo. Fica fixo até a soltura (`movimento.md`, "Gancho") | m | `grapple_point` |
 | Cabo | O voo do gancho até o ponto, 100 ms, e a linha que liga o ombro ao ponto enquanto o gancho vale. Na tela, uma linha de 3 cm (`visual-e-audio.md`, "O gancho na tela") | ms | `grapple_fired_tick`, `grapple_attach_ms` |
 | Puxada | O modo do gancho preso: os pés vão ao ponto a 18 m/s, sem gravidade e sem input, até a soltura (`movimento.md`, "Gancho") | m/s | `Mode.GRAPPLE`, `grapple_pull_speed_mps` |

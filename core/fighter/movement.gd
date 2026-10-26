@@ -231,9 +231,10 @@ static func _asking(plan: MovePlan, config: MovementConfig, tick: int) -> MovePl
 
 
 # The fire (movimento.md, "Gancho": "Alcance", "Alcance mínimo", "O erro"): the plan asked, and the
-# ray found the scenery from grapple_min_range to grapple_range off the shoulder, aim_height above
-# the feet after the move, both limits inclusive. Otherwise nothing happens: the press keeps
-# waiting while its window lives, and the cooldown does not count.
+# ray found the scenery from grapple_min_range to grapple_range off the point O of the feet after
+# the move and of the tick's yaw, which before_move copied into facing_yaw (DEC-0045 §2), both
+# limits inclusive. Otherwise nothing happens: the press keeps waiting while its window lives, and
+# the cooldown does not count.
 static func _hooks(
 	state: FighterState,
 	facts: MoveFacts,
@@ -244,14 +245,16 @@ static func _hooks(
 		return false
 	if not can_grapple(state, tick, config):
 		return false
-	return in_reach(facts.aim_point, facts.position, config)
+	return in_reach(facts.aim_point, facts.position, state.facing_yaw, config)
 
 
-# A point the hook can bite from these feet: from grapple_min_range to grapple_range off the
-# shoulder, aim_height above them, both limits inclusive (movimento.md, "Gancho": "Alcance",
-# "Alcance mínimo"). Public, so the reticle on screen reads the same rule.
-static func in_reach(point: Vector3, feet: Vector3, config: MovementConfig) -> bool:
-	var distance := point.distance_to(feet + Vector3.UP * config.aim_height)
+# A point the hook can bite from these feet and this yaw: from grapple_min_range to grapple_range
+# off the point O, aim_height above the feet and aim_side to the right of the yaw (Aim.origin),
+# both limits inclusive (movimento.md, "Gancho": "Alcance", "Alcance mínimo"; DEC-0045 §2).
+# Public, so the reticle on screen reads the same rule, with the camera's yaw.
+static func in_reach(point: Vector3, feet: Vector3, yaw: float, config: MovementConfig) -> bool:
+	var origin := Aim.origin(feet, yaw, config.aim_height, config.aim_side)
+	var distance := point.distance_to(origin)
 	return distance >= config.grapple_min_range and distance <= config.grapple_range
 
 

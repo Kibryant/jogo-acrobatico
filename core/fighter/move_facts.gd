@@ -16,7 +16,8 @@ var wall_id: StringName = &""
 # Where the feet are after the move, on every tick (DEC-0044 §1).
 var position := Vector3.ZERO
 # The answer to the aim request (DEC-0044 §1), only on a tick whose plan asked: whether the ray
-# from the shoulder along the aim found the world within the grapple's range, and the point it
-# found. Without a request, or on a miss, false and Vector3.ZERO.
+# from the point O along the aim found the world within the grapple's range, a point the shoulder
+# also sees (DEC-0045 §2 and §3), and the point it found. Without a request, on a miss or on a
+# point behind a corner, false and Vector3.ZERO.
 var aim_hit := false
 var aim_point := Vector3.ZERO

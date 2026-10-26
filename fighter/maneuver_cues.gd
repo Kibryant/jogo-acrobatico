@@ -1,10 +1,11 @@
 # The cues of the maneuvers (DEC-0031 §6; TASK-10.4): a puff under the feet when a double jump
 # comes out, a trail behind a dash, a mark on the wall a wall jump leaves (TASK-10.5), a short
 # trail behind a wall run (TASK-10.10; movimento.md, "O que se vê na parede"), and the grapple's
-# cable and the short trail of its pull (TASK-10.6; visual-e-audio.md, "O gancho na tela"), each
-# played once per event, by its key: the fighter, the kind and the stamp, the tick the state
-# carries for it. Like the `key` of a list in React, the
-# key says "this one already showed": after every tick loop it reads the displayed state, and a
+# cable and the short trail of its pull (TASK-10.6; visual-e-audio.md, "O gancho na tela"), and
+# the same short trail on a slide off another fighter's head (TASK-10.7; visual-e-audio.md, "A
+# cabeça do outro na tela"), each played once per event, by its key: the fighter, the kind and the
+# stamp, the tick the state carries for it. Like the `key` of a list in React, the key says "this
+# one already showed": after every tick loop it reads the displayed state, and a
 # key that already played never plays again, however many times a rollback runs its tick again.
 # A cue never undoes either: a rollback that takes the event away leaves it showing (DEC-0031 §6).
 # Only visual in the v0; the sound waits for a licensed pack (DEC-0029; Q-32). The cue wears the
@@ -13,8 +14,9 @@
 # The mark of the wall jump is the puff stood up against the wall: Claude's v0 reading (DEC-0017).
 # The wall run's trail is the dash's, cut short to the body's last dash duration of path, with
 # the same material: Claude's v0 reading of "um rastro curto" (DEC-0017; no new asset, DEC-0029).
-# The grapple's pull wears the same short trail. Its cable is the one opaque cue: a line from the
-# shoulder to the point, drawn by Godot's own shapes too (visual-e-audio.md, "O gancho na tela").
+# The grapple's pull and the slide off a head wear the same short trail. The grapple's cable is
+# the one opaque cue: a line from the shoulder to the point, drawn by Godot's own shapes too
+# (visual-e-audio.md, "O gancho na tela").
 # It also counts, for the SyncTest, the events the simulation made on its fresh ticks: there,
 # with the rollback forced on every tick, the cues presented must equal the events (DEC-0031 §6;
 # rede.md §4).
@@ -29,6 +31,7 @@ enum Kind {
 	WALL_RUN,
 	GRAPPLE_CABLE,
 	GRAPPLE_PULL,
+	HEAD_SLIDE,
 }
 
 ## The cue's opacity when it appears; it fades to nothing. Claude's v0 reading (DEC-0017): seen
@@ -90,9 +93,11 @@ func forget(fighter: Fighter) -> void:
 # while it lasts, by the tick it began; the wall jump during the flight it began, the air since
 # its stamp; the wall run while it lasts, by the tick it began, so a seam, which keeps the run's
 # clock, is the same run (F-129); the grapple's cable while it is in the air, flying or pulling,
-# by the tick it was fired; and the pull while it lasts, by the tick it began. A dash_tick or a
-# wall_jump_tick that stays after its maneuver shows no cue, so a fighter seen for the first time
-# long after never plays an old one; grapple_fired_tick goes back to NEVER on the release.
+# by the tick it was fired; the pull while it lasts, by the tick it began; and the slide off a
+# head while it lasts, by the tick the contact with that head began, once per landing. A dash_tick
+# or a wall_jump_tick that stays after its maneuver shows no cue, so a fighter seen for the first
+# time long after never plays an old one; grapple_fired_tick goes back to NEVER on the release,
+# and head_landing_tick off the head.
 static func shown_events(fighter: Fighter) -> Array[Event]:
 	var shown: Array[Event] = []
 	var state := fighter.state
@@ -110,6 +115,8 @@ static func shown_events(fighter: Fighter) -> Array[Event]:
 		shown.append(Event.new(fighter, Kind.GRAPPLE_CABLE, state.grapple_fired_tick))
 	if state.mode == FighterState.Mode.GRAPPLE:
 		shown.append(Event.new(fighter, Kind.GRAPPLE_PULL, state.mode_since))
+	if state.slide_off_dir != Vector3.ZERO:
+		shown.append(Event.new(fighter, Kind.HEAD_SLIDE, state.head_landing_tick))
 	return shown
 
 
@@ -166,6 +173,8 @@ func _draw(fighter: Fighter, kind: Kind) -> void:
 			add_child(Trail.new(fighter, _config, Kind.WALL_RUN))
 		Kind.GRAPPLE_PULL:
 			add_child(Trail.new(fighter, _config, Kind.GRAPPLE_PULL))
+		Kind.HEAD_SLIDE:
+			add_child(Trail.new(fighter, _config, Kind.HEAD_SLIDE))
 		Kind.GRAPPLE_CABLE:
 			add_child(Cable.new(fighter, _config))
 		Kind.WALL_JUMP:
@@ -221,7 +230,9 @@ static func stretch(from: Vector3, to: Vector3, across: float, height: float) ->
 # covers only the path of the body's last dash duration, so it follows the body along the wall
 # instead of drawing the whole run, and fades the same way once the run ends. The grapple's pull
 # wears the wall run's short trail, from where the body was 200 ms ago, and fades 200 ms after
-# the release (visual-e-audio.md, "O gancho na tela").
+# the release (visual-e-audio.md, "O gancho na tela"); so does the slide off a head, from its
+# landing until the body leaves the head, and 200 ms after (visual-e-audio.md, "A cabeça do outro
+# na tela").
 class Trail:
 	extends MeshInstance3D
 
@@ -244,17 +255,23 @@ class Trail:
 
 	func _init(fighter: Fighter, config: MovementConfig, kind: Kind) -> void:
 		var trailed := kind == Kind.DASH or kind == Kind.WALL_RUN or kind == Kind.GRAPPLE_PULL
-		assert(trailed, "a trail follows a dash, a wall run or a grapple's pull")
+		trailed = trailed or kind == Kind.HEAD_SLIDE
+		assert(trailed, "a trail follows a dash, a wall run, a grapple's pull or a head's slide")
 		_kind = kind
+		_fighter = fighter
 		match kind:
 			Kind.DASH:
 				name = "DashTrail"
+				_stamp = fighter.state.dash_tick
 			Kind.WALL_RUN:
 				name = "WallRunTrail"
+				_stamp = fighter.state.mode_since
+			Kind.HEAD_SLIDE:
+				name = "HeadSlideTrail"
+				_stamp = fighter.state.head_landing_tick
 			_:
 				name = "GrapplePullTrail"
-		_fighter = fighter
-		_stamp = fighter.state.dash_tick if kind == Kind.DASH else fighter.state.mode_since
+				_stamp = fighter.state.mode_since
 		_from = fighter.global_position
 		_height = config.capsule_height
 		_width = 2.0 * config.capsule_radius
@@ -293,11 +310,13 @@ class Trail:
 				return state.mode == FighterState.Mode.WALL_RUN and state.mode_since == _stamp
 			Kind.GRAPPLE_PULL:
 				return state.mode == FighterState.Mode.GRAPPLE and state.mode_since == _stamp
+			Kind.HEAD_SLIDE:
+				return state.slide_off_dir != Vector3.ZERO and state.head_landing_tick == _stamp
 		return state.mode == FighterState.Mode.DASH and state.dash_tick == _stamp
 
 
-	# Where the body was the dash's duration ago, or where the run or the pull first showed while
-	# it is younger.
+	# Where the body was the dash's duration ago, or where the run, the pull or the slide first
+	# showed while it is younger.
 	func _tail(to: Vector3) -> Vector3:
 		var now := NetworkTime.tick
 		_seen_tick.append(now)

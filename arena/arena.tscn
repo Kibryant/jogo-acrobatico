@@ -103,6 +103,20 @@ size = Vector3(2, 10, 2)
 material = SubResource("StandardMaterial3D_x52g8")
 size = Vector3(0.1, 0.01, 2)
 
+[sub_resource type="BoxShape3D" id="BoxShape3D_borda_ns"]
+size = Vector3(82, 50, 1)
+
+[sub_resource type="BoxMesh" id="BoxMesh_borda_ns"]
+material = SubResource("StandardMaterial3D_x52g8")
+size = Vector3(82, 50, 1)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_borda_lo"]
+size = Vector3(1, 50, 82)
+
+[sub_resource type="BoxMesh" id="BoxMesh_borda_lo"]
+material = SubResource("StandardMaterial3D_x52g8")
+size = Vector3(1, 50, 82)
+
 [node name="Arena" type="Node3D" unique_id=450802812]
 script = ExtResource("1_dkqtx")
 
@@ -248,6 +262,46 @@ shape = SubResource("BoxShape3D_pilar")
 
 [node name="Mesh" type="MeshInstance3D" parent="Pilar10m" unique_id=1773091540]
 mesh = SubResource("BoxMesh_pilar")
+
+[node name="BordaNorte" type="StaticBody3D" parent="." unique_id=539315983]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 25, -40.5)
+
+[node name="Collision" type="CollisionShape3D" parent="BordaNorte" unique_id=1341029456]
+shape = SubResource("BoxShape3D_borda_ns")
+
+[node name="Mesh" type="MeshInstance3D" parent="BordaNorte" unique_id=1258310621]
+cast_shadow = 0
+mesh = SubResource("BoxMesh_borda_ns")
+
+[node name="BordaSul" type="StaticBody3D" parent="." unique_id=1655678160]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 25, 40.5)
+
+[node name="Collision" type="CollisionShape3D" parent="BordaSul" unique_id=2097957561]
+shape = SubResource("BoxShape3D_borda_ns")
+
+[node name="Mesh" type="MeshInstance3D" parent="BordaSul" unique_id=1571463627]
+cast_shadow = 0
+mesh = SubResource("BoxMesh_borda_ns")
+
+[node name="BordaLeste" type="StaticBody3D" parent="." unique_id=1422598768]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 40.5, 25, 0)
+
+[node name="Collision" type="CollisionShape3D" parent="BordaLeste" unique_id=923281000]
+shape = SubResource("BoxShape3D_borda_lo")
+
+[node name="Mesh" type="MeshInstance3D" parent="BordaLeste" unique_id=1046204314]
+cast_shadow = 0
+mesh = SubResource("BoxMesh_borda_lo")
+
+[node name="BordaOeste" type="StaticBody3D" parent="." unique_id=1648956314]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -40.5, 25, 0)
+
+[node name="Collision" type="CollisionShape3D" parent="BordaOeste" unique_id=673537738]
+shape = SubResource("BoxShape3D_borda_lo")
+
+[node name="Mesh" type="MeshInstance3D" parent="BordaOeste" unique_id=2065049699]
+cast_shadow = 0
+mesh = SubResource("BoxMesh_borda_lo")
 
 [node name="RéguaDoDash" type="Node3D" parent="." unique_id=141947930]
 

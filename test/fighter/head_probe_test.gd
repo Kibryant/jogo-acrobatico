@@ -1,37 +1,43 @@
-# Criterion 2 of TASK-10.7, probe C (rede.md §4; F-025 §3): before any head rule, one fighter
-# lands on the head of another under netfox's rollback of 7 ticks on every loop, the depth of a
-# 220 ms ping at 60 ticks, and every resimulated tick is compared with the fresh one. The probe of
-# Desenho 2 found its last divergences there, 6 at 30 ticks and 32 at 60, up to 15 cm, all with
-# one fighter standing on the other's head, and taking the fighters out of platform_floor_layers
-# changed nothing (F-025 §3). This probe measures it with the game's own fighters before the rule
-# changes what the head is.
+# Criterion 2 of TASK-10.7, probe C (rede.md §4, "A sonda C"; F-025 §3): one fighter lands on the
+# head of another under netfox's rollback of 7 ticks on every loop, the depth of a 220 ms ping at 60
+# ticks, and every resimulated tick is compared with the fresh one. The probe of Desenho 2 found its
+# last divergences there, 6 at 30 ticks and 32 at 60, up to 15 cm, all with one fighter standing on
+# the other's head, and taking the fighters out of platform_floor_layers changed nothing (F-025 §3).
+# This probe first ran before the head rule, on the code of that day (round A, 26/10/2026): 0
+# divergences, the snap holding the top fighter on the dome until the walk off, and the old
+# divergence back only with DEC-0037's reserve snap taken out; rede.md §4 keeps those numbers. Since
+# the rule (round B), the same flights prove that it holds under the rollback: the top fighter still
+# lands on the head, nothing diverges, the test-only probe down names the fighter below on every
+# tick on the head, and the rules never take the head as floor.
 #
-# Two fighters of fighter.tscn, with the game's capsule, margin and contours, on a floor built
-# here and nothing else. The one on top runs at the other, jumps, double jumps at the apex and
-# lands on its head, where today's rules let it stand, since the engine calls the dome floor up to
-# 45°. It stands there HOLD_LOOPS without input, then walks off the head and rests on the floor.
-# The one below stands still, or, in the flights of a moving head, walks at 1 m/s while the other
-# stands on it. After every tick, on netfox's after_process_tick, the probe reads what the engine
-# says of each body: is_on_floor(), get_floor_normal(), get_platform_velocity(), every collision of
-# the move with its normal, and what a test-only move 5 cm down would hit, moving nothing (the
-# probe the plan holds for the adapter, "Os fatos da cabeça"). A resimulated tick must give the
-# fresh tick's facts, the normals and velocities within 0,000001; the SyncTest's observer compares
-# the body and the whole state on the same ticks. The probe prints, for the gate's log and for
-# rede.md §4: the divergences and the largest position error; whether the floor snap holds the top
-# fighter on the dome, and for how long; how many ticks on the head the engine says floor with no
-# collision of the move at a floor angle, the floor only from the snap, and what the probe down
+# Two fighters of fighter.tscn, with the game's capsule, margin and contours, on a floor built here
+# and nothing else. The one on top runs at the other, jumps, double jumps at the apex and lands on
+# its head, which the engine calls floor up to 45° on the dome; the rule slides it off at 3 m/s
+# (before the rule, it stood there). The route then waits HOLD_LOOPS without input, walks forward
+# and rests on the floor. The one below stands still, or, in the flights of a moving head, walks at
+# 1 m/s from the landing on. After every tick, on netfox's after_process_tick, the probe reads what
+# the engine says of each body: is_on_floor(), get_floor_normal(), get_platform_velocity(), every
+# collision of the move with its normal, and what a test-only move 5 cm down would hit, moving
+# nothing (the probe the adapter also makes, Fighter._head_contact). A resimulated tick must give
+# the fresh tick's facts, the normals and velocities within 0,000001; the SyncTest's observer
+# compares the body and the whole state on the same ticks. The probe prints, for the gate's log and
+# for rede.md §4: the divergences and the largest position error; whether the floor snap holds the
+# top fighter on the dome, and for how long; how many ticks on the head the engine says floor with
+# no collision of the move at a floor angle, the floor only from the snap, and what the probe down
 # names then; whether the floor normal comes out equal on the fresh and the resimulated tick, and
 # the largest difference; and the platform velocity on the head. The flights run every loop in one
 # physics frame, as the SyncTest does, and the moving head also with a physics step between two
 # loops, as the game runs its ticks (DEC-0040): Jolt only steps the kinematic bodies there, so a
 # platform velocity would show there first.
 #
-# It runs with the fighter's own platform settings, and again with platform_floor_layers set to
-# the world's layer and platform_on_leave to PLATFORM_ON_LEAVE_DO_NOTHING, set here only, on the
-# fighters the probe builds (TASK-10.7, choice 2). It asserts only what makes its numbers mean
-# something (.claude/harness/registro.md, 10/10/2026): netfox resimulated every tick it owed, the
-# top fighter's double jump fired, at least one landing on the head happened, and the route
-# finished. The numbers themselves are measures, printed and judged in rede.md §4.
+# It runs with the fighter's own platform settings, only the world as a platform and nothing added
+# on leaving one (Fighter.setup; TASK-10.7, choice 2), and again with Godot's defaults, every layer
+# and the platform's velocity added on leaving, set here only, as the fighter had them before. It
+# asserts what makes its numbers mean something (.claude/harness/registro.md, 10/10/2026): netfox
+# resimulated every tick it owed, the top fighter's double jump fired, at least one landing on the
+# head happened, and the route finished; and what the rule needs of the engine: zero divergences,
+# the probe down naming the fighter below on every tick on the head, and no tick on the head where
+# the rules stand. The other numbers are measures, printed and judged in rede.md §4.
 extends GdUnitTestSuite
 
 const NetfoxTicks := preload("res://test/support/netfox_ticks.gd")
@@ -97,17 +103,17 @@ func after_test() -> void:
 	NetfoxTicks.reset()
 
 
-# The fighter's own platform settings, as Fighter.setup leaves them today: every layer is a
-# platform, and leaving one adds its velocity.
-func test_the_head_is_measured_under_the_rollback_with_the_default_platform_settings() -> void:
+# The fighter's own platform settings (Fighter.setup; TASK-10.7, choice 2): only the world is a
+# platform, and leaving one adds nothing, so a fighter's platform velocity never moves another.
+func test_the_head_is_measured_under_the_rollback_with_the_fighters_platform_settings() -> void:
 	for flight: Flight in _flights(false):
 		var reading := await _fly(flight)
 		_assert_measured(reading)
 
 
-# Only the world is a platform, and leaving one adds nothing: set on the probe's fighters only
-# (TASK-10.7, choice 2), so the platform velocity of a fighter can never move the other.
-func test_the_head_is_measured_under_the_rollback_with_only_the_world_as_platform() -> void:
+# Godot's defaults, the fighter's before TASK-10.7, set on the probe's fighters only: every layer
+# is a platform, and leaving one adds its velocity.
+func test_the_head_is_measured_under_the_rollback_with_the_engines_platform_defaults() -> void:
 	for flight: Flight in _flights(true):
 		var reading := await _fly(flight)
 		_assert_measured(reading)
@@ -115,12 +121,12 @@ func test_the_head_is_measured_under_the_rollback_with_only_the_world_as_platfor
 
 # The flights of one platform setting: centred, off-centre, and the moving head, all in one
 # physics frame, and the moving head again with a physics step between two loops.
-func _flights(world_platform: bool) -> Array[Flight]:
-	var setting := "only the world as platform" if world_platform else "default platform"
+func _flights(engine_defaults: bool) -> Array[Flight]:
+	var setting := "the engine's platform defaults" if engine_defaults else "the fighter's platform"
 	var flights: Array[Flight] = []
 	for kind: int in 4:
 		var flight := Flight.new()
-		flight.world_platform = world_platform
+		flight.engine_defaults = engine_defaults
 		flight.lateral = OFF_CENTRE if kind == 1 else 0.0
 		flight.below_move = BELOW_WALK if kind >= 2 else Vector2.ZERO
 		flight.stepped = kind == 3
@@ -157,6 +163,33 @@ func _assert_measured(reading: Reading) -> void:
 	assert_int(reading.head_landings).override_failure_message(message).is_greater(0)
 	message = "%s: the route did not finish (%s)" % [reading.name, reading.route_end]
 	assert_bool(reading.route_done).override_failure_message(message).is_true()
+	# What the rule needs of the engine: the same answers on every resimulated tick, the fighter
+	# below named on every tick on the head, the snap's ticks included, and the rules never
+	# standing there (TASK-10.7, criterion 3).
+	message = "%s: %d mismatches of the body and the state, %d and %d of the engine facts:\n%s" % [
+		reading.name,
+		reading.body_mismatches,
+		reading.top_mismatches,
+		reading.below_mismatches,
+		"\n".join(reading.shown),
+	]
+	assert_int(reading.body_mismatches).override_failure_message(message).is_equal(0)
+	assert_int(reading.top_mismatches + reading.below_mismatches) \
+			.override_failure_message(message) \
+			.is_equal(0)
+	message = "%s: the probe down named the fighter below on %d of %d ticks on the head" % [
+		reading.name,
+		reading.under_fighter_ticks,
+		reading.head_ticks,
+	]
+	assert_int(reading.under_fighter_ticks).override_failure_message(message).is_equal(
+		reading.head_ticks
+	)
+	message = "%s: the rules stood on the head on %d ticks" % [
+		reading.name,
+		reading.head_floor_ticks,
+	]
+	assert_int(reading.head_floor_ticks).override_failure_message(message).is_equal(0)
 
 
 func _config() -> MovementConfig:
@@ -188,9 +221,11 @@ func _fighter(arena: Node3D, config: MovementConfig, start: Vector3, flight: Fli
 	assert(node is Fighter, "fighter.tscn must have a Fighter at its root")
 	var fighter := node as Fighter
 	fighter.setup(config, start, YAW, false)
-	if flight.world_platform:
-		fighter.platform_floor_layers = PhysicsLayers.WORLD
-		fighter.platform_on_leave = CharacterBody3D.PLATFORM_ON_LEAVE_DO_NOTHING
+	if flight.engine_defaults:
+		var plain := CharacterBody3D.new()
+		fighter.platform_floor_layers = plain.platform_floor_layers
+		fighter.platform_on_leave = plain.platform_on_leave
+		plain.free()
 	arena.add_child(fighter)
 	return fighter
 
@@ -275,8 +310,9 @@ class Flight:
 	## A physics step between two loops, as the game runs its ticks (DEC-0040); otherwise every
 	## loop runs inside one physics frame, as the SyncTest runs them.
 	var stepped := false
-	## platform_floor_layers only the world's, and platform_on_leave doing nothing.
-	var world_platform := false
+	## platform_floor_layers and platform_on_leave as Godot leaves them, every layer and the
+	## platform's velocity added on leaving; otherwise as Fighter.setup sets them.
+	var engine_defaults := false
 	## The input of the fighter below while the top one holds on its head: none, the head still.
 	var below_move := Vector2.ZERO
 
@@ -284,7 +320,8 @@ class Flight:
 # The top fighter's route, before each loop, reading the state on screen through the calls the
 # keyboard uses (FighterInput.sample_frame and press_jump): it runs at the other, jumps JUMP_FROM
 # before its axis, double jumps at the apex with no direction, so the speed carries, and lands on
-# the head; it holds HOLD_LOOPS there without input, walks off forward and rests on the floor.
+# the head; it waits HOLD_LOOPS without input, where it slides off (before the rule, it stood
+# there), walks forward, off the head if still on it, and rests on the floor.
 class HeadBot:
 	extends RefCounted
 
@@ -388,9 +425,11 @@ class EngineFacts:
 	## Collisions of the move at a floor angle, and of those the ones with a fighter.
 	var floor_slides := 0
 	var fighter_floor_slides := 0
-	## The fighter's own state after the tick: the jumps of the flight and the double jump's tick.
+	## The fighter's own state after the tick: the jumps of the flight, the double jump's tick, and
+	## whether the rules stand (Movement.stands).
 	var jumps_used := 0
 	var double_jump_tick := FighterState.NEVER
+	var stands := false
 
 
 	static func read(fighter: Fighter) -> EngineFacts:
@@ -418,6 +457,7 @@ class EngineFacts:
 						facts.fighter_floor_slides += 1
 		facts.jumps_used = fighter.state.jumps_used
 		facts.double_jump_tick = fighter.state.double_jump_tick
+		facts.stands = Movement.stands(fighter.state)
 		return facts
 
 
@@ -617,6 +657,10 @@ class Reading:
 	var platform_moving_ticks := 0
 	var under_fighter_ticks := 0
 	var snap_only_under_fighter := 0
+	## Ticks on the head where the rules stood, as if it were floor: none since the head rule.
+	var head_floor_ticks := 0
+	## Ticks on the head the shown errors came from.
+	var shown: Array[String] = []
 	## m: how far the fighter below drifted from where it started.
 	var below_drift := 0.0
 	## One mark per head tick, in order: F the move collided with the fighter below at a floor
@@ -649,6 +693,7 @@ class Reading:
 		floor_normal_apart = recorder.floor_normal_apart
 		head_floor_normal_apart = recorder.head_floor_normal_apart
 		platform_velocity_apart = recorder.platform_velocity_apart
+		shown = recorder.shown
 		walk_off_tick = walk_off
 		_measure(recorder)
 
@@ -676,6 +721,8 @@ class Reading:
 			if not on_head:
 				continue
 			head_ticks += 1
+			if top.stands:
+				head_floor_ticks += 1
 			var mark := "W"
 			if top.floor_slides == 0:
 				snap_only_ticks += 1
@@ -717,8 +764,8 @@ class Reading:
 			+ " the fighter below at a floor angle (%s); dome %.3f..%.3f° before the walk off,"
 			+ " feet up to %.4f m off the axis; the test-only probe down names the fighter below"
 			+ " on %d head ticks, %d of them with no collision of the move at a floor angle;"
-			+ " platform velocity up to %s m/s, not zero on %d head ticks; the fighter below"
-			+ " drifted %s m"
+			+ " platform velocity up to %s m/s, not zero on %d head ticks; the rules stood on"
+			+ " the head on %d ticks; the fighter below drifted %s m"
 		) % [
 			name,
 			platform_layers,
@@ -752,6 +799,7 @@ class Reading:
 			snap_only_under_fighter,
 			String.num_scientific(platform_speed_max),
 			platform_moving_ticks,
+			head_floor_ticks,
 			String.num_scientific(below_drift),
 		]
 		return line

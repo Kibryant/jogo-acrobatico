@@ -236,3 +236,12 @@ func test_the_bot_plays_from_the_clocks_tick_and_leaves_with_its_fighter() -> vo
 	await get_tree().process_frame
 	assert_bool(is_instance_valid(bot)).is_false()
 	assert_bool(is_instance_valid(rig)).is_false()
+
+
+# TASK-10.7: in Sozinho this PC drives every fighter, and only the player's wears the own tone; the
+# dummy, and any other slot of a replay, the other's (visual-e-audio.md, "A cabeça do outro na
+# tela": "O boneco").
+func test_in_sozinho_only_the_players_slot_wears_the_own_tone() -> void:
+	assert_str(str(Match.solo_tone(Match.PLAYER_SLOT))).is_equal(str(Fighter.OWN_TONE))
+	assert_str(str(Match.solo_tone(Match.DUMMY_SLOT))).is_equal(str(Fighter.OTHER_TONE))
+	assert_str(str(Match.solo_tone(2))).is_equal(str(Fighter.OTHER_TONE))

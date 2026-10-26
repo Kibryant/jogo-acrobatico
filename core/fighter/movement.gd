@@ -13,12 +13,21 @@
 # The grapple is the one rule that asks the scenery (DEC-0044): while a press that can fire waits
 # in the slot, before_move sets MovePlan.aim_request, the node casts the aim's ray after the move,
 # and after_move fires on the answer in MoveFacts.
+# Another fighter's head is never floor for the rules (movimento.md, "O corpo": "A cabeça do
+# outro"; TASK-10.7): the engine's on_floor stays its verdict, which contour D aligns with
+# (DEC-0025 §2; DEC-0037), and every rule that asked it for a floor jump, a dash, a renewal or the
+# floor's speed asks stands() instead. On a head the body is in the air for the rules and slides
+# off along slide_off_dir.
 class_name Movement
 extends RefCounted
 
 # Floating-point slack of the wall jump's turn, against the unit run direction: a stick turned by
 # the camera exactly across the wall reads ~1e-7 along it. Not a design number.
 const TURN_HAIR := 1e-4
+# A flattened contact normal shorter than this is a landing on the very top of a head, which has
+# no direction of its own: the slide goes toward the back of the facing (TASK-10.7 plan). A float
+# threshold, not a design number.
+const CENTRE_HAIR := 1e-6
 
 
 # Puts the presses in the slot. A grapple whose cable has flown pulls, or releases and leaves a
@@ -64,7 +73,7 @@ static func before_move(
 			# mode of the floor's verdict, and this tick runs free on the incoming velocity.
 			next.grapple_end_tick = tick
 			next.grapple_fired_tick = FighterState.NEVER
-			next.mode = FighterState.Mode.GROUND if state.on_floor else FighterState.Mode.AIR
+			next.mode = FighterState.Mode.GROUND if stands(state) else FighterState.Mode.AIR
 			next.mode_since = tick
 	if next.mode == FighterState.Mode.WALL_RUN:
 		if tick - next.mode_since < config.wall_run_max_ticks:
@@ -74,8 +83,9 @@ static func before_move(
 		# coyote, so a press now is the double jump ("Pulo da parede no voo").
 		next.mode = FighterState.Mode.AIR
 		next.mode_since = tick
-	# On the floor the body rests on it; the engine keeps it there and slides it along ramps.
-	var vertical := 0.0 if state.on_floor else _gravity(velocity.y, config)
+	# On the floor the body rests on it; the engine keeps it there and slides it along ramps. A head
+	# is air: its gravity pulls (movimento.md, "O corpo": "A cabeça do outro").
+	var vertical := 0.0 if stands(state) else _gravity(velocity.y, config)
 	var current := Vector3(velocity.x, 0.0, velocity.z)
 	var horizontal: Vector3
 	if next.mode == FighterState.Mode.DASH:
@@ -88,10 +98,12 @@ static func before_move(
 		# the contact the dash ends on; the slot may fire on this same tick.
 		current = next.dash_direction * config.dash_exit_speed
 		horizontal = current
-		next.mode = FighterState.Mode.GROUND if state.on_floor else FighterState.Mode.AIR
+		next.mode = FighterState.Mode.GROUND if stands(state) else FighterState.Mode.AIR
 		next.mode_since = tick
 	else:
 		horizontal = _horizontal(current, input, state, config)
+	if next.slide_off_dir != Vector3.ZERO:
+		horizontal = _slide(horizontal, next.slide_off_dir, config)
 	if next.buffered_command == FighterCommand.JUMP:
 		if _can_jump(next, tick, config):
 			# Always a full jump, from the floor or off a ledge: it replaces the vertical speed.
@@ -130,8 +142,10 @@ static func before_move(
 # and ends a wall run, and leaving the floor stamps the tick the coyote counts from. The contact
 # changes the mode between GROUND and AIR, but never ends the dash or the grapple's pull: the dash
 # goes on off a ledge, and the pull along or off the floor (DEC-0041 §3). In the air, the wall
-# facts start, carry on or end a wall run. Last, a grapple that asked for the aim fires on the
-# answer (DEC-0044).
+# facts start, carry on or end a wall run. A floor that is only another fighter's head renews
+# nothing and is air for the rules (_onto_head). Landing and leaving read stands(): from a head
+# onto the real floor is a landing, and off a head opens no coyote (movimento.md, "Perdão"). Last,
+# a grapple that asked for the aim fires on the answer (DEC-0044).
 static func after_move(
 	state: FighterState,
 	facts: MoveFacts,
@@ -141,17 +155,23 @@ static func after_move(
 	var next := state.copy()
 	var pulled := state.mode == FighterState.Mode.GRAPPLE
 	var by_contact := state.mode != FighterState.Mode.DASH and not pulled
-	if facts.on_floor:
+	var on_head := facts.on_floor and facts.floor_is_fighter
+	if not on_head:
+		next.slide_off_dir = Vector3.ZERO
+		next.head_landing_tick = FighterState.NEVER
+	if on_head:
+		_onto_head(next, state, facts, by_contact, tick)
+	elif facts.on_floor:
 		# Touching the floor renews the double jump (movimento.md, "Pulo e ar"), and the same wall
 		# accepts a run again ("Corrida na parede": "Mesma parede").
 		next.jumps_used = 0
 		next.double_jump_tick = FighterState.NEVER
 		next.wall_normal = Vector3.ZERO
 		next.wall_id = &""
-		if not state.on_floor and by_contact:
+		if not stands(state) and by_contact:
 			next.mode = FighterState.Mode.GROUND
 			next.mode_since = tick
-	elif state.on_floor:
+	elif stands(state):
 		if by_contact:
 			next.mode = FighterState.Mode.AIR
 			next.mode_since = tick
@@ -169,20 +189,55 @@ static func after_move(
 
 
 # Whether the body stands on a floor of its own (movimento.md, "O corpo": "A cabeça do outro";
-# TASK-10.7): the engine's floor, and not another fighter's head. Declared before the head rule
-# (TASK-10.7, round A): no rule asks it yet.
+# glossario.md, "Em pé e no chão"; TASK-10.7): the engine's floor, and not another fighter's head.
+# on_floor is the engine's verdict, which contour D aligns with; stands is the rule's question.
 static func stands(state: FighterState) -> bool:
 	return state.on_floor and state.slide_off_dir == Vector3.ZERO
+
+
+# The engine's floor is only another fighter's head (movimento.md, "O corpo": "A cabeça do outro";
+# TASK-10.7 plan): the slide goes away from the other's axis, along the contact's normal laid flat,
+# or toward the back of the facing on the very top; the landing is stamped once, the tick the
+# contact began; nothing renews, neither the jumps nor the double jump nor the last wall; and by
+# contact the body is in the air from this tick, without the coyote's stamp. A committed dash or
+# pull keeps its mode and its own rule (DEC-0041).
+static func _onto_head(
+	next: FighterState,
+	state: FighterState,
+	facts: MoveFacts,
+	by_contact: bool,
+	tick: int,
+) -> void:
+	var away := Vector3(facts.fighter_away.x, 0.0, facts.fighter_away.z)
+	if away.length() < CENTRE_HAIR:
+		next.slide_off_dir = Basis(Vector3.UP, state.facing_yaw) * Vector3.BACK
+	else:
+		next.slide_off_dir = away.normalized()
+	if state.slide_off_dir == Vector3.ZERO:
+		next.head_landing_tick = tick
+	if by_contact and next.mode != FighterState.Mode.AIR:
+		next.mode = FighterState.Mode.AIR
+		next.mode_since = tick
+
+
+# The slide off a head (movimento.md, "O corpo": "Escorregar da cabeça"): the component of the
+# horizontal along the slide's direction raised to head_slide_speed when it is slower; a faster
+# one along it, and the component across it, are kept.
+static func _slide(horizontal: Vector3, direction: Vector3, config: MovementConfig) -> Vector3:
+	var along := horizontal.dot(direction)
+	if along >= config.head_slide_speed:
+		return horizontal
+	return horizontal + direction * (config.head_slide_speed - along)
 
 
 # The jump of the floor, before any jump of the flight: standing on the floor, or within the
 # coyote window after leaving a ledge without jumping (movimento.md, "Perdão"). A press on the
 # floor fires on its own tick; one made in the air fires on the first tick that starts on the
-# floor, while its window lives.
+# floor, while its window lives. A head is not floor: no floor jump from it.
 static func _can_jump(state: FighterState, tick: int, config: MovementConfig) -> bool:
 	if state.jumps_used != 0:
 		return false
-	if state.mode == FighterState.Mode.GROUND and state.on_floor:
+	if state.mode == FighterState.Mode.GROUND and stands(state):
 		return true
 	return _within(state.left_floor_tick, tick, config.coyote_ticks)
 
@@ -190,9 +245,9 @@ static func _can_jump(state: FighterState, tick: int, config: MovementConfig) ->
 # The double jump, one per flight (movimento.md, "Pulo e ar"): after the jump, or in the air past
 # the coyote without having jumped ("Aperto depois do coyote, sem ter pulado: é o pulo duplo"),
 # and only when the bar can pay its cost ("Stamina": "Sem stamina suficiente, a manobra não
-# sai"; nothing is paid then).
+# sai"; nothing is paid then). On a head it fires as in the air (F-151).
 static func _can_double_jump(state: FighterState, tick: int, config: MovementConfig) -> bool:
-	if state.on_floor:
+	if stands(state):
 		return false
 	var past_coyote := not _within(state.left_floor_tick, tick, config.coyote_ticks)
 	var in_flight := state.jumps_used == 1 or (state.jumps_used == 0 and past_coyote)
@@ -204,9 +259,10 @@ static func _can_double_jump(state: FighterState, tick: int, config: MovementCon
 # and when the bar can pay its cost ("Stamina": nothing is paid otherwise). The cooldown reads
 # the stamp: the last dash started dash_ticks + dash_cooldown_ticks ago or earlier, and NEVER is
 # far enough in the past to count as free. With a grapple's cable in the air the dash waits in the
-# slot: one committed mode at a time ("Gancho": "Tempo até prender"; DEC-0041).
+# slot: one committed mode at a time ("Gancho": "Tempo até prender"; DEC-0041). A head is not
+# floor: no dash from it.
 static func _can_dash(state: FighterState, tick: int, config: MovementConfig) -> bool:
-	if state.mode != FighterState.Mode.GROUND or not state.on_floor:
+	if state.mode != FighterState.Mode.GROUND or not stands(state):
 		return false
 	if state.grapple_fired_tick != FighterState.NEVER:
 		return false
@@ -358,7 +414,8 @@ static func _world(move: Vector2, yaw: float) -> Vector3:
 # air keeps its speed (movimento.md, "Princípios": speed carries between maneuvers). In the air
 # the target keeps the speed the body has when it is above run_speed, so the input turns and
 # brakes it only by the air acceleration and never cuts the excess; on the floor the excess falls
-# by the ground acceleration (movimento.md, "Pulo e ar": "Controle no ar"; F-127).
+# by the ground acceleration (movimento.md, "Pulo e ar": "Controle no ar"; F-127). A head is air:
+# its control and its kept speed.
 static func _horizontal(
 	current: Vector3,
 	input: TickInput,
@@ -366,11 +423,12 @@ static func _horizontal(
 	config: MovementConfig,
 ) -> Vector3:
 	var move := input.move.limit_length(1.0)
+	var standing := stands(state)
 	if move == Vector2.ZERO:
-		if state.on_floor:
+		if standing:
 			return current.move_toward(Vector3.ZERO, config.stop_decel_per_tick)
 		return current
-	if state.on_floor:
+	if standing:
 		return current.move_toward(
 			_world(move, input.yaw) * config.run_speed,
 			config.ground_accel_per_tick,

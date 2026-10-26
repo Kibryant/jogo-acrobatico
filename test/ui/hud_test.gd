@@ -292,14 +292,18 @@ func test_the_grapple_cooldown_shows_above_the_dash_with_its_ring_and_the_tenths
 
 
 # The target of the reticle: a wall of the test's own in the arena's empty south-east, 16 m wide
-# and 10 m tall, its face looking south at z = 20.
-const TARGET_FACE_Z := 20.0
-const TARGET_POINT := Vector3(28, 4, 20)
+# and 10 m tall, its face looking south at z = 12. TASK-10.7 moved it, and the points below with
+# it, 8 m north of z = 20: 27 m south of z = 20 stood at z = 47, outside the border's inner face at
+# z = 40, where the ray met BordaSul's outer face first (movimento.md, "Métricas de nível": "A
+# borda").
+const TARGET_FACE_Z := 12.0
+const TARGET_POINT := Vector3(28, 4, 12)
 # Where the fighter stands: 12 m south of the face, 3 m less than the range would allow and far
-# more than the minimum; 27 m south, beyond the 25 m of the ray; 1,5 m south, nearer than 3 m.
-const BEFORE_THE_TARGET := Vector3(28, 0, 32)
-const BEYOND_THE_RANGE := Vector3(28, 0, 47)
-const TOO_NEAR := Vector3(28, 0, 21.5)
+# more than the minimum; 27 m south, beyond the 25 m of the ray, still inside the border; 1,5 m
+# south, nearer than 3 m.
+const BEFORE_THE_TARGET := Vector3(28, 0, 24)
+const BEYOND_THE_RANGE := Vector3(28, 0, 39)
+const TOO_NEAR := Vector3(28, 0, 13.5)
 
 
 func _add_target() -> void:
@@ -396,11 +400,11 @@ func test_the_reticle_gains_its_dot_when_the_q_would_hook_now() -> void:
 # arm: its face 0,6 m right of the feet, from 1 m behind them to 8 m, 4 m tall. The arm stays free
 # and the shoulder stops 0,3 m before the face, about 0,73 m left of the free camera, so the aim's
 # ray from O shows right of the screen's centre. Behind the body, it is out of both rays' paths.
-const RIGHT_WALL_CENTRE := Vector3(29.1, 2, 36.5)
+const RIGHT_WALL_CENTRE := Vector3(29.1, 2, 28.5)
 const RIGHT_WALL_SIZE := Vector3(1, 4, 7)
-# The corner: a fin 0,2 m thick on the shoulder's line to the target, from z = 24 to 30, that the
+# The corner: a fin 0,2 m thick on the shoulder's line to the target, from z = 16 to 22, that the
 # ray from O, 0,8 m to the right at the body and closing in on the point, passes beside.
-const FIN_CENTRE := Vector3(28, 2.5, 27)
+const FIN_CENTRE := Vector3(28, 2.5, 19)
 const FIN_SIZE := Vector3(0.2, 5, 6)
 ## px at the base: the ring's centre is within a pixel of where it should be.
 const PIXEL := 1.0

@@ -124,6 +124,19 @@ func test_the_fighter_collides_with_the_world_and_with_fighters() -> void:
 	assert_int(fighter.collision_mask).is_equal(PhysicsLayers.WORLD | PhysicsLayers.FIGHTERS)
 
 
+# Criterion 4 of TASK-10.7 (F-152): only the scenery is a platform, never another fighter, and
+# leaving any body adds nothing to the velocity. Godot's defaults are every layer and adding the
+# platform's velocity, so a fighter not set up would still ride another's head.
+func test_only_the_scenery_is_a_platform_and_leaving_a_body_adds_no_velocity() -> void:
+	var plain: CharacterBody3D = auto_free(CharacterBody3D.new())
+	assert_int(plain.platform_floor_layers & PhysicsLayers.FIGHTERS).is_not_equal(0)
+	assert_int(plain.platform_on_leave).is_equal(CharacterBody3D.PLATFORM_ON_LEAVE_ADD_VELOCITY)
+	var fighter := _fighter()
+	assert_int(fighter.platform_floor_layers).is_equal(PhysicsLayers.WORLD)
+	assert_int(fighter.platform_floor_layers & PhysicsLayers.FIGHTERS).is_equal(0)
+	assert_int(fighter.platform_on_leave).is_equal(CharacterBody3D.PLATFORM_ON_LEAVE_DO_NOTHING)
+
+
 # TASK-9, criterion 9: only the server sends a fighter's state, and only to the peers it told that
 # the fighter exists (Main._on_player_clock_synced); a state for a node a client does not have
 # yet would be dropped there with a warning.

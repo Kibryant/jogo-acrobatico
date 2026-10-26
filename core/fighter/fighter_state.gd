@@ -77,7 +77,7 @@ var grapple_end_tick := NEVER
 # Another fighter's head under the feet (movimento.md, "O corpo": "A cabeça do outro"; TASK-10.7):
 # the horizontal unit vector away from the fighter below while the body is on its head, ZERO off
 # it; and the tick the contact with that head began, the key its cue plays by (DEC-0031), NEVER
-# off it. Declared before their rule (TASK-10.7, round A): nothing writes them yet.
+# off it. after_move writes them from the head facts; before_move slides along slide_off_dir.
 var slide_off_dir := Vector3.ZERO
 var head_landing_tick := NEVER
 

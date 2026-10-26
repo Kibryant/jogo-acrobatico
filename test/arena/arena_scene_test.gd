@@ -8,7 +8,9 @@
 # "Métricas de nível"), on free floor too, the wall scenario of the SyncTest's included. From
 # TASK-10.6 (criterion 9), the grapple's pieces: two 6 m towers 16 m apart and the 10 m pillar
 # (movimento.md, "Métricas de nível"), on free floor too, the grapple scenario's included, and
-# every piece of the arena stays off that scenario's ground.
+# every piece of the arena stays off that scenario's ground. From TASK-10.7 (criterion 6), the
+# border: four walls 50 m tall and 1 m thick close the 80 x 80 m floor, their inner faces at ±40 m,
+# in the blocks' grey and casting no shadow (movimento.md, "Métricas de nível": "A borda").
 extends GdUnitTestSuite
 
 const ARENA_SCENE := preload("res://arena/arena.tscn")
@@ -105,6 +107,24 @@ const DOUBLE_JUMP_GAP := 7.0
 ## m: the grapple's reach (movimento.md, "Gancho": "Alcance"): from the floor between the towers,
 ## each tower's near face is within it.
 const GRAPPLE_RANGE := 25.0
+
+## The border (TASK-10.7; movimento.md, "Métricas de nível": "A borda"): each wall's centre and
+## box. The north and south walls run 82 m along x, over the east and west walls' ends, so the
+## corners are closed; the floor spans x and z from -40 to 40.
+const BORDER: Dictionary[String, Vector3] = {
+	"BordaNorte": Vector3(0, 25, -40.5),
+	"BordaSul": Vector3(0, 25, 40.5),
+	"BordaLeste": Vector3(40.5, 25, 0),
+	"BordaOeste": Vector3(-40.5, 25, 0),
+}
+const BORDER_SIZES: Dictionary[String, Vector3] = {
+	"BordaNorte": Vector3(82, 50, 1),
+	"BordaSul": Vector3(82, 50, 1),
+	"BordaLeste": Vector3(1, 50, 82),
+	"BordaOeste": Vector3(1, 50, 82),
+}
+const BORDER_TOP := 50.0
+const BORDER_INNER := 40.0
 
 ## m: a run of 2.5 s at 8 m/s (movimento.md, "Corrida na parede"), which the long wall outlasts.
 const WALL_RUN_LENGTH := 20.0
@@ -489,7 +509,9 @@ func test_the_grapple_pieces_stay_clear_of_the_routes_and_of_every_other_body() 
 func test_the_grapple_scenario_ground_is_free_of_every_piece_of_the_arena() -> void:
 	var arena := _arena()
 	for node: Node in arena.find_children("*", "StaticBody3D", true, false):
-		if node.name == "Floor":
+		# The border closes the arena around every ground, the scenario's walls inside it: its
+		# inner face is that ground's edge.
+		if node.name == "Floor" or BORDER.has(String(node.name)):
 			continue
 		assert(node is StaticBody3D, "find_children by StaticBody3D returns StaticBody3Ds")
 		var reach := _footprint(_box(node as StaticBody3D)).grow(BODY_RADIUS)
@@ -506,3 +528,71 @@ func test_the_grapple_scenario_ground_is_free_of_every_piece_of_the_arena() -> v
 		var box := mesh_node.global_transform * mesh_node.get_aabb()
 		var reach := _footprint(box).grow(BODY_RADIUS)
 		assert_bool(reach.intersects(GANCHO_SCENARIO_AREA)).is_false()
+
+
+# Criterion 6 of TASK-10.7: each border wall has one name under the arena, is a box on the world's
+# layer whose collision is its mesh, in the blocks' grey and casting no shadow, standing on the
+# floor's top and 50 m tall.
+func test_each_border_wall_is_one_named_world_box_50_m_tall_that_casts_no_shadow() -> void:
+	var arena := _arena()
+	var grey := _grey_of(_body(arena, GREY_BLOCK))
+	for wall: String in BORDER:
+		var found := arena.find_children(wall, "", true, false)
+		var failure := "%s is named %d times under Arena" % [wall, found.size()]
+		assert_int(found.size()).override_failure_message(failure).is_equal(1)
+		var body := _body(arena, wall)
+		assert_object(body.get_parent()).is_same(arena)
+		assert_int(body.collision_layer).is_equal(PhysicsLayers.WORLD)
+		assert_vector(body.position).is_equal_approx(BORDER[wall], Vector3.ONE * HAIR)
+		assert_bool(body.basis.is_equal_approx(Basis.IDENTITY)).is_true()
+		var collision := body.get_node(^"Collision")
+		assert_bool(collision is CollisionShape3D).is_true()
+		var shape := (collision as CollisionShape3D).shape
+		assert_bool(shape is BoxShape3D).is_true()
+		assert_vector((shape as BoxShape3D).size).is_equal(BORDER_SIZES[wall])
+		var mesh_node := body.get_node(^"Mesh")
+		assert_bool(mesh_node is MeshInstance3D).is_true()
+		var mesh_instance := mesh_node as MeshInstance3D
+		var mesh := mesh_instance.mesh
+		assert_bool(mesh is BoxMesh).is_true()
+		assert_vector((mesh as BoxMesh).size).is_equal(BORDER_SIZES[wall])
+		assert_object(_grey_of(body)).is_same(grey)
+		var shadow := "%s casts a shadow" % wall
+		assert_int(mesh_instance.cast_shadow).override_failure_message(shadow).is_equal(
+			GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+		)
+		var box := _box(body)
+		assert_float(box.position.y).is_equal_approx(0.0, HAIR)
+		assert_float(box.end.y).is_equal_approx(BORDER_TOP, HAIR)
+
+
+# Nobody falls out: the inner faces stand on the floor's edges at ±40 m, each wall spans the whole
+# edge and past it, the north and south walls over the east and west ones, so no gap is left at a
+# corner; and every other body of the arena stands inside them.
+func test_the_border_closes_the_floor_with_its_inner_faces_at_40_m() -> void:
+	var arena := _arena()
+	var north := _box(_body(arena, "BordaNorte"))
+	var south := _box(_body(arena, "BordaSul"))
+	var east := _box(_body(arena, "BordaLeste"))
+	var west := _box(_body(arena, "BordaOeste"))
+	assert_float(north.end.z).is_equal_approx(-BORDER_INNER, HAIR)
+	assert_float(south.position.z).is_equal_approx(BORDER_INNER, HAIR)
+	assert_float(east.position.x).is_equal_approx(BORDER_INNER, HAIR)
+	assert_float(west.end.x).is_equal_approx(-BORDER_INNER, HAIR)
+	var floor_box := _box(_body(arena, "Floor"))
+	for along_x: AABB in [north, south]:
+		assert_float(along_x.position.x).is_less_equal(floor_box.position.x)
+		assert_float(along_x.end.x).is_greater_equal(floor_box.end.x)
+		assert_float(along_x.position.x).is_less_equal(west.position.x)
+		assert_float(along_x.end.x).is_greater_equal(east.end.x)
+	for along_z: AABB in [east, west]:
+		assert_float(along_z.position.z).is_less_equal(floor_box.position.z)
+		assert_float(along_z.end.z).is_greater_equal(floor_box.end.z)
+	var inside := Rect2(Vector2(-BORDER_INNER, -BORDER_INNER), Vector2.ONE * 2.0 * BORDER_INNER)
+	for node: Node in arena.find_children("*", "StaticBody3D", true, false):
+		if node.name == "Floor" or BORDER.has(String(node.name)):
+			continue
+		assert(node is StaticBody3D, "find_children by StaticBody3D returns StaticBody3Ds")
+		var footprint := _footprint(_box(node as StaticBody3D))
+		var failure := "%s stands outside the border" % node.name
+		assert_bool(inside.encloses(footprint)).override_failure_message(failure).is_true()

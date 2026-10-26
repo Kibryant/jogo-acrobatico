@@ -3,7 +3,8 @@
 # fighter and its camera. An argument it does not know is refused (.claude/harness/registro.md,
 # 2026-10-07). Ending the session stops the clock before the match goes, the clean exit the probe
 # lacked (F-026 §4). The server and client modes need two processes; tools/net_check.sh runs them
-# (TASK-9, part 2).
+# (TASK-9, part 2). Sozinho puts a still dummy at the second spawn point, in the other fighter's
+# tone, with no camera, unless --dummy=off, and its replay records both (TASK-10.7, criterion 5).
 # Sozinho records a replay of every session in user://replays/ (TASK-10.3; F-112 §2), and the gate
 # never writes there: these tests open the Main with --no-replay, or with --replay-dir in a
 # temporary folder, and tools/run_tests.sh checks the folder after the run.
@@ -13,6 +14,7 @@ const NetfoxTicks := preload("res://test/support/netfox_ticks.gd")
 const MAIN_SCENE := preload("res://main/main.tscn")
 const ReplayRun := preload("res://tools/replay_run.gd")
 const SPAWN_A := Vector3(-6, 0, 9) # arena.tscn: SpawnA
+const SPAWN_B := Vector3(-6, 0, -1) # arena.tscn: SpawnB
 const HAIR := 1e-4
 ## s of wall clock Sozinho plays before the session ends: netfox's real clock runs ticks in it.
 const PLAY_S := 0.3
@@ -72,12 +74,43 @@ func test_with_no_argument_the_main_plays_sozinho() -> void:
 	assert_bool(multiplayer.multiplayer_peer is OfflineMultiplayerPeer).is_true()
 	assert_bool(NetworkTime.is_initial_sync_done()).is_true()
 	assert_object(main.current_match).is_not_null()
-	assert_int(main.current_match.fighters.size()).is_equal(1)
-	var fighter := main.current_match.fighters[0]
+	assert_int(main.current_match.fighters.size()).is_equal(2)
+	var fighter := main.current_match.fighter_at(Match.PLAYER_SLOT)
 	assert_vector(fighter.position).is_equal_approx(SPAWN_A, Vector3.ONE * HAIR)
 	assert_object(main.current_match.camera_rig).is_not_null()
+	assert_str(str(fighter.tone)).is_equal(str(Fighter.OWN_TONE))
 	# Closing the window must come to the Main first (DEC-0026 §6).
 	assert_bool(get_tree().auto_accept_quit).is_false()
+
+
+# TASK-10.7, criterion 5: the dummy stands at the second spawn point, driven by this PC, in the
+# other fighter's tone, with no camera and no bot, and stays still while the clock runs.
+func test_sozinho_has_a_still_dummy_at_the_second_spawn_point() -> void:
+	var main := _main(["--no-replay"])
+	await get_tree().process_frame
+	var dummy := main.current_match.fighter_at(Match.DUMMY_SLOT)
+	assert_object(dummy).is_not_null()
+	assert_vector(dummy.position).is_equal_approx(SPAWN_B, Vector3.ONE * HAIR)
+	assert_int(dummy.input.get_multiplayer_authority()).is_equal(multiplayer.get_unique_id())
+	assert_str(str(dummy.tone)).is_equal(str(Fighter.OTHER_TONE))
+	assert_object(main.current_match.bot).is_null()
+	# One camera in the match, the player's.
+	var cameras := 0
+	for child: Node in main.current_match.get_children():
+		if child is CameraRig:
+			cameras += 1
+	assert_int(cameras).is_equal(1)
+	await get_tree().create_timer(PLAY_S).timeout
+	assert_int(NetworkTime.tick).is_greater(0)
+	assert_vector(dummy.position).is_equal_approx(SPAWN_B, Vector3.ONE * HAIR)
+	assert_int(dummy.state.mode).is_equal(FighterState.Mode.GROUND)
+
+
+func test_dummy_off_plays_sozinho_alone() -> void:
+	var main := _main(["--no-replay", "--dummy=off"])
+	await get_tree().process_frame
+	assert_int(main.current_match.fighters.size()).is_equal(1)
+	assert_object(main.current_match.fighter_at(Match.DUMMY_SLOT)).is_null()
 
 
 func test_ending_the_session_stops_the_clock_and_frees_the_match() -> void:
@@ -109,7 +142,8 @@ func test_sozinho_records_its_session_in_the_replay_folder() -> void:
 	assert_array(replay.errors).is_empty()
 	assert_array(replay.warnings).is_empty()
 	assert_int(replay.first_tick()).is_equal(first_tick)
-	assert_int(replay.fighter_count()).is_equal(1)
+	# The player's fighter and the dummy (TASK-10.7, criterion 5).
+	assert_int(replay.fighter_count()).is_equal(2)
 	# netfox's real clock ran ticks in PLAY_S, and every one of them is in the file.
 	assert_int(replay.tick_count()).is_greater(0)
 	var last := replay.rows[replay.rows.size() - 1]

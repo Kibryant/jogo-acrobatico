@@ -346,3 +346,35 @@ func test_replay_arguments_that_do_not_fit_are_errors() -> void:
 		var errors := _parse(arguments, EDITOR_BUILD, WITH_SCREEN).errors
 		assert_array(errors).override_failure_message(message).is_not_empty()
 	assert_str(_parse(["--watch=x.replay"]).errors[0]).contains("it needs a screen")
+
+
+# TASK-10.7, criterion 5: Sozinho's own play has a still dummy unless --dummy=off; the server, a
+# client and --watch, which plays the fighters of its file, have none.
+func test_sozinho_has_a_dummy_unless_told_off() -> void:
+	assert_bool(_parse([], EDITOR_BUILD, WITH_SCREEN).dummy).is_true()
+	assert_bool(_parse([]).dummy).is_true()
+	assert_bool(_parse(["--dummy=on"]).dummy).is_true()
+	var off := _parse(["--dummy=off", "--no-replay"])
+	assert_array(off.errors).is_empty()
+	assert_bool(off.dummy).is_false()
+	assert_bool(_parse(["--server"]).dummy).is_false()
+	assert_bool(_parse(["--connect=127.0.0.1"]).dummy).is_false()
+	assert_bool(_parse(["--watch=x.replay"], EDITOR_BUILD, WITH_SCREEN).dummy).is_false()
+
+
+func test_dummy_arguments_that_do_not_fit_are_errors() -> void:
+	var cases: Array[Array] = [
+		["--dummy"],
+		["--dummy="],
+		["--dummy=no"],
+		["--dummy=off", "--dummy=on"],
+		["--server", "--dummy=off"],
+		["--connect=127.0.0.1", "--dummy=on"],
+	]
+	for arguments: Array in cases:
+		var message := "%s must be refused with one message" % [arguments]
+		var errors := _parse(arguments).errors
+		assert_int(errors.size()).override_failure_message(message).is_equal(1)
+	var watched := _parse(["--watch=x.replay", "--dummy=off"], EDITOR_BUILD, WITH_SCREEN)
+	assert_int(watched.errors.size()).is_equal(1)
+	assert_str(watched.errors[0]).contains("--watch")

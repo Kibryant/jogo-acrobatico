@@ -1,7 +1,8 @@
 # The entry scene (DEC-0026 §6; rede.md §9): it reads how the game was opened, like a main.ts
 # reading process.argv, and starts that mode:
-# - no argument: Sozinho, Godot's offline peer, where this PC is its own server (rede.md §8), which
-#   records the session as a replay (ReplayRecorder; TASK-10.3), and plays one with --watch;
+# - no argument: Sozinho, Godot's offline peer, where this PC is its own server (rede.md §8), with
+#   a still dummy at the second spawn point (TASK-10.7), which records the session as a replay
+#   (ReplayRecorder; TASK-10.3), and plays one with --watch;
 # - --server, or the build exported as a dedicated server: the server, without a screen or a
 #   fighter of its own, which gives a fighter to each player the handshake accepts;
 # - --connect=host:port: a client, which plays its own fighter and mirrors the others; with --bot,
@@ -50,7 +51,9 @@ const SIMULATOR_FRAMES := 10
 ## loop of 1 ms (network-simulator.gd).
 const PROXY_DRAIN_MARGIN_MS := 100
 const USAGE := """Usage, with the game's arguments after "--":
-  (no argument)            play Sozinho: this PC is its own server.
+  (no argument)            play Sozinho: this PC is its own server, with a still dummy at the
+                           second spawn point to stand on and bump into.
+    --dummy=off            play Sozinho without the dummy.
   --server                 run the dedicated server; open Godot with --headless, it has no screen.
     --port=N               the server's port, 7777/udp when not given.
     --stop-file=PATH       the server closes cleanly, with exit code 0, when PATH appears.
@@ -161,14 +164,25 @@ func _first_frame() -> void:
 # simulates and confirms its own fighter, with no network and nothing to redo. netfox's clock starts
 # first, then the match (DEC-0026 §6). start() is a coroutine because a client waits for the
 # server's clock; the server, Sozinho's role, does not wait.
+# The dummy (TASK-10.7; visual-e-audio.md, "A cabeça do outro na tela"), unless --dummy=off: a
+# second fighter at the second spawn point, driven by this PC with no camera, no keyboard and no
+# bot, so its input box stays neutral and it stands still, in the other fighter's tone. The
+# player judges a rule of two bodies against it, the head first. The replay records both.
 func start_solo() -> void:
 	var started: int = await NetworkTime.start()
 	assert(started == OK, "netfox's clock did not start: %s" % error_string(started))
 	_start_match()
-	var fighter := current_match.spawn_fighter(0, multiplayer.get_unique_id())
+	var me := multiplayer.get_unique_id()
+	var fighter := current_match.spawn_fighter(Match.PLAYER_SLOT, me)
 	current_match.watch(fighter)
+	var recorded: Array[Fighter] = [fighter]
+	if options.dummy:
+		var dummy := current_match.spawn_fighter(Match.DUMMY_SLOT, me)
+		dummy.wear(Match.solo_tone(Match.DUMMY_SLOT))
+		recorded.append(dummy)
+		_log("sozinho: a still dummy stands at the second spawn point (--dummy=off leaves it out)")
 	if options.records_replay():
-		_start_replay(fighter)
+		_start_replay(recorded)
 	_measure_from_now()
 
 
@@ -191,6 +205,8 @@ func start_watch() -> void:
 	var fighters: Array[Fighter] = []
 	for slot: int in replay.fighter_count():
 		var fighter := current_match.spawn_fighter(slot, multiplayer.get_unique_id())
+		# The tones of the live game: the player's own, the dummy the other's.
+		fighter.wear(Match.solo_tone(slot))
 		var first_tick: int = fighter.synchronizer.spawn_tick
 		fighter.input.play_rows(ReplaySource.in_order(replay, slot, first_tick))
 		fighters.append(fighter)
@@ -464,14 +480,14 @@ func _start_match(movement_data: MovementData = null) -> void:
 
 
 # Sozinho records the session as a replay (TASK-10.3; F-112 §2): in user://replays/, in
-# --replay-dir, or in --replay's file, from the fighter's first tick; the log says where, with the
-# whole path.
-func _start_replay(fighter: Fighter) -> void:
+# --replay-dir, or in --replay's file, from the fighters' first tick, the player's and the dummy's
+# (TASK-10.7); the log says where, with the whole path.
+func _start_replay(fighters: Array[Fighter]) -> void:
 	_replay = ReplayRecorder.new()
 	if not options.replay_dir.is_empty():
 		_replay.directory = options.replay_dir
 	add_child(_replay)
-	var error := _replay.start(current_match, [fighter], options.replay)
+	var error := _replay.start(current_match, fighters, options.replay)
 	if error != OK:
 		var where := options.replay if not options.replay.is_empty() else _replay.directory
 		push_error("cannot record the replay in %s: %s" % [where, error_string(error)])

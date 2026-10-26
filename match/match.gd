@@ -14,6 +14,9 @@ const CAMERA_DATA_PATH := "res://data/camera_v0.tres"
 const NO_TICK := -1
 ## spawn_fighter() without a node name: the match names the fighter.
 const ANY_NAME := ""
+## In Sozinho, the slot of the player's fighter; the dummy (TASK-10.7) takes the next one.
+const PLAYER_SLOT := 0
+const DUMMY_SLOT := 1
 
 ## The movement numbers in the units of the paper. Set before the match enters the tree, they
 ## replace movement_v0.tres, which is then never loaded: the reference test plays its frozen copy
@@ -158,6 +161,13 @@ func view(fighter: Fighter) -> CameraRig:
 	_follow(fighter, false)
 	_show_hud(fighter)
 	return camera_rig
+
+
+# Sozinho's tones (visual-e-audio.md, "A cabeça do outro na tela": "O boneco"): this PC drives
+# every fighter there, but only the player's, in PLAYER_SLOT, wears the own tone; the dummy, and
+# any other slot of a replay, wears the other's, live and in --watch alike (Fighter.wear).
+static func solo_tone(slot: int) -> Color:
+	return Fighter.OWN_TONE if slot == PLAYER_SLOT else Fighter.OTHER_TONE
 
 
 # True when this PC draws to a screen; the dedicated server and the headless runs have none,

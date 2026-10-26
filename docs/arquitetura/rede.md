@@ -146,7 +146,7 @@ O teste é mais duro que a rede: ele força o rollback a cada tick. As mediçõe
 | Hipótese | Como foi testada | Resultado | O que sobrou |
 |---|---|---|---|
 | 1. O caminho aninhado `:state:mode` grava, restaura e vai pela rede | SyncTest com os campos aninhados envenenados depois de cada loop (F-025 §2). Pela rede, o tick do aperto lido no estado aninhado do outro lado (F-026 §3; F-029 §1) | **Provada.** 0 divergências em 1.776 conferências a 30 ticks e em 7.134 a 60. Pela rede, 349 de 349 pulos com 2 clientes, e 747 de 747 e 764 de 764 com 8 | Na corrida sobrecarregada de 8 clientes a 60 ticks, 431 de 438; com o servidor para trás, as 7 não foram analisadas (F-029 §1) |
-| 2. O contorno do transform faz um lutador bater no outro na posição certa | SyncTest com dois bots que se miram, se empurram e recuam, um pulando no meio (F-025 §3) | **Provada, com o contorno.** Sem ele, 786 divergências a 30 ticks (até 55 cm) e 1.897 a 60 (até 1,56 m). Com ele, 6 e 32 | As 6 e as 32 são de um lutador em pé na cabeça do outro (Q-16) |
+| 2. O contorno do transform faz um lutador bater no outro na posição certa | SyncTest com dois bots que se miram, se empurram e recuam, um pulando no meio (F-025 §3) | **Provada, com o contorno.** Sem ele, 786 divergências a 30 ticks (até 55 cm) e 1.897 a 60 (até 1,56 m). Com ele, 6 e 32 | Nada, no código de hoje. As 6 e as 32 eram de um lutador em pé na cabeça do outro (Q-16). A sonda C da TASK-10.7 achou 0 na cabeça e só as trouxe de volta tirando a reserva do snap da DEC-0037, que entrou depois e já as tinha zerado ("A sonda C da cabeça", abaixo) |
 | 3. O `on_floor` no estado substitui o movimento de velocidade zero | SyncTest em rampa de 45°, beirada e pouso, com quatro variantes (F-025 §4) | **Derrubada.** A: 61 e 71 divergências; B, a do netfox: 11 e 175; C: 0, mas não sobe a rampa; D: 0 e 0. O D foi escolhido (F-030) | Num duelo de 60 ticks, 1 flag de chão trocado com a posição idêntica, em 14.268 conferências |
 
 **O float:** com o frame sem limite, o contorno D deu erro máximo de 0,000000 m. O resíduo do `physics_factor` fica abaixo de 1 µm nesta máquina (F-025 §5).
@@ -161,7 +161,7 @@ O teste é mais duro que a rede: ele força o rollback a cada tick. As mediçõe
 - **A cena do dash** (TASK-10.4, critério 6): dois lutadores numa cópia do `movement_v0.tres` com a barra de 20, então um dash de 15 deixa no máximo 5, e a barra só paga o próximo 68 ticks depois. Um sai da plataforma num dash pela crista e desce a rampa de 45° sem tick no ar, volta, sai da beirada num dash, e pula apertando o dash logo antes do pouso, que fica na vaga e sai no primeiro tick no chão. O outro dá um dash contra a face do bloco de 2 m, aperta na recarga e com a barra curta, as duas recusas, dá um dash no plano com o pulo apertado perto do fim, que sai no primeiro tick depois dele, e aperta o dash 3 ticks antes de a barra pagar, um aperto que a vaga guarda até lá. Com a barra de 20, a recarga de 36 ticks sempre acaba antes da barra, então o aperto guardado na recarga é recusado por ela e não chega a sair.
 - **O sinal da manobra sob rollback** (DEC-0031 §6): nas cenas do pulo duplo e do dash, ela confere que os sinais apresentados pelo `ManeuverCues` são tantos quanto os eventos dos ticks novos, e tantos quanto as manobras: 3 de 3 no pulo duplo e 6 de 6 no dash, com cada tick refeito até 7 vezes (TASK-10.4, critério 5).
 - As seis cenas dão zero divergência em uns 4,1 s no portão em silêncio (TASK-10.4); as cinco da TASK-10.1 levavam 3,9 a 4,3 s, e 1,7 s no Linux do CI. O tempo aparece em toda rodada do portão, sem trava (F-087 §1).
-- Quatro autotestes tiram um campo do que o netfox grava e exigem que ela acuse: o `on_floor`, o `stamina_at_spend`, o `double_jump_tick` e o `dash_tick` (TASK-10.4). A TASK-10.5 somou o quinto, o `wall_id`, na cena `parede`, e a TASK-10.6, o sexto, o `grapple_point`, na cena `gancho` (§8). Os três últimos só acusam porque ela compara o estado inteiro: com a comparação da TASK-9, o campo esquecido passaria calado (TASK-10.1).
+- Quatro autotestes tiram um campo do que o netfox grava e exigem que ela acuse: o `on_floor`, o `stamina_at_spend`, o `double_jump_tick` e o `dash_tick` (TASK-10.4). A TASK-10.5 somou o quinto, o `wall_id`, na cena `parede`; a TASK-10.6, o sexto, o `grapple_point`, na cena `gancho`; e a TASK-10.7, o sétimo, o `slide_off_dir`, na cena `cabeca` (§8). Os quatro últimos só acusam porque ela compara o estado inteiro: com a comparação da TASK-9, o campo esquecido passaria calado (TASK-10.1).
 - Na beirada, ela achou a cápsula apoiada na quina, que a sonda do Desenho 3 não via (DEC-0037).
 
 ### A sonda A da parede (TASK-10.5, critério 1; DEC-0042 §4)
@@ -242,6 +242,52 @@ Na primeira rodada (24/10/2026), com um raio só, do ombro: as mesmas 333 de 333
 - **A mira da tela** lança a mesma mira, só da tela, do ponto O exibido, pelo yaw e pelo pitch da câmera, a cada quadro, com o segundo raio. O anel fica onde a câmera vê o fim do raio: o centro, com a câmera livre, e fora dele quando uma parede empurra a câmera (DEC-0045 §4). Ela lê as mesmas regras públicas do núcleo, `Movement.can_grapple` e `Movement.in_reach`, e nunca entra no estado (`visual-e-audio.md`, "O gancho na tela").
 - **A previsão, na fase 3:** hoje nenhum lutador prevê input (DEC-0026 §2), então o servidor só simula um lutador num tick cujo input chegou. Um tick previsto reaproveita o último input, e um `grapple` de um toque dispararia de novo nele. A fase 3 decide o raio nesses ticks (DEC-0044, "Consequências"; TASK-10.6, "Fora do escopo").
 - **Na rede:** o `net_run` de 26/10/2026, a ping 100, passou com o input novo, sem nenhum tick corrigido nem faltando (§10). O bot da rede ainda não usa o gancho (TASK-10.8).
+
+### A sonda C da cabeça (TASK-10.7, critério 2; F-025 §3)
+
+A cabeça do outro era a última divergência da sonda do Desenho 2: 6 a 30 ticks e 32 a 60, até 15 cm, todas com um lutador em pé na cabeça do outro, e tirar os lutadores da camada de plataforma não mudou nada (F-025 §3). A sonda C rodou antes da regra da cabeça, no código daquele dia. Ela fica no portão (`test/fighter/head_probe_test.gd`).
+
+**Como ela mede:**
+
+- **Os lutadores são os de verdade:** dois do `fighter.tscn`, num chão de 40 × 40 m que ela constrói, sem mais nada, no tick do netfox avançado à mão e com o rollback de 7 ticks a cada loop. O observador da SyncTest compara o corpo e o estado inteiro dos dois.
+- **O percurso:** o de baixo fica parado. O de cima corre a 2,4 m/s, pula a 2 m do eixo do outro, dá o pulo duplo no ápice, sem direção, e pousa na cabeça dele. Depois de 40 ticks sem input, anda para a frente e para no chão.
+- **Os voos:** centrado; a 0,30 m do eixo, com o domo a uns 25° sob os pés; e com a cabeça andando a 1 m/s desde o pouso, num quadro de física só e com um passo de física entre dois laços. Só no passo de física o Jolt move os corpos cinemáticos, então uma velocidade de plataforma apareceria ali primeiro. Cada voo roda com as camadas de plataforma do Godot (todas as camadas, e a velocidade somada ao sair) e com as do lutador (só o cenário, e nada ao sair).
+- **O que ela lê** depois de cada tick, dos dois lutadores: `is_on_floor()`, `get_floor_normal()`, `get_platform_velocity()`, as colisões do movimento com a normal, e o que uma sonda só de teste 5 cm para baixo acharia, sem mover nada. O tick refeito tem de dar o do tick novo, até 0,000001.
+- **As precondições,** provadas em cada voo: o netfox refez todo tick devido, o pulo duplo saiu, houve um pouso na cabeça, e o percurso terminou.
+
+**O que ela achou antes da regra (26/10/2026):**
+
+| Pergunta | Resposta |
+|---|---|
+| Diverge? | **Não.** 0 divergência no corpo, no estado e nos fatos do motor, erro de 0 m, em todos os voos: 819 de 819 ticks refeitos com a cabeça parada e 711 de 711 com ela andando |
+| O snap segura o de cima no domo? | **Sim.** Centrado, ele pousa no tick 65 e fica até o passo para a frente, 42 ticks depois, com o domo a 4,7 a 6,6° sob os pés. A 0,30 m, também, a 26,7 a 27,7°. Andando, a cabeça sai debaixo dele em 30 ticks, e ele cai a 0,50 m do eixo, com o domo a 44°: a conta dos 0,495 m (`movimento.md`, "Escorregar da cabeça") |
+| Ticks de chão sem colisão do movimento | 9 de 49 centrado e 8 de 48 a 0,30 m: 2 logo depois do pouso e o resto no passo para fora. Parado sobre a cabeça, o movimento colide com ela em quase todo tick. Com a cabeça andando, 29 de 31. Em todos esses ticks, a sonda só de teste para baixo achou o lutador de baixo |
+| A normal do chão sai igual? | **Sim,** com diferença 0 em todo tick refeito. O domo curvo não deixa estado escondido |
+| A velocidade de plataforma | **0 m/s** em todo tick na cabeça, parada ou andando, com o passo de física ou sem ele, nas duas configurações de camada. O Jolt não dá velocidade a um `CharacterBody3D` cinemático: ninguém é carregado |
+| De onde vinham as 6 e as 32? | Com a reserva do snap da DEC-0037 tirada numa cópia local, desfeita depois, voltam 21 divergências em cada voo da primeira versão do percurso (60 ticks na cabeça): até 6,9 cm centrado e 4,9 cm a 0,30 m, no passo para fora do domo a 6 m/s, e até 1,6 cm com a cabeça andando, 15 das 21 com o de cima na cabeça. Todas começam no tick do contorno D, com o `on_floor` indo de verdadeiro para falso, e saem iguais nas duas configurações de camada, como na F-025 §3 |
+
+**O que isso diz da causa:** a sonda de 0,83 mm do contorno D não alcança o domo, um contato curvo e inclinado, o mesmo caso da cápsula apoiada na quina da beirada. Sem achar o chão, o flag do motor fica em "ar" no primeiro tick refeito, o snap não roda, e o corpo sai do domo um tick antes. A reserva do snap (DEC-0037), que entrou depois da sonda do Desenho 2, já tinha zerado a cabeça. A hipótese do domo curvo acertou o lugar, mas não o mecanismo: a normal sai igual, o que falhava era a sonda alcançar o contato.
+
+**O que isso decidiu:**
+
+- A cabeça não tem estado escondido no código de hoje. A regra da Q-16 é de jogo, não de rede (F-154; F-155).
+- O adaptador precisa da sonda só de teste para baixo, `move_and_collide(DOWN * 0,05, true)`. Há ticks na cabeça em que o chão vem só do snap, e a sonda nomeou o lutador de baixo em todos (`visao-geral.md`, "Os fatos da cabeça").
+- O `platform_floor_layers` só com o cenário e o `PLATFORM_ON_LEAVE_DO_NOTHING` entram como regra escrita (critério 4; F-152), sem mudar nada medido.
+
+**Depois da regra (rodada B, portão de 26/10/2026):** os mesmos voos, agora com o `Fighter.setup` de verdade e as camadas do Godot postas no próprio teste.
+
+- **Não diverge:** 0 divergência em 657 de 657 e em 663 de 663 ticks refeitos.
+- **O de cima pousa e escorrega:** fica 9 ticks na cabeça centrado e 4 a 0,30 m, e sai antes dos 12.
+- **A sonda para baixo nomeia o de baixo em todo tick na cabeça,** 7 de 9 e 3 de 4 vindos só do snap.
+- **As regras nunca ficaram em pé na cabeça.**
+- Desde a rodada B, a sonda afirma esses três: zero divergência, o lutador nomeado em todo tick na cabeça e nenhum tick em pé nela.
+
+### A cabeça no tick e na rede (TASK-10.7)
+
+- **O netfox grava** `:state:slide_off_dir` e `:state:head_landing_tick`, junto com os outros campos do `FighterState` (`fighter/fighter.tscn`). Os fatos da cabeça (`MoveFacts.floor_is_fighter` e `fighter_away`) não entram no estado: o nó os lê de novo em todo tick, refeito ou não, do corpo restaurado.
+- **A sonda para baixo só lê:** um `move_and_collide` de teste, que não move o corpo nem mexe em flag do `CharacterBody3D`, como a sonda da parede. Ela só roda num tick em que o motor diz chão sem colisão de chão no movimento. Correndo no chão plano, isso é quase todo tick, e o custo não foi medido.
+- **O input não muda.** O escorregão é a regra que empurra, e o sinal dele toca uma vez por pouso, pelo `head_landing_tick` (DEC-0031 §6).
+- **A cena `cabeca` da SyncTest** fica no §8.
 
 ## 5. O oponente no passado (DEC-0026 §2)
 
@@ -366,6 +412,10 @@ O modelo bate com o que o Arthur fez a 60 ticks: 72 % sem lag e 13 % com ping 10
     - Com a mira saindo do ponto O (TASK-10.11): os bots miram de O, com o yaw virado de asin(0,8 / D) para o raio passar pelo ponto (`test/support/aim_at.gd`), e a geometria da cena não mudou. No portão de 26/10/2026, os mesmos contadores, `grapple_fires=4 attaches=4 releases_by_distance=2 releases_by_jump=1 releases_by_block=1 misses=1 refused_grapples=1 resimulated_fires=24 bots_done=2 cues_presented=8 cue_events=8`, com 0 divergência em 3.558 conferências, em 1,1 s.
     - Tirar o `:state:grapple_point` do que o netfox grava a faz acusar: 30 divergências em 30 laços.
     - O cabo e o rastro da puxada tocam uma vez por chave: 8 sinais para 4 disparos e 4 puxadas (DEC-0031 §6).
+  - A cabeça veio na TASK-10.7: a cena `cabeca`, num teste próprio, no noroeste vazio da arena, longe das formas dela. Um lutador fica parado; o outro corre, pula, dá o pulo duplo no ápice e pousa na cabeça dele. Lá ele aperta o pulo, que fica na vaga porque os dois pulos já foram, e escorrega. No chão, anda para longe do eixo e faz de novo.
+    - No portão de 26/10/2026: `head_landings=2 slide_offs=2 head_floor_ticks=0 head_slides=2 double_jumps=2 head_jump_refusals=2 bots_done=1 cues_presented=4 cue_events=4` e `collisions=4`, com 0 divergência em 2.514 conferências, em 0,87 s. A sonda C já tinha achado 0 no código de antes da regra (§4, "A sonda C da cabeça").
+    - Tirar o `:state:slide_off_dir` do que o netfox grava a faz acusar: 188 divergências em 100 laços.
+    - O rastro do escorregão toca uma vez por pouso: 4 sinais para 2 pulos duplos e 2 pousos.
   - Desde a TASK-10.1, ela compara o estado inteiro (§4): um campo novo do `FighterState` entra na comparação no dia em que existe, sem ninguém lembrar de pôr.
 - **De tempos em tempos,** o mesmo movimento roda com 2 clientes e o simulador do netfox, para ver a correção com lag. É o `tools/net_run.sh` (§10).
 - **Todo replay de bug vai com o arquivo.** O Sozinho grava cada sessão em `user://replays/`, e o log diz onde (TASK-10.3; `testes-e-entrega.md` §4). Quando o Arthur achar um bug jogando, o arquivo vai junto, e o Claude refaz sem tela com o `tools/replay.sh` (F-044 §1).
@@ -379,7 +429,7 @@ A cena de entrada olha como o jogo foi aberto, como um `main.ts` que lê o `proc
 |---|---|
 | `godot --headless -- --server`, na porta 7777/udp, ou noutra com `--port=N`; ou o build exportado como servidor dedicado, que liga a feature `dedicated_server` e força o modo sem tela ([guia do Godot](https://docs.godotengine.org/en/stable/tutorials/export/exporting_for_dedicated_servers.html)) | **Servidor dedicado:** sem tela e sem lutador próprio; cria um lutador para cada cliente que entra |
 | `godot -- --connect=127.0.0.1`, na porta 7777, ou `--connect=host:porta` | **Cliente** |
-| `godot`, sem argumento | **Sozinho:** o par offline |
+| `godot`, sem argumento | **Sozinho:** o par offline. Desde a TASK-10.7, um boneco parado espera no segundo ponto de nascimento, dirigido por este PC sem câmera, sem teclado e sem bot, no tom do outro lutador; o `--dummy=off` o tira, e o replay grava os dois |
 
 - **Argumento desconhecido, repetido ou fora do modo é erro:** o jogo mostra o uso e sai com o código 2. Um erro de digitação já deixou uma sonda em tela cheia aberta por até 300 s (`.claude/harness/registro.md`, 07/10/2026). O servidor sem o `--headless` também é recusado.
 - **O relógio do netfox:**

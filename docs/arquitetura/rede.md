@@ -224,7 +224,7 @@ O gancho é a primeira regra que pergunta ao cenário algo além do contato do p
 | A mira sai igual no tick novo e no refeito? | **Sim.** 0 divergência em 333 de 333 conferências em cada um dos dois voos, e 0 no corpo e no estado |
 | E num quadro de processo? | **Sim.** 0 divergência em 60 de 60 em cada voo |
 | Acertos e erros | 30 acertos (20 na `WallNorth`, 10 na `WallWest`) e 30 erros (10 atrás, 10 no céu, 10 na quina), nenhum na parede errada; as 10 quinas provadas; os acertos de 8,394 a 17,941 m de O |
-| Quanto custa | 1.000 miras de 25 m, as seis em rodízio, em 10,1 a 10,5 ms, uns 10,3 µs por mira, em três rodadas; só acertos, com os dois raios, 10,7 a 10,8 µs; só erros, um raio, 4,3 a 5,3 µs; só quinas, 10,6 a 12,1 µs. O segundo raio, curto, custa uns 2 µs |
+| Quanto custa | 1.000 miras de 25 m, as seis em rodízio, em 8,7 a 10,5 ms, uns 9 a 10 µs por mira, em quatro rodadas (três do implementer e a do revisor); só acertos, com os dois raios, 10,7 a 10,8 µs; só erros, um raio, 4,3 a 5,3 µs; só quinas, 10,6 a 12,9 µs. O segundo raio, curto, custa uns 2 µs |
 | Por que não há estado escondido | Os dois raios só leem o espaço da física: as paredes nunca se movem, os lutadores não estão na máscara, e a pergunta não mexe em nenhum flag do `CharacterBody3D`, como o raio da cabeça (TASK-10.10) |
 
 Na primeira rodada (24/10/2026), com um raio só, do ombro: as mesmas 333 de 333 e 60 de 60 sem divergência; 36 acertos e 24 erros, de 8,394 a 18,432 m do ombro; 1.000 raios em 7,3 a 7,9 ms, só acertos 8,8 a 9,4 µs.

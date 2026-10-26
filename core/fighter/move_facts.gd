@@ -13,3 +13,10 @@ var velocity := Vector3.ZERO
 # them from the move's own collisions, and during a wall run from its test-only probe.
 var wall_normal := Vector3.ZERO
 var wall_id: StringName = &""
+# Where the feet are after the move, on every tick (DEC-0044 §1).
+var position := Vector3.ZERO
+# The answer to the aim request (DEC-0044 §1), only on a tick whose plan asked: whether the ray
+# from the shoulder along the aim found the world within the grapple's range, and the point it
+# found. Without a request, or on a miss, false and Vector3.ZERO.
+var aim_hit := false
+var aim_point := Vector3.ZERO

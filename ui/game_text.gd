@@ -15,9 +15,13 @@ const HUD_MODE_GROUND := &"HUD_MODE_GROUND"
 const HUD_MODE_AIR := &"HUD_MODE_AIR"
 const HUD_MODE_DASH := &"HUD_MODE_DASH"
 const HUD_MODE_WALL_RUN := &"HUD_MODE_WALL_RUN"
+const HUD_MODE_GRAPPLE := &"HUD_MODE_GRAPPLE"
 # The tenths of a second until the next dash, beside its arc; the message holds the decimal
 # separator of its language (TASK-10.4).
 const HUD_DASH_COOLDOWN := &"HUD_DASH_COOLDOWN"
+# The tenths of a second until the next grapple, beside its arc, with the maneuver's name: its
+# row sits above the dash's (TASK-10.6; visual-e-audio.md, "O gancho na tela").
+const HUD_GRAPPLE_COOLDOWN := &"HUD_GRAPPLE_COOLDOWN"
 # Every row of a replay played in the window has played (--watch; TASK-10.3).
 const REPLAY_ENDED := &"REPLAY_ENDED"
 ## Every key the code shows; StatusMessage and the HUD take no other.
@@ -31,7 +35,9 @@ const KEYS: Array[StringName] = [
 	HUD_MODE_AIR,
 	HUD_MODE_DASH,
 	HUD_MODE_WALL_RUN,
+	HUD_MODE_GRAPPLE,
 	HUD_DASH_COOLDOWN,
+	HUD_GRAPPLE_COOLDOWN,
 	REPLAY_ENDED,
 ]
 ## The messages of each language, by locale.

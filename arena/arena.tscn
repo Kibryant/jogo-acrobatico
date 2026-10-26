@@ -85,6 +85,20 @@ size = Vector3(3.5, 3, 4)
 material = SubResource("StandardMaterial3D_x52g8")
 size = Vector3(3.5, 3, 4)
 
+[sub_resource type="BoxShape3D" id="BoxShape3D_torre"]
+size = Vector3(4, 6, 4)
+
+[sub_resource type="BoxMesh" id="BoxMesh_torre"]
+material = SubResource("StandardMaterial3D_x52g8")
+size = Vector3(4, 6, 4)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_pilar"]
+size = Vector3(2, 10, 2)
+
+[sub_resource type="BoxMesh" id="BoxMesh_pilar"]
+material = SubResource("StandardMaterial3D_x52g8")
+size = Vector3(2, 10, 2)
+
 [sub_resource type="BoxMesh" id="BoxMesh_regua"]
 material = SubResource("StandardMaterial3D_x52g8")
 size = Vector3(0.1, 0.01, 2)
@@ -207,6 +221,33 @@ shape = SubResource("BoxShape3D_patamar")
 
 [node name="Mesh" type="MeshInstance3D" parent="PatamarDoCorredor" unique_id=1102938475]
 mesh = SubResource("BoxMesh_patamar")
+
+[node name="TorreA" type="StaticBody3D" parent="." unique_id=1536181688]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -8, 3, -30)
+
+[node name="Collision" type="CollisionShape3D" parent="TorreA" unique_id=2110681954]
+shape = SubResource("BoxShape3D_torre")
+
+[node name="Mesh" type="MeshInstance3D" parent="TorreA" unique_id=1945113758]
+mesh = SubResource("BoxMesh_torre")
+
+[node name="TorreB" type="StaticBody3D" parent="." unique_id=1039153441]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 12, 3, -30)
+
+[node name="Collision" type="CollisionShape3D" parent="TorreB" unique_id=45999727]
+shape = SubResource("BoxShape3D_torre")
+
+[node name="Mesh" type="MeshInstance3D" parent="TorreB" unique_id=1202704312]
+mesh = SubResource("BoxMesh_torre")
+
+[node name="Pilar10m" type="StaticBody3D" parent="." unique_id=2033065388]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2, 5, -36)
+
+[node name="Collision" type="CollisionShape3D" parent="Pilar10m" unique_id=1141467785]
+shape = SubResource("BoxShape3D_pilar")
+
+[node name="Mesh" type="MeshInstance3D" parent="Pilar10m" unique_id=1773091540]
+mesh = SubResource("BoxMesh_pilar")
 
 [node name="RéguaDoDash" type="Node3D" parent="." unique_id=141947930]
 

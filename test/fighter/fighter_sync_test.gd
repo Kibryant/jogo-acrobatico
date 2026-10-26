@@ -12,7 +12,8 @@
 # prints a summary line that proves its paths ran. The pulo duplo and the dash also check the
 # cues of the maneuvers: played once per event, as many as the events (DEC-0031 §6). The wall
 # scenario, parede (TASK-10.5, criterion 7), runs on walls it builds in the arena, away from the
-# arena's own shapes, and has a test of its own.
+# arena's own shapes, and has a test of its own; so does the grapple's, gancho (TASK-10.6,
+# criterion 8), whose ray the fighter casts again on every resimulated tick that asks for it.
 extends GdUnitTestSuite
 
 const NetfoxTicks := preload("res://test/support/netfox_ticks.gd")
@@ -163,6 +164,41 @@ const BACK_INTO_WEST := Vector3(-1, 0, 1.5)
 const PAREDE_LOOPS := 480
 # The self-test needs only the long runner's entry and a few ticks of its run.
 const PAREDE_SELF_TEST_LOOPS := 80
+
+# Gancho (TASK-10.6, criterion 8): three walls the scenario builds in the arena's empty south-east,
+# away from its shapes and from the towers of TASK-10.6, all faces along X, on a copy of
+# movement_v0.tres whose grapple recharges in 500 ms, 30 ticks, so the scenario stays short. The
+# north wall's face looks south at z = 20, the south wall's looks north at z = 38, both 16 m wide
+# and 10 m tall; between them, a low wall 1 m tall faces south at z = 28 in the east lane only.
+# The west fighter presses the grapple at the sky, a miss; hooks the north wall 5 m up and is
+# released by the distance; presses again in the cooldown, a refusal; and once landed and
+# recharged hooks the south wall and jumps a few ticks into the pull: the release by the jump.
+# The east fighter hooks the north wall low, across the low wall: its ray passes over the low
+# wall, its feet do not, and the stop releases by the block; then it hooks the south wall and is
+# released by the distance (movimento.md, "Gancho").
+const GANCHO_STARTS: Array[Vector3] = [Vector3(24, 0, 34), Vector3(32, 0, 34)]
+const GANCHO_COOLDOWN_MS := 500
+const GANCHO_WALL_X := 28.0
+const GANCHO_WALL_WIDTH := 16.0
+const GANCHO_WALL_HEIGHT := 10.0
+const GANCHO_NORTH_FACE_Z := 20.0
+const GANCHO_SOUTH_FACE_Z := 38.0
+const GANCHO_LOW_WALL := Vector3(32, 0.5, 27.75)
+const GANCHO_LOW_WALL_SIZE := Vector3(4, 1, 0.5)
+# The points the fighters aim at: on the north face 5 m up; on the north face 1,3 m up, so the ray
+# from the shoulder passes 1,47 m over the low wall's top while the feet's line meets its face;
+# and on the south face.
+const GANCHO_NORTH_HIGH := Vector3(24, 5, 20)
+const GANCHO_NORTH_LOW := Vector3(32, 1.3, 20)
+const GANCHO_SOUTH_WEST := Vector3(24, 2.5, 38)
+const GANCHO_SOUTH_EAST := Vector3(32, 3, 38)
+# Degrees: the miss looks this far up, the camera's limit, and the ray finds nothing.
+const SKY_PITCH_DEG := 80.0
+# Ticks of the pull before the west fighter's jump releases it.
+const JUMP_INTO_PULL := 3
+const GANCHO_LOOPS := 300
+# The self-test needs only the east fighter's first fire and a few ticks of its cable.
+const GANCHO_SELF_TEST_LOOPS := 30
 
 # The first tick of the run and the tick of the fighters' first recorded state.
 var _first_tick := 0
@@ -317,6 +353,36 @@ func test_the_wall_scenario_resimulates_with_zero_divergence() -> void:
 # entry brings back the wall of the present on the ticks before it.
 func test_the_wall_id_netfox_does_not_record_makes_the_sync_test_diverge() -> void:
 	var observer := await _parede(PAREDE_SELF_TEST_LOOPS, ":state:wall_id")
+	assert_int(observer.mismatches).is_greater(0)
+
+
+# Criterion 8 of TASK-10.6: the grapple under the rollback of 7 ticks on every tick, with zero
+# divergence in the whole state: four fires, their pulls, the releases by the distance, the jump
+# and the block, a miss at the sky and a press refused in the cooldown. The fighter casts the ray
+# again on every resimulated tick whose plan asks for it, so each fire comes out again on its
+# resimulations (DEC-0044 §1). As many cues as cables and pulls (DEC-0031 §6).
+func test_the_grapple_scenario_resimulates_with_zero_divergence() -> void:
+	var gancho := await _gancho(GANCHO_LOOPS)
+	var message := "%s diverged:\n%s" % [gancho.scenario, "\n".join(gancho.shown)]
+	assert_int(gancho.mismatches).override_failure_message(message).is_equal(0)
+	assert_int(gancho.paths["grapple_fires"]).is_greater_equal(4)
+	assert_int(gancho.paths["attaches"]).is_greater_equal(3)
+	assert_int(gancho.paths["releases_by_distance"]).is_greater_equal(1)
+	assert_int(gancho.paths["releases_by_jump"]).is_greater_equal(1)
+	assert_int(gancho.paths["releases_by_block"]).is_greater_equal(1)
+	assert_int(gancho.paths["misses"]).is_greater_equal(1)
+	assert_int(gancho.paths["refused_grapples"]).is_greater_equal(1)
+	# Every fire came out again when its tick was simulated again: the ray was cast again there.
+	assert_int(gancho.paths["resimulated_fires"]).is_greater_equal(gancho.paths["grapple_fires"])
+	assert_int(gancho.paths["bots_done"]).is_equal(GANCHO_STARTS.size())
+	_assert_cues(gancho, gancho.paths["grapple_fires"] + gancho.paths["attaches"])
+
+
+# The grapple's point in the state: out of the recording, a rollback across the fire brings the
+# point of the present back on the ticks before it, where the fresh state had none.
+func test_the_grapple_point_netfox_does_not_record_makes_the_sync_test_diverge() -> void:
+	var observer := await _gancho(GANCHO_SELF_TEST_LOOPS, ":state:grapple_point")
+	assert_int(observer.paths["grapple_fires"]).is_greater_equal(1)
 	assert_int(observer.mismatches).is_greater(0)
 
 
@@ -480,6 +546,63 @@ func _parede(loops: int, hidden := "") -> SyncObserver:
 	return _finish(observer, game_match)
 
 
+func _gancho(loops: int, hidden := "") -> SyncObserver:
+	var game_match := await _match_with(GANCHO_STARTS, hidden, _gancho_data())
+	_build_gancho(game_match.arena)
+	var config := game_match.config
+	var bots: Array[DashBot] = [
+		WestHookBot.new(game_match.fighters[0], config),
+		EastHookBot.new(game_match.fighters[1], config),
+	]
+	var scenario := "gancho" if hidden.is_empty() else "gancho without " + hidden
+	var observer := _start(game_match, scenario)
+	var grapples := Grapples.new(game_match.fighters, config)
+	for _loop: int in loops:
+		for bot: DashBot in bots:
+			bot.drive()
+		NetfoxTicks.run_loop()
+	grapples.stop()
+	grapples.add_to(observer.paths)
+	observer.paths["bots_done"] = 0
+	for bot: DashBot in bots:
+		observer.paths["bots_done"] += 1 if bot.done() else 0
+	_add_cues(observer, game_match)
+	return _finish(observer, game_match)
+
+
+# The walls of gancho, built in the arena at run time on the world's layer.
+func _build_gancho(arena: Arena) -> void:
+	var wide := Vector3(GANCHO_WALL_WIDTH, GANCHO_WALL_HEIGHT, PAREDE_THICKNESS)
+	var half := PAREDE_THICKNESS / 2.0
+	var middle := GANCHO_WALL_HEIGHT / 2.0
+	_gancho_box(
+		arena,
+		&"GanchoNorte",
+		Vector3(GANCHO_WALL_X, middle, GANCHO_NORTH_FACE_Z - half),
+		wide,
+	)
+	_gancho_box(
+		arena,
+		&"GanchoSul",
+		Vector3(GANCHO_WALL_X, middle, GANCHO_SOUTH_FACE_Z + half),
+		wide,
+	)
+	_gancho_box(arena, &"GanchoMureta", GANCHO_LOW_WALL, GANCHO_LOW_WALL_SIZE)
+
+
+func _gancho_box(arena: Arena, wall_name: StringName, center: Vector3, size: Vector3) -> void:
+	var body := StaticBody3D.new()
+	body.name = wall_name
+	body.collision_layer = PhysicsLayers.WORLD
+	body.position = center
+	var collision := CollisionShape3D.new()
+	var shape := BoxShape3D.new()
+	shape.size = size
+	collision.shape = shape
+	body.add_child(collision)
+	arena.add_child(body)
+
+
 # The walls of parede, built in the arena at run time on the world's layer, so their paths
 # relative to it are their names (DEC-0042 §2).
 func _build_parede(arena: Arena) -> void:
@@ -546,6 +669,19 @@ func _dash_bar() -> MovementData:
 	var data := copy as MovementData
 	data.stamina_max = DASH_BAR
 	assert_array(data.validate()).override_failure_message("the dash's bar").is_empty()
+	return data
+
+
+# The movement numbers of gancho: a copy of movement_v0.tres whose grapple recharges in 500 ms,
+# checked like any design data.
+func _gancho_data() -> MovementData:
+	var resource: Resource = load(Match.MOVEMENT_DATA_PATH)
+	assert(resource is MovementData, "%s must load as a MovementData" % Match.MOVEMENT_DATA_PATH)
+	var copy := resource.duplicate()
+	assert(copy is MovementData, "a copy of a MovementData is a MovementData")
+	var data := copy as MovementData
+	data.grapple_cooldown_ms = GANCHO_COOLDOWN_MS
+	assert_array(data.validate()).override_failure_message("the grapple's fixture").is_empty()
 	return data
 
 
@@ -1471,3 +1607,249 @@ class Walls:
 				if path == state.wall_id and same_face:
 					return true
 		return false
+
+
+# A scripted player of the grapple: the dash bot's floor and numbers, and the camera aimed from
+# the shoulder at a point, as the mouse would aim it, with the press of the Q.
+class HookBot:
+	extends DashBot
+
+	var _pressed_tick := FighterState.NEVER
+
+
+	# Samples a frame whose camera looks from the shoulder through point, no push, and presses the
+	# grapple: its press is this loop's tick.
+	func _hook(point: Vector3) -> void:
+		var shoulder := fighter.position + Vector3.UP * _config.aim_height
+		var toward := (point - shoulder).normalized()
+		fighter.input.sample_frame(Vector2.ZERO, atan2(-toward.x, -toward.z), asin(toward.y))
+		fighter.input.press_grapple()
+		_pressed_tick = NetworkTime.tick
+
+
+	# The camera at its highest, looking north: the ray climbs 24,6 m over the 4,3 m it goes
+	# forward, far above every wall, and finds nothing.
+	func _look_at_the_sky() -> void:
+		fighter.input.sample_frame(Vector2.ZERO, 0.0, deg_to_rad(SKY_PITCH_DEG))
+
+
+	func _released() -> bool:
+		return fighter.state.grapple_end_tick != FighterState.NEVER
+
+
+	func _recharged_and_rested() -> bool:
+		var state := fighter.state
+		var recharged := NetworkTime.tick - state.grapple_end_tick >= _config.grapple_cooldown_ticks
+		return state.on_floor and _floor_ticks > REST_TICKS and recharged
+
+
+# The west lane: a miss at the sky, a pull released by the distance at the north wall, a press
+# refused in the cooldown, then a pull toward the south wall released by a jump.
+class WestHookBot:
+	extends HookBot
+
+	enum Step {
+		STAND,
+		MISS,
+		NORTH,
+		REFUSE,
+		LAND,
+		SOUTH,
+		JUMP_OFF,
+		DONE,
+	}
+
+	var _step := Step.STAND
+	var _released_at := FighterState.NEVER
+
+
+	func done() -> bool:
+		return _step == Step.DONE
+
+
+	func drive() -> void:
+		_track_floor()
+		var state := fighter.state
+		match _step:
+			Step.STAND:
+				if _floor_ticks > REST_TICKS:
+					_look_at_the_sky()
+					fighter.input.press_grapple()
+					_pressed_tick = NetworkTime.tick
+					_step = Step.MISS
+					return
+			Step.MISS:
+				# The press asks on every tick of its window: the camera stays on the sky.
+				if NetworkTime.tick - _pressed_tick <= _config.buffer_ticks + 1:
+					_look_at_the_sky()
+					return
+				_hook(GANCHO_NORTH_HIGH)
+				_step = Step.NORTH
+				return
+			Step.NORTH:
+				if _released():
+					_released_at = state.grapple_end_tick
+					_step = Step.REFUSE
+			Step.REFUSE:
+				# Two ticks after the release, deep in the cooldown: the press waits and dies.
+				if NetworkTime.tick - _released_at == 2:
+					_hook(GANCHO_SOUTH_WEST)
+					_step = Step.LAND
+					return
+			Step.LAND:
+				if _recharged_and_rested():
+					_hook(GANCHO_SOUTH_WEST)
+					_step = Step.SOUTH
+					return
+			Step.SOUTH:
+				var pulling := state.mode == FighterState.Mode.GRAPPLE
+				if pulling and NetworkTime.tick - state.mode_since == JUMP_INTO_PULL:
+					fighter.input.press_jump()
+					_step = Step.JUMP_OFF
+			Step.JUMP_OFF:
+				if state.on_floor and _floor_ticks > REST_TICKS:
+					_step = Step.DONE
+		run(Vector3.ZERO)
+
+
+# The east lane: a pull across the low wall that the stop releases by the block, then a pull
+# toward the south wall released by the distance.
+class EastHookBot:
+	extends HookBot
+
+	enum Step {
+		STAND,
+		BLOCKED,
+		LAND,
+		SOUTH,
+		DONE,
+	}
+
+	var _step := Step.STAND
+
+
+	func done() -> bool:
+		return _step == Step.DONE
+
+
+	func drive() -> void:
+		_track_floor()
+		match _step:
+			Step.STAND:
+				if _floor_ticks > REST_TICKS:
+					_hook(GANCHO_NORTH_LOW)
+					_step = Step.BLOCKED
+					return
+			Step.BLOCKED:
+				if _released():
+					_step = Step.LAND
+			Step.LAND:
+				if _recharged_and_rested():
+					_hook(GANCHO_SOUTH_EAST)
+					_step = Step.SOUTH
+					return
+			Step.SOUTH:
+				var end := fighter.state.grapple_end_tick
+				if end > _pressed_tick and fighter.state.on_floor and _floor_ticks > REST_TICKS:
+					_step = Step.DONE
+		run(Vector3.ZERO)
+
+
+# Counts the grapple's paths of the fighters on netfox's after_process_tick, which comes after
+# every fighter of the tick has moved: on a fresh tick, the fires, the pulls' starts, the releases
+# by their cause, the misses and the refusals, from the state after the tick and the one before
+# it; on a resimulated tick, the fires that came out again, which only a ray cast again can give
+# (DEC-0044 §1). A release is by the jump when the tick's own input pressed it, by the distance
+# when the feet started the tick within the release distance, otherwise by the block
+# (movimento.md, "Gancho": "Como solta", "Trava").
+class Grapples:
+	var grapple_fires := 0
+	var attaches := 0
+	var releases_by_distance := 0
+	var releases_by_jump := 0
+	var releases_by_block := 0
+	## Legal presses whose window closed with no fire: every tick of it asked and found nothing.
+	var misses := 0
+	## Presses kept in the slot while the grapple could not fire: the cooldown, or a cable out.
+	var refused_grapples := 0
+	var resimulated_fires := 0
+
+	var _fighters: Array[Fighter] = []
+	var _config: MovementConfig
+	var _before: Array[FighterState] = []
+	var _feet_before: Array[Vector3] = []
+	var _newest: int
+
+
+	func _init(fighters: Array[Fighter], config: MovementConfig) -> void:
+		_fighters.assign(fighters)
+		_config = config
+		for fighter: Fighter in fighters:
+			_before.append(fighter.state.copy())
+			_feet_before.append(fighter.position)
+		_newest = NetworkTime.tick - 1
+		NetworkRollback.after_process_tick.connect(_observe)
+
+
+	func stop() -> void:
+		NetworkRollback.after_process_tick.disconnect(_observe)
+
+
+	func add_to(paths: Dictionary[String, int]) -> void:
+		paths["grapple_fires"] = grapple_fires
+		paths["attaches"] = attaches
+		paths["releases_by_distance"] = releases_by_distance
+		paths["releases_by_jump"] = releases_by_jump
+		paths["releases_by_block"] = releases_by_block
+		paths["misses"] = misses
+		paths["refused_grapples"] = refused_grapples
+		paths["resimulated_fires"] = resimulated_fires
+
+
+	func _observe(tick: int) -> void:
+		var fresh := tick > _newest
+		if fresh:
+			_newest = tick
+		for index: int in _fighters.size():
+			var fighter := _fighters[index]
+			var state := fighter.state
+			if not fresh:
+				if state.grapple_fired_tick == tick:
+					resimulated_fires += 1
+				continue
+			if state.grapple_fired_tick == tick:
+				grapple_fires += 1
+			if state.mode == FighterState.Mode.GRAPPLE and state.mode_since == tick:
+				attaches += 1
+			if state.grapple_end_tick == tick:
+				_note_release(fighter, index)
+			_note_presses(state, _before[index], tick)
+			_before[index] = state.copy()
+			_feet_before[index] = fighter.position
+
+
+	func _note_release(fighter: Fighter, index: int) -> void:
+		var before := _before[index]
+		var reach := _feet_before[index].distance_to(before.grapple_point)
+		if fighter.input.to_tick_input().jump:
+			releases_by_jump += 1
+		elif reach <= _config.grapple_release_distance:
+			releases_by_distance += 1
+		else:
+			releases_by_block += 1
+
+
+	func _note_presses(state: FighterState, before: FighterState, tick: int) -> void:
+		var pressed := state.buffered_command == FighterCommand.GRAPPLE
+		if pressed and state.buffered_tick == tick:
+			if not Movement.can_grapple(state, tick, _config):
+				refused_grapples += 1
+		var waited := before.buffered_command == FighterCommand.GRAPPLE
+		var gone := state.buffered_command == FighterCommand.NONE
+		var no_fire := state.grapple_fired_tick == FighterState.NEVER
+		var closed := tick - before.buffered_tick > _config.buffer_ticks
+		if (
+			waited and gone and no_fire and closed
+			and Movement.can_grapple(before, tick - 1, _config)
+		):
+			misses += 1

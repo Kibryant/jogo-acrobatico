@@ -1,6 +1,6 @@
 ---
-revisado_em: 2026-10-23
-fontes: [F-001, F-005, F-007, F-023, F-024, F-025, F-026, F-027, F-028, F-029, F-030, F-032, F-033, F-034, F-036, F-042, F-044, F-046, F-073, F-084, F-085, F-087, F-088, F-089, F-091, F-092, F-093, F-095, F-097, F-101, F-112, F-121, F-122, F-129]
+revisado_em: 2026-10-26
+fontes: [F-001, F-005, F-007, F-023, F-024, F-025, F-026, F-027, F-028, F-029, F-030, F-032, F-033, F-034, F-036, F-042, F-044, F-046, F-073, F-084, F-085, F-087, F-088, F-089, F-091, F-092, F-093, F-095, F-097, F-101, F-112, F-121, F-122, F-129, F-140, F-141, F-143]
 ---
 
 # Rede
@@ -9,6 +9,7 @@ Estado atual: o Desenho 3 (TASK-5) fechado, com as DEC-0023 a DEC-0026, a DEC-00
 
 - A parte 3 do esqueleto andante levou o servidor para a build e para o contêiner do CI, testado em todo push da main e em todo PR (TASK-9; DEC-0032 §1; §10).
 - A TASK-10.1 trouxe o pulo duplo e a stamina, e a SyncTest passou a comparar o estado inteiro (§4).
+- A TASK-10.6 trouxe o gancho, a primeira regra que pergunta ao cenário de dentro do tick, pelo pedido de mira: a sonda B rodou antes de qualquer regra, e a cena `gancho` entrou na SyncTest (§4; §8; DEC-0044).
 - A compensação e a detecção do golpe nascem com a espada: local na fase 2, em rede na fase 3 (F-023 §3).
 - A versão visual e interativa deste documento é a vitrine [A rede por dentro](https://claude.ai/artifact/Sb4Q5e4M16UymdoaR9UAzp), privada (DEC-0019), na versão 9.
 
@@ -67,15 +68,15 @@ O input é o pedido do jogador para o tick, como o corpo de uma requisição: o 
 | `move` | Para onde andar, até 1, relativo à câmera; a média das amostras dos frames do tick, o padrão do netfox para entrada contínua. Desde a DEC-0040, o teclado dá uma amostra por passo de física, e a média é de uma amostra num tick normal | esqueleto andante |
 | `yaw` | Para onde a câmera olha; a última amostra dos frames do tick | esqueleto andante |
 | `jump` | Um toque | esqueleto andante |
-| `pitch` | A mira na vertical, para o gancho | fase 1 |
+| `pitch` | A mira na vertical, em rad, positiva para cima; a câmera a limita a 80° para cima e para baixo (`movimento.md`, "Câmera"). A última amostra dos frames, como o `yaw`. O gancho mira por `Aim.direction(yaw, pitch)` (DEC-0044 §2) | TASK-10.6 |
 | `dash` | Um toque: o Shift esquerdo, por posição física (F-121). Entra na vaga antes do pulo, então o pulo vence um empate no mesmo tick (DEC-0039 §4) | TASK-10.4 |
-| `grapple` | Um toque | fase 1 |
+| `grapple` | Um toque: o Q, por posição física (F-140 §1). Entra na vaga antes do dash e do pulo, então no mesmo tick vence o pulo, depois o dash, depois o gancho (DEC-0039 §4; `movimento.md`, "Perdão") | TASK-10.6 |
 | `light`, `parry`, `dodge`, `feint`, `swap` | Um toque | fase 2 |
 | `heavy`, `block` | Segurar | fase 2 |
 | `view_lag` | Quão velho estava o oponente na tela, em ticks (§6) | fase 3 |
 
 - **O comando de um toque** fica guardado entre os frames e é consumido depois de cada tick. Assim, vale no máximo um tick, mesmo quando um frame roda dois ticks para alcançar o relógio. É o padrão do exemplo [`one-off-input.gd`](https://github.com/foxssake/netfox/blob/cf5189d18e98766022c8c1c5e637a6a30c4c3703/examples/snippets/input-gathering-tutorial/one-off-input.gd), que consome no `after_tick` (guia `input-gathering-tips-and-tricks.md`).
-- **O `yaw` e o `pitch` são ângulos,** e a média simples erra quando o ângulo dá a volta em 360°. O `yaw` entra no tick pela última amostra, que é para onde a câmera olha agora (TASK-9, escolha 1; F-084 §4). O `pitch` nasce na fase 1.
+- **O `yaw` e o `pitch` são ângulos,** e a média simples erra quando o ângulo dá a volta em 360°. O `yaw` entra no tick pela última amostra, que é para onde a câmera olha agora (TASK-9, escolha 1; F-084 §4). O `pitch` entra do mesmo jeito desde a TASK-10.6: a mira de um tick é para onde a câmera olha agora, e não uma média de onde olhou (`fighter/input_sampler.gd`).
 - **O buffer de 150 ms** (`movimento.md`) não mora no input: o núcleo guarda o carimbo do aperto no estado (DEC-0022).
 
 **A configuração do netfox:** tudo fica no padrão, e o teste de configurações guarda cada valor (DEC-0026).
@@ -92,7 +93,7 @@ O input é o pedido do jogador para o tick, como o corpo de uma requisição: o 
 - Input que chega para um tick que o servidor já guardou não substitui o guardado (`_merge_snapshot`): ninguém reescreve o próprio passado.
 - Input mais velho que o histórico é descartado com um aviso (`_merge_history`).
 
-**A banda de subida:** cada cliente sobe uns 6,3 kB/s a 30 ticks e 12,4 a 60, com qualquer ping, por causa da redundância de 3 ticks (F-034 §3).
+**A banda de subida:** cada cliente sobe uns 6,3 kB/s a 30 ticks e 12,4 a 60, com qualquer ping, por causa da redundância de 3 ticks (F-034 §3). Na TASK-10.6, o input ganhou um float e um bool por tick. A banda não foi medida de novo; o `net_run` de 26/10/2026 passou sem nenhum tick corrigido (§10).
 
 ## 4. O rollback (DEC-0025)
 
@@ -160,7 +161,7 @@ O teste é mais duro que a rede: ele força o rollback a cada tick. As mediçõe
 - **A cena do dash** (TASK-10.4, critério 6): dois lutadores numa cópia do `movement_v0.tres` com a barra de 20, então um dash de 15 deixa no máximo 5, e a barra só paga o próximo 68 ticks depois. Um sai da plataforma num dash pela crista e desce a rampa de 45° sem tick no ar, volta, sai da beirada num dash, e pula apertando o dash logo antes do pouso, que fica na vaga e sai no primeiro tick no chão. O outro dá um dash contra a face do bloco de 2 m, aperta na recarga e com a barra curta, as duas recusas, dá um dash no plano com o pulo apertado perto do fim, que sai no primeiro tick depois dele, e aperta o dash 3 ticks antes de a barra pagar, um aperto que a vaga guarda até lá. Com a barra de 20, a recarga de 36 ticks sempre acaba antes da barra, então o aperto guardado na recarga é recusado por ela e não chega a sair.
 - **O sinal da manobra sob rollback** (DEC-0031 §6): nas cenas do pulo duplo e do dash, ela confere que os sinais apresentados pelo `ManeuverCues` são tantos quanto os eventos dos ticks novos, e tantos quanto as manobras: 3 de 3 no pulo duplo e 6 de 6 no dash, com cada tick refeito até 7 vezes (TASK-10.4, critério 5).
 - As seis cenas dão zero divergência em uns 4,1 s no portão em silêncio (TASK-10.4); as cinco da TASK-10.1 levavam 3,9 a 4,3 s, e 1,7 s no Linux do CI. O tempo aparece em toda rodada do portão, sem trava (F-087 §1).
-- Quatro autotestes tiram um campo do que o netfox grava e exigem que ela acuse: o `on_floor`, o `stamina_at_spend`, o `double_jump_tick` e o `dash_tick` (TASK-10.4). A TASK-10.5 somou o quinto, o `wall_id`, na cena `parede`. Os três últimos só acusam porque ela compara o estado inteiro: com a comparação da TASK-9, o campo esquecido passaria calado (TASK-10.1).
+- Quatro autotestes tiram um campo do que o netfox grava e exigem que ela acuse: o `on_floor`, o `stamina_at_spend`, o `double_jump_tick` e o `dash_tick` (TASK-10.4). A TASK-10.5 somou o quinto, o `wall_id`, na cena `parede`, e a TASK-10.6, o sexto, o `grapple_point`, na cena `gancho` (§8). Os três últimos só acusam porque ela compara o estado inteiro: com a comparação da TASK-9, o campo esquecido passaria calado (TASK-10.1).
 - Na beirada, ela achou a cápsula apoiada na quina, que a sonda do Desenho 3 não via (DEC-0037).
 
 ### A sonda A da parede (TASK-10.5, critério 1; DEC-0042 §4)
@@ -200,6 +201,45 @@ A parede é o primeiro fato do motor lido além do chão, e o chão tinha estado
 - **O raio acima da cabeça (TASK-10.10):** além do contato, o nó pergunta ao motor, com `intersect_ray` no `PhysicsDirectSpaceState3D`, se há uma face no mesmo plano (a até 10°) a 2,1 m dos pés, 30 cm acima da cabeça, a até o raio mais 5 cm do eixo; a máscara é só a do mundo, sem lutadores. Sem a face, o nó não entrega a parede ao núcleo: a entrada é recusada, e a corrida termina como na borda. O núcleo e o estado não mudam. A pergunta só lê o espaço da física, que nas paredes nunca se move, e não mexe em nenhum flag do `CharacterBody3D`; o resultado sai igual no tick refeito. No portão de 24/10/2026, o teste de motor (`test/fighter/wall_head_ray_test.gd`: o bloco de 2 m recusa, a parede de 4 m e a pilha de dois blocos aceitam, e a corrida termina a 6,7 cm do degrau de 4 para 2 m) e o teste da arena (`test/arena/arena_wall_cover_test.gd`: o `Block1m` e o `Block2m` recusam a 0,15, 0,5 e 1,2 m e no pulo dado do chão encostado neles, o `Block3m` aceita a 0,5 m e recusa a 1,2 m, a `ParedeLonga` e o corredor aceitam) deram 0 divergência da resposta do raio, do corpo e do estado, com o rollback de 7 ticks a cada loop, de 93 a 273 conferências por voo.
 - **O input não muda:** a corrida e o pulo da parede usam o `Input:move`, o `Input:yaw` e o `Input:jump` de sempre; durante a corrida, o input de direção é ignorado.
 - **A cena `parede` da SyncTest** (critério 7): dois lutadores, no canto noroeste da arena, em paredes que a cena constrói em tempo de execução, longe das formas da arena. Um corre a parede longa, de dois blocos com uma emenda em z = 26, até o fim por tempo; o outro sobe o corredor de 3,5 m alternando as paredes, faz o pulo duplo de volta para a mesma parede, que recusa, e depois sai pela borda da parede leste. No portão de 23/10/2026: `wall_entries=5 wall_timeouts=1 edge_exits=1 wall_jumps=3 wall_to_wall=2 same_wall_refusals=1 double_jumps_after_wall=1 seams=1 bots_done=2 cues_presented=4 cue_events=4`, com 0 divergência em 4.998 conferências, em uns 2,2 s com o PC ocupado. Tirar o `:state:wall_id` do que o netfox grava a faz acusar: 30 divergências. A TASK-10.10 deu ao corredor da parede longa uma volta: depois da corrida longa, ele volta à parede correndo para o sul e pula com a tecla para o norte. No portão de 24/10/2026: `wall_entries=6 wall_timeouts=1 edge_exits=1 wall_jumps=4 wall_to_wall=2 same_wall_refusals=1 double_jumps_after_wall=1 seams=1 turned_wall_jumps=1 bots_done=2 cues_presented=11 cue_events=11`, com 0 divergência em 5.718 conferências; os sinais agora contam também o rastro de cada corrida.
+
+### A sonda B da mira (TASK-10.6, critério 1; DEC-0044 §4)
+
+O gancho é a primeira regra que pergunta ao cenário algo além do contato do próprio movimento: o que tem na mira, a até 25 m. Por isso a sonda B rodou antes de qualquer regra do gancho, como a sonda A antes da parede (DEC-0042 §4). Ela fica no portão (`test/fighter/aim_probe_test.gd`).
+
+**Como ela mede:**
+
+- **O lutador é o de verdade:** o `fighter.tscn`, no tick do netfox avançado à mão e com o rollback de 7 ticks a cada loop. O observador da SyncTest compara junto o corpo e o estado inteiro.
+- **O corpo anda:** uma cópia da configuração sem gravidade faz o lutador voar a 8 m/s sem perder altura. O ombro muda de lugar a cada tick, de x = −4 a 3,87.
+- **O mundo é de teste:** a `WallNorth`, 15 m à frente; a `WallWest`, de 8 a 16 m à esquerda; e a `WallFar`, 28 m atrás, além do alcance.
+- **A mira viaja no input:** cinco miras em rodízio, uma por tick, entram pelo `sample_frame`, como a câmera. O netfox as grava em `Input:yaw` e `Input:pitch` e as restaura em cada tick refeito. Duas miram a `WallNorth`, uma a `WallWest`, e duas erram: para trás, na `WallFar` além dos 25 m, e para o céu.
+- **O raio é o do adaptador** (DEC-0044 §1): `intersect_ray` do ombro, 1,6 m acima dos pés, 25 m por `Aim.direction(yaw, pitch)`, só na máscara do mundo e sem o RID do próprio corpo.
+- **O que se compara:** acertou, o ponto, a normal e o caminho do colisor relativo à `Arena`. O tick refeito tem de dar o do tick novo: o ombro, o ponto e a normal até 0,000001, e o resto igual. O mesmo raio, lançado de novo depois de um quadro de processo, como a mira da tela lança, também.
+- **Dois jeitos de rodar:** com um passo de física e um quadro de processo entre dois laços, como o jogo (DEC-0040), e com todos os laços num quadro de física só, como a SyncTest.
+- **As precondições,** provadas em cada voo: o netfox refez todo tick devido, houve acerto e erro, e cada mira achou a parede que devia.
+
+**O que ela achou (24/10/2026):**
+
+| Pergunta | Resposta |
+|---|---|
+| O raio sai igual no tick novo e no refeito? | **Sim.** 0 divergência em 333 de 333 conferências em cada um dos dois voos, e 0 no corpo e no estado |
+| E num quadro de processo? | **Sim.** 0 divergência em 60 de 60 em cada voo |
+| Acertos e erros | 36 acertos (24 na `WallNorth`, 12 na `WallWest`) e 24 erros, nenhum na parede errada; os acertos de 8,394 a 18,432 m do ombro |
+| Quanto custa | 1.000 raios de 25 m em 7,3 a 7,9 ms, uns 7,6 µs por raio; só acertos, 8,8 a 9,4 µs; só erros, 4,4 a 5,3 µs |
+| Por que não há estado escondido | O raio só lê o espaço da física: as paredes nunca se movem, os lutadores não estão na máscara, e a pergunta não mexe em nenhum flag do `CharacterBody3D`, como o raio da cabeça (TASK-10.10) |
+
+**O que isso decidiu:**
+
+- O pedido de mira fica no tick (DEC-0044 §1). A reserva, o raio no `_process` com o acerto no input, não entra.
+- **O custo com 16 lutadores** (DEC-0004, regra 6): no pior caso, todos têm um aperto esperando, e um laço com rollback de 7 ticks lança um raio por tick refeito, 16 × 7 × 9 µs ≈ 1 ms, 6 % de um tick de 16,7 ms. Só acontece nos 150 ms em que o aperto espera.
+
+### O gancho no tick e na rede (TASK-10.6; DEC-0044)
+
+- **O pedido de mira:** o `before_move` liga o `MovePlan.aim_request` em todo tick em que a vaga guarda um aperto de gancho que pode sair (`Movement.can_grapple`): fora do dash e da puxada, sem cabo no ar e com a recarga livre. O nó move, lê a parede e preenche o `MoveFacts.position` em todo tick. Só com o pedido, ele lança o raio do ombro pelo `yaw` e pelo `pitch` do input do tick (`Fighter.aim_ray`). O `after_move` dispara se o ponto está de 3 a 25 m do ombro (`Movement.in_reach`).
+- **Cada tick refeito lança o raio de novo,** com o corpo e o input restaurados. Na cena `gancho` (§8), cada um dos 4 disparos saiu de novo nos seus 6 ticks refeitos: 24 vezes, o que só um raio lançado de novo dá.
+- **O netfox grava** `:state:grapple_fired_tick`, `:state:grapple_point` e `:state:grapple_end_tick`, e o input em `Input:pitch` e `Input:grapple` (`fighter/fighter.tscn`). Nenhum RID entra no estado: o ponto é um `Vector3`.
+- **A mira da tela** lança outro raio, só da tela, do ombro exibido, pela câmera, a cada quadro. Ela lê as mesmas regras públicas do núcleo, `Movement.can_grapple` e `Movement.in_reach`, e nunca entra no estado (`visual-e-audio.md`, "O gancho na tela").
+- **A previsão, na fase 3:** hoje nenhum lutador prevê input (DEC-0026 §2), então o servidor só simula um lutador num tick cujo input chegou. Um tick previsto reaproveita o último input, e um `grapple` de um toque dispararia de novo nele. A fase 3 decide o raio nesses ticks (DEC-0044, "Consequências"; TASK-10.6, "Fora do escopo").
+- **Na rede:** o `net_run` de 26/10/2026, a ping 100, passou com o input novo, sem nenhum tick corrigido nem faltando (§10). O bot da rede ainda não usa o gancho (TASK-10.8).
 
 ## 5. O oponente no passado (DEC-0026 §2)
 
@@ -319,6 +359,10 @@ O modelo bate com o que o Arthur fez a 60 ticks: 72 % sem lag e 13 % com ping 10
 - **A SyncTest no CI** cobre cada manobra nova, parede, gancho e dash, no dia em que ela nasce. É o jeito de achar estado escondido enquanto ele ainda é pequeno: o Mortal Kombat precisou mexer fundo na engine porque adaptou o rollback depois (F-007 §2).
   - O pulo duplo e a stamina foram os primeiros, na TASK-10.1: a cena do pulo duplo e os dois venenos da §4.
   - O dash veio na TASK-10.4: a cena do dash, o veneno do `dash_tick` e os sinais das manobras contados sob rollback (§4).
+  - O gancho veio na TASK-10.6: a cena `gancho`, num teste próprio, com paredes que ela constrói na arena, longe das formas dela, numa cópia do `movement_v0.tres` com a recarga de 500 ms, para a cena ficar curta. Um lutador erra no céu, é solto pela distância, tem um aperto recusado na recarga e é solto pelo pulo. O outro é solto pela trava, contra uma mureta de 1 m que o raio passa por cima e os pés não, e depois pela distância.
+    - No portão de 26/10/2026: `grapple_fires=4 attaches=4 releases_by_distance=2 releases_by_jump=1 releases_by_block=1 misses=1 refused_grapples=1 resimulated_fires=24 bots_done=2 cues_presented=8 cue_events=8`, com 0 divergência em 3.558 conferências, em uns 1,4 s.
+    - Tirar o `:state:grapple_point` do que o netfox grava a faz acusar: 30 divergências em 30 laços.
+    - O cabo e o rastro da puxada tocam uma vez por chave: 8 sinais para 4 disparos e 4 puxadas (DEC-0031 §6).
   - Desde a TASK-10.1, ela compara o estado inteiro (§4): um campo novo do `FighterState` entra na comparação no dia em que existe, sem ninguém lembrar de pôr.
 - **De tempos em tempos,** o mesmo movimento roda com 2 clientes e o simulador do netfox, para ver a correção com lag. É o `tools/net_run.sh` (§10).
 - **Todo replay de bug vai com o arquivo.** O Sozinho grava cada sessão em `user://replays/`, e o log diz onde (TASK-10.3; `testes-e-entrega.md` §4). Quando o Arthur achar um bug jogando, o arquivo vai junto, e o Claude refaz sem tela com o `tools/replay.sh` (F-044 §1).
@@ -475,6 +519,7 @@ O `tools/net_run.sh [ping]` roda um servidor sem tela e dois clientes sem tela c
 | Fechamento da rodada C2, 17/10/2026 | 1.852 ticks conferidos, 0 corrigidos | 1.850 conferidos, 0 corrigidos | 10,00 m |
 | Revisão da parte 2, 18/10/2026 | 1.852 conferidos, 0 corrigidos | 1.846 conferidos, 0 corrigidos | 10,00 m |
 | TASK-10.4, rodada B, 23/10/2026, com o dash no meio de cada trecho | 1.818 conferidos, 0 corrigidos | 1.815 conferidos, 0 corrigidos | 10,00 m |
+| TASK-10.6, rodada C, 26/10/2026, com o `pitch` e o `grapple` no input; o bot não usa o gancho | 1.875 conferidos, 0 corrigidos, 0 faltando | 1.866 conferidos, 0 corrigidos, 0 faltando | 10,00 m |
 
 A primeira corrida achou 13 ticks corrigidos: o lutador do cliente nascia um tick antes do servidor (§9, o nascimento do lutador).
 

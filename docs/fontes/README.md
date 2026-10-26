@@ -142,3 +142,10 @@ O que chegou ao projeto e como chegou. Uma fonte não muda: só mudam `status`, 
 | [F-136](F-136-arthur-aprova-o-plano-do-ajuste-da-parede.md) | 2026-10-24 | O Arthur aprova o plano da TASK-10.10, o ajuste da parede, no plan mode: a volta, o raio da cabeça, a cápsula que inclina e a métrica do corredor |
 | [F-137](F-137-arthur-joga-o-ajuste-da-parede.md) | 2026-10-24 | O Arthur joga o ajuste da parede, acha que ficou excelente e pede retorno visual para tudo daqui para frente |
 | [F-138](F-138-arthur-libera-push-e-merge-da-task-10-10.md) | 2026-10-24 | O Arthur libera subir a branch da TASK-10.10, abrir o PR e fazer o merge |
+| [F-139](F-139-arthur-decide-que-toda-manobra-nasce-com-o-seu-sinal.md) | 2026-10-24 | O Arthur decide que toda manobra nasce com o seu sinal visual e abre a TASK-10.6 em outra sessão |
+| [F-140](F-140-arthur-abre-a-task-10-6-e-escolhe-a-conferencia-aberta.md) | 2026-10-24 | O Arthur abre a TASK-10.6, escolhe o Q para o gancho, erra três conferências de múltipla escolha pela primeira opção, acerta a aberta e escolhe a conferência aberta |
+| [F-141](F-141-arthur-aprova-o-plano-do-gancho.md) | 2026-10-24 | O Arthur acerta por que o núcleo pede o raio e aprova o plano da TASK-10.6, o gancho, no plan mode |
+| [F-142](F-142-arthur-registra-o-apelo-pelo-arco-duas-espadas-e-sniper.md) | 2026-10-24 | O Arthur registra o apelo pelo arco, pelas duas espadas e pelo sniper, para depois |
+| [F-143](F-143-arthur-libera-a-correcao-do-teste-da-parede-que-para-a-puxada.md) | 2026-10-26 | O Arthur libera a correção de uma linha no teste travado da parede que para a puxada |
+| [F-144](F-144-arthur-joga-o-gancho.md) | 2026-10-26 | O Arthur joga o gancho, gosta muito, acha certa a recarga longa, sente um "boost" ao soltar perto da parede e acha a mira ruim, com o boneco na frente dela |
+| [F-145](F-145-arthur-abre-a-mira-no-ombro-e-fecha-o-gancho.md) | 2026-10-26 | O Arthur pede a filha da mira no ombro antes da TASK-10.7 e libera fechar a TASK-10.6 com push, PR e merge |

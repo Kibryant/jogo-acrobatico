@@ -4,11 +4,12 @@ title: 'A cabeça do outro: a regra da Q-16, o boneco e a borda da arena'
 status: To Refine
 assignee: []
 created_date: '2026-10-19 13:47'
+updated_date: '2026-10-26 14:09'
 labels:
   - jogo
 milestone: m-1
 dependencies:
-  - TASK-10.6
+  - TASK-10.11
 parent_task_id: TASK-10
 ordinal: 18000
 ---

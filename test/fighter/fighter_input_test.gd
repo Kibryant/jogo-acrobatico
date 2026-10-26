@@ -1,6 +1,8 @@
 # Criterion 7 of TASK-9, through netfox's real tick loop: the frames' samples become the input
 # netfox records for each tick (DEC-0026 §1), and a jump press counts for at most one tick, even
 # when a frame runs two ticks to catch the clock. Ticks run by hand (DEC-0027 §3), in Sozinho.
+# TASK-10.4 adds the dash on the left Shift; TASK-10.6, criterion 2, the camera's pitch, the last
+# sample like the yaw, and the grapple on the Q, a one-touch command like the others.
 extends GdUnitTestSuite
 
 const NetfoxTicks := preload("res://test/support/netfox_ticks.gd")
@@ -10,6 +12,9 @@ const HAIR := 1e-9 # floating-point slack, not a design number
 const FORWARD := Vector2(0, 1)
 
 var _game_match: Match
+# The box of every tick the run simulated, by tick, as netfox restored it (_watch_boxes).
+var _boxes: Dictionary[int, TickInput] = { }
+var _watched: Fighter
 
 
 func before_test() -> void:
@@ -17,6 +22,8 @@ func before_test() -> void:
 
 
 func after_test() -> void:
+	if NetworkRollback.after_process_tick.is_connected(_keep_box):
+		NetworkRollback.after_process_tick.disconnect(_keep_box)
 	NetfoxTicks.reset()
 
 
@@ -38,6 +45,18 @@ func _fighter_at_the_keyboard() -> Fighter:
 	var fighter := await _fighter_in_a_match()
 	_game_match.watch(fighter)
 	return fighter
+
+
+# From now on, keeps the box of fighter on every tick netfox simulates, on its after_process_tick:
+# the input netfox restored for that very tick (replay/replay_recorder.gd reads it there too).
+func _watch_boxes(fighter: Fighter) -> void:
+	_watched = fighter
+	_boxes.clear()
+	NetworkRollback.after_process_tick.connect(_keep_box)
+
+
+func _keep_box(tick: int) -> void:
+	_boxes[tick] = _watched.input.to_tick_input()
 
 
 # The jump key as the operating system reports it: the InputMap's jump action is the physical
@@ -187,3 +206,83 @@ func test_the_left_shift_dashes_once_and_its_key_repeat_is_not_a_second_press() 
 			.override_failure_message("a key repeat counted as a second press") \
 			.is_equal(String(FighterCommand.NONE))
 	assert_int(fighter.state.dash_tick).is_equal(press_tick)
+
+
+# TASK-10.6: the box carries the last pitch of the frames, like the yaw (rede.md §3). The pitch
+# aims the grapple and tilts only the camera: the body keeps facing the yaw.
+func test_the_tick_input_carries_the_last_pitch_of_the_frames() -> void:
+	var fighter := await _fighter_in_a_match()
+	fighter.input.sample_frame(FORWARD, 0.25, 0.5)
+	fighter.input.sample_frame(Vector2.ZERO, 0.5, -0.125)
+	NetfoxTicks.run_loop()
+	var tick_input := fighter.input.to_tick_input()
+	assert_float(tick_input.pitch).is_equal_approx(-0.125, HAIR)
+	assert_float(tick_input.yaw).is_equal_approx(0.5, HAIR)
+	assert_float(fighter.state.facing_yaw).is_equal_approx(0.5, HAIR)
+	# The next tick without a frame keeps the last sample, as the yaw does.
+	NetfoxTicks.run_loop()
+	assert_float(fighter.input.to_tick_input().pitch).is_equal_approx(-0.125, HAIR)
+
+
+# TASK-10.6 (DEC-0044): at the keyboard, the input samples the camera's pitch with its yaw. It
+# samples the devices in its own _physics_process, which runs after the physics frame the test
+# resumes in, so one whole physics frame passes before the tick reads them.
+func test_at_the_keyboard_the_box_takes_the_camera_pitch_with_its_yaw() -> void:
+	var fighter := await _fighter_at_the_keyboard()
+	var camera := _game_match.camera_rig
+	camera.yaw = 0.75
+	camera.pitch = -0.3
+	await get_tree().physics_frame
+	await get_tree().physics_frame
+	NetfoxTicks.run_loop()
+	var tick_input := fighter.input.to_tick_input()
+	assert_float(tick_input.yaw).is_equal_approx(0.75, HAIR)
+	assert_float(tick_input.pitch).is_equal_approx(-0.3, HAIR)
+
+
+# TASK-10.6: pressed once, the grapple is in the box of the first tick of a frame that runs two,
+# and the second tick finds it taken: a one-touch command counts for one tick (DEC-0026 §1).
+func test_a_grapple_press_counts_for_one_tick_when_a_frame_runs_two() -> void:
+	var fighter := await _fighter_in_a_match()
+	NetfoxTicks.run_loops(3)
+	_watch_boxes(fighter)
+	var press_tick := NetworkTime.tick
+	fighter.input.press_grapple()
+	NetfoxTicks.run_loop(2)
+	assert_bool(_boxes[press_tick].grapple).is_true()
+	assert_bool(_boxes[press_tick + 1].grapple).is_false()
+	assert_bool(fighter.input.to_tick_input().grapple).is_false()
+	# The grapple is not the jump or the dash.
+	assert_bool(_boxes[press_tick].jump).is_false()
+	assert_bool(_boxes[press_tick].dash).is_false()
+
+
+# The Q key as the operating system reports it: the InputMap's grapple action is the physical Q,
+# keycode 81 (project.godot, [input]; F-140 §1); echo marks the key repeat of a held key.
+static func _q_key(echo: bool) -> InputEventKey:
+	var event := InputEventKey.new()
+	event.physical_keycode = KEY_Q
+	event.pressed = true
+	event.echo = echo
+	return event
+
+
+# TASK-10.6, choice 1 (F-140 §1): the Q through the viewport presses the grapple on its tick, and
+# its key repeat is no second press: a held Q is one grapple.
+func test_the_q_key_presses_the_grapple_once_and_its_key_repeat_is_not_a_second_press() -> void:
+	var fighter := await _fighter_at_the_keyboard()
+	NetfoxTicks.run_loops(3)
+	_watch_boxes(fighter)
+	var press_tick := NetworkTime.tick
+	get_viewport().push_input(_q_key(false))
+	NetfoxTicks.run_loop()
+	for _echo: int in 5:
+		get_viewport().push_input(_q_key(true))
+		NetfoxTicks.run_loop()
+	assert_bool(_boxes[press_tick].grapple) \
+			.override_failure_message("the Q through the viewport did not press the grapple") \
+			.is_true()
+	for tick: int in range(press_tick + 1, NetworkTime.tick):
+		assert_bool(_boxes[tick].grapple) \
+				.override_failure_message("a key repeat counted as a press on tick %d" % tick) \
+				.is_false()

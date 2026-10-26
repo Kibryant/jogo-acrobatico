@@ -18,6 +18,7 @@ Rules:
 - Test through the public interface only. Never read source files from a test, never mock private functions.
 - Test names describe behavior in English (`test_parry_beats_charged_attack`).
 - Write only under `test/`. Format with `gdscript-formatter`.
+- A helper that decides when an engine event happened (a contact, a landing, a clamp, a release) uses the rig's own predicate and tolerance, never a looser one such as a probe distance. Three locked tests had to be fixed for an assumption the rig did not share (F-102; F-130; F-143).
 - Run `bash tools/run_tests.sh` and confirm the new tests fail for the right reason, because the implementation is missing.
 
 Return, in English:

@@ -3,8 +3,10 @@
 # criterion 7 of TASK-10.4, the dash's cooldown as an arc with the tenths of a second left; below
 # the cost of the double jump the number gains an underline, a shape and not a colour; its look
 # comes from the one Theme and its words from translation keys (DEC-0031 §8); and a PC without a
-# screen never makes one. The tests run headless, as the gate does, so they drive the HUD by hand
-# with the tick they choose, the call its _process makes with netfox's tick on every frame.
+# screen never makes one. TASK-10.6 adds the grapple's cooldown row and the reticle with its dot
+# (visual-e-audio.md, "O gancho na tela"). The tests run headless, as the gate does, so they drive
+# the HUD by hand with the tick they choose, the call its _process makes with netfox's tick on
+# every frame.
 extends GdUnitTestSuite
 
 const NetfoxTicks := preload("res://test/support/netfox_ticks.gd")
@@ -239,3 +241,152 @@ func test_the_dash_cooldown_shows_as_an_arc_with_the_tenths_left() -> void:
 	hud.show_at(SPENT_AT + 30)
 	assert_bool(hud.shows_dash_cooldown()).is_true()
 	assert_str(hud.shown_dash_cooldown()).is_equal("0,1 s")
+
+
+# Criterion 9 of TASK-10.6 (visual-e-audio.md, "O gancho na tela"): the grapple's row sits above
+# the dash's, with the same ring and "Gancho 5,9 s", the tenths left rounded up, from the release
+# to the next legal fire, 6 s (movimento.md, "Gancho": "Recarga"); all from the stamp and the
+# tick, so an earlier tick shows its own value again, as after a rollback.
+func test_the_grapple_cooldown_shows_above_the_dash_with_its_ring_and_the_tenths_left() -> void:
+	GameText.install()
+	TranslationServer.set_locale("pt_BR")
+	var config := _match.config
+	var cooldown := config.grapple_cooldown_ticks
+	var hud := _hud()
+	var rows := hud.row_names()
+	assert_int(rows.find("GrappleRow")).is_equal(0)
+	assert_int(rows.find("DashRow")).is_equal(1)
+	hud.show_at(SPENT_AT)
+	assert_bool(hud.shows_grapple_cooldown()).override_failure_message("before any release") \
+			.is_false()
+
+	_fighter.state.grapple_end_tick = SPENT_AT
+	var cases: Dictionary[int, String] = {
+		0: "Gancho 6,0 s", # 360 ticks at 60: 6 s
+		1: "Gancho 6,0 s", # 359 ticks: 5,983 s, rounded up
+		6: "Gancho 5,9 s", # 354 ticks: 5,9 s
+		cooldown - 1: "Gancho 0,1 s", # 1 tick: 17 ms, still waiting
+	}
+	for after: int in cases:
+		hud.show_at(SPENT_AT + after)
+		var where := "%d ticks after the release" % after
+		assert_bool(hud.shows_grapple_cooldown()).override_failure_message(where).is_true()
+		assert_str(hud.shown_grapple_cooldown()).override_failure_message(where).is_equal(
+			cases[after]
+		)
+		var share := float(cooldown - after) / cooldown
+		assert_float(hud.grapple_cooldown_share()).is_equal_approx(share, HAIR)
+		assert_bool(hud.shows_dash_cooldown()).override_failure_message("the dash's row").is_false()
+	TranslationServer.set_locale("en")
+	hud.show_at(SPENT_AT + 6)
+	assert_str(hud.shown_grapple_cooldown()).is_equal("Grapple 5.9 s")
+
+	# Ready on the tick the next grapple may fire, and after it.
+	for after: int in [cooldown, cooldown + 100]:
+		hud.show_at(SPENT_AT + after)
+		assert_bool(hud.shows_grapple_cooldown()).is_false()
+	# Back to a tick of the cooldown, as a rollback would show it.
+	hud.show_at(SPENT_AT + 6)
+	assert_bool(hud.shows_grapple_cooldown()).is_true()
+
+
+# The target of the reticle: a wall of the test's own in the arena's empty south-east, 16 m wide
+# and 10 m tall, its face looking south at z = 20.
+const TARGET_FACE_Z := 20.0
+const TARGET_POINT := Vector3(28, 4, 20)
+# Where the fighter stands: 12 m south of the face, 3 m less than the range would allow and far
+# more than the minimum; 27 m south, beyond the 25 m of the ray; 1,5 m south, nearer than 3 m.
+const BEFORE_THE_TARGET := Vector3(28, 0, 32)
+const BEYOND_THE_RANGE := Vector3(28, 0, 47)
+const TOO_NEAR := Vector3(28, 0, 21.5)
+
+
+func _add_target() -> void:
+	var wall := StaticBody3D.new()
+	wall.name = "AlvoDaMira"
+	wall.position = Vector3(TARGET_POINT.x, 5, TARGET_FACE_Z - 0.5)
+	var collision := CollisionShape3D.new()
+	var box := BoxShape3D.new()
+	box.size = Vector3(16, 10, 1)
+	collision.shape = box
+	wall.add_child(collision)
+	_match.arena.add_child(wall)
+
+
+# Turns the camera so the ray from the fighter's shoulder goes through point.
+func _aim(camera: CameraRig, point: Vector3) -> void:
+	var shoulder := _fighter.global_position + Vector3.UP * _match.config.aim_height
+	var toward := (point - shoulder).normalized()
+	camera.yaw = atan2(-toward.x, -toward.z)
+	camera.pitch = asin(toward.y)
+
+
+# The reticle (visual-e-audio.md, "O gancho na tela"): a 24 px ring at the screen's centre that
+# gains its dot when the Q would hook now: the screen's own ray, from the displayed shoulder along
+# the camera the Match gave, finds the world from 3 to 25 m, and the grapple can fire by the
+# core's rule, out of the dash, with no cable in the air and the cooldown over. The ray never
+# touches the state.
+func test_the_reticle_gains_its_dot_when_the_q_would_hook_now() -> void:
+	_add_target()
+	_fighter.position = BEFORE_THE_TARGET
+	var camera := _match.watch(_fighter)
+	# The wall and the body join the physics space on the next physics step.
+	await get_tree().physics_frame
+	var hud: Hud = auto_free(Hud.new())
+	add_child(hud)
+	hud.follow(_fighter, _match.config, camera)
+	var reticle_node := hud.get_node(^"Reticle")
+	assert(reticle_node is Control, "the reticle is a Control")
+	var reticle := reticle_node as Control
+	assert_float(reticle.anchor_left).is_equal(0.5)
+	assert_float(reticle.anchor_top).is_equal(0.5)
+	assert_vector(reticle.size).is_equal(Hud.RETICLE_SIZE)
+	assert_vector(Hud.RETICLE_SIZE).is_equal(Vector2(24, 24))
+	var state_before := _fighter.state.copy()
+
+	_aim(camera, TARGET_POINT)
+	hud.show_at(SPENT_AT)
+	assert_bool(hud.shows_reticle_dot()).override_failure_message("aimed at the wall").is_true()
+
+	camera.pitch = deg_to_rad(80.0)
+	hud.show_at(SPENT_AT)
+	assert_bool(hud.shows_reticle_dot()).override_failure_message("aimed at the sky").is_false()
+
+	_aim(camera, TARGET_POINT)
+	var cooldown := _match.config.grapple_cooldown_ticks
+	_fighter.state.grapple_end_tick = SPENT_AT
+	hud.show_at(SPENT_AT + cooldown - 1)
+	assert_bool(hud.shows_reticle_dot()).override_failure_message("in the cooldown").is_false()
+	hud.show_at(SPENT_AT + cooldown)
+	assert_bool(hud.shows_reticle_dot()).override_failure_message("the cooldown over").is_true()
+
+	_fighter.state.grapple_fired_tick = SPENT_AT + cooldown
+	hud.show_at(SPENT_AT + cooldown + 1)
+	assert_bool(hud.shows_reticle_dot()).override_failure_message("with a cable out").is_false()
+	_fighter.state.grapple_fired_tick = FighterState.NEVER
+	_fighter.state.mode = FighterState.Mode.DASH
+	hud.show_at(SPENT_AT + cooldown + 1)
+	assert_bool(hud.shows_reticle_dot()).override_failure_message("in the dash").is_false()
+	_fighter.state.mode = FighterState.Mode.GROUND
+	hud.show_at(SPENT_AT + cooldown + 1)
+	assert_bool(hud.shows_reticle_dot()).is_true()
+
+	_fighter.position = BEYOND_THE_RANGE
+	_aim(camera, TARGET_POINT)
+	hud.show_at(SPENT_AT + cooldown + 1)
+	assert_bool(hud.shows_reticle_dot()).override_failure_message("beyond 25 m").is_false()
+	_fighter.position = TOO_NEAR
+	_aim(camera, Vector3(TARGET_POINT.x, _match.config.aim_height, TARGET_FACE_Z))
+	hud.show_at(SPENT_AT + cooldown + 1)
+	assert_bool(hud.shows_reticle_dot()).override_failure_message("nearer than 3 m").is_false()
+
+	# The ray of the screen never wrote the state.
+	assert_int(_fighter.state.buffered_tick).is_equal(state_before.buffered_tick)
+	assert_vector(_fighter.state.grapple_point).is_equal(state_before.grapple_point)
+	assert_int(_fighter.state.grapple_fired_tick).is_equal(state_before.grapple_fired_tick)
+
+	# Without a camera there is no aim, so no dot.
+	_fighter.position = BEFORE_THE_TARGET
+	hud.follow(_fighter, _match.config)
+	hud.show_at(SPENT_AT + cooldown + 1)
+	assert_bool(hud.shows_reticle_dot()).is_false()

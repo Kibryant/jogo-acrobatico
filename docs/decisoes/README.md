@@ -29,7 +29,7 @@
 | [DEC-0018](DEC-0018-nome-provisorio-jogo-acrobatico.md) | 2026-10-02 | Nome provisório "Jogo Acrobático" até o fim da fase 1 | aceita |
 | [DEC-0019](DEC-0019-numeros-em-artefato-visual.md) | 2026-10-02 | Número, medida e cálculo se mostram ao Arthur num artefato visual | aceita |
 | [DEC-0020](DEC-0020-linguagem-gdscript-e-nucleo-trocavel.md) | 2026-10-02 | GDScript no jogo todo; só o núcleo muda de linguagem, se a medição de CPU pedir | aceita; completa a DEC-0001 |
-| [DEC-0021](DEC-0021-explicar-no-mundo-do-arthur.md) | 2026-10-02 | Explicar no mundo do Arthur: pergunta fixa de entendimento, exemplo do que ele conhece e escolha como trade-off | aceita; completa a DEC-0010 |
+| [DEC-0021](DEC-0021-explicar-no-mundo-do-arthur.md) | 2026-10-02 | Explicar no mundo do Arthur: pergunta fixa de entendimento, exemplo do que ele conhece e escolha como trade-off | aceita; completa a DEC-0010; a forma da pergunta fixa foi substituída pela DEC-0043 (a conferência aberta) |
 | [DEC-0022](DEC-0022-arquitetura-detalhada.md) | 2026-10-02 | Arquitetura detalhada: estado em quatro caixas, máquina de estados no núcleo, tick em sanduíche, cenas, zero autoloads nossos, pastas e acesso inseguro como erro | aceita; substitui só a frase da DEC-0004 sobre a RewindableStateMachine. As cenas e as pastas foram aprovadas no plano (F-022). A hipótese 3 foi substituída pela DEC-0025 |
 | [DEC-0023](DEC-0023-netfox-no-godot-4-7-2.md) | 2026-10-04 | O netfox no Godot 4.7.2: main fixada no `cf5189d`, com core, extras e internals em `addons/`, e os autoloads em `res://` guardados por teste | aceita; completa a DEC-0003 e fecha a Q-02; o §7 completado pela DEC-0038 (a sessão de teste com o simulador) |
 | [DEC-0024](DEC-0024-sessenta-ticks-por-segundo.md) | 2026-10-04 | 60 ticks por segundo | aceita; fecha a Q-01 |
@@ -51,6 +51,8 @@
 | [DEC-0040](DEC-0040-o-tick-no-passo-de-fisica.md) | 2026-10-23 | O tick no passo de física: o `sync_to_physics` do netfox ligado, para a janela, o jogo ao vivo e o replay sem tela darem os mesmos bits em qualquer fps | aceita (F-117) |
 | [DEC-0041](DEC-0041-troca-de-modo-por-comando.md) | 2026-10-23 | A troca de modo por comando no `before_move`: a DEC-0022 muda só nisso | aceita; substitui a DEC-0022 só nisso (F-122) |
 | [DEC-0042](DEC-0042-os-fatos-da-parede.md) | 2026-10-23 | Os fatos da parede: o caminho do nó como identidade, a normal no estado e a sonda só de teste durante a corrida | aceita (F-127; F-128) |
+| [DEC-0043](DEC-0043-conferencia-aberta.md) | 2026-10-24 | A conferência aberta: uma pergunta só, sem opções, respondida com as palavras do Arthur, antes da decisão que depende da explicação | aceita (F-140 §5); substitui a DEC-0021 só na forma da pergunta fixa |
+| [DEC-0044](DEC-0044-pedido-de-mira-e-altura-da-mira.md) | 2026-10-24 | O pedido de mira e a altura da mira: o núcleo pede o raio pelo plano, o acerto volta nos fatos, e a altura do ombro mora no `MovementData` | aceita (F-141) |
 
 ## Propostas — ainda não são regra
 
@@ -68,3 +70,4 @@ Nenhuma proposta aberta.
 | [DEC-0028](DEC-0028-builds-versoes-e-fluxo-de-branch.md) | Só a frase "O push na main não gera build" do §2. O resto continua valendo | [DEC-0032](DEC-0032-hospedagem-do-servidor.md) | 2026-10-10 |
 | [DEC-0022](DEC-0022-arquitetura-detalhada.md) | Só o `jump_pressed_tick` como carimbo do buffer, a assinatura `before_move(state, velocity, input, config, tick)` e a janela estrita do buffer. O resto continua valendo | [DEC-0039](DEC-0039-vaga-do-buffer-posicao-no-before-move-e-janela-inclusiva.md) | 2026-10-19 |
 | [DEC-0022](DEC-0022-arquitetura-detalhada.md) | Só a frase de que o `after_move` é quem atualiza o modo: o `before_move` troca por comando, e o `after_move` por contato, fora de um modo comprometido. O resto continua valendo | [DEC-0041](DEC-0041-troca-de-modo-por-comando.md) | 2026-10-23 |
+| [DEC-0021](DEC-0021-explicar-no-mundo-do-arthur.md) | Só a forma da pergunta fixa: a múltipla escolha no começo de toda rodada vira uma pergunta aberta, respondida com as palavras do Arthur, antes da decisão que depende da explicação. O resto continua valendo | [DEC-0043](DEC-0043-conferencia-aberta.md) | 2026-10-24 |

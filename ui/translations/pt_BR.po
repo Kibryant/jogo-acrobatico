@@ -44,10 +44,20 @@ msgstr "No dash"
 msgid "HUD_MODE_WALL_RUN"
 msgstr "Na parede"
 
+# The HUD's mode of the fighter: the pull of the grapple, from the first tick after the cable's
+# 100 ms to the release, by the distance, the jump or the block (TASK-10.6).
+msgid "HUD_MODE_GRAPPLE"
+msgstr "No gancho"
+
 # The HUD's time until the next dash, beside its arc: {whole} and {tenth} are the digits of the
 # seconds, rounded up to the tenth (TASK-10.4).
 msgid "HUD_DASH_COOLDOWN"
 msgstr "{whole},{tenth} s"
+
+# The HUD's time until the next grapple, beside its arc, above the dash's row: {whole} and
+# {tenth} are the digits of the seconds, rounded up to the tenth (TASK-10.6).
+msgid "HUD_GRAPPLE_COOLDOWN"
+msgstr "Gancho {whole},{tenth} s"
 
 # Every tick of the replay played in the window has played (--watch; TASK-10.3).
 msgid "REPLAY_ENDED"

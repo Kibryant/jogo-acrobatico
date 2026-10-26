@@ -1,6 +1,6 @@
 ---
-revisado_em: 2026-10-23
-fontes: [F-050, F-051, F-052, F-053, F-054, F-056, F-058, F-059, F-061, F-062, F-063, F-100, F-121, F-122]
+revisado_em: 2026-10-24
+fontes: [F-050, F-051, F-052, F-053, F-054, F-056, F-058, F-059, F-061, F-062, F-063, F-100, F-121, F-122, F-137, F-139, F-140, F-141]
 ---
 
 # Visual e áudio
@@ -186,6 +186,15 @@ Leitura v0 do Claude, que o Arthur julga jogando (DEC-0017; TASK-10.2).
 - As cores do HUD são branco e preto: a barra cheia em branco sobre um fundo preto translúcido. Nenhuma cor de token (DEC-0031 §1 e §3).
 - Cada texto da tela é uma chave de tradução, com pt-BR e en. Um teste reprova a chave sem mensagem num dos dois idiomas (DEC-0031 §8).
 
+### Toda manobra nasce com o seu sinal (F-139)
+
+Decisão do Arthur, depois de jogar a parede ajustada: "Ter um feedback visual de tudo" (F-137; F-139).
+
+- **A regra:** toda manobra nova entra no jogo já com um sinal visual que mostra que ela aconteceu e em que fase está: o rastro e a baforada (TASK-10.4), a marca, a inclinação e o rastro da parede (TASK-10.5; TASK-10.10). Uma manobra sem sinal não está pronta.
+- **No plano de cada task de manobra:** o sinal é um critério de aceite, com os números v0 do Claude escritos aqui antes do código (DEC-0017).
+- **Como os outros sinais:** só na tela, fora do estado, uma vez por chave e nunca na re-simulação (DEC-0031 §6); no tom neutro do lutador e sem ativo novo enquanto não houver arte (DEC-0029).
+- **O som** segue a Q-32: entra quando houver um pacote com licença.
+
 ### O dash na tela (TASK-10.4)
 
 Leituras v0 do Claude, que o Arthur julga jogando (DEC-0017; TASK-10.4).
@@ -210,6 +219,19 @@ Leituras v0 do Claude, que o Arthur julga jogando (DEC-0017; TASK-10.5).
 - **O rastro da corrida (TASK-10.10):** o rastro do dash, curto. A mesma caixa translúcida no tom do lutador, mas só do ponto em que o corpo estava há 200 ms, a duração do dash, até o corpo: uns 1,6 m a 8 m/s, que acompanham a corrida em vez de desenhar a parede inteira. O comprimento conta os ticks do netfox, não o tempo do quadro, para ser o mesmo em qualquer fps. Some em 200 ms depois do fim da corrida. Toca uma vez por chave, pelo tick em que a corrida começou, então uma emenda continua o mesmo rastro, e o rollback não o duplica. "Curto" sem número no papel: a duração do dash é a leitura v0 do Claude (DEC-0017), e nenhum ativo novo entra (DEC-0029).
 - **A câmera** não inclina na corrida no v0 (`movimento.md`, "Corrida na parede").
 - **As peças da arena:** a `ParedeLonga`, o `CorredorOeste`, o `CorredorLeste` e o `PatamarDoCorredor` usam o cinza dos blocos, sem cor nova (`movimento.md`, "Métricas de nível").
+
+### O gancho na tela (TASK-10.6)
+
+Leituras v0 do Claude, que o Arthur julga jogando (DEC-0017; F-141). O sinal nasce com a manobra (F-139).
+
+- **A tecla:** o gancho é o Q, por posição física (F-140 §1; DEC-0031 §8).
+- **A mira:** um anel de 24 × 24 px na base de 1080p, no centro da tela, com 2 px de traço, branco com contorno escuro translúcido, as cores do HUD. Ele ganha um ponto de 5 px no centro quando o Q prenderia agora: um raio só da tela acha cenário de 3 a 25 m, e o gancho está livre, fora do dash, sem outro gancho no ar e fora da recarga. É forma, não cor (DEC-0031 §2). O raio da mira sai do ombro exibido, pela câmera, a cada quadro, e nunca entra no estado (`movimento.md`, "Gancho"). As cores e o traço vêm da classe `Reticle` do Theme, e o ponto lê as mesmas regras do núcleo que a simulação (`Movement.can_grapple` e `Movement.in_reach`), então ele nunca promete um gancho que a regra recusa. No `--watch` de um replay, a câmera fica com o pitch em 0, e o ponto mostra a mira nivelada, não a gravada; o replay em si toca o pitch gravado.
+- **O modo:** o HUD diz "No gancho" ("Grappling" em inglês) durante a puxada, pela chave `HUD_MODE_GRAPPLE`. Com o cabo voando, o modo ainda é o de antes.
+- **A recarga:** uma linha acima da do dash, com um anel igual ao dele, de 24 × 24 px e 4 px de espessura (a classe `GrappleCooldownArc` do Theme, com os valores da `DashCooldownArc`), e o texto "Gancho 5,9 s" ("Grapple 5.9 s"), em décimos arredondados para cima, pela chave `HUD_GRAPPLE_COOLDOWN`. O anel começa cheio na soltura e esvazia no sentido horário a partir do topo, em 6 s. Com o gancho livre, os dois somem, e a linha guarda a altura. Tudo se calcula do `grapple_end_tick` e do tick, sem timer (F-051 §3.4).
+- **O cabo:** uma linha de 3 cm de espessura, opaca, sem luz, no tom neutro do próprio lutador, do ombro exibido (1,6 m acima dos pés) até a ponta. Nos 100 ms de voo, a ponta vai do ombro ao ponto, contando os ticks do netfox; na puxada, fica no ponto; na soltura, o cabo some. Toca uma vez por chave, pelo `grapple_fired_tick` (DEC-0031 §6).
+- **A puxada:** o rastro curto da corrida na parede, a mesma caixa translúcida a 40 %, do ponto em que o corpo estava há 200 ms até ele, enquanto o modo é o gancho. Some em 200 ms depois da soltura. Toca uma vez por chave, pelo tick em que a puxada começou.
+- **Nenhum ativo novo** entra: o anel, o ponto, a linha e a caixa são formas do Godot (DEC-0029). O som do cabo espera a Q-32.
+- **As peças da arena:** a `TorreA`, a `TorreB` e o `Pilar10m` usam o cinza dos blocos, sem cor nova (`movimento.md`, "Métricas de nível").
 
 ## Em aberto
 

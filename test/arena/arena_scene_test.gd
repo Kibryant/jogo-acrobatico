@@ -5,7 +5,10 @@
 # nor the SyncTest meets them. From TASK-10.4 (criterion 7), the dash's ruler: strips every 4 m,
 # only seen, on free floor too. From TASK-10.5 (criterion 8), the wall run's pieces: the long wall,
 # the corridor's two walls 3.5 m apart and the 3 m landing at the corridor's end (movimento.md,
-# "Métricas de nível"), on free floor too, the wall scenario of the SyncTest's included.
+# "Métricas de nível"), on free floor too, the wall scenario of the SyncTest's included. From
+# TASK-10.6 (criterion 9), the grapple's pieces: two 6 m towers 16 m apart and the 10 m pillar
+# (movimento.md, "Métricas de nível"), on free floor too, the grapple scenario's included, and
+# every piece of the arena stays off that scenario's ground.
 extends GdUnitTestSuite
 
 const ARENA_SCENE := preload("res://arena/arena.tscn")
@@ -74,6 +77,35 @@ const WALL_PIECE_SIZES: Dictionary[String, Vector3] = {
 	"CorredorLeste": Vector3(1, 5, 24),
 	"PatamarDoCorredor": Vector3(3.5, 3, 4),
 }
+## The ground of the SyncTest's grapple scenario, gancho (TASK-10.6), which builds its own walls
+## in the arena's empty corner at large x and z: two walls over x 20 to 36, one from z 19 to 20
+## and one from z 38 to 39, a low wall over x 30 to 34 and z 27.5 to 28, and the fighters' feet
+## between them, in lanes at x 24 and 32; grown by 1 m, x 19..37 and z 18..40.
+const GANCHO_SCENARIO_AREA := Rect2(Vector2(19, 18), Vector2(18, 22))
+
+## The grapple's pieces (TASK-10.6, "Arena"; movimento.md, "Métricas de nível"), each one collider:
+## where its centre stands and its box. The towers are 6 m tall, out of the double jump's ≈ 2,2 m
+## from the floor, and 16 m apart, more than its ≈ 7 m across; the pillar's top is at 10 m.
+const GRAPPLE_PIECES: Dictionary[String, Vector3] = {
+	"TorreA": Vector3(-8, 3, -30),
+	"TorreB": Vector3(12, 3, -30),
+	"Pilar10m": Vector3(2, 5, -36),
+}
+const GRAPPLE_PIECE_SIZES: Dictionary[String, Vector3] = {
+	"TorreA": Vector3(4, 6, 4),
+	"TorreB": Vector3(4, 6, 4),
+	"Pilar10m": Vector3(2, 10, 2),
+}
+const TOWER_GAP := 16.0
+const TOWER_TOP := 6.0
+const PILLAR_TOP := 10.0
+## m: the double jump's reach across, which the towers' gap passes (movimento.md, "Métricas de
+## nível": "até ≈ 7 m com o pulo duplo").
+const DOUBLE_JUMP_GAP := 7.0
+## m: the grapple's reach (movimento.md, "Gancho": "Alcance"): from the floor between the towers,
+## each tower's near face is within it.
+const GRAPPLE_RANGE := 25.0
+
 ## m: a run of 2.5 s at 8 m/s (movimento.md, "Corrida na parede"), which the long wall outlasts.
 const WALL_RUN_LENGTH := 20.0
 const CORRIDOR_GAP := 3.5
@@ -371,3 +403,106 @@ func test_the_gap_platforms_and_the_ruler_stay_clear_of_the_wall_scenario() -> v
 		var mesh_node := strip as MeshInstance3D
 		var box := mesh_node.global_transform * mesh_node.get_aabb()
 		assert_bool(_footprint(box).grow(BODY_RADIUS).intersects(PAREDE_SCENARIO_AREA)).is_false()
+
+
+# Criterion 9 of TASK-10.6: each grapple piece has one name under the arena, is a box on the
+# world's layer whose collision is its mesh, in the blocks' grey, standing on the floor's top.
+func test_each_grapple_piece_is_one_named_world_box_whose_collision_matches_its_mesh() -> void:
+	var arena := _arena()
+	var grey := _grey_of(_body(arena, GREY_BLOCK))
+	for piece: String in GRAPPLE_PIECES:
+		var found := arena.find_children(piece, "", true, false)
+		var failure := "%s is named %d times under Arena" % [piece, found.size()]
+		assert_int(found.size()).override_failure_message(failure).is_equal(1)
+		var body := _body(arena, piece)
+		assert_object(body.get_parent()).is_same(arena)
+		assert_int(body.collision_layer).is_equal(PhysicsLayers.WORLD)
+		assert_vector(body.position).is_equal_approx(GRAPPLE_PIECES[piece], Vector3.ONE * HAIR)
+		assert_bool(body.basis.is_equal_approx(Basis.IDENTITY)).is_true()
+		var collision := body.get_node(^"Collision")
+		assert_bool(collision is CollisionShape3D).is_true()
+		var shape := (collision as CollisionShape3D).shape
+		assert_bool(shape is BoxShape3D).is_true()
+		assert_vector((shape as BoxShape3D).size).is_equal(GRAPPLE_PIECE_SIZES[piece])
+		var mesh_node := body.get_node(^"Mesh")
+		assert_bool(mesh_node is MeshInstance3D).is_true()
+		var mesh := (mesh_node as MeshInstance3D).mesh
+		assert_bool(mesh is BoxMesh).is_true()
+		assert_vector((mesh as BoxMesh).size).is_equal(GRAPPLE_PIECE_SIZES[piece])
+		var collision_at := (collision as CollisionShape3D).transform
+		var mesh_at := (mesh_node as MeshInstance3D).transform
+		assert_bool(collision_at.is_equal_approx(Transform3D.IDENTITY)).is_true()
+		assert_bool(mesh_at.is_equal_approx(Transform3D.IDENTITY)).is_true()
+		assert_object(_grey_of(body)).is_same(grey)
+		assert_float(_box(body).position.y).is_equal_approx(0.0, HAIR)
+
+
+# The towers face each other 16 m apart over the same z, more than the double jump crosses and
+# within the grapple's reach, both 6 m tall; the pillar's top is at 10 m (movimento.md, "Métricas
+# de nível": "As torres e o pilar").
+func test_the_towers_stand_16_m_apart_6_m_tall_and_the_pillar_10_m() -> void:
+	var arena := _arena()
+	var tower_a := _box(_body(arena, "TorreA"))
+	var tower_b := _box(_body(arena, "TorreB"))
+	var gap := tower_b.position.x - tower_a.end.x
+	assert_float(gap).is_equal_approx(TOWER_GAP, HAIR)
+	assert_float(gap).is_greater(DOUBLE_JUMP_GAP)
+	assert_float(gap).is_less(GRAPPLE_RANGE)
+	assert_float(tower_a.position.z).is_equal_approx(tower_b.position.z, HAIR)
+	assert_float(tower_a.end.z).is_equal_approx(tower_b.end.z, HAIR)
+	for tower: AABB in [tower_a, tower_b]:
+		assert_float(tower.end.y).is_equal_approx(TOWER_TOP, HAIR)
+	var pillar := _box(_body(arena, "Pilar10m"))
+	assert_float(pillar.end.y).is_equal_approx(PILLAR_TOP, HAIR)
+
+
+# The grapple's pieces stand on free floor: off the reference route's ground, the SyncTest's, its
+# wall scenario's and its grapple scenario's, which build their walls at run time, and at most
+# touching any other body of the arena.
+func test_the_grapple_pieces_stay_clear_of_the_routes_and_of_every_other_body() -> void:
+	var arena := _arena()
+	var grounds: Dictionary[String, Rect2] = {
+		"the reference route's ground": REFERENCE_ROUTE_AREA,
+		"the SyncTest's ground": SYNC_TEST_AREA,
+		"the wall scenario's ground": PAREDE_SCENARIO_AREA,
+		"the grapple scenario's ground": GANCHO_SCENARIO_AREA,
+	}
+	for piece: String in GRAPPLE_PIECES:
+		var box := _box(_body(arena, piece))
+		var reach := _footprint(box).grow(BODY_RADIUS)
+		for ground: String in grounds:
+			var failure := "%s is on %s" % [piece, ground]
+			assert_bool(reach.intersects(grounds[ground])).override_failure_message(failure) \
+					.is_false()
+		for node: Node in arena.find_children("*", "StaticBody3D", true, false):
+			if node.name == piece:
+				continue
+			assert(node is StaticBody3D, "find_children by StaticBody3D returns StaticBody3Ds")
+			var other := _box(node as StaticBody3D)
+			var overlap := "%s overlaps %s" % [piece, node.name]
+			assert_bool(box.intersects(other)).override_failure_message(overlap).is_false()
+
+
+# The grapple scenario builds its walls where the arena has nothing: every body of the arena but
+# the floor under it, and every strip of the ruler, stays off its ground, so its walls overlap
+# none of the arena's.
+func test_the_grapple_scenario_ground_is_free_of_every_piece_of_the_arena() -> void:
+	var arena := _arena()
+	for node: Node in arena.find_children("*", "StaticBody3D", true, false):
+		if node.name == "Floor":
+			continue
+		assert(node is StaticBody3D, "find_children by StaticBody3D returns StaticBody3Ds")
+		var reach := _footprint(_box(node as StaticBody3D)).grow(BODY_RADIUS)
+		var failure := "%s is on the grapple scenario's ground" % node.name
+		assert_bool(reach.intersects(GANCHO_SCENARIO_AREA)).override_failure_message(failure) \
+				.is_false()
+	var ruler := arena.get_node_or_null(NodePath(RULER))
+	assert_object(ruler).is_not_null()
+	if ruler == null:
+		return
+	for strip: Node in ruler.get_children():
+		assert(strip is MeshInstance3D, "every strip of the ruler is a MeshInstance3D")
+		var mesh_node := strip as MeshInstance3D
+		var box := mesh_node.global_transform * mesh_node.get_aabb()
+		var reach := _footprint(box).grow(BODY_RADIUS)
+		assert_bool(reach.intersects(GANCHO_SCENARIO_AREA)).is_false()

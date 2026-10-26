@@ -5,7 +5,9 @@
 # come from docs/design/movimento.md, cited by section. TASK-10.1, criterion 7, adds the double
 # jump and the stamina (movimento.md, "Pulo e ar" and "Stamina"); TASK-10.4 adds the dash
 # (movimento.md, "Dash"); TASK-10.5, criterion 7, adds the wall (movimento.md, "Corrida na
-# parede"); TASK-10.10 adds the head ray and the lean on screen (same section).
+# parede"); TASK-10.10 adds the head ray and the lean on screen (same section); TASK-10.6 adds
+# the grapple and the aim's height (movimento.md, "Gancho"), whose own checks live in
+# movement_data_grapple_test.gd.
 extends GdUnitTestSuite
 
 const MOVEMENT_V0 := "res://data/movement_v0.tres"
@@ -116,6 +118,14 @@ func _design_data() -> MovementData:
 	data.wall_clear_above_head_m = 0.3 # "A parede passa da cabeça": 2,1 m above the feet
 	data.wall_lean_deg = 15.0 # "Corrida na parede": "O que se vê na parede"
 	data.wall_lean_ms = 100 # "Corrida na parede": "O que se vê na parede"
+	data.grapple_range_m = 25.0 # "Gancho": "Alcance"
+	data.grapple_min_range_m = 3.0 # "Gancho": "Alcance mínimo"
+	data.grapple_attach_ms = 100 # "Gancho": "Tempo até prender"
+	data.grapple_pull_speed_mps = 18.0 # "Gancho": "Velocidade da puxada"
+	data.grapple_release_distance_m = 1.5 # "Gancho": "Como solta"
+	data.grapple_block_pct = 50.0 # "Gancho": "Trava"
+	data.grapple_cooldown_ms = 6000 # "Gancho": "Recarga"
+	data.aim_height_m = 1.6 # "Gancho": "De onde sai a mira"
 	return data
 
 
@@ -186,6 +196,17 @@ func test_movement_v0_holds_the_numbers_of_movimento_md() -> void:
 	assert_float(data.wall_clear_above_head_m).is_equal_approx(design.wall_clear_above_head_m, HAIR)
 	assert_float(data.wall_lean_deg).is_equal_approx(design.wall_lean_deg, HAIR)
 	assert_int(data.wall_lean_ms).is_equal(design.wall_lean_ms)
+	assert_float(data.grapple_range_m).is_equal_approx(design.grapple_range_m, HAIR)
+	assert_float(data.grapple_min_range_m).is_equal_approx(design.grapple_min_range_m, HAIR)
+	assert_int(data.grapple_attach_ms).is_equal(design.grapple_attach_ms)
+	assert_float(data.grapple_pull_speed_mps).is_equal_approx(design.grapple_pull_speed_mps, HAIR)
+	assert_float(data.grapple_release_distance_m).is_equal_approx(
+		design.grapple_release_distance_m,
+		HAIR,
+	)
+	assert_float(data.grapple_block_pct).is_equal_approx(design.grapple_block_pct, HAIR)
+	assert_int(data.grapple_cooldown_ms).is_equal(design.grapple_cooldown_ms)
+	assert_float(data.aim_height_m).is_equal_approx(design.aim_height_m, HAIR)
 
 
 func test_movement_v0_passes_the_data_check() -> void:

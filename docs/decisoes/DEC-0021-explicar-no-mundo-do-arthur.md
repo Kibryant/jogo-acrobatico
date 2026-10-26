@@ -6,8 +6,10 @@ status: aceita
 decidido_por: Arthur
 fontes: [F-016, F-020]
 substitui:
-substituida_por:
+substituida_por: DEC-0043, só a forma da pergunta fixa (§1)
 ---
+
+> ⚠️ Em parte substituída por DEC-0043 em 2026-10-24: a pergunta fixa no começo de toda rodada, de múltipla escolha, não é a regra atual. A conferência é uma pergunta aberta, respondida com as palavras do Arthur, antes de uma decisão que depende da explicação. O resto desta DEC continua valendo.
 
 # DEC-0021 — Explicar no mundo do Arthur: pergunta fixa de entendimento, exemplo do que ele conhece e escolha como trade-off
 

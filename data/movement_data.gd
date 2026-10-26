@@ -106,6 +106,28 @@ const CHECKED_TICKRATES: Array[int] = [30, 60]
 ## parede": "O que se vê na parede").
 @export var wall_lean_ms: int
 
+@export_group("Grapple")
+## The ray's length, measured from the shoulder along the aim (movimento.md, "Gancho": "Alcance").
+@export var grapple_range_m: float
+## A point nearer the shoulder than this is a miss (movimento.md, "Gancho": "Alcance mínimo").
+@export var grapple_min_range_m: float
+## The cable flies this long before the pull (movimento.md, "Gancho": "Tempo até prender").
+@export var grapple_attach_ms: int
+## The pull takes the feet toward the point at this speed (movimento.md, "Gancho": "Velocidade da
+## puxada").
+@export var grapple_pull_speed_mps: float
+## The feet this close to the point release the hook (movimento.md, "Gancho": "Como solta").
+@export var grapple_release_distance_m: float
+## Percent of the pull: a speed toward the point below it releases the hook (movimento.md,
+## "Gancho": "Trava").
+@export var grapple_block_pct: float
+## From a release until the next grapple may fire (movimento.md, "Gancho": "Recarga").
+@export var grapple_cooldown_ms: int
+## The shoulder the aim leaves from, above the feet: a copy of the camera's pivot height, which a
+## data test keeps equal to camera_v0.tres (movimento.md, "Gancho": "De onde sai a mira";
+## DEC-0044 §3).
+@export var aim_height_m: float
+
 
 # The data check, layer 3 of DEC-0027 §2: one message per impossible number, empty when every
 # number can be. The gate runs it over every movement .tres under data/
@@ -187,6 +209,21 @@ func validate() -> PackedStringArray:
 		),
 		_range_error("wall_lean_deg", wall_lean_deg, 90.0, "a lean"),
 		_time_error("wall_lean_ms", wall_lean_ms, false),
+		# The grapple (movimento.md, "Gancho"). The minimum and the release distance live inside
+		# the range; nothing divides by its two times, so the cable may bite at once and the
+		# cooldown may be none.
+		_positive_error("grapple_range_m", grapple_range_m, "the ray needs a length"),
+		_grapple_min_range_error(),
+		_time_error("grapple_attach_ms", grapple_attach_ms, false),
+		_positive_error(
+			"grapple_pull_speed_mps",
+			grapple_pull_speed_mps,
+			"a pull without speed never arrives",
+		),
+		_grapple_release_distance_error(),
+		_range_error("grapple_block_pct", grapple_block_pct, 100.0, "a percentage"),
+		_time_error("grapple_cooldown_ms", grapple_cooldown_ms, false),
+		_positive_error("aim_height_m", aim_height_m, "the aim leaves the shoulder above the feet"),
 	]
 	var errors := PackedStringArray()
 	for message: String in checks:
@@ -289,6 +326,36 @@ func _wall_hold_error() -> String:
 		return (
 			"wall_hold_ms is %d ms: longer than wall_run_max_ms, %d ms, the run ends first"
 			% [wall_hold_ms, wall_run_max_ms]
+		)
+	return ""
+
+
+# The minimum range is not negative and below the range: at the range or beyond it, no point could
+# ever be close enough and far enough at once. A range that is not positive has its own message,
+# and against it the minimum says nothing more.
+func _grapple_min_range_error() -> String:
+	var least := grapple_min_range_m
+	if least < 0.0:
+		return "grapple_min_range_m is %s: a distance cannot be negative" % least
+	if grapple_range_m > 0.0 and least >= grapple_range_m:
+		return (
+			"grapple_min_range_m is %s: at or beyond grapple_range_m, %s, nothing could ever fire"
+			% [least, grapple_range_m]
+		)
+	return ""
+
+
+# The release distance is positive and below the range: at the range or beyond it, every pull
+# would release on its first tick. A range that is not positive has its own message.
+func _grapple_release_distance_error() -> String:
+	var release := grapple_release_distance_m
+	if release <= 0.0:
+		return "grapple_release_distance_m is %s: the feet never reach the point itself" % release
+	if grapple_range_m > 0.0 and release >= grapple_range_m:
+		return (
+			"grapple_release_distance_m is %s: at or beyond grapple_range_m, %s, every pull would"
+			% [release, grapple_range_m]
+			+ " release at once"
 		)
 	return ""
 

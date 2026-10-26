@@ -1,10 +1,10 @@
 ---
 id: TASK-10.6
 title: 'Gancho: a mira, o cabo e a puxada'
-status: In Progress
+status: Done
 assignee: []
 created_date: '2026-10-19 13:47'
-updated_date: '2026-10-24 20:16'
+updated_date: '2026-10-26 14:11'
 labels:
   - jogo
 milestone: m-1
@@ -54,23 +54,23 @@ Fechados pelo Claude (DEC-0017) e escritos no `movimento.md` ("Gancho", "Perdão
 
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
-- [ ] #1 Quando a sonda do motor lança o raio de 25 m de dentro do tick, só contra o cenário, o resultado (acertou, ponto, normal, caminho do colisor) sai igual no tick novo, no refeito pelo rollback de 7 ticks e num quadro de processo, contra uma parede de teste e contra o céu; a sonda falha se não houver um acerto e um erro, e anota o tempo de 1000 raios (DEC-0044 §4; `rede.md` §4; DEC-0025)
-- [ ] #2 Quando o jogador mira, o input leva o `pitch` (a última amostra da câmera, de −80° a 80°, positivo para cima) e o `grapple` (um toque, no Q por posição física); a direção da mira é `Aim.direction(yaw, pitch)`, e o raio sai do ombro, 1,6 m acima dos pés (`aim_height_m`, igual ao pivô do `camera_v0.tres` por teste), só contra o cenário; o netfox grava os dois, e o replay ganha as duas colunas: um arquivo da TASK-10.3 ainda toca com `--force`, com as colunas que faltam no valor padrão (F-140 §1; DEC-0044; DEC-0026 §1; DEC-0027 §5)
-- [ ] #3 Quando o lutador aperta o gancho com a recarga livre, fora do dash e sem outro gancho no ar, e a mira acha o cenário de 3 a 25 m do ombro, o cabo voa 100 ms (6 ticks a 60, 3 a 30) e prende no ponto fixado no tick do disparo; a 2,99 m, a 25,01 m ou contra o céu, nada acontece, a recarga não conta, e o aperto fica na vaga, com a mira refeita a cada tick, até a janela de 150 ms fechar (`movimento.md`, "Gancho"; DEC-0039)
-- [ ] #4 Quando o cabo prende, o núcleo puxa o lutador a 18 m/s com os pés rumo ao ponto, recalculado a cada tick, sem gravidade e sem input; com os pés a 1,5 m do ponto, solta e conserva a velocidade; a partir do segundo tick da puxada, quando a velocidade rumo ao ponto fica abaixo de 9 m/s (50% da puxada, `grapple_block_pct`), solta (`movimento.md`, "Gancho")
-- [ ] #5 Quando o lutador aperta o pulo durante a puxada, o gancho solta conservando a velocidade, sem impulso e sem custo, e o aperto se gasta na soltura: o próximo aperto no ar é o pulo duplo, se houver e com stamina; um pulo apertado enquanto o cabo voa segue as regras do modo e não solta; quando pulo, dash e gancho chegam no mesmo tick, vale o pulo, depois o dash, depois o gancho, e um aperto posterior substitui o guardado (`movimento.md`, "Gancho" e "Perdão"; DEC-0039 §4)
-- [ ] #6 Quando o gancho solta, o próximo só sai 6 s depois (360 ticks a 60, 180 a 30), e um aperto na recarga espera na vaga pelos 150 ms e some; o gancho sai do chão, do ar e da parede, onde a corrida acaba no disparo, e não sai no dash, com o cabo voando nem na puxada; o dash espera na vaga enquanto o cabo voa; sair do chão puxado não abre o coyote (`movimento.md`, "Gancho"; DEC-0016; DEC-0041)
-- [ ] #7 Quando uma corrida na parede começa dentro dos 100 ms do coyote do chão e termina, o primeiro aperto no ar é o pulo duplo, não o pulo cheio: entrar na corrida zera o coyote do chão (`movimento.md`, "Corrida na parede": "O coyote do chão na entrada"; Q-35)
-- [ ] #8 Quando a SyncTest roda o cenário do gancho com o rollback de 7 ticks a cada tick, refazendo o raio em cada tick refeito, ela acha zero divergências no estado inteiro, e esconder `:state:grapple_point` do netfox faz ela acusar; o cenário tem soltura pela distância, pelo pulo e pela trava, um erro e uma recusa na recarga; o sinal do cabo e o da puxada tocam uma vez por chave; a gravação de um gancho refaz o mesmo rastro de estado (`rede.md` §8; DEC-0031 §6; DEC-0027 §5)
-- [ ] #9 Quando o Arthur aperta Q no Sozinho, ele se puxa até as torres e o pilar; a mira ganha o ponto quando o Q prenderia agora, o cabo aparece do ombro ao ponto, o rastro curto acompanha a puxada, e o HUD mostra "No gancho" e a recarga com o anel e os décimos, tudo lido do estado ou só da tela; as torres e o pilar ficam longe da referência e da SyncTest; o que ele sentiu vai para uma fonte (`visual-e-audio.md`, "O gancho na tela"; DEC-0031 §2; F-139; F-041)
+- [x] #1 Quando a sonda do motor lança o raio de 25 m de dentro do tick, só contra o cenário, o resultado (acertou, ponto, normal, caminho do colisor) sai igual no tick novo, no refeito pelo rollback de 7 ticks e num quadro de processo, contra uma parede de teste e contra o céu; a sonda falha se não houver um acerto e um erro, e anota o tempo de 1000 raios (DEC-0044 §4; `rede.md` §4; DEC-0025)
+- [x] #2 Quando o jogador mira, o input leva o `pitch` (a última amostra da câmera, de −80° a 80°, positivo para cima) e o `grapple` (um toque, no Q por posição física); a direção da mira é `Aim.direction(yaw, pitch)`, e o raio sai do ombro, 1,6 m acima dos pés (`aim_height_m`, igual ao pivô do `camera_v0.tres` por teste), só contra o cenário; o netfox grava os dois, e o replay ganha as duas colunas: um arquivo da TASK-10.3 ainda toca com `--force`, com as colunas que faltam no valor padrão (F-140 §1; DEC-0044; DEC-0026 §1; DEC-0027 §5)
+- [x] #3 Quando o lutador aperta o gancho com a recarga livre, fora do dash e sem outro gancho no ar, e a mira acha o cenário de 3 a 25 m do ombro, o cabo voa 100 ms (6 ticks a 60, 3 a 30) e prende no ponto fixado no tick do disparo; a 2,99 m, a 25,01 m ou contra o céu, nada acontece, a recarga não conta, e o aperto fica na vaga, com a mira refeita a cada tick, até a janela de 150 ms fechar (`movimento.md`, "Gancho"; DEC-0039)
+- [x] #4 Quando o cabo prende, o núcleo puxa o lutador a 18 m/s com os pés rumo ao ponto, recalculado a cada tick, sem gravidade e sem input; com os pés a 1,5 m do ponto, solta e conserva a velocidade; a partir do segundo tick da puxada, quando a velocidade rumo ao ponto fica abaixo de 9 m/s (50% da puxada, `grapple_block_pct`), solta (`movimento.md`, "Gancho")
+- [x] #5 Quando o lutador aperta o pulo durante a puxada, o gancho solta conservando a velocidade, sem impulso e sem custo, e o aperto se gasta na soltura: o próximo aperto no ar é o pulo duplo, se houver e com stamina; um pulo apertado enquanto o cabo voa segue as regras do modo e não solta; quando pulo, dash e gancho chegam no mesmo tick, vale o pulo, depois o dash, depois o gancho, e um aperto posterior substitui o guardado (`movimento.md`, "Gancho" e "Perdão"; DEC-0039 §4)
+- [x] #6 Quando o gancho solta, o próximo só sai 6 s depois (360 ticks a 60, 180 a 30), e um aperto na recarga espera na vaga pelos 150 ms e some; o gancho sai do chão, do ar e da parede, onde a corrida acaba no disparo, e não sai no dash, com o cabo voando nem na puxada; o dash espera na vaga enquanto o cabo voa; sair do chão puxado não abre o coyote (`movimento.md`, "Gancho"; DEC-0016; DEC-0041)
+- [x] #7 Quando uma corrida na parede começa dentro dos 100 ms do coyote do chão e termina, o primeiro aperto no ar é o pulo duplo, não o pulo cheio: entrar na corrida zera o coyote do chão (`movimento.md`, "Corrida na parede": "O coyote do chão na entrada"; Q-35)
+- [x] #8 Quando a SyncTest roda o cenário do gancho com o rollback de 7 ticks a cada tick, refazendo o raio em cada tick refeito, ela acha zero divergências no estado inteiro, e esconder `:state:grapple_point` do netfox faz ela acusar; o cenário tem soltura pela distância, pelo pulo e pela trava, um erro e uma recusa na recarga; o sinal do cabo e o da puxada tocam uma vez por chave; a gravação de um gancho refaz o mesmo rastro de estado (`rede.md` §8; DEC-0031 §6; DEC-0027 §5)
+- [x] #9 Quando o Arthur aperta Q no Sozinho, ele se puxa até as torres e o pilar; a mira ganha o ponto quando o Q prenderia agora, o cabo aparece do ombro ao ponto, o rastro curto acompanha a puxada, e o HUD mostra "No gancho" e a recarga com o anel e os décimos, tudo lido do estado ou só da tela; as torres e o pilar ficam longe da referência e da SyncTest; o que ele sentiu vai para uma fonte (`visual-e-audio.md`, "O gancho na tela"; DEC-0031 §2; F-139; F-041)
 <!-- AC:END -->
 
 ## Definition of Done
 <!-- DOD:BEGIN -->
-- [ ] #1 Critérios de aceite verificados
-- [ ] #2 Teste automatizado para toda regra do núcleo (core/)
-- [ ] #3 Diário da sessão escrito e glossário atualizado
-- [ ] #4 Mudanças registradas em docs/mudancas.md
+- [x] #1 Critérios de aceite verificados
+- [x] #2 Teste automatizado para toda regra do núcleo (core/)
+- [x] #3 Diário da sessão escrito e glossário atualizado
+- [x] #4 Mudanças registradas em docs/mudancas.md
 <!-- DOD:END -->
 
 ## Implementation Plan
@@ -207,3 +207,15 @@ Contract for the agents, from the approved plan (F-141; DEC-0044). It supersedes
 
 **Rounds**: A (probe B, the inputs, the key, the data and the config; stop and report if probe B finds a divergence); B (the core, the adapter, the cues, the HUD, the reticle, the SyncTest); C (the arena, the docs: `rede.md` §3, §4 and §8, `visao-geral.md`, `testes-e-entrega.md`; `net_run`). The pillar may slide to TASK-10.7; the cable may not (F-139).
 <!-- SECTION:NOTES:END -->
+
+## Final Summary
+
+<!-- SECTION:FINAL_SUMMARY:BEGIN -->
+O gancho está no jogo (F-141; DEC-0044):
+- **A puxada leva os pés ao ponto**, de 3 a 25 m do ombro, a 18 m/s e sem gravidade. Solta com os pés a 1,5 m, pela trava abaixo de 9 m/s ou pelo pulo, que só solta. A recarga de 6 s conta da soltura, e a tecla é o Q (F-140).
+- **O raio mora no tick**, pelo pedido de mira: a sonda B deu 0 divergência no rollback de 7 ticks e num quadro de processo.
+- **O sinal na tela:** a mira com o ponto, o cabo, o rastro da puxada, "No gancho" e o anel da recarga.
+- **A arena** ganhou a `TorreA`, a `TorreB` e o `Pilar10m`. A Q-35 entrou junto.
+
+Provas: 94 + 10 casos travados, com uma linha corrigida pelo ok do Arthur (F-143); a cena "gancho" da SyncTest com 0 divergência em 3.558 conferências e o veneno acusando 30; o `net_run` com 0 tick corrigido; o portão verde com 1.187 testes. Revisor: APPROVE. O Arthur jogou duas sessões e gostou muito (F-144). A mira com o boneco na frente virou a TASK-10.11 (F-145), e o "boost" ao soltar perto da parede, a Q-40.
+<!-- SECTION:FINAL_SUMMARY:END -->

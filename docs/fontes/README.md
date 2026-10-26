@@ -147,3 +147,5 @@ O que chegou ao projeto e como chegou. Uma fonte não muda: só mudam `status`, 
 | [F-141](F-141-arthur-aprova-o-plano-do-gancho.md) | 2026-10-24 | O Arthur acerta por que o núcleo pede o raio e aprova o plano da TASK-10.6, o gancho, no plan mode |
 | [F-142](F-142-arthur-registra-o-apelo-pelo-arco-duas-espadas-e-sniper.md) | 2026-10-24 | O Arthur registra o apelo pelo arco, pelas duas espadas e pelo sniper, para depois |
 | [F-143](F-143-arthur-libera-a-correcao-do-teste-da-parede-que-para-a-puxada.md) | 2026-10-26 | O Arthur libera a correção de uma linha no teste travado da parede que para a puxada |
+| [F-144](F-144-arthur-joga-o-gancho.md) | 2026-10-26 | O Arthur joga o gancho, gosta muito, acha certa a recarga longa, sente um "boost" ao soltar perto da parede e acha a mira ruim, com o boneco na frente dela |
+| [F-145](F-145-arthur-abre-a-mira-no-ombro-e-fecha-o-gancho.md) | 2026-10-26 | O Arthur pede a filha da mira no ombro antes da TASK-10.7 e libera fechar a TASK-10.6 com push, PR e merge |

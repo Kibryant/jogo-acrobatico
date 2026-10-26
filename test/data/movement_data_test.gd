@@ -126,6 +126,7 @@ func _design_data() -> MovementData:
 	data.grapple_block_pct = 50.0 # "Gancho": "Trava"
 	data.grapple_cooldown_ms = 6000 # "Gancho": "Recarga"
 	data.aim_height_m = 1.6 # "Gancho": "De onde sai a mira"
+	data.aim_side_m = 0.8 # "Gancho": "De onde sai a mira"; "Câmera": "Ombro" (DEC-0045 §2)
 	return data
 
 
@@ -207,6 +208,20 @@ func test_movement_v0_holds_the_numbers_of_movimento_md() -> void:
 	assert_float(data.grapple_block_pct).is_equal_approx(design.grapple_block_pct, HAIR)
 	assert_int(data.grapple_cooldown_ms).is_equal(design.grapple_cooldown_ms)
 	assert_float(data.aim_height_m).is_equal_approx(design.aim_height_m, HAIR)
+	assert_float(data.aim_side_m).is_equal_approx(design.aim_side_m, HAIR)
+
+
+# TASK-10.11: the aim's side is signed, 0 the shoulder and negative the left one, so no value
+# of it is impossible (movimento.md, "Câmera": "Ombro"; its own checks live in
+# movement_data_grapple_test.gd).
+func test_an_aim_side_of_zero_or_negative_passes_the_data_check(
+	side_m: float,
+	_test_parameters := [[0.0], [-0.8]],
+) -> void:
+	var data := _design_data()
+	data.aim_side_m = side_m
+	var message := "aim_side_m = %s must pass" % side_m
+	assert_array(data.validate()).override_failure_message(message).is_empty()
 
 
 func test_movement_v0_passes_the_data_check() -> void:

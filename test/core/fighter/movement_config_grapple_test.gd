@@ -3,7 +3,8 @@
 # ticks (DEC-0004, rule 3; visao-geral.md, "O tempo e a física no estado" and "A configuração
 # nasce na carga"); derives the block speed from the pull and the percentage; and copies the
 # range, the minimum, the pull, the release distance and the aim's height (movimento.md, "Gancho";
-# TASK-10.6 notes, Config).
+# TASK-10.6 notes, Config). TASK-10.11 adds the aim's side, the camera's shoulder copied as it is,
+# sign included (movimento.md, "Gancho": "De onde sai a mira"; "Câmera": "Ombro"; DEC-0045 §2).
 extends GdUnitTestSuite
 
 const MOVEMENT_V0 := "res://data/movement_v0.tres"
@@ -20,7 +21,8 @@ const GRAPPLE_RELEASE_DISTANCE_M := 1.5 # "Como solta"
 const GRAPPLE_BLOCK_PCT := 50.0 # "Trava"
 const GRAPPLE_BLOCK_SPEED_MPS := 9.0 # "Trava": "(9 m/s)"
 const GRAPPLE_COOLDOWN_MS := 6000 # "Recarga"
-const AIM_HEIGHT_M := 1.6 # "De onde sai a mira"
+const AIM_HEIGHT_M := 1.6 # "De onde sai a mira": 1,6 m up ("Câmera": "Altura do pivô")
+const AIM_SIDE_M := 0.8 # "De onde sai a mira": 0,8 m to the right of the yaw ("Câmera": "Ombro")
 const ATTACH_TICKS: Dictionary[int, int] = { 30: 3, 60: 6 }
 const COOLDOWN_TICKS: Dictionary[int, int] = { 30: 180, 60: 360 }
 
@@ -166,8 +168,40 @@ func test_the_range_the_minimum_the_pull_the_release_and_the_aim_height_are_copi
 	assert_float(config.grapple_pull_speed).is_equal_approx(GRAPPLE_PULL_SPEED_MPS, HAIR)
 	assert_float(config.grapple_release_distance).is_equal_approx(GRAPPLE_RELEASE_DISTANCE_M, HAIR)
 	assert_float(config.aim_height).is_equal_approx(AIM_HEIGHT_M, HAIR)
+	assert_float(config.aim_side).is_equal_approx(AIM_SIDE_M, HAIR)
 	assert_float(config.grapple_min_range).is_less(config.grapple_range)
 	assert_float(config.grapple_release_distance).is_less(config.grapple_range)
+
+
+# The aim's side is copied as it is, sign included: 0,8 is the right shoulder, 0 the shoulder
+# itself and a negative value the left one (movimento.md, "Câmera": "Ombro": "Com sinal";
+# DEC-0045 §2). A metre, not a time: no tick conversion, the same at 30 and at 60.
+func test_the_aim_side_is_copied_as_is_with_its_sign(
+	tickrate: int,
+	side_m: float,
+	_test_parameters := [
+		[30, AIM_SIDE_M],
+		[60, AIM_SIDE_M],
+		[30, 0.0],
+		[60, 0.0],
+		[30, -AIM_SIDE_M],
+		[60, -AIM_SIDE_M],
+		[30, 0.35],
+		[60, -0.35],
+	],
+) -> void:
+	var data := _v0_copy()
+	data.aim_side_m = side_m
+	assert_array(data.validate()).override_failure_message("a side of %s must pass" % side_m) \
+			.is_empty()
+	var config := MovementConfig.create(data, tickrate)
+	var message := "aim_side for aim_side_m = %s at %d ticks is %s" % [
+		side_m,
+		tickrate,
+		config.aim_side,
+	]
+	assert_float(config.aim_side).override_failure_message(message).is_equal_approx(side_m, HAIR)
+	assert_float(config.aim_height).is_equal_approx(AIM_HEIGHT_M, HAIR)
 
 
 func test_the_config_keeps_the_tickrate_it_was_created_for(

@@ -2,7 +2,10 @@
 # "Grapple" (movimento.md, "Gancho"; TASK-10.6 notes, Data), with the data check of DEC-0027 §2
 # (layer 3): movement_v0.tres holds the design numbers, MovementData.validate() returns one
 # message per impossible number, and the aim's height equals the camera's pivot in camera_v0.tres
-# (DEC-0044, choice 2). Each case changes one field of a copy of movement_v0.tres, the design
+# (DEC-0044, choice 2). TASK-10.11 adds the aim's side, the camera's shoulder copied with its
+# sign, which has no impossible value (0 is the shoulder, negative the left one) and must equal
+# the shoulder of camera_v0.tres (movimento.md, "Gancho": "De onde sai a mira"; "Câmera":
+# "Ombro"; DEC-0045 §2). Each case changes one field of a copy of movement_v0.tres, the design
 # numbers, as test/data/movement_data_ticks_test.gd does.
 extends GdUnitTestSuite
 
@@ -19,8 +22,10 @@ const GRAPPLE_RELEASE_DISTANCE_M := 1.5 # "Como solta": 1,5 m from the point
 const GRAPPLE_BLOCK_PCT := 50.0 # "Trava": below 50 % of the pull
 const GRAPPLE_COOLDOWN_MS := 6000 # "Recarga": 6 s
 const AIM_HEIGHT_M := 1.6 # "De onde sai a mira": 1,6 m above the feet, the camera's pivot
+const AIM_SIDE_M := 0.8 # "De onde sai a mira": 0,8 m to the right of the yaw, the camera's shoulder
 
-# The eight numbers of the grapple, each with one value that cannot be, chosen so that each is
+# The eight numbers of the grapple with an impossible value (the aim's side has none, so it is
+# not here), each with one value that cannot be, chosen so that each is
 # wrong on its own and the two "below the range" checks still hold against a range of 0: a range
 # of zero, a negative minimum, a negative cable time, a pull of zero, a negative release distance,
 # a negative percentage, a negative cooldown and an aim without height. The times are ints; the
@@ -103,6 +108,7 @@ func test_movement_v0_holds_the_grapple_numbers_of_movimento_md() -> void:
 	assert_float(data.grapple_block_pct).is_equal_approx(GRAPPLE_BLOCK_PCT, HAIR)
 	assert_int(data.grapple_cooldown_ms).is_equal(GRAPPLE_COOLDOWN_MS)
 	assert_float(data.aim_height_m).is_equal_approx(AIM_HEIGHT_M, HAIR)
+	assert_float(data.aim_side_m).is_equal_approx(AIM_SIDE_M, HAIR)
 
 
 # None: the design numbers pass the data check, and so does the copy every case starts from.
@@ -126,6 +132,33 @@ func test_the_aim_height_equals_the_camera_pivot_of_camera_v0() -> void:
 		HAIR,
 	)
 	assert_float(camera.pivot_height_m).is_equal_approx(AIM_HEIGHT_M, HAIR)
+
+
+# DEC-0045 §2: the aim's side is a copy of the camera's shoulder, sign included, so O sits on
+# the line of the screen's centre. Two files, one number: this test catches the day they differ
+# (movimento.md, "Gancho": "De onde sai a mira"; "Câmera": "Ombro").
+func test_the_aim_side_equals_the_camera_shoulder_of_camera_v0() -> void:
+	var movement := _load_v0()
+	var camera := _load_camera_v0()
+	var message := "aim_side_m is %s, the camera's shoulder_m is %s: they must be equal" % [
+		movement.aim_side_m,
+		camera.shoulder_m,
+	]
+	assert_float(movement.aim_side_m).override_failure_message(message).is_equal_approx(
+		camera.shoulder_m,
+		HAIR,
+	)
+	assert_float(camera.shoulder_m).is_equal_approx(AIM_SIDE_M, HAIR)
+
+
+# The aim's side has no impossible value: 0 is the shoulder itself and a negative value the left
+# shoulder (movimento.md, "Câmera": "Ombro": "Com sinal: negativo seria o ombro esquerdo").
+func test_an_aim_side_of_zero_or_negative_is_allowed(
+	side_m: float,
+	_test_parameters := [[0.0], [-AIM_SIDE_M], [-0.01], [AIM_SIDE_M], [1.5]],
+) -> void:
+	var data := _v0_copy_with("aim_side_m", side_m)
+	_assert_passes(data, "an aim side of %.2f must pass" % side_m)
 
 
 # The range is positive: the ray's length (TASK-10.6 notes: "positive").

@@ -63,7 +63,7 @@ A linguagem ubíqua do jogo (DEC-0004, regra 5): o mesmo termo na conversa, no d
 | Ticks conferidos | Os ticks em que o estado que o cliente previu para o próprio lutador foi comparado com o que o servidor confirmou (`tools/net_run.sh`; `rede.md` §10) | ticks | `PredictionCheck` |
 | Ticks corrigidos | Os ticks conferidos em que o servidor discordou da previsão: a posição a mais de 1 mm, ou o `on_floor` ou o `mode` diferentes. Quando a correção é grande, o lutador pula para o lugar certo na tela | ticks | `PredictionCheck` |
 | Simulador de rede | A peça do netfox que atrasa os pacotes entre os jogos deste PC, para testar com ping sem um servidor longe. Vem em todo jogo como autoload e só liga numa sessão de teste, por um `override.cfg` temporário (DEC-0038) | ms | `NetworkSimulator` |
-| Bot de teste | O programa que joga um lutador no lugar do teclado e do mouse: corre de lado e pula a cada 2 s. Só produz input, como todo bot (DEC-0022) | — | `--bot`, `BotPlayer`, `BotRoute` |
+| Bot de teste | O programa que joga um lutador no lugar do teclado e do mouse: corre de lado e pula a cada 2 s, dá o pulo duplo no topo do pulo e o dash no chão, depois do pouso (TASK-10.8; F-165). Só produz input, como todo bot (DEC-0022) | — | `--bot`, `BotPlayer`, `BotRoute` |
 | Sonda | Código descartável, fora do repositório, feito para provar ou derrubar uma hipótese. O jogo não usa | — | — |
 | Simulação | O contexto que roda a cada tick: movimento e combate | — | `core/` |
 | Meta | O contexto que roda fora do tick: salas, contas e ranking | — | — |

@@ -72,6 +72,8 @@ func _observe(tick: int) -> void:
 			fighter.position,
 			fighter.state.on_floor,
 			fighter.state.mode,
+			fighter.state.double_jump_tick,
+			fighter.state.dash_tick,
 		)
 		if _keep == Keep.FIRST:
 			record.keep_first(String(fighter.name), tick, sample)

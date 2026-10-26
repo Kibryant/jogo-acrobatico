@@ -49,9 +49,10 @@ func _push_for_the_next_loop() -> void:
 
 # The jump and the dash are one-touch commands (DEC-0026 §1): pressed right before their own tick,
 # they count on that tick only, even in a loop of several ticks, since FighterInput takes them
-# after the tick.
+# after the tick. The double jump is the jump's press in the air (TASK-10.8).
 func _press_on_its_tick(_delta: float, tick: int) -> void:
-	if route.jumps_at(tick - start_tick):
+	var step := tick - start_tick
+	if route.jumps_at(step) or route.double_jumps_at(step):
 		input.press_jump()
-	if route.dashes_at(tick - start_tick):
+	if route.dashes_at(step):
 		input.press_dash()

@@ -41,7 +41,7 @@ Explain in Arthur's world (DEC-0021): before a decision that depends on an expla
 | `backlog/` | Backlog.md tasks and milestones. CLI only. |
 | `docs/fontes/` | F-xxx: what was received, as received. Immutable. |
 | `docs/decisoes/` | DEC-xxxx in ADR format; `README.md` is the index. |
-| `docs/design/` | The game on paper: vision, combat, movement, visual and audio, glossary (ubiquitous language). |
+| `docs/design/` | The game on paper: vision, combat, match, movement, visual and audio, glossary (ubiquitous language). |
 | `docs/arquitetura/` | How the game is built; `README.md` is the index. |
 | `docs/diario/` | One devlog entry per session. |
 | `docs/roteiro.md` | Phases and their gates. |

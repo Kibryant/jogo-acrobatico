@@ -124,8 +124,20 @@ A sonda não tem rede, física, efeitos, interface nem arena; o jogo de verdade 
 | Arma de longe carregada | Roxo-avermelhado `#CC79A7`, a conferir sob deuteranopia | A puxada | A puxada ouvida pelo alvo, com direção |
 | Bloqueio (100 ms para subir) | Nenhuma | A lâmina vertical à frente | Um som baixo ao subir; "tunk" no impacto |
 | Reação | Um flash branco | O corpo recua | "Thud" |
+| Armadura (o carregado levando um leve) | O azul do carregado não some | O corpo não recua: só um tremor | O "thud" abafado |
+| Agarrão (a quebra que pegou), 333 ms | Nenhuma | Os dois presos, a mão no peito do outro; o contorno de quem foi agarrado pulsa | Um baque; o estalo do tech quando a pessoa responde |
+| Hitstop, de 2 a 12 ticks | — | Os dois parados na pose do impacto; a câmera treme (só apresentação, com opção para desligar) | — |
+| Golpe que mata | Um flash | O corpo cai | O "thud" mais grave, e o hitstop de 12 ticks |
 
-Os tempos são do `combate.md`; as cores, da Okabe-Ito (F-053 §3.6); as poses e os sons, os da sonda (F-061 §1). Por que o leve não tem cor: ninguém reage a 300 ms com os 100 ms do bloqueio, então ele se defende por leitura ou distância, e a cor marca a exceção que exige outra resposta (F-053 §2.4; For Honor e Naraka, F-053 §1).
+Os tempos são do `combate.md`; as cores, da Okabe-Ito (F-053 §3.6); as poses e os sons, os da sonda (F-061 §1). As quatro linhas de baixo entraram no desenho do duelo (TASK-12; `combate.md`, "O tranco e a vantagem", "A quebra de guarda e o tech", "O hitstop e o tremor").
+
+### O som entra na fase 2 (F-172 §2)
+
+Os três canais só valem com os três (DEC-0031 §1), e o som nunca entrou no jogo porque só entra áudio com licença livre (DEC-0029; Q-32). Pela escolha do Arthur, a fase 2 traz um pacote CC0 pequeno, com um som por token da tabela acima (o "whoosh" do leve, o som longo do carregado, o "swish", o "clang", o "tunk", o "thud", o pisão, o estalo da finta e o baque do agarrão), no bus "leitura" com o sidechain de 12 dB (DEC-0031 §4). A filha do som o escolhe pela política de assets, com a licença ao lado e a linha no `CREDITS.md` (DEC-0029).
+
+### O HUD do duelo (TASK-12)
+
+A vida dos dois no topo, o placar e o relógio no centro, a stamina onde já está, e o token do golpe do outro repetido com forma e cor (`partida.md`, "O que se vê"). O detalhe sai na filha da partida. Por que o leve não tem cor: ninguém reage a 300 ms com os 100 ms do bloqueio, então ele se defende por leitura ou distância, e a cor marca a exceção que exige outra resposta (F-053 §2.4; For Honor e Naraka, F-053 §1).
 
 ### Onde o sinal mora
 
@@ -289,8 +301,7 @@ A tela que a DEC-0031 §8 promete a quem joga, com as escolhas do Arthur (F-161)
 
 ## Em aberto
 
-- Q-21: a janela do parry e a carga variável do carregado.
-- Q-25: a quebra de guarda por escolha.
-- O roxo da arma de longe sob deuteranopia; o som lido com fone; a pose com o boneco (F-063 §3).
+- O roxo da arma de longe sob deuteranopia; o som lido com fone (na filha do som); a pose com o boneco (F-063 §3), a confirmar na rodada 2 do desenho do duelo.
+- A Q-21 e a Q-25 fecharam no desenho do duelo (`combate.md`, "O parry" e "A quebra de guarda e o tech").
 - Q-09: o jitter da entrega, que a sonda viu e o simulador do netfox não tem (F-061 §3).
 - Q-13: a explicação da acrobacia no mundo do jogo, para a fase 1.

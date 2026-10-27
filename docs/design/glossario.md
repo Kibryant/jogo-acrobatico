@@ -1,6 +1,6 @@
 ---
 revisado_em: 2026-10-27
-fontes: [F-001, F-002, F-005, F-007, F-012, F-013, F-020, F-021, F-025, F-026, F-028, F-030, F-032, F-038, F-039, F-044, F-045, F-046, F-050, F-051, F-052, F-053, F-056, F-058, F-066, F-068, F-069, F-070, F-073, F-078, F-079, F-081, F-083, F-085, F-086, F-087, F-088, F-090, F-091, F-093, F-094, F-095, F-097, F-100, F-112, F-121, F-122, F-129, F-141, F-146, F-147, F-148, F-152, F-170]
+fontes: [F-001, F-002, F-005, F-007, F-012, F-013, F-020, F-021, F-025, F-026, F-028, F-030, F-032, F-038, F-039, F-044, F-045, F-046, F-050, F-051, F-052, F-053, F-056, F-058, F-066, F-068, F-069, F-070, F-073, F-078, F-079, F-081, F-083, F-085, F-086, F-087, F-088, F-090, F-091, F-093, F-094, F-095, F-097, F-100, F-112, F-121, F-122, F-129, F-141, F-146, F-147, F-148, F-152, F-170, F-172, F-173]
 ---
 
 # Glossário
@@ -21,7 +21,7 @@ A linguagem ubíqua do jogo (DEC-0004, regra 5): o mesmo termo na conversa, no d
 | Estado | Retrato da simulação num tick, feito de valores planos (número, vetor, texto curto e ID), nunca referência a outro objeto. Fica em quatro caixas: corpo, regras, input e configuração (DEC-0022) | — | `state` |
 | Estado do lutador | A caixa de regras do lutador: modo, carimbos e pulos usados. O netfox grava campo a campo, por valor | — | `FighterState` |
 | Modo | Em que situação o lutador está: no chão ou no ar e, na fase 1, na parede, no dash ou no gancho. Um por vez, com o tick em que começou | — | `mode`, `mode_since` |
-| Ação | O segundo modo, paralelo ao do movimento: o que o lutador faz com as mãos, como preparar um golpe ou bloquear. Fase 2 | — | `action`, `action_since` |
+| Ação | O segundo modo, paralelo ao do movimento: o que o lutador faz com as mãos. Nada, a preparação, o ativo e a recuperação de um golpe, a guarda, a postura do parry, o tranco, o agarrão. Um por vez, com o tick em que começou, como o `mode` (`combate.md`; TASK-12) | — | `action`, `action_since` |
 | Troca por comando | A troca de modo que nasce de um aperto, no `before_move`, onde o comando sai: o dash leva `GROUND → DASH` no tick do aperto. Como lançar uma habilidade no LoL: a tecla decide, e não o chão (DEC-0041) | — | `Movement.before_move` |
 | Troca por contato | A troca de modo que nasce do que o motor relata, no `after_move`: tocou o chão, `GROUND`; deixou o chão, `AIR`. Nunca termina um modo comprometido: o dash que sai da beirada continua dash (DEC-0041 §3) | — | `Movement.after_move` |
 | Saída desenhada | O tick em que um modo comprometido termina pela própria regra, com a velocidade e o modo do desenho: o dash sai a 7 m/s na mesma direção, em `GROUND` ou `AIR` conforme o chão, e um aperto guardado pode sair no mesmo tick (DEC-0041 §2; `movimento.md`, "Dash") | tick | `dash_exit_speed`, `Movement.before_move` |
@@ -75,34 +75,65 @@ A linguagem ubíqua do jogo (DEC-0004, regra 5): o mesmo termo na conversa, no d
 | Preparação | A fase antes de o golpe acertar (startup, windup) | ms no design, ticks no código | `windup` |
 | Ativo | A fase em que o golpe acerta | ms no design, ticks no código | `active` |
 | Recuperação | A fase depois do golpe, em que o atacante fica vulnerável | ms no design, ticks no código | `recovery` |
-| Golpe leve | Golpe rápido e barato | — | `light_attack` |
-| Golpe carregado | Golpe segurado, mais lento e mais forte | — | `charged_attack` |
-| Bloqueio | Defesa que gasta stamina a cada golpe recebido | — | `block` |
-| Parry | Defesa com janela curta, que vence o golpe carregado | — | `parry` |
+| Golpe leve | O golpe rápido e barato: 400 / 100 / 250 ms, 8 de stamina, 12 de dano. Não se apara; o bloqueio o para, e o tranco dele é curto (`combate.md`, "Os golpes e as defesas") | ms no design, ticks no código | `light_attack` |
+| Golpe carregado | O golpe lento e forte: 700 ms de preparação fixa, 120 de ativo, 450 de recuperação, 25 de stamina pagos na soltura, 30 de dano. Tem armadura contra leves na preparação, e é o único golpe que se apara (`combate.md`) | ms no design, ticks no código | `charged_attack` |
+| Bloqueio | A guarda segurada: sobe em 100 ms, para o leve e o carregado, não a quebra; custa 5 por leve e 15 por carregado bloqueado, e anda a 3 m/s (`combate.md`, "O bloqueio, a guarda andando e a stamina") | ms no design, ticks no código | `block` |
+| Parry | A defesa de tempo que vence o carregado: uma janela de 200 ms desde o aperto, 15 de stamina. Aparou, recupera em 200 e tem um carregado garantido; errou, 450 de pé. Só o carregado se apara (`combate.md`, "O parry") | ms no design, ticks no código | `parry` |
 | Feint | Cancelar um golpe durante a preparação, pagando stamina | — | `feint` |
-| Quebra de guarda | Golpe que atravessa o bloqueio | — | `guard_break` |
-| Esquiva | Movimento curto com uma janela invulnerável | — | `dodge` |
+| Quebra de guarda | O agarrão que atravessa o bloqueio e a postura do parry: 350 / 100 / 400 ms, 15 de stamina, sem dano. No contato, os dois ficam presos 333 ms, a janela do tech; sem o tech, 1.000 ms de tranco e um carregado garantido (`combate.md`, "A quebra de guarda e o tech") | ms no design, ticks no código | `guard_break` |
+| Esquiva | O movimento curto com uma janela invulnerável. A recomendação da rodada 2 do desenho do duelo é que ela seja o dash, invulnerável dos ticks 3 a 10 dos seus 12 (`combate.md`, "A esquiva e o dash"; a confirmar) | ms no design, ticks no código | `dodge` |
 | Stamina | A única barra de recurso, usada para tudo | pontos | `stamina` |
 | Troca de arma | Passar de uma arma do equipamento para outra, com tempo fixo | ms no design, ticks no código | `weapon_swap` |
 | Equipamento | Uma arma corpo a corpo, uma de distância e um utilitário | — | `loadout` |
 | Hitbox | A área que acerta | m | `hitbox` |
 | Hurtbox | A área que pode ser acertada | m | `hurtbox` |
 | Fatia varrida | A área que a lâmina percorre do começo ao fim de um tick. O teste do golpe usa a fatia, para a lâmina não pular o corpo entre dois ticks (DEC-0026) | m | `sweep` |
-| Vantagem | Depois de uma troca, quem volta a agir primeiro, e com quantos ms de folga | ms no design, ticks no código | `advantage` |
-| Tranco | O tempo sem agir de quem leva um golpe (hitstun) ou o bloqueia (blockstun). Ainda sem número (Q-10) | ms no design, ticks no código | `hitstun`, `blockstun` |
-| Hitstop | A pausa curta de quem bate e de quem leva, no instante do acerto, que faz o golpe parecer que encostou em algo. É só apresentação: o tick não para, a tela segura a pose. Padrão do gênero (F-083 §4); ainda sem número, v0 do Claude no desenho do duelo (DEC-0036; DEC-0017) | ms | `hitstop` |
+| Vantagem | Depois de uma troca, quem volta a agir primeiro, e com quantos ticks de folga: o tranco de quem leva menos o que falta a quem bateu. Como o cooldown no LoL: quem tem a skill de volta antes ganha a próxima (`combate.md`, "O tranco e a vantagem") | ms no design, ticks no código | `advantage` |
+| Tranco | O tempo sem agir de quem leva um golpe (hitstun) ou o bloqueia (blockstun): 400 ms no leve e 700 no carregado que acertam, 250 e 417 bloqueados, 900 para quem é aparado, 1.000 para a quebra sem tech. Sem input de movimento nem de ação; a gravidade segue (`combate.md`, "O tranco e a vantagem"; Q-10) | ms no design, ticks no código | `hitstun`, `blockstun`, `stun_until_tick` |
+| Hitstop | A pausa curta de quem bate e de quem leva, no instante do acerto, que faz o golpe parecer que encostou em algo. No v0 é simulado: os dois congelam o mesmo tempo, de 2 a 12 ticks, o relógio do golpe dos dois para junto e a vantagem não muda; no parry, só quem foi aparado congela. É estado do núcleo e volta no rollback (`combate.md`, "O hitstop e o tremor"; F-173 §2). O tremor da câmera que o acompanha é só apresentação | ms no design, ticks no código | `frozen_until_tick` |
+| Armadura | O golpe que leva o dano e não para: a preparação do carregado contra leves. É o que faz o carregado vencer o leve, como no Naraka (`combate.md`, "A armadura do carregado"; F-173 §1) | — | `armor` |
+| Tech | A resposta à quebra de guarda: apertar a própria tecla da quebra nos 333 ms depois de ser agarrado. Os dois se soltam, e quem respondeu fica 2 ticks à frente. É reação simples, a um estímulo só, como o "GB tech" do For Honor (`combate.md`, "A quebra de guarda e o tech") | ms no design, ticks no código | `guard_break_tech` |
+| Castigo garantido | Dano que o outro não evita com nenhuma ação: o carregado depois de um parry ou de uma quebra sem tech (`combate.md`, "O tranco e a vantagem") | — | — |
+| Seguro | O golpe bloqueado que deixa quem bateu para trás, mas não tanto que o outro acerte antes de a guarda subir: aqui, desvantagem menor que 18 ticks, os 24 do leve menos os 6 da guarda (`combate.md`) | ticks | — |
+| Troca | Dois golpes que pegam no mesmo tick: os dois levam o dano e o tranco (`combate.md`) | — | `trade` |
+| Golpe que desce | O leve dado no ar, com o arco inclinado 45° para baixo: o golpe de quem está no alto (`combate.md`, "A matriz de posição"; a confirmar) | ° | `air_light` |
+| Regra das mãos | Uma manobra que ocupa uma mão só deixa usar arma de uma mão: na puxada do gancho, a espada não ataca; a pistola, mais tarde, cabe (`combate.md`, "A matriz de posição"; Q-14, a confirmar) | — | — |
+| Guarda andando | Com a guarda alta, o corpo anda a 3 m/s; correr, pular e o dash derrubam a guarda (`combate.md`, "O bloqueio, a guarda andando e a stamina") | m/s | `guard_walk_speed_mps` |
+| Lâmina | O segmento com raio que a conta do golpe usa: começa na mão, a 0,6 m do eixo e 1,3 m de altura, tem 1,4 m e 0,08 m de raio, e varre um arco no ativo (`combate.md`, "A lâmina e o contato") | m | `blade` |
+| Golpe que acerta uma vez | Cada golpe acerta cada alvo no máximo uma vez por janela ativa; o estado guarda quem já foi acertado (`combate.md`; Q-26) | — | `hit_targets` |
 | Punir o erro | Acertar quem errou um golpe enquanto ele ainda está na recuperação | — | — |
 | Cancelamento | Cortar uma ação para começar outra. Só existe o desenhado: na lista, com preço, com aviso e com janela larga (DEC-0016) | — | `cancel` |
 | Janela | O intervalo em que uma ação vale, como a do parry | ms no design, ticks no código | `window` |
 | Buffer de input | Guardar um comando apertado antes da hora e executá-lo no primeiro tick livre | ms no design, ticks no código | `input_buffer` |
-| Invulnerabilidade | A janela em que nada acerta o jogador (i-frames). No v0, a esquiva tem 250 ms; se alguma manobra terá, ainda não se decidiu | ms no design, ticks no código | `invulnerable` |
+| Invulnerabilidade | A janela em que nada acerta o jogador (i-frames). No v0, só a esquiva a tem (`combate.md`, "A esquiva e o dash"; a confirmar se a esquiva é o dash) | ms no design, ticks no código | `invulnerable` |
+
+## Partida
+
+| Termo | O que é | Unidade | No código |
+|---|---|---|---|
+| Partida | O duelo inteiro: rounds até alguém ganhar 3, no máximo 9. É o contexto "Partida e round" da arquitetura, uma máquina de estados pequena e pura no servidor: contagem, luta, fim de round, fim de partida (`partida.md`, "O duelo"; `visao-geral.md`) | — | `MatchState` |
+| Round | Uma luta de até 90 s, com a vida e a stamina cheias no começo. Acaba por KO, por queda fora, ou pelo tempo (`partida.md`) | s no design, ticks no código | `round`, `round_since` |
+| KO | A vida chegou a zero: o round acaba, com o hitstop de 12 ticks e 2 s de fim de round (`partida.md`, "A transição entre rounds") | — | `ko_tick` |
+| Tempo esgotado | O round acabou com os dois vivos: vence quem tem mais vida; vida igual, quem acertou primeiro; ninguém acertou, round sem ponto (`partida.md`) | — | `time_out` |
+| Round sem ponto | O round que ninguém ganha: vida igual sem golpe, ou os dois mortos no mesmo tick (o Double KO) (`partida.md`) | — | — |
+| Contagem | Os 3 s antes de cada round, com as teclas travadas e a câmera livre (`partida.md`) | s | `countdown` |
+| Plano de morte | A altura 5 m abaixo do chão mais baixo do mapa: quem passa dela morre. No duelo, perde o round; no percurso, volta ao último checkpoint. Regra do núcleo com teletransporte, igual no rollback (`partida.md`, "O plano de morte"; Q-48; DEC-0049) | m | `death_plane_y` |
+| Ring-out | Morrer caindo fora da arena num duelo. É como o For Honor e o Smash tratam a queda (`partida.md`; F-173 §2) | — | — |
+| Percurso cronometrado | O modo de treino: a partida, seis checkpoints em ordem e a chegada, com o relógio em ticks e o fantasma da melhor volta (`partida.md`, "O percurso cronometrado"; F-001) | ticks | `time_trial` |
+| Checkpoint | Uma esfera de 3 m no percurso, com número. Cruzar é o segmento entre a posição de um tick e a do seguinte tocar a esfera, na ordem (`partida.md`) | m | `checkpoint` |
+| Fantasma | A melhor volta do percurso desenhada translúcida e sem colisão: a posição, a rotação e o modo por tick, um rastro de estado, não um replay por inputs (`partida.md`; `testes-e-entrega.md` §4) | — | `ghost` |
+| Medalha | Bronze, prata e ouro por tempo no percurso; o ouro nasce do tempo do Arthur (`partida.md`) | s | `medal` |
+| Bot de duelo | O primeiro oponente: só produz input e só lê o que o jogador vê; reage com um atraso sorteado por evento e erra numa taxa por nível (`partida.md`, "O bot que luta"; F-029) | — | `DuelBot` |
+| Nível do bot | A reação média e a taxa de erro do bot: 450 ms e 30 % no nível 1, 330 e 15 % no 2, 260 e 5 % no 3, com o mínimo de 180 ms (`partida.md`) | ms | `bot_level` |
+| Atraso de percepção | O tempo entre um golpe entrar na preparação e o bot "enxergá-lo", sorteado uma vez por evento. É só isso que o faz parecer gente (`partida.md`; F-173 §3) | ms no design, ticks no código | `perception_delay` |
+| Árvore de comportamento | A decisão do bot como uma árvore de seletores, sequências, condições e ações, lida a cada tick e devolvendo o input seguinte. Em GDScript puro, sem addon; a memória do bot é dado plano (`partida.md`) | — | `BehaviorTree` |
 
 ## Movimento
 
 | Termo | O que é | Unidade | No código |
 |---|---|---|---|
 | Corrida na parede | Correr pela parede por um tempo limitado | s | `wall_run` |
-| Dash | Arrancada curta, só no chão e sem invulnerabilidade. No v0, separada da esquiva (`movimento.md`) | m, ms | `dash` |
+| Dash | Arrancada curta de 4 m em 200 ms, só no chão. A recomendação da rodada 2 do desenho do duelo é que ela seja também a esquiva, invulnerável dos ticks 3 a 10 (`movimento.md`, "Dash"; `combate.md`, "A esquiva e o dash"; a confirmar) | m, ms | `dash` |
 | Gancho | Puxa os pés do jogador até um ponto do cenário, de 3 a 25 m do ponto O, pela mira (`movimento.md`, "Gancho") | m | `grapple` |
 | Mira | A direção para onde a câmera olha, pelo yaw e pelo pitch, saindo do ponto O. Na tela, um anel que ganha um ponto quando o Q prenderia agora; como a mira do CoD, é o centro da tela, e acompanha o raio quando uma parede empurra a câmera (`movimento.md`, "Gancho"; DEC-0045) | m | `Aim.direction`, `Aim.origin`, `pitch` |
 | Ponto O | De onde o raio da mira sai: os pés, mais 1,6 m para cima, mais 0,8 m para a direita do yaw. É a linha do centro da tela na profundidade do corpo, calculada pelo núcleo sem câmera, como um backend que recalcula o preço pela tabela em vez de confiar no front (`movimento.md`, "Gancho"; DEC-0045) | m | `Aim.origin`, `aim_height_m`, `aim_side_m` |
@@ -129,7 +160,7 @@ A linguagem ubíqua do jogo (DEC-0004, regra 5): o mesmo termo na conversa, no d
 | Escala da interface | Um número que multiplica toda a interface, de 0,8 a 1,5, como o zoom do navegador; a arena não muda (DEC-0031 §8) | — | `content_scale_factor` |
 | Trava do gancho | A soltura de quem bateu: a partir do segundo tick da puxada, a velocidade rumo ao ponto abaixo de 9 m/s, a metade da puxada (`movimento.md`, "Gancho") | % | `grapple_block_pct` |
 | No chão | Superestado do modo: o lutador apoiado no chão, parado, correndo ou no dash (`movimento.md`). É onde a defesa vale | — | `is_grounded(mode)` |
-| No ar | Superestado do modo: pulo e gancho; ninguém se defende. Se a corrida na parede conta como ar no combate é a Q-14 | — | `is_airborne(mode)` |
+| No ar | Superestado do modo: pulo, queda e gancho; ninguém se defende, e só o leve ataca, descendo em 45°. A corrida na parede conta como ar no combate, e nela nem o leve sai: as mãos estão na parede (`combate.md`, "A matriz de posição"; Q-14, a confirmar) | — | `is_airborne(mode)` |
 | Manobra | O verbo de uma acrobacia como entidade do núcleo: deslocamento, tempo, custo e o que dá para fazer durante ela. É o back-end; a animação só mostra (F-013 §1) | m, ms | `maneuver` |
 | Animação | A apresentação de uma manobra ou de um golpe, no nó. Mostra e nunca decide (DEC-0004) | — | `animation` |
 | Transição | Uma animação deslizando para a próxima sem encurtar nenhuma das duas (blend). É só visual | ms | `blend` |

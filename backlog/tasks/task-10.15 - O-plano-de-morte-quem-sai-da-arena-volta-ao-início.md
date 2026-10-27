@@ -1,10 +1,10 @@
 ---
 id: TASK-10.15
 title: 'A tampa da arena: ninguém sai por cima da borda'
-status: In Progress
+status: Done
 assignee: []
 created_date: '2026-10-26 23:44'
-updated_date: '2026-10-27 13:35'
+updated_date: '2026-10-27 14:14'
 labels: []
 dependencies: []
 parent_task_id: TASK-10
@@ -41,18 +41,24 @@ Fechados pelo Claude (DEC-0017).
 
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
-- [ ] #1 Quando o lutador sobe o Z num canto da borda e dá o pulo duplo no topo, a cabeça bate na tampa, os pés não chegam à quina, e ele fica na arena; a sonda do canto da TASK-10.8 vira teste no portão (DEC-0049; `movimento.md`, "O canto da borda, medido")
-- [ ] #2 Quando o gancho prende na borda o mais alto que alcança, de qualquer altura do Z, o lutador fica na arena (DEC-0049)
-- [ ] #3 Quando a mira, o raio do gancho, as sondas da parede ou a câmera apontam para a tampa, elas não a enxergam; só o corpo do lutador colide com ela, numa camada própria (DEC-0049 §2)
-- [ ] #4 Quando a tampa entra, nada muda abaixo dela: os testes da arena e da borda, a SyncTest e o replay seguem verdes e sem divergência (DEC-0049)
-- [ ] #5 Quando o Arthur tenta sair pelo canto no Sozinho, ele bate na tampa e fica na arena, e o que ele sentiu vai para uma fonte (F-041)
-- [ ] #6 Quando a tampa entra, o `movimento.md` ("A borda" e "O canto da borda, medido"), o `visual-e-audio.md`, o glossário e o `mudancas.md` dizem o que ela é e por quê (DEC-0049)
+- [x] #1 Quando o lutador sobe o Z num canto da borda e dá o pulo duplo no topo, a cabeça bate na tampa, os pés não chegam à quina, e ele fica na arena; a sonda do canto da TASK-10.8 vira teste no portão (DEC-0049; `movimento.md`, "O canto da borda, medido")
+- [x] #2 Quando o gancho prende na borda o mais alto que alcança, de qualquer altura do Z, o lutador fica na arena (DEC-0049)
+- [x] #3 Quando a mira, o raio do gancho, as sondas da parede ou a câmera apontam para a tampa, elas não a enxergam; só o corpo do lutador colide com ela, numa camada própria (DEC-0049 §2)
+- [x] #4 Quando a tampa entra, nada muda abaixo dela: os testes da arena e da borda, a SyncTest e o replay seguem verdes e sem divergência (DEC-0049)
+- [x] #5 Quando o Arthur tenta sair pelo canto no Sozinho, ele bate na tampa e fica na arena, e o que ele sentiu vai para uma fonte (F-041)
+- [x] #6 Quando a tampa entra, o `movimento.md` ("A borda" e "O canto da borda, medido"), o `visual-e-audio.md`, o glossário e o `mudancas.md` dizem o que ela é e por quê (DEC-0049)
 <!-- AC:END -->
 
 ## Definition of Done
 <!-- DOD:BEGIN -->
-- [ ] #1 Critérios de aceite verificados
-- [ ] #2 Teste automatizado para toda regra do núcleo (core/)
-- [ ] #3 Diário da sessão escrito e glossário atualizado
-- [ ] #4 Mudanças registradas em docs/mudancas.md
+- [x] #1 Critérios de aceite verificados
+- [x] #2 Teste automatizado para toda regra do núcleo (core/)
+- [x] #3 Diário da sessão escrito e glossário atualizado
+- [x] #4 Mudanças registradas em docs/mudancas.md
 <!-- DOD:END -->
+
+## Final Summary
+
+<!-- SECTION:FINAL_SUMMARY:BEGIN -->
+A tampa da arena fecha a saída por cima da borda: uma caixa invisível a 50 m, na camada BOUNDS, que só o corpo do lutador enxerga (DEC-0049). A sonda do canto virou teste do portão: com a tampa, os pés param em 48,2 m no Z e no gancho. O Arthur jogou e fechou com a prova do portão (F-171). O plano de morte foi para a fase 2 (Q-48), e o Z flutuando sob a tampa virou a Q-49. O revisor aprovou, e o portão passou em 374 s com 1.514 testes.
+<!-- SECTION:FINAL_SUMMARY:END -->

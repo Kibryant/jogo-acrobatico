@@ -1759,7 +1759,7 @@ class Walls:
 	var same_wall_re_entries := 0
 	## Of those, the ones that came back with the double jump spent and kept it spent.
 	var spent_re_entries := 0
-	## Of those, the ones that changed the jump count or the double jump's stamp: the rule says none.
+	## Of those, the ones that changed the jump count or the double jump's stamp: none, by the rule.
 	var same_wall_renewals := 0
 	## Hops to another wall that renewed the jumps and the double jump (DEC-0047 §2).
 	var renewals_on_another_wall := 0

@@ -79,8 +79,9 @@ static func before_move(
 		if tick - next.mode_since < config.wall_run_max_ticks:
 			return _wall_run(next, velocity, input, config, tick)
 		# The end by time (movimento.md, "Corrida na parede": "Duração máxima"): from this tick
-		# the body is in the air with the double jump the entry renewed, and the wall has no
-		# coyote, so a press now is the double jump ("Pulo da parede no voo").
+		# the body is in the air with the double jump as the entry left it, and the wall has no
+		# coyote, so a press now is the double jump when it is there ("Pulo da parede no voo";
+		# DEC-0047 §2).
 		next.mode = FighterState.Mode.AIR
 		next.mode_since = tick
 	# On the floor the body rests on it; the engine keeps it there and slides it along ramps. A head
@@ -162,8 +163,9 @@ static func after_move(
 	if on_head:
 		_onto_head(next, state, facts, by_contact, tick)
 	elif facts.on_floor:
-		# Touching the floor renews the double jump (movimento.md, "Pulo e ar"), and the same wall
-		# accepts a run again ("Corrida na parede": "Mesma parede").
+		# Touching the floor renews the double jump (movimento.md, "Pulo e ar") and clears the last
+		# wall, so the next run on it is a run on another wall, with the renewal ("Corrida na
+		# parede": "Mesma parede"; DEC-0047 §2).
 		next.jumps_used = 0
 		next.double_jump_tick = FighterState.NEVER
 		next.wall_normal = Vector3.ZERO
@@ -444,7 +446,8 @@ static func _horizontal(
 # -k times wall_slide_gravity_per_tick, set before the move ("Descida, tick a tick"). A jump in
 # the slot is the wall jump: the jump's parabola for its own height, the push out of the wall
 # along its normal, the speed along kept; it is the first jump of the flight, the double jump
-# stays, and the body is in the air from this tick ("Pulo da parede"; DEC-0041). A press made up
+# stays as the entry left it, available or, after a run back on the same wall, spent (DEC-0047
+# §2), and the body is in the air from this tick ("Pulo da parede"; DEC-0041). A press made up
 # to the buffer before the touch fires here, on the first tick of the run (DEC-0039). The stick of
 # the tick the jump fires on may turn it back along the wall ("A volta no pulo da parede").
 static func _wall_run(
@@ -466,7 +469,7 @@ static func _wall_run(
 		if _points_back(input, along):
 			horizontal = -horizontal
 		horizontal += next.wall_normal * config.wall_jump_push
-		next.jumps_used = 1
+		next.jumps_used = maxi(next.jumps_used, 1)
 		next.wall_jump_tick = tick
 		next.mode = FighterState.Mode.AIR
 		next.mode_since = tick
@@ -523,11 +526,15 @@ static func _read_wall(
 
 
 # The entry (movimento.md, "Corrida na parede": "Como entra", "O que decide a entrada", "Mesma
-# parede"): a wall that is not the last one, the same collider within the same-face angle, with
-# the speed along its plane at least the entry speed. It renews the double jump and clears the
-# floor's coyote, so a run that starts and ends within 100 ms of the floor leaves the double jump,
-# never the full one ("O coyote do chão na entrada"; Q-35); the next tick zeroes the vertical and
-# sets the speed (_wall_run).
+# parede"), with the speed along the wall's plane at least the entry speed. The same wall, the same
+# collider within the same-face angle, is accepted only in a flight that began with a wall jump
+# (mode_since is the wall jump's tick): a run ended by time, the lock, the grapple or the contact
+# refuses it until the floor or another wall (DEC-0048), so a run that ends against its wall never
+# starts again on the next tick. Back on the same wall the run renews nothing: the jumps and the
+# double jump stay as they are, spent or available (DEC-0047 §2; the "fake na parede"). Another
+# wall renews the double jump. Every entry clears the floor's coyote, so a run that starts and
+# ends within 100 ms of the floor leaves the double jump, never the full one ("O coyote do chão na
+# entrada"; Q-35); the next tick zeroes the vertical and sets the speed (_wall_run).
 static func _enter_wall(
 	next: FighterState,
 	facts: MoveFacts,
@@ -536,15 +543,17 @@ static func _enter_wall(
 	tick: int,
 ) -> void:
 	var same := facts.wall_id == next.wall_id
-	if same and normal.dot(next.wall_normal) >= config.wall_same_face_cos:
+	same = same and normal.dot(next.wall_normal) >= config.wall_same_face_cos
+	if same and next.mode_since != next.wall_jump_tick:
 		return
 	var horizontal := Vector3(facts.velocity.x, 0.0, facts.velocity.z)
 	if _along_wall(horizontal, normal).length() < config.wall_entry_speed:
 		return
 	next.mode = FighterState.Mode.WALL_RUN
 	next.mode_since = tick
-	next.jumps_used = 0
-	next.double_jump_tick = FighterState.NEVER
+	if not same:
+		next.jumps_used = 0
+		next.double_jump_tick = FighterState.NEVER
 	next.left_floor_tick = FighterState.NEVER
 	next.wall_id = facts.wall_id
 	next.wall_normal = normal

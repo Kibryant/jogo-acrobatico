@@ -36,7 +36,9 @@ var left_floor_tick := NEVER
 # fires, or a press whose window closed, leaves it empty (FighterCommand.NONE and NEVER).
 var buffered_command: StringName = FighterCommand.NONE
 var buffered_tick := NEVER
-# Jumps since the floor, 0 to 2: the jump makes it 1, the double jump 2, the floor renews it.
+# Jumps since the floor, 0 to 2: the jump makes it 1, the double jump 2, the floor renews it, and
+# so does a run on another wall. A run back on the same wall keeps it, so a 2 there stays a 2
+# through the next wall jump: spent stays spent (DEC-0047 §2).
 var jumps_used := 0
 # Where the body looks, in rad: the camera's yaw (movimento.md, "Princípios").
 var facing_yaw := 0.0
@@ -45,8 +47,9 @@ var facing_yaw := 0.0
 # never spent, the bar is full.
 var stamina_at_spend := 0.0
 var stamina_spent_tick := NEVER
-# The tick of the double jump of this flight; the floor clears it. The key its visual signal
-# will play by, once per event (DEC-0031; TASK-10.4).
+# The tick of the double jump of this flight; the floor or a run on another wall clears it, and a
+# run back on the same wall keeps it (DEC-0047 §2). The key its visual signal plays by, once per
+# event (DEC-0031; TASK-10.4).
 var double_jump_tick := NEVER
 # The tick the last dash started: the dash lasts dash_ticks from it, and the next one may start
 # dash_ticks + dash_cooldown_ticks after it, so the cooldown counts from the end (movimento.md,
@@ -57,9 +60,11 @@ var dash_tick := NEVER
 var dash_direction := Vector3.ZERO
 # The wall of the run now, or of the last one (DEC-0042 §2): the flattened unit normal of its face
 # and its identity, the collider's node path relative to the Arena, never an engine id. They stay
-# after the run, so the same wall refuses a new one, until the floor clears them (movimento.md,
-# "Corrida na parede": "Mesma parede"). A seam passes the run to the next block of the plane
-# (F-129).
+# after the run, until the floor clears them or another wall takes their place; another fighter's
+# head changes neither (DEC-0047 §3; DEC-0046 §1). Against them the same wall accepts a run back
+# only in a flight that began with a wall jump, and that run renews nothing (movimento.md,
+# "Corrida na parede": "Mesma parede"; DEC-0047; DEC-0048). A seam passes the run to the next
+# block of the plane (F-129).
 var wall_normal := Vector3.ZERO
 var wall_id: StringName = &""
 # The tick of the last wall jump: the key its visual signal plays by (DEC-0031). It stays after

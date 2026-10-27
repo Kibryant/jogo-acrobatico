@@ -1,9 +1,10 @@
 ---
 id: TASK-10.15
-title: 'O plano de morte: quem sai da arena volta ao início'
-status: To Refine
+title: 'A tampa da arena: ninguém sai por cima da borda'
+status: Ready
 assignee: []
 created_date: '2026-10-26 23:44'
+updated_date: '2026-10-27 13:35'
 labels: []
 dependencies: []
 parent_task_id: TASK-10
@@ -14,24 +15,39 @@ ordinal: 24000
 
 <!-- SECTION:DESCRIPTION:BEGIN -->
 ### Por quê
-A sonda do canto da TASK-10.8 mediu a saída da arena. No canto nordeste, o Z entre as duas bordas tem a última entrada a 47,85 m; um pulo duplo no topo, para o canto, leva os pés a 50,0 m, e a cápsula sobe na quina de cima da borda, anda por ela e cai do lado de fora, sem chão e sem fim. Um gancho a partir de uma corrida a 16,9 m faz o mesmo (`movimento.md`, "A borda"). O Arthur decidiu que, nesse caso, o plano de morte entra antes da 0.2.0: "cair fora da arena e voltar ao início" (F-167 §2).
+A sonda do canto da TASK-10.8 mediu a saída da arena: a cápsula sobe na quina de cima da borda de 50 m, com o pulo duplo no topo do Z num canto ou com um gancho preso a 42,8 m ou mais, e cai do lado de fora, sem chão (`movimento.md`, "O canto da borda, medido"). O Arthur escolheu fechar a saída com uma tampa invisível sobre a arena: "a cabeça bate na tampa antes dos pés chegarem na quina" (DEC-0049; F-170). O plano de morte fica para a fase 2 (Q-48).
 
 ### Perguntas em aberto
-- Onde fica o plano: uma altura abaixo do chão, uma caixa em volta da arena, ou as duas.
-- O que volta ao início: a posição no ponto de nascimento, a velocidade zerada, a barra e as recargas cheias, como um lutador novo.
-- Online e no replay: o plano é uma regra do núcleo, que o servidor decide e o rollback refaz como qualquer outra.
-- Uma tampa sobre a arena, na altura do topo da borda, tira a quina de cima e impede a saída antes da queda. Ela entra junto, no lugar do plano, ou não entra?
+Nenhuma.
 
 ### Escolhas a confirmar
-A confirmar com o Arthur no refinamento.
+Confirmadas pelo Arthur em 27/10/2026 (F-170 §2; DEC-0049):
+1. A tampa: uma caixa de 82 × 1 × 82 m com a face de baixo a 50 m, sem malha e sem sombra.
+2. Numa camada própria: só o corpo do lutador colide com ela; a mira, o gancho, as sondas da parede e a câmera não a enxergam.
+3. O plano de morte vai para a fase 2, com a regra do duelo para quem cai fora.
+
+### Números v0 do Claude
+Fechados pelo Claude (DEC-0017).
+- A tampa mede o mesmo que a borda por fora, 82 m, e tem 1 m de espessura, como a borda. A altura é o topo da borda.
+- Com a tampa, os pés param em uns 48,2 m, 1,8 m abaixo da quina.
 
 ### Fora do escopo
-- O que cair fora vale num duelo (fase 2).
-- Mudar a borda, o Z ou o gancho.
+- O plano de morte e o que cair fora vale num duelo (Q-48, fase 2).
+- Mudar a borda, o Z, o gancho ou qualquer número de movimento.
 
 ### O que você vai aprender
-- Uma rede de segurança no núcleo: a regra que pega o que o mapa não previu.
+- Camadas de física: o mesmo objeto pode bloquear o corpo e ser invisível para os raios, como uma barreira de mapa no CoD que não para tiro.
 <!-- SECTION:DESCRIPTION:END -->
+
+## Acceptance Criteria
+<!-- AC:BEGIN -->
+- [ ] #1 Quando o lutador sobe o Z num canto da borda e dá o pulo duplo no topo, a cabeça bate na tampa, os pés não chegam à quina, e ele fica na arena; a sonda do canto da TASK-10.8 vira teste no portão (DEC-0049; `movimento.md`, "O canto da borda, medido")
+- [ ] #2 Quando o gancho prende na borda o mais alto que alcança, de qualquer altura do Z, o lutador fica na arena (DEC-0049)
+- [ ] #3 Quando a mira, o raio do gancho, as sondas da parede ou a câmera apontam para a tampa, elas não a enxergam; só o corpo do lutador colide com ela, numa camada própria (DEC-0049 §2)
+- [ ] #4 Quando a tampa entra, nada muda abaixo dela: os testes da arena e da borda, a SyncTest e o replay seguem verdes e sem divergência (DEC-0049)
+- [ ] #5 Quando o Arthur tenta sair pelo canto no Sozinho, ele bate na tampa e fica na arena, e o que ele sentiu vai para uma fonte (F-041)
+- [ ] #6 Quando a tampa entra, o `movimento.md` ("A borda" e "O canto da borda, medido"), o `visual-e-audio.md`, o glossário e o `mudancas.md` dizem o que ela é e por quê (DEC-0049)
+<!-- AC:END -->
 
 ## Definition of Done
 <!-- DOD:BEGIN -->

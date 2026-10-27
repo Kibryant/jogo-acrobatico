@@ -110,7 +110,9 @@ func setup(
 ) -> void:
 	config = movement_config
 	collision_layer = PhysicsLayers.FIGHTERS
-	collision_mask = PhysicsLayers.WORLD | PhysicsLayers.FIGHTERS
+	# The lid over the arena stops the body only (DEC-0049 §2): the rays of the aim, the grapple
+	# and the wall ask PhysicsLayers.WORLD alone, and the wall facts skip it (_is_bounds).
+	collision_mask = PhysicsLayers.WORLD | PhysicsLayers.FIGHTERS | PhysicsLayers.BOUNDS
 	# The engine judges the floor with the design's slope (movimento.md, "O corpo"); the core
 	# reads its verdict in MoveFacts.on_floor.
 	floor_max_angle = config.floor_max_angle
@@ -231,15 +233,16 @@ func _rollback_tick(_delta: float, tick: int, _is_fresh: bool) -> void:
 # wall, the move itself collides with nothing on almost every tick (rede.md §4: 100 % of the
 # ticks beside the wall), so a test-only probe asks the engine whether a move WALL_PROBE_DISTANCE
 # into the wall of the state would hit, and moves nothing. Out of a run, the move's own
-# collisions tell the entry: of the colliders that are not a fighter, the one with the most
-# horizontal normal, the first in the engine's order on a tie. The core judges whether it is a
-# wall at all. A wall must also rise above the head (covers_body): when the ray above the head
-# finds no face, the node reports no wall, so the entry is refused and a run ends as at the edge
-# (movimento.md, "Corrida na parede": "A parede passa da cabeça"; TASK-10.10).
+# collisions tell the entry: of the colliders that are not a fighter nor the arena's lid
+# (_is_bounds), the one with the most horizontal normal, the first in the engine's order on a tie.
+# The core judges whether it is a wall at all. A wall must also rise above the head
+# (covers_body): when the ray above the head finds no face, the node reports no wall, so the
+# entry is refused and a run ends as at the edge (movimento.md, "Corrida na parede": "A parede
+# passa da cabeça"; TASK-10.10).
 func _wall_contact(prior: FighterState, facts: MoveFacts) -> void:
 	if prior.mode == FighterState.Mode.WALL_RUN:
 		var hit := move_and_collide(-prior.wall_normal * WALL_PROBE_DISTANCE, true)
-		if hit == null or hit.get_collider() is Fighter:
+		if hit == null or hit.get_collider() is Fighter or _is_bounds(hit.get_collider()):
 			return
 		var id := _wall_id_of(hit.get_collider())
 		# The run's own face while the probe reads it (the same collider, or a seam within the
@@ -319,8 +322,8 @@ func _world_ray(from: Vector3, to: Vector3) -> Dictionary:
 	return get_world_3d().direct_space_state.intersect_ray(query)
 
 
-# The move's own collisions (DEC-0042 §1): of the colliders that are not a fighter, the one with
-# the most horizontal normal, the first in the engine's order on a tie.
+# The move's own collisions (DEC-0042 §1): of the colliders that are not a fighter nor the arena's
+# lid, the one with the most horizontal normal, the first in the engine's order on a tie.
 func _read_slide_contact(facts: MoveFacts) -> void:
 	var flattest := INF
 	for slide: int in get_slide_collision_count():
@@ -328,7 +331,7 @@ func _read_slide_contact(facts: MoveFacts) -> void:
 		for index: int in collision.get_collision_count():
 			var collider := collision.get_collider(index)
 			var normal := collision.get_normal(index)
-			if collider is Fighter or absf(normal.y) >= flattest:
+			if collider is Fighter or _is_bounds(collider) or absf(normal.y) >= flattest:
 				continue
 			flattest = absf(normal.y)
 			facts.wall_normal = normal
@@ -367,6 +370,14 @@ func _head_contact(facts: MoveFacts) -> void:
 		normal = hit.get_normal()
 	facts.floor_is_fighter = true
 	facts.fighter_away = Vector3(normal.x, 0.0, normal.z)
+
+
+# Whether collider is one of the arena's bounds, the lid over the border (DEC-0049 §2): it stops
+# the body and is never a wall for the rules, so the wall facts skip it like a fighter.
+static func _is_bounds(collider: Object) -> bool:
+	if not (collider is CollisionObject3D):
+		return false
+	return ((collider as CollisionObject3D).collision_layer & PhysicsLayers.BOUNDS) != 0
 
 
 # A normal laid flat: the horizontal unit vector a wall faces; zero for a floor or a ceiling.

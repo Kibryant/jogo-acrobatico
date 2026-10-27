@@ -13,7 +13,9 @@
 # casting no shadow (movimento.md, "Métricas de nível": "A borda"). From TASK-10.12, the towers and
 # the pillar share one material of their own and the border walls another, so the tall pieces and
 # the border stand apart from the blocks (visual-e-audio.md, "A cara da arena"); their colours are
-# checked in arena_look_test.gd.
+# checked in arena_look_test.gd. From TASK-10.15, the lid over the border: one box of 82 x 1 x 82 m
+# with its bottom face at the border's 50 m top, without a mesh, on a layer of its own that only
+# the fighter's body collides with (DEC-0049).
 extends GdUnitTestSuite
 
 const ARENA_SCENE := preload("res://arena/arena.tscn")
@@ -128,6 +130,10 @@ const BORDER_SIZES: Dictionary[String, Vector3] = {
 }
 const BORDER_TOP := 50.0
 const BORDER_INNER := 40.0
+## The lid over the border (TASK-10.15; DEC-0049 §1): as wide as the border outside, 82 m, and
+## 1 m thick, as the border is; its bottom face is the border's top.
+const LID := "Tampa"
+const LID_SIZE := Vector3(82, 1, 82)
 
 ## m: a run of 2.5 s at 8 m/s (movimento.md, "Corrida na parede"), which the long wall outlasts.
 const WALL_RUN_LENGTH := 20.0
@@ -516,8 +522,9 @@ func test_the_grapple_scenario_ground_is_free_of_every_piece_of_the_arena() -> v
 	var arena := _arena()
 	for node: Node in arena.find_children("*", "StaticBody3D", true, false):
 		# The border closes the arena around every ground, the scenario's walls inside it: its
-		# inner face is that ground's edge.
-		if node.name == "Floor" or BORDER.has(String(node.name)):
+		# inner face is that ground's edge. The lid lies over it all, 50 m up, above the
+		# scenario's walls.
+		if node.name == "Floor" or node.name == LID or BORDER.has(String(node.name)):
 			continue
 		assert(node is StaticBody3D, "find_children by StaticBody3D returns StaticBody3Ds")
 		var reach := _footprint(_box(node as StaticBody3D)).grow(BODY_RADIUS)
@@ -600,9 +607,43 @@ func test_the_border_closes_the_floor_with_its_inner_faces_at_40_m() -> void:
 		assert_float(along_z.end.z).is_greater_equal(floor_box.end.z)
 	var inside := Rect2(Vector2(-BORDER_INNER, -BORDER_INNER), Vector2.ONE * 2.0 * BORDER_INNER)
 	for node: Node in arena.find_children("*", "StaticBody3D", true, false):
-		if node.name == "Floor" or BORDER.has(String(node.name)):
+		# The lid lies over the border, as wide as it outside (test below).
+		if node.name == "Floor" or node.name == LID or BORDER.has(String(node.name)):
 			continue
 		assert(node is StaticBody3D, "find_children by StaticBody3D returns StaticBody3Ds")
 		var footprint := _footprint(_box(node as StaticBody3D))
 		var failure := "%s stands outside the border" % node.name
 		assert_bool(inside.encloses(footprint)).override_failure_message(failure).is_true()
+
+
+# Criterion 3 of TASK-10.15 (DEC-0049): the lid is one box under the arena, 82 x 1 x 82 m, its
+# bottom face at the border's top and over every border wall, so no corner is left open; it has
+# no mesh, so nobody sees it and it casts no shadow; it sits on PhysicsLayers.BOUNDS, not on the
+# world's layer that the rays and the camera ask, and scans nothing itself.
+func test_the_lid_is_one_invisible_box_on_the_bounds_layer_over_the_border_top() -> void:
+	var arena := _arena()
+	var found := arena.find_children(LID, "", true, false)
+	var failure := "%s is named %d times under Arena" % [LID, found.size()]
+	assert_int(found.size()).override_failure_message(failure).is_equal(1)
+	var lid := _body(arena, LID)
+	assert_object(lid.get_parent()).is_same(arena)
+	assert_int(lid.collision_layer).is_equal(PhysicsLayers.BOUNDS)
+	assert_int(lid.collision_layer & PhysicsLayers.WORLD).is_equal(0)
+	assert_int(lid.collision_mask).is_equal(0)
+	assert_bool(lid.basis.is_equal_approx(Basis.IDENTITY)).is_true()
+	var collision := lid.get_node(^"Collision")
+	assert(collision is CollisionShape3D, "the lid's Collision is a CollisionShape3D")
+	var shape := (collision as CollisionShape3D).shape
+	assert(shape is BoxShape3D, "the lid's shape is a BoxShape3D")
+	assert_vector((shape as BoxShape3D).size).is_equal(LID_SIZE)
+	var box := _box(lid)
+	assert_float(box.position.y).is_equal_approx(BORDER_TOP, HAIR)
+	var cover := _footprint(box)
+	for wall: String in BORDER:
+		var top := _box(_body(arena, wall))
+		assert_float(top.end.y).is_equal_approx(box.position.y, HAIR)
+		var open := "%s is not under the lid" % wall
+		assert_bool(cover.encloses(_footprint(top))).override_failure_message(open).is_true()
+	var seen := lid.find_children("*", "VisualInstance3D", true, false)
+	var visible := "the lid has something to see: %s" % [seen]
+	assert_array(seen).override_failure_message(visible).is_empty()

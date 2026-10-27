@@ -9,3 +9,7 @@ extends RefCounted
 const WORLD := 1
 ## The fighters' bodies, which collide with the world and with each other.
 const FIGHTERS := 2
+## The arena's bounds that only stop a fighter's body: the lid over the border (DEC-0049 §2).
+## Only the fighter's collision_mask has it. The aim's ray, the grapple's, the wall and head
+## probes and the camera ask WORLD only, so nobody aims at the sky nor runs on its ceiling.
+const BOUNDS := 4

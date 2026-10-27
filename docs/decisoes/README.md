@@ -57,6 +57,7 @@
 | [DEC-0046](DEC-0046-a-cabeca-do-outro-e-ar.md) | 2026-10-26 | A cabeça do outro é ar: quem cai sobre outro lutador fica no ar para as regras e escorrega para fora, pelo jogo e não pela rede (a Q-16) | aceita (F-155; F-156; F-165) |
 | [DEC-0047](DEC-0047-a-mesma-parede-vale-sem-devolver-o-pulo-duplo.md) | 2026-10-26 | A mesma parede vale de novo, sem devolver o pulo duplo: o fake na parede sai, e a escada de uma parede só não nasce | aceita (F-166; F-167) |
 | [DEC-0048](DEC-0048-a-volta-na-mesma-parede-so-depois-do-pulo-da-parede.md) | 2026-10-27 | A volta na mesma parede só vale depois de um pulo da parede: completa a DEC-0047 e guarda o limite de 2,5 s | aceita (F-168) |
+| [DEC-0049](DEC-0049-a-tampa-da-arena.md) | 2026-10-27 | A tampa da arena: uma placa invisível a 50 m, que só o corpo do lutador enxerga, fecha a saída por cima da borda; o plano de morte fica para a fase 2 | aceita (F-170) |
 
 ## Propostas — ainda não são regra
 

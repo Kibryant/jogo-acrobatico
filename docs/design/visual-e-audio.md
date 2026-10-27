@@ -1,6 +1,6 @@
 ---
-revisado_em: 2026-10-26
-fontes: [F-050, F-051, F-052, F-053, F-054, F-056, F-058, F-059, F-061, F-062, F-063, F-100, F-121, F-122, F-137, F-139, F-140, F-141, F-146, F-147, F-148, F-152, F-153, F-156, F-157, F-158, F-161, F-162]
+revisado_em: 2026-10-27
+fontes: [F-050, F-051, F-052, F-053, F-054, F-056, F-058, F-059, F-061, F-062, F-063, F-100, F-121, F-122, F-137, F-139, F-140, F-141, F-146, F-147, F-148, F-152, F-153, F-156, F-157, F-158, F-161, F-162, F-170]
 ---
 
 # Visual e áudio
@@ -241,6 +241,7 @@ Leituras v0 do Claude, que o Arthur julga jogando (DEC-0017; F-152). O sinal nas
 - **O modo:** o HUD diz "No ar" em cima de uma cabeça, porque para as regras é ar.
 - **O boneco:** o segundo lutador do Sozinho, parado no `SpawnB`, usa o tom do outro lutador, o mais escuro, como um adversário.
 - **A borda:** as quatro paredes de 50 m não fazem sombra (`movimento.md`, "Métricas de nível"); a cor delas está em "A cara da arena" (TASK-10.12).
+- **A tampa da arena:** a placa sobre a borda, a 50 m, é invisível: não tem malha, então ninguém a vê e ela não faz sombra. Só o corpo do lutador a sente, quando a cabeça bate nela (DEC-0049 §1; F-170; `movimento.md`, "Métricas de nível": "A tampa da arena").
 - **Nenhum ativo novo** entra (DEC-0029).
 
 ### A cara da arena (TASK-10.12)

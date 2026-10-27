@@ -412,12 +412,7 @@ func test_the_wall_id_netfox_does_not_record_makes_the_sync_test_diverge() -> vo
 # same-wall entries renewed anything. As many cues as wall jumps, double jumps and wall runs.
 func test_the_same_wall_scenario_resimulates_with_zero_divergence() -> void:
 	var mesma := await _mesma_parede(MESMA_PAREDE_LOOPS)
-	var message := "%s diverged:
-%s" % [
-		mesma.scenario,
-		"
-".join(mesma.shown),
-	]
+	var message := "%s diverged:\n%s" % [mesma.scenario, "\n".join(mesma.shown)]
 	assert_int(mesma.mismatches).override_failure_message(message).is_equal(0)
 	assert_int(mesma.paths["same_wall_re_entries"]).is_greater_equal(1)
 	assert_int(mesma.paths["spent_re_entries"]).is_greater_equal(1)

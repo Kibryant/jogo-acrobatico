@@ -1,10 +1,10 @@
 ---
 id: TASK-10
 title: 'Fase 1: movimento que diverte sozinho'
-status: Waiting
+status: Done
 assignee: []
 created_date: '2026-10-02 16:48'
-updated_date: '2026-10-19 13:47'
+updated_date: '2026-10-27 14:42'
 labels:
   - jogo
 milestone: m-1
@@ -40,8 +40,8 @@ Confirmadas pelo Arthur em 19/10/2026 (F-100 §1): a ordem "sentir primeiro" (pu
 
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
-- [ ] #1 Quando o Arthur joga 15 minutos sozinho na arena de blocos, ele quer continuar (o teste da fase, F-001).
-- [ ] #2 Quando um número de movimento muda no Resource, o jogo muda sem tocar no código.
+- [x] #1 Quando o Arthur joga 15 minutos sozinho na arena de blocos, ele quer continuar (o teste da fase, F-001).
+- [x] #2 Quando um número de movimento muda no Resource, o jogo muda sem tocar no código.
 <!-- AC:END -->
 
 ## Definition of Done
@@ -76,3 +76,9 @@ created: 2026-10-07 17:52
 Entrada do Desenho 4, rodada 2 (TASK-6; F-044 §1): a gravação do replay por inputs começa nesta fase. Quando o Arthur achar um bug jogando o movimento, o arquivo de teclas vai junto, e o Claude refaz sem tela, em milissegundos (F-042 §3). É um gravador pequeno, no formato que o testes-e-entrega.md definir. O mesmo arquivo serve para o fantasma do percurso cronometrado (visao.md, onboarding).
 ---
 <!-- COMMENTS:END -->
+
+## Final Summary
+
+<!-- SECTION:FINAL_SUMMARY:BEGIN -->
+A fase 1 fechou com a versão 0.2.0. Critério 1: o Arthur jogou 15 min 38 s sozinho e continuaria jogando (F-166 §2; TASK-10.8). Critério 2: test/data/movement_tuning_test.gd muda o pulo duplo para 1,5 m numa cópia do Resource, e o jogo muda sem tocar no código (TASK-10.8). As manobras: pulo duplo, dash, parede, gancho, a mesma parede e a tampa da arena (TASK-10.1 a TASK-10.15).
+<!-- SECTION:FINAL_SUMMARY:END -->

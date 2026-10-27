@@ -1,6 +1,6 @@
 ---
-revisado_em: 2026-10-10
-fontes: [F-001, F-007, F-032, F-044, F-074, F-076, F-082, F-083]
+revisado_em: 2026-10-27
+fontes: [F-001, F-007, F-032, F-044, F-074, F-076, F-082, F-083, F-166]
 ---
 
 # Roteiro
@@ -15,6 +15,11 @@ As fases do estudo, cada uma com o teste que pode encerrar o projeto sem culpa (
 | 3 | 1v1 online | 6 a 9 meses | "Justo entre cidades diferentes?" |
 | 4 | Alpha com 1v1 e 4v4, salas, bot, replay e comunidade no GitHub | 6 a 8 meses | "20 pessoas voltam sem ninguém pedir?" |
 | 5 | Lançamento grátis no Next Fest | 3 a 5 meses | "30+ no pico uma semana depois?" |
+
+## Fases fechadas
+
+- **Fase 0** fechou em 19/10/2026 com a versão 0.1.0, o esqueleto andante (DEC-0028 §3).
+- **Fase 1** fechou em 27/10/2026 com a versão 0.2.0. O teste passou: o Arthur jogou 15 min 38 s sozinho e "com certeza continuaria jogando", pedindo mais ação, que é a fase 2 (F-166 §2). O portão da fase 2 é "Amigos entendem cada troca?".
 
 ## Mudanças em relação ao estudo
 

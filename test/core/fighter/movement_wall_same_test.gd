@@ -421,7 +421,14 @@ func test_back_on_the_same_wall_after_the_wall_jump_a_new_run_starts(
 	_wall_a(rig)
 	var first_entry := _run_on_wall_a(rig)
 	_wall_jump(rig)
-	_throw_back(rig)
+	# The way back is long enough for the touch to come while falling at both rates (F-168 §2):
+	# idle to the apex of the wall jump, by the rig's own predicate (the velocity after the move
+	# no longer rises), then thrown back at the wall by hand with the push of the jump reversed.
+	_rise_to_apex(rig, 2 * tickrate)
+	assert_float(rig.position.x).override_failure_message("still beside the wall").is_greater(
+		MovementRig.WALL_PROBE_DISTANCE
+	)
+	rig.velocity = Vector3(-THROWN_BACK_MPS, rig.velocity.y, -WALL_RUN_SPEED_MPS)
 	var entry_tick := _fly_until_wall_run(rig, tickrate)
 	assert_int(entry_tick).is_greater(first_entry)
 	assert_float(rig.last_facts.velocity.y).override_failure_message("not falling at the touch") \

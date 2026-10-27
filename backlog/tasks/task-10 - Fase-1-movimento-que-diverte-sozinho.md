@@ -4,7 +4,7 @@ title: 'Fase 1: movimento que diverte sozinho'
 status: Done
 assignee: []
 created_date: '2026-10-02 16:48'
-updated_date: '2026-10-27 14:42'
+updated_date: '2026-10-27 14:47'
 labels:
   - jogo
 milestone: m-1
@@ -16,8 +16,6 @@ ordinal: 10000
 ## Description
 
 <!-- SECTION:DESCRIPTION:BEGIN -->
-Esperando: as filhas TASK-10.1 a TASK-10.9, desde 19/10/2026.
-
 ### Por quê
 Fase 1 do roteiro (`docs/roteiro.md`): correr, subir na parede, pular, dar dash e usar o gancho numa arena de blocos. O teste da fase é "divertido sozinho por 15 min?" (F-001). Esta é a task-mãe: as filhas, do tamanho de uma sessão, nascem com `-p TASK-10`.
 

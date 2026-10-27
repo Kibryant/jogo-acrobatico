@@ -1,8 +1,9 @@
 # TASK-9, round C2: the bot plays its fighter through the input box only (DEC-0022), tick by tick
 # as its route says, and leaves the keyboard and the mouse alone; two bots at the arena's spawn
 # points play their routes without touching each other or anything but the floor (criterion 12:
-# "sem se encostar"). The real Match runs in Sozinho, Godot's offline peer, with netfox's ticks
-# advanced by hand (test/support/netfox_ticks.gd; DEC-0027 §3).
+# "sem se encostar"). From TASK-10.8 each leg also has its double jump, at the top of the jump, and
+# the dash comes out on the floor after the flight (F-165). The real Match runs in Sozinho, Godot's
+# offline peer, with netfox's ticks advanced by hand (test/support/netfox_ticks.gd; DEC-0027 §3).
 extends GdUnitTestSuite
 
 const NetfoxTicks := preload("res://test/support/netfox_ticks.gd")
@@ -39,8 +40,8 @@ func _match_with_fighters(count: int) -> Match:
 
 
 # The keys held and pressed on the bot's window reach nothing: every tick takes the route's move,
-# the move of its loop's first tick, as netfox gathers once per loop, and the route's jump and dash
-# on their own ticks, even inside a loop of two ticks.
+# the move of its loop's first tick, as netfox gathers once per loop, and the route's jump, double
+# jump and dash on their own ticks, even inside a loop of two ticks.
 func test_the_bot_fills_the_input_tick_by_tick_and_leaves_the_keyboard_alone() -> void:
 	var game_match := await _match_with_fighters(1)
 	var fighter := game_match.fighters[0]
@@ -65,6 +66,11 @@ func test_the_bot_fills_the_input_tick_by_tick_and_leaves_the_keyboard_alone() -
 		NetfoxTicks.run_loop()
 		if NetworkTime.tick - bot.start_tick == 2:
 			assert_int(fighter.state.jumps_used).is_equal(1) # the jump of step 0
+		if NetworkTime.tick - bot.start_tick == bot.route.double_jump_at_ticks + 1:
+			# The double jump of the leg came out on its tick, in the air.
+			var double_jump_tick := bot.start_tick + bot.route.double_jump_at_ticks
+			assert_int(fighter.state.double_jump_tick).is_equal(double_jump_tick)
+			assert_int(fighter.state.jumps_used).is_equal(2)
 	seen.loop_starts(NetworkTime.tick)
 	NetfoxTicks.run_loop(2)
 	assert_int(fighter.state.jumps_used).is_equal(1) # the jump of step leg, in the loop of two
@@ -80,24 +86,25 @@ func test_the_bot_fills_the_input_tick_by_tick_and_leaves_the_keyboard_alone() -
 		var loop_step := seen.loop_first[tick] - bot.start_tick
 		if seen.moves[tick] != bot.route.move_at(loop_step):
 			wrong.append("step %d: move %s" % [step, seen.moves[tick]])
-		if seen.jumps[tick] != bot.route.jumps_at(step):
+		if seen.jumps[tick] != (bot.route.jumps_at(step) or bot.route.double_jumps_at(step)):
 			wrong.append("step %d: jump %s" % [step, seen.jumps[tick]])
 		if seen.dashes[tick] != bot.route.dashes_at(step):
 			wrong.append("step %d: dash %s" % [step, seen.dashes[tick]])
 	assert_int(seen.moves.size()).is_equal(leg + 4)
 	assert_array(wrong).is_empty()
-	# The dash of the first leg came out, along the bot's line (TASK-10.4).
+	# The dash of the first leg came out on its tick, on the floor after the flight (TASK-10.4;
+	# TASK-10.8).
 	assert_int(fighter.state.dash_tick).is_equal(bot.start_tick + bot.route.dash_at_ticks)
 
 
 # Each bot runs along its own line, the one through its spawn point across the line between the
-# two, so they stay 10 m apart; each jumps and dashes once per leg, and the only thing either one
-# touches is the floor.
+# two, so they stay 10 m apart; each jumps, double jumps and dashes once per leg, the dash on the
+# floor, and the only thing either one touches is the floor.
 func test_two_bots_play_their_routes_without_touching_anything_but_the_floor() -> void:
 	var game_match := await _match_with_fighters(2)
 	var first := game_match.fighters[0]
 	var second := game_match.fighters[1]
-	game_match.let_bot_play(first)
+	var bot := game_match.let_bot_play(first)
 	var second_first_tick: int = second.synchronizer.spawn_tick
 	var other_bot := BotPlayer.new(
 		second.input,
@@ -109,11 +116,17 @@ func test_two_bots_play_their_routes_without_touching_anything_but_the_floor() -
 	var floor_body := game_match.arena.get_node(^"Floor")
 	var lines: Array[float] = [first.position.z, second.position.z]
 	var takeoffs: Array[int] = [0, 0]
+	var double_jumps: Array[int] = [0, 0]
 	var dashes: Array[int] = [0, 0]
+	# The dashes that did not come out on the route's tick: a press in the air, or one the
+	# cooldown or the bar kept waiting in the buffer.
+	var late_dashes: Array[int] = [0, 0]
+	var starts: Array[int] = [bot.start_tick, second_first_tick]
+	var route := other_bot.route
 	var was_on_floor: Array[bool] = [true, true]
 	var closest := INF
 	var wrong: Array[String] = []
-	for step: int in LEGS * other_bot.route.leg_ticks:
+	for step: int in LEGS * route.leg_ticks:
 		NetfoxTicks.run_loop()
 		var gap := second.position - first.position
 		closest = minf(closest, Vector2(gap.x, gap.z).length())
@@ -125,8 +138,13 @@ func test_two_bots_play_their_routes_without_touching_anything_but_the_floor() -
 				)
 			if was_on_floor[index] and not fighter.state.on_floor:
 				takeoffs[index] += 1
+			if fighter.state.double_jump_tick == NetworkTime.tick - 1:
+				double_jumps[index] += 1
 			if fighter.state.dash_tick == NetworkTime.tick - 1:
 				dashes[index] += 1
+				var in_leg := posmod(NetworkTime.tick - 1 - starts[index], route.leg_ticks)
+				if in_leg != route.dash_at_ticks:
+					late_dashes[index] += 1
 			was_on_floor[index] = fighter.state.on_floor
 			for slide: int in fighter.get_slide_collision_count():
 				var collider := fighter.get_slide_collision(slide).get_collider()
@@ -136,8 +154,11 @@ func test_two_bots_play_their_routes_without_touching_anything_but_the_floor() -
 	assert_array(wrong).is_empty()
 	assert_int(takeoffs[0]).is_equal(LEGS)
 	assert_int(takeoffs[1]).is_equal(LEGS)
+	assert_int(double_jumps[0]).is_equal(LEGS)
+	assert_int(double_jumps[1]).is_equal(LEGS)
 	assert_int(dashes[0]).is_equal(LEGS)
 	assert_int(dashes[1]).is_equal(LEGS)
+	assert_array(late_dashes).is_equal([0, 0])
 	assert_float(closest).is_greater(2.0 * game_match.config.capsule_radius)
 
 

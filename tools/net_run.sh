@@ -6,7 +6,8 @@
 # client, the ticks checked and corrected. It is not a gate step; run it by hand:
 #   bash tools/net_run.sh [PING_MS]        (100 when not given; an even number of ms)
 # It exits with 0 only when every process exited with 0, no tick was corrected or missing, every
-# client has 25 s of checked ticks and no log holds an engine error.
+# client has 25 s of checked ticks, every client's bot made at least one double jump and one dash
+# (TASK-10.8) and no log holds an engine error.
 # The simulator works only through its own autoconnect, so the run writes an override.cfg at the
 # project root for its processes: it is removed once they have read it, and on any exit. Ports
 # 7777 and 7778 must be free. The logs and the records stay in a temporary folder, printed at the

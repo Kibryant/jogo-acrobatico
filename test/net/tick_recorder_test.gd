@@ -8,7 +8,8 @@ extends GdUnitTestSuite
 const NetfoxTicks := preload("res://test/support/netfox_ticks.gd")
 const MATCH_SCENE := preload("res://match/match.tscn")
 
-## Loops of one tick: the bot's first leg, with its jump and its landing, and some more.
+## Loops of one tick: the start of the bot's first leg, with its jump, its double jump and its
+## landing (63 ticks in, TASK-10.8), and some more.
 const LOOPS := 90
 
 
@@ -39,6 +40,12 @@ func test_the_recorder_keeps_each_simulated_tick_and_changes_nothing() -> void:
 	assert_vector(without["end"]).is_equal(end)
 	# The bot jumped on its first tick, so the record holds the air as well as the floor.
 	assert_bool(first.sample_at(fighter, start_tick).on_floor).is_false()
+	# The stamps of the leg's double jump and dash are in it too (TASK-10.8).
+	assert_int(first.double_jumps(fighter)).is_equal(1)
+	assert_int(first.dashes(fighter)).is_equal(1)
+	var double_jump_tick := start_tick + BotRoute.new(NetworkTime.tickrate).double_jump_at_ticks
+	var stamped := first.sample_at(fighter, double_jump_tick)
+	assert_int(stamped.double_jump_tick).is_equal(double_jump_tick)
 
 
 # The bot plays a fighter for LOOPS ticks, followed by a recorder of each kind when recording; the

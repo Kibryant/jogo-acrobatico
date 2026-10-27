@@ -30,6 +30,9 @@ const EXTENSION := "replay"
 var path := ""
 ## The rows written so far, one per tick and fighter.
 var rows_written := 0
+## The ticks written so far, each with the rows of its fighters: the session's length in ticks.
+## With the dummy of Sozinho (TASK-10.7), two fighters write two rows per tick.
+var ticks_written := 0
 
 var _file: FileAccess
 var _replay: ReplayFile
@@ -167,6 +170,7 @@ func _on_tick(tick: int) -> void:
 		wrote = true
 	if not wrote:
 		return
+	ticks_written += 1
 	_newest_tick = tick
 	_ticks_since_flush += 1
 	if _ticks_since_flush >= _flush_ticks:

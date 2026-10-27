@@ -1,6 +1,6 @@
 ---
 revisado_em: 2026-10-26
-fontes: [F-001, F-005, F-007, F-023, F-024, F-025, F-026, F-027, F-028, F-029, F-030, F-032, F-033, F-034, F-036, F-042, F-044, F-046, F-073, F-084, F-085, F-087, F-088, F-089, F-091, F-092, F-093, F-095, F-097, F-101, F-112, F-121, F-122, F-129, F-140, F-141, F-143]
+fontes: [F-001, F-005, F-007, F-023, F-024, F-025, F-026, F-027, F-028, F-029, F-030, F-032, F-033, F-034, F-036, F-042, F-044, F-046, F-073, F-084, F-085, F-087, F-088, F-089, F-091, F-092, F-093, F-095, F-097, F-101, F-112, F-121, F-122, F-129, F-140, F-141, F-143, F-165]
 ---
 
 # Rede
@@ -241,7 +241,7 @@ Na primeira rodada (24/10/2026), com um raio só, do ombro: as mesmas 333 de 333
 - **O netfox grava** `:state:grapple_fired_tick`, `:state:grapple_point` e `:state:grapple_end_tick`, e o input em `Input:pitch` e `Input:grapple` (`fighter/fighter.tscn`). Nenhum RID entra no estado: o ponto é um `Vector3`.
 - **A mira da tela** lança a mesma mira, só da tela, do ponto O exibido, pelo yaw e pelo pitch da câmera, a cada quadro, com o segundo raio. O anel fica onde a câmera vê o fim do raio: o centro, com a câmera livre, e fora dele quando uma parede empurra a câmera (DEC-0045 §4). Ela lê as mesmas regras públicas do núcleo, `Movement.can_grapple` e `Movement.in_reach`, e nunca entra no estado (`visual-e-audio.md`, "O gancho na tela").
 - **A previsão, na fase 3:** hoje nenhum lutador prevê input (DEC-0026 §2), então o servidor só simula um lutador num tick cujo input chegou. Um tick previsto reaproveita o último input, e um `grapple` de um toque dispararia de novo nele. A fase 3 decide o raio nesses ticks (DEC-0044, "Consequências"; TASK-10.6, "Fora do escopo").
-- **Na rede:** o `net_run` de 26/10/2026, a ping 100, passou com o input novo, sem nenhum tick corrigido nem faltando (§10). O bot da rede ainda não usa o gancho (TASK-10.8).
+- **Na rede:** o `net_run` de 26/10/2026, a ping 100, passou com o input novo, sem nenhum tick corrigido nem faltando (§10). O bot da rede não usa o gancho nem a parede: os dois esperam a fase 3, que precisa de um alvo na rota do bot e da regra do raio nos ticks previstos (DEC-0044; F-165).
 
 ### A sonda C da cabeça (TASK-10.7, critério 2; F-025 §3)
 
@@ -417,7 +417,7 @@ O modelo bate com o que o Arthur fez a 60 ticks: 72 % sem lag e 13 % com ping 10
     - Tirar o `:state:slide_off_dir` do que o netfox grava a faz acusar: 188 divergências em 100 laços.
     - O rastro do escorregão toca uma vez por pouso: 4 sinais para 2 pulos duplos e 2 pousos.
   - Desde a TASK-10.1, ela compara o estado inteiro (§4): um campo novo do `FighterState` entra na comparação no dia em que existe, sem ninguém lembrar de pôr.
-- **De tempos em tempos,** o mesmo movimento roda com 2 clientes e o simulador do netfox, para ver a correção com lag. É o `tools/net_run.sh` (§10).
+- **De tempos em tempos,** o mesmo movimento roda com 2 clientes e o simulador do netfox, para ver a correção com lag. É o `tools/net_run.sh` (§10). Desde a TASK-10.8, o bot dá o pulo duplo e o dash, e a corrida exige ao menos um de cada em cada cliente (F-165).
 - **Todo replay de bug vai com o arquivo.** O Sozinho grava cada sessão em `user://replays/`, e o log diz onde (TASK-10.3; `testes-e-entrega.md` §4). Quando o Arthur achar um bug jogando, o arquivo vai junto, e o Claude refaz sem tela com o `tools/replay.sh` (F-044 §1).
   - O jogo ao vivo e o tocador sem tela rodam os ticks no passo de física, e os dois dão os mesmos bits em qualquer fps (DEC-0040). Com os ticks no `_process`, eles se separavam no último bit de um float, em micrômetros (`testes-e-entrega.md` §4, a medição).
 
@@ -563,9 +563,12 @@ A cena de entrada olha como o jogo foi aberto, como um `main.ts` que lê o `proc
 
 O `tools/net_run.sh [ping]` roda um servidor sem tela e dois clientes sem tela com o bot, por 30 s, a ping 100.
 
-- O bot corre de lado, 2 s para cada lado, pula no primeiro tick de cada trecho e, desde a TASK-10.4, dá um dash ao longo da linha 1 s depois do começo de cada trecho (`BotRoute.dashes_at`). Ele só produz input (DEC-0022).
+- O bot corre de lado, 2 s para cada lado, e pula no primeiro tick de cada trecho. Desde a TASK-10.4, dá um dash ao longo da linha, e desde a TASK-10.8, o pulo duplo no topo do pulo, 350 ms depois do começo do trecho (`BotRoute.double_jumps_at`; F-165). Ele só produz input (DEC-0022).
+- **O dash passou de 1.000 para 1.200 ms** (`BotRoute.dashes_at`). Com o pulo duplo, o voo pousa no passo 63 do trecho, aos 1.050 ms, medido no motor a 60 ticks; o primeiro tick no chão é o de 1.067 ms, e o dash de 1.000 ms sairia no ar. O dash e a recarga somam 600 ms (`movimento.md`, "Dash"), então um aperto até 1.400 ms termina os dois antes do trecho seguinte. Os 1.200 ms ficam no meio dessa janela, com 133 ms no chão antes, folga para um pulo duplo que a barra atrase, e o dash e a recarga acabam aos 1.800 ms. A 30 ticks, o núcleo pousa o voo no passo 31, e o primeiro tick no chão também é o de 1.067 ms.
+- **A barra não paga 25 pontos a cada 2 s** (`movimento.md`, "Stamina"). Do sétimo trecho em diante, ela entra num ciclo de três: um dash sai 3 ticks atrasado, esperando a barra na vaga do buffer; o trecho seguinte fica sem dash, e o pulo duplo dele sai 2 ticks depois, quando a barra junta os 10 pontos; o terceiro dá o dash na hora. Na corrida de 30 s, cada bot deu 16 pulos duplos e 12 dashes.
 - Cada cliente grava o que previu para o próprio lutador, tick a tick: o primeiro resultado de cada tick. O servidor grava o que confirmou: o último.
 - O `tools/net_run_check.gd` junta os registros e confere cada tick com a tolerância da SyncTest da TASK-9: a posição a até 1 mm, e o `on_floor` e o `mode` iguais. A SyncTest passou a comparar o estado inteiro na TASK-10.1, e esta conferência ficou em 1 mm (§4; F-101 §1).
+- Desde a TASK-10.8, cada tick do registro leva também os carimbos do pulo duplo e do dash (`double_jump_tick` e `dash_tick`). O `net_run_check.gd` conta, por cliente, os pulos duplos e os dashes que saíram, pelos carimbos diferentes, no registro do cliente e no do servidor, e a corrida falha se algum dos quatro for zero: ela precisa ter jogado as manobras que confere. A conferência tick a tick não muda.
 
 | Corrida | Cliente 1 | Cliente 2 | Menor distância entre os dois |
 |---|---|---|---|
@@ -573,8 +576,11 @@ O `tools/net_run.sh [ping]` roda um servidor sem tela e dois clientes sem tela c
 | Revisão da parte 2, 18/10/2026 | 1.852 conferidos, 0 corrigidos | 1.846 conferidos, 0 corrigidos | 10,00 m |
 | TASK-10.4, rodada B, 23/10/2026, com o dash no meio de cada trecho | 1.818 conferidos, 0 corrigidos | 1.815 conferidos, 0 corrigidos | 10,00 m |
 | TASK-10.6, rodada C, 26/10/2026, com o `pitch` e o `grapple` no input; o bot não usa o gancho | 1.875 conferidos, 0 corrigidos, 0 faltando | 1.866 conferidos, 0 corrigidos, 0 faltando | 10,00 m |
+| TASK-10.8, rodada A, 26/10/2026, com o pulo duplo no topo e o dash aos 1.200 ms | 1.837 conferidos, 0 corrigidos, 0 faltando; 16 pulos duplos e 12 dashes, os mesmos no registro do servidor | 1.835 conferidos, 0 corrigidos, 0 faltando; 16 pulos duplos e 12 dashes, os mesmos no servidor | 10,00 m |
 
 A primeira corrida achou 13 ticks corrigidos: o lutador do cliente nascia um tick antes do servidor (§9, o nascimento do lutador).
+
+Na rodada A da TASK-10.8, a corrida levou 37 s, com a CPU em 5 % antes de começar, e o portão verde, 369 s (6 min 9 s, 1.453 casos de teste), com a CPU em 1 % antes, sem nenhum Godot aberto (DEC-0027 §1).
 
 ### O teste à mão (TASK-9, critério 13)
 

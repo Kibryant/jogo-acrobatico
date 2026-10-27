@@ -1,6 +1,6 @@
 ---
 revisado_em: 2026-10-27
-fontes: [F-001, F-028, F-032, F-053, F-061, F-062, F-063, F-166, F-172, F-173, F-174]
+fontes: [F-001, F-028, F-032, F-053, F-061, F-062, F-063, F-166, F-172, F-173, F-174, F-175, F-176]
 ---
 
 # Combate
@@ -149,6 +149,22 @@ A conta do golpe é do núcleo, com formas simples: a lâmina é um segmento com
 | Um acerto por janela ativa (Q-26) | cada golpe acerta cada alvo no máximo uma vez | — | O estado guarda quem o golpe já acertou. Na sonda, a lâmina parada no corpo recomeçava o tranco 4 vezes em 24 ticks (F-073 §4); é a regra do Tekken (F-173 §1 C23). Um teste do núcleo prova com a lâmina parada dentro do corpo por todo o ativo |
 | Parede no meio | não bloqueia no v0 | — | DEC-0026 §4 |
 | Dois golpes no mesmo tick | os dois pegam: troca | — | Sem prioridade entre eles |
+
+### O leve no tick (TASK-12.1; DEC-0051)
+
+Como as regras acima viram ticks. O que não estava no papel é leitura v0 do Claude (DEC-0017), salvo o andar no golpe e a tecla, que são escolhas do Arthur (F-175 §2).
+
+- **Quando o leve sai:** em pé no chão (o modo `GROUND`, fora da cabeça de outro lutador; `movimento.md`, "O corpo"), sem golpe em curso e com 8 de stamina, pagos no primeiro tick da preparação. Fora disso, o aperto espera na vaga do buffer pelos 150 ms (`movimento.md`, "Perdão" e "Stamina"). A tecla é o botão esquerdo do mouse, remapeável (F-175 §2; DEC-0031 §8).
+- **A vaga dividida:** uma vaga só para todo comando (DEC-0039). No mesmo tick, o pulo vence o dash, que vence o gancho, que vence o leve: qualquer tecla de movimento apertada junto com o leve leva a vaga.
+- **As fases:** a preparação de 24 ticks, o ativo de 6 e a recuperação de 15, um depois do outro, contados do tick em que cada fase começou. Nenhum input corta a sequência (DEC-0016).
+- **O corpo durante o golpe** (F-175 §2): em pé, o corpo anda a até 3 m/s em qualquer direção, o mesmo andar devagar da guarda; vindo da corrida, cai de 7 para 3 m/s em uns 90 ms, pela aceleração do chão. Nenhum comando sai da vaga durante o golpe: um pulo, um dash ou um gancho apertados nele esperam e saem no primeiro tick depois da recuperação, se ainda estiverem nos 150 ms. Saindo de uma beirada no meio do golpe, valem as regras do ar, e o golpe continua.
+- **A direção:** em cada tick da preparação, a direção do golpe é a da câmera, e o corpo olha para ela. Do primeiro tick ativo ao fim da recuperação, ela fica, e o corpo olha para ela, por mais que a câmera gire.
+- **O arco do leve:** da direita, o lado da mão, para a esquerda: de −60° a +60° da direção do golpe, com o ângulo positivo girando para a esquerda, como o yaw. A fatia do tick k do ativo, de 1 a 6, vai de −60° + 20°·(k − 1) a −60° + 20°·k: a coroa de círculo entre 0,6 m e 2,0 m do eixo de quem bate, na altura da mão, 1,3 m acima dos pés dele.
+- **O toque:** a fatia toca o alvo quando a menor distância entre ela e o eixo da cápsula do alvo, o segmento de 0,35 m a 1,45 m acima dos pés dele, é de até 0,43 m, os 0,35 do corpo mais os 0,08 da lâmina. A conta é exata, sem amostrar ângulos: um alvo entre a lâmina do fim de um tick e a do fim do seguinte é acertado.
+- **O contato:** no tick do toque, o estado de quem bateu carimba o tick, o nome do alvo e o golpe (DEC-0026 §3). Um golpe faz um contato só: depois dele, a lâmina não testa mais até o golpe acabar (Q-26). Os alvos são testados em ordem de nome.
+- **Quem levou** aplica o contato no tick seguinte ao toque, o primeiro em que a foto do tick o mostra (DEC-0051): perde o dano do golpe, e a vida nunca desce de 0. O dano e, na TASK-12.2, o tranco contam do tick do contato. Dois leves que tocam no mesmo tick tiram 12 dos dois no tick seguinte, em qualquer ordem dos lutadores.
+- **A vida no treino:** sem partida, até a TASK-12.7, a vida volta a 100 dois segundos, 120 ticks, depois do último golpe levado (`partida.md`, "Os modos da Main").
+- **Na TASK-12.1, o golpe levado não interrompe o seu:** o tranco entra na TASK-12.2.
 
 ## O hitstop e o tremor
 

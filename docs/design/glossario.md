@@ -1,6 +1,6 @@
 ---
 revisado_em: 2026-10-27
-fontes: [F-001, F-002, F-005, F-007, F-012, F-013, F-020, F-021, F-025, F-026, F-028, F-030, F-032, F-038, F-039, F-044, F-045, F-046, F-050, F-051, F-052, F-053, F-056, F-058, F-066, F-068, F-069, F-070, F-073, F-078, F-079, F-081, F-083, F-085, F-086, F-087, F-088, F-090, F-091, F-093, F-094, F-095, F-097, F-100, F-112, F-121, F-122, F-129, F-141, F-146, F-147, F-148, F-152, F-170, F-172, F-173, F-174]
+fontes: [F-001, F-002, F-005, F-007, F-012, F-013, F-020, F-021, F-025, F-026, F-028, F-030, F-032, F-038, F-039, F-044, F-045, F-046, F-050, F-051, F-052, F-053, F-056, F-058, F-066, F-068, F-069, F-070, F-073, F-078, F-079, F-081, F-083, F-085, F-086, F-087, F-088, F-090, F-091, F-093, F-094, F-095, F-097, F-100, F-112, F-121, F-122, F-129, F-141, F-146, F-147, F-148, F-152, F-170, F-172, F-173, F-174, F-175, F-176]
 ---
 
 # Glossário
@@ -21,12 +21,13 @@ A linguagem ubíqua do jogo (DEC-0004, regra 5): o mesmo termo na conversa, no d
 | Estado | Retrato da simulação num tick, feito de valores planos (número, vetor, texto curto e ID), nunca referência a outro objeto. Fica em quatro caixas: corpo, regras, input e configuração (DEC-0022) | — | `state` |
 | Estado do lutador | A caixa de regras do lutador: modo, carimbos e pulos usados. O netfox grava campo a campo, por valor | — | `FighterState` |
 | Modo | Em que situação o lutador está: no chão ou no ar e, na fase 1, na parede, no dash ou no gancho. Um por vez, com o tick em que começou | — | `mode`, `mode_since` |
-| Ação | O segundo modo, paralelo ao do movimento: o que o lutador faz com as mãos. Nada, a preparação, o ativo e a recuperação de um golpe, a guarda, a postura do parry, o tranco, o agarrão. Um por vez, com o tick em que começou, como o `mode` (`combate.md`; TASK-12) | — | `action`, `action_since` |
+| Ação | O segundo modo, paralelo ao do movimento: o que o lutador faz com as mãos. Nada, a preparação, o ativo e a recuperação de um golpe, a guarda, a postura do parry, o tranco, o agarrão. Um por vez, com o tick em que começou, como o `mode`; o golpe em curso vai por ID, e a direção dele fica guardada do primeiro tick ativo em diante (`combate.md`, "O leve no tick"; DEC-0051) | — | `action`, `action_since`, `action_move`, `action_yaw` |
 | Troca por comando | A troca de modo que nasce de um aperto, no `before_move`, onde o comando sai: o dash leva `GROUND → DASH` no tick do aperto. Como lançar uma habilidade no LoL: a tecla decide, e não o chão (DEC-0041) | — | `Movement.before_move` |
 | Troca por contato | A troca de modo que nasce do que o motor relata, no `after_move`: tocou o chão, `GROUND`; deixou o chão, `AIR`. Nunca termina um modo comprometido: o dash que sai da beirada continua dash (DEC-0041 §3) | — | `Movement.after_move` |
 | Saída desenhada | O tick em que um modo comprometido termina pela própria regra, com a velocidade e o modo do desenho: o dash sai a 7 m/s na mesma direção, em `GROUND` ou `AIR` conforme o chão, e um aperto guardado pode sair no mesmo tick (DEC-0041 §2; `movimento.md`, "Dash") | tick | `dash_exit_speed`, `Movement.before_move` |
 | Carimbo de tick | O tick em que algo aconteceu, guardado no estado no lugar de uma contagem regressiva, como o "flash 12:30" no chat do LoL | tick | `*_tick`, como `buffered_tick` e `stamina_spent_tick` |
-| Sanduíche do tick | O tick do lutador em três fatias: o núcleo decide, o motor move e colide, o núcleo confere | — | `before_move`, `move_and_slide`, `after_move` |
+| Sanduíche do tick | O tick do lutador em fatias: desde a TASK-12.1, o núcleo luta; depois decide, o motor move e colide, e o núcleo confere (DEC-0051) | — | `Combat.step`, `before_move`, `move_and_slide`, `after_move` |
+| Foto do tick | A cópia de todos os lutadores, com o nome, os pés e o estado, tirada logo depois de o netfox restaurar o tick. Cada lutador lê os outros só nela, e por isso a ordem dos nós não muda o resultado. Como dar a cada função uma cópia do estado do começo, e não o objeto que a anterior acabou de mexer (DEC-0026 §3; DEC-0051) | — | `TickPhoto` |
 | Plano do movimento | O que a primeira fatia do sanduíche devolve: o estado novo e a velocidade que o núcleo pede ao motor e, desde a TASK-10.6, o pedido de mira | — | `MovePlan` |
 | Fatos do movimento | O que o motor devolve depois de mover: se terminou no chão, a velocidade depois da colisão, desde a TASK-10.5 a parede que toca, com a normal e o caminho do colisor (DEC-0042), e desde a TASK-10.6 a posição e a resposta da mira, quando o núcleo pede (DEC-0044) | — | `MoveFacts` |
 | Pedido de mira | O pedido que o núcleo faz no plano quando há um Q válido na vaga: "o que tem na mira?". O nó lança o raio do ombro depois do movimento e devolve a resposta nos fatos. Como uma função pura do TypeScript que não pode fazer `fetch`: ela pede o dado, e quem a chamou o busca (DEC-0044) | — | `MovePlan.aim_request` |
@@ -42,7 +43,9 @@ A linguagem ubíqua do jogo (DEC-0004, regra 5): o mesmo termo na conversa, no d
 | Atraso de visão | Quão velho estava o oponente na tela quando o jogador apertou: o tick atual menos o tick do último estado recebido dele. Vai no input, como um carimbo, a partir da fase 3 | ticks | `view_lag` |
 | Compensação de lag | O servidor julga cada ação pela tela de quem a fez: o contato, pela de quem ataca; a defesa por tempo, pela de quem defende; até o teto (DEC-0026) | ms | `lag_compensation` |
 | Teto de compensação | Até quanto atraso de visão o servidor aceita: 200 ms, 12 ticks a 60. Acima dele, quem tem o atraso paga o excesso (`combate.md`) | ms no design, ticks no código | `compensation_cap` |
-| Contato | A lâmina encostou no corpo do outro, na pose que quem ataca via. Fica no estado de quem ataca, como carimbo, e nunca é desfeito; a defesa decide o resultado depois (DEC-0026) | tick | `contact_tick` |
+| Contato | A lâmina encostou no corpo do outro, na pose que quem ataca via. Fica no estado de quem ataca, como carimbo, com o tick, o nome do alvo e o golpe, e nunca é desfeito; a defesa decide o resultado depois. Quem levou o aplica no tick seguinte, o primeiro em que a foto o mostra (DEC-0026; DEC-0051) | tick | `contact_tick`, `contact_target`, `contact_move` |
+| Vida | Os pontos que um golpe tira: 100 por lutador, que nunca descem de 0. Sem partida, voltam a 100 dois segundos depois do último golpe levado, o treino contra o boneco (`partida.md`, "A vida sem partida") | pontos | `health` |
+| Golpe levado | O carimbo do último golpe que pegou o lutador: o tick do contato, não o tick em que ele o aplicou. É a chave do flash branco, e o tranco da TASK-12.2 conta dele (`combate.md`, "O leve no tick") | tick | `hurt_tick` |
 | Histórico de poses | As poses dos lutadores dos últimos 12 ticks, guardadas no servidor para testar o contato contra a pose que quem ataca via | ticks | — |
 | Lag switch | Trapaça: cortar a própria conexão de propósito, para os inputs chegarem atrasados e valerem no passado (Q-17) | — | — |
 | Servidor autoritativo | O servidor decide o que aconteceu; o cliente só manda input | — | `server` |
@@ -98,9 +101,9 @@ A linguagem ubíqua do jogo (DEC-0004, regra 5): o mesmo termo na conversa, no d
 | Troca | Dois golpes que pegam no mesmo tick: os dois levam o dano e o tranco (`combate.md`) | — | `trade` |
 | Golpe que desce | O leve dado no ar, com o arco inclinado 45° para baixo: o golpe de quem está no alto (`combate.md`, "A matriz de posição"; DEC-0050) | ° | `air_light` |
 | Regra das mãos | Uma manobra que ocupa uma mão só deixa usar arma de uma mão: na puxada do gancho, a espada não ataca; a pistola, mais tarde, cabe (`combate.md`, "A matriz de posição"; Q-14; DEC-0050) | — | — |
-| Guarda andando | Com a guarda alta, o corpo anda a 3 m/s; correr, pular e o dash derrubam a guarda (`combate.md`, "O bloqueio, a guarda andando e a stamina") | m/s | `guard_walk_speed_mps` |
+| Guarda andando | Com a guarda alta, o corpo anda a 3 m/s; correr, pular e o dash derrubam a guarda (`combate.md`, "O bloqueio, a guarda andando e a stamina"). O golpe em curso anda no mesmo andar devagar (F-175 §2) | m/s | `slow_walk_speed_mps` |
 | Lâmina | O segmento com raio que a conta do golpe usa: começa na mão, a 0,6 m do eixo e 1,3 m de altura, tem 1,4 m e 0,08 m de raio, e varre um arco no ativo (`combate.md`, "A lâmina e o contato") | m | `blade` |
-| Golpe que acerta uma vez | Cada golpe acerta cada alvo no máximo uma vez por janela ativa; o estado guarda quem já foi acertado (`combate.md`; Q-26) | — | `hit_targets` |
+| Golpe que acerta uma vez | Cada golpe acerta cada alvo no máximo uma vez por janela ativa. No v0, um golpe guarda um contato só: depois dele, a lâmina não testa mais até o golpe acabar; no 1v1 é a mesma regra (`combate.md`, "O leve no tick"; Q-26; DEC-0051) | — | `contact_tick` |
 | Punir o erro | Acertar quem errou um golpe enquanto ele ainda está na recuperação | — | — |
 | Cancelamento | Cortar uma ação para começar outra. Só existe o desenhado: na lista, com preço, com aviso e com janela larga (DEC-0016) | — | `cancel` |
 | Janela | O intervalo em que uma ação vale, como a do parry | ms no design, ticks no código | `window` |

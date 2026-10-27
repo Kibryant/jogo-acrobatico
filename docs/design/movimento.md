@@ -1,6 +1,6 @@
 ---
 revisado_em: 2026-10-27
-fontes: [F-001, F-012, F-013, F-015, F-084, F-086, F-088, F-100, F-108, F-109, F-121, F-122, F-127, F-128, F-129, F-131, F-132, F-135, F-136, F-140, F-141, F-146, F-147, F-148, F-151, F-152, F-153, F-161, F-167, F-170]
+fontes: [F-001, F-012, F-013, F-015, F-084, F-086, F-088, F-100, F-108, F-109, F-121, F-122, F-127, F-128, F-129, F-131, F-132, F-135, F-136, F-140, F-141, F-146, F-147, F-148, F-151, F-152, F-153, F-161, F-167, F-170, F-174]
 ---
 
 # Movimento
@@ -50,7 +50,7 @@ Cada número tem uma origem, e nem todos têm a mesma firmeza; a vitrine mostra 
 | Velocidade de corrida | 7 | m/s | A mesma para frente, para o lado e para trás |
 | Tempo até a velocidade máxima | 150 | ms | Deriva a aceleração: ≈ 46,7 m/s² |
 | Tempo até parar | 100 | ms | Deriva a desaceleração: 70 m/s² |
-| Andar devagar | não existe | — | Um modo de guarda pode vir com o combate (fase 2) |
+| Andar devagar | só com a guarda alta: 3 m/s | m/s | A guarda andando do combate (`combate.md`, "O bloqueio, a guarda andando e a stamina"; TASK-12). Sem a guarda, não existe andar devagar. Leitura v0 do Claude |
 
 ## Pulo e ar
 
@@ -129,7 +129,7 @@ Cada número tem uma origem, e nem todos têm a mesma firmeza; a vitrine mostra 
 | Pulo depois de um dash que saiu da beirada | o coyote conta da beirada | — | Dentro dos 100 ms do coyote, sai o pulo cheio; depois, é o pulo duplo ("Pulo e ar"). Leitura v0 do Claude (TASK-10.4) |
 | Recarga | 400 | ms | Conta a partir do fim do dash: 24 ticks a 60 e 12 a 30. O dash dura 12 ticks a 60 e 6 a 30 |
 | Custo | 15 | pontos de stamina | |
-| Invulnerabilidade | nenhuma | — | Separado da esquiva, que é do combate (`combate.md`); o protótipo pode pedir para unir os dois |
+| Invulnerabilidade | dos ticks 3 a 10 dos 12 | ticks | O dash é a esquiva do combate, escolha do Arthur na rodada 2 do desenho do duelo (F-174 §2; DEC-0050; `combate.md`, "A esquiva e o dash"): dos 50 aos 167 ms nada o acerta; nos ticks 1, 2, 11 e 12 um golpe pega e interrompe o dash. A esquiva à parte do estudo (F-001) não existe |
 
 ## Gancho
 

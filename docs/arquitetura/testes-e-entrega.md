@@ -314,3 +314,18 @@ O inventário que o `AGENTS.md` resumia (veio para cá no fechamento do Desenho 
   - `tools/measure_fps.sh`: a medição de fps, com a build em tela cheia por uns 2 minutos e o PC livre (F-095).
 - O `node` 24 e o `python` 3.14 servem scripts de apoio e os hooks, nunca o portão (F-016 §2); `python`, nunca `python3`, que aqui é um atalho da Store.
 - As sondas ficam fora do repositório, em pastas ao lado dele (`../netfox-sonda`, `../assets-sonda`, `../git-sonda`).
+
+## 13. O relatório de crash pelo log (DEC-0034; TASK-12)
+
+Quando os amigos testarem a fase 2, o jogo precisa deixar no PC deles o log com a pilha de chamadas, e o passo a passo precisa dizer onde ele fica e como mandar (DEC-0034; F-173 §3). O que entra no `project.godot`, cada um com guarda no `test/project_settings_test.gd`:
+
+| Configuração | Valor | Por quê |
+|---|---|---|
+| `debug/file_logging/enable_file_logging` e `enable_file_logging.pc` | `true` | O arquivo de log. O `.pc` já é `true` no desktop; o explícito evita surpresa numa troca de template (F-173 §3) |
+| `debug/file_logging/log_path` | `user://logs/godot.log`, o padrão | No Windows, `%APPDATA%\Godot\app_userdata\<nome do projeto>\logs` (F-173 §3) |
+| `debug/file_logging/max_log_files` | 10 | Cada sessão renomeia o log anterior com a data; o padrão é 5, e 10 cobrem uma tarde de testes |
+| `application/run/flush_stdout_on_print` | `true` | Sem ele, a saída padrão só vai ao arquivo quando o jogo fecha ou cai; a sonda da F-073 §1 tropeçou nisso |
+| `debug/settings/gdscript/always_track_call_stacks` | `true`, medindo o custo no PC mínimo antes de manter | Sem ele, um erro de GDScript no exportado não traz a pilha; desde o Godot 4.5, o erro registra um backtrace até a origem (F-173 §3) |
+| `debug/settings/crash_handler/message` | o pedido ao testador, em português | O tratador de queda imprime a mensagem antes do backtrace. O template oficial não tem símbolos de depuração, então uma queda nativa dá só endereços; o Sentry da fase 3 pede símbolos próprios (F-173 §3) |
+
+A primeira linha do log traz a versão e o commit (`common/build_stamp.gd`). O passo a passo público para os testadores nasce na filha do log (TASK-12.12), junto com o pedido ao SignPath (Q-20): não reabrir o jogo antes de copiar o log, porque a sessão nova o renomeia; Win+R com o caminho da pasta; mandar o `godot.log` mais recente com o que a pessoa estava fazendo e, se houver, o arquivo de replay da sessão (§4).

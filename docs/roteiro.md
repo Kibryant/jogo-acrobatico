@@ -1,6 +1,6 @@
 ---
 revisado_em: 2026-10-27
-fontes: [F-001, F-007, F-032, F-044, F-074, F-076, F-082, F-083, F-166]
+fontes: [F-001, F-007, F-032, F-044, F-074, F-076, F-082, F-083, F-166, F-172, F-173, F-174]
 ---
 
 # Roteiro
@@ -27,6 +27,7 @@ O detalhe de cada mudança está em `mudancas.md`.
 
 - **Fase 0:** virou base do repositório, fase de desenho e esqueleto andante (DEC-0012). A fase de desenho fechou em 10/10/2026, com os seis desenhos e as DEC-0013 a DEC-0035; não se abre desenho de base novo. Cada fase abre com o seu desenho de jogo, com a lista na DEC-0036; o que aparecer no meio vira Q em `pendencias.md`.
 - **Fase 1:** no estudo, era "movimento sem rede". O rollback exige que o movimento rode dentro do tick desde o começo (F-007 §2). O Desenho 3 decidiu: a fase 1 nasce no tick do netfox e é jogada sozinha, no modo "Sozinho" da `Main`, sem rede. A SyncTest no portão cobre cada manobra nova (DEC-0026; DEC-0027). A gravação do replay por inputs também começa na fase 1, para reproduzir sem tela os bugs de movimento; o replay para o jogador segue na fase 4 (F-044 §1; DEC-0027).
+- **Fase 2:** abriu em 27/10/2026 com o desenho do duelo, a primeira rodada da fase (TASK-12; DEC-0036; F-172): o `combate.md` ganhou o v0 do duelo golpe a golpe, e o `partida.md` nasceu com os rounds, o plano de morte, o bot e o percurso cronometrado, com a pesquisa verificada da tribo na F-173. A fase traz também o som com licença livre (F-172 §2), o relatório de crash pelo log (DEC-0034) e o manequim CC0 com os clipes de identidade feitos no Blender, depois de as regras do duelo estarem jogáveis e antes de os amigos jogarem (DEC-0050; DEC-0030 §7). Fecha com a versão 0.3.0 (DEC-0028 §3).
 - **Fase 3:** o primeiro servidor fora de casa é uma VPS em São Paulo; até lá, nada se paga (DEC-0032).
 - **Entre a fase 3 e a 4:** o arco e as armas entram como marco próprio, depois do 1v1 online e antes do 4v4 com bots (DEC-0004, regra 6; DEC-0036).
 - **Fase 4:** a comunidade mora no GitHub Discussions, e o Discord só entra como canal extra; no jogo, só sinais rápidos, sem chat livre (DEC-0034; `mudancas.md`).

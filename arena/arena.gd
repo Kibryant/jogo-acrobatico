@@ -21,7 +21,11 @@
 # "Métricas de nível": "A borda"): BordaNorte, BordaSul, BordaLeste and BordaOeste, four walls 50 m
 # tall and 1 m thick with their inner faces at ±40 m on the floor's edges, scenery like any wall,
 # in the blocks' grey and casting no shadow. Everything sits on PhysicsLayers.WORLD, Godot's
-# default layer. The floor's top is y = 0, so a spawn point at y = 0 stands on it.
+# default layer, but Tampa: the lid over the border (TASK-10.15; DEC-0049), an 82 x 1 x 82 m box
+# with its bottom face at the border's 50 m top, no mesh and no shadow, on PhysicsLayers.BOUNDS,
+# which only the fighter's body collides with, so the head stops under it before the feet reach
+# the border's top edge, and no ray nor the camera sees it. The floor's top is y = 0, so a spawn
+# point at y = 0 stands on it.
 class_name Arena
 extends Node3D
 

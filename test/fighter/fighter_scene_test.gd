@@ -118,10 +118,18 @@ func test_the_floor_snap_covers_a_dash_tick_down_45_degrees(
 	assert_float(fighter.floor_snap_length).is_greater(drop_per_tick)
 
 
-func test_the_fighter_collides_with_the_world_and_with_fighters() -> void:
+# From TASK-10.15, the body collides with the arena's bounds too, the lid over the border
+# (DEC-0049 §2), on a layer of their own that none of the fighter's rays asks.
+func test_the_fighter_collides_with_the_world_with_fighters_and_with_the_bounds() -> void:
 	var fighter := _fighter()
 	assert_int(fighter.collision_layer).is_equal(PhysicsLayers.FIGHTERS)
-	assert_int(fighter.collision_mask).is_equal(PhysicsLayers.WORLD | PhysicsLayers.FIGHTERS)
+	var mask := PhysicsLayers.WORLD | PhysicsLayers.FIGHTERS | PhysicsLayers.BOUNDS
+	assert_int(fighter.collision_mask).is_equal(mask)
+	var layers: Array[int] = [PhysicsLayers.WORLD, PhysicsLayers.FIGHTERS, PhysicsLayers.BOUNDS]
+	for layer: int in layers:
+		var single := "layer %d is not one bit of its own" % layer
+		assert_int(layer & (layer - 1)).override_failure_message(single).is_equal(0)
+	assert_int(PhysicsLayers.BOUNDS & (PhysicsLayers.WORLD | PhysicsLayers.FIGHTERS)).is_equal(0)
 
 
 # Criterion 4 of TASK-10.7 (F-152): only the scenery is a platform, never another fighter, and

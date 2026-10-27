@@ -261,8 +261,8 @@ func _assert_facts_wall(facts: MoveFacts, wall: StringName) -> void:
 
 
 # The entry as the plan says it (TASK-10.5 plan; DEC-0042): WALL_RUN since the entry tick, the
-# wall's id and flattened normal in the state, and the double jump renewed.
-func _assert_wall_run_started(
+# wall's id and flattened normal in the state, without a word on the double jump.
+func _assert_wall_run_entered(
 	state: FighterState,
 	entry_tick: int,
 	wall: StringName,
@@ -279,6 +279,17 @@ func _assert_wall_run_started(
 		flat,
 		Vector3.ONE * GEOMETRY_HAIR,
 	)
+
+
+# The entry on a wall that is not the last one, or after the floor: the entry above, and the
+# double jump renewed (movimento.md, "Pulo e ar": "Renovação do pulo duplo"; DEC-0047 §2).
+func _assert_wall_run_started(
+	state: FighterState,
+	entry_tick: int,
+	wall: StringName,
+	normal: Vector3,
+) -> void:
+	_assert_wall_run_entered(state, entry_tick, wall, normal)
 	assert_int(state.jumps_used).override_failure_message("the double jump was not renewed") \
 			.is_equal(0)
 	assert_int(state.double_jump_tick).is_equal(FighterState.NEVER)
@@ -1192,11 +1203,12 @@ func test_the_wall_jump_speed_equals_the_jump_speed_for_the_same_height(
 	assert_float(config.wall_jump_speed).is_equal_approx(config.jump_speed, HAIR)
 
 
-# Criterion 6: back on the same wall after the wall jump, without the floor or another wall in
-# between, the touch starts no run: the body slides along it and keeps falling, the state keeps
-# the wall as the last one and the jump count of the flight (movimento.md, "Corrida na parede":
-# "Mesma parede: só vale de novo depois de tocar o chão ou outra parede").
-func test_the_same_wall_refuses_a_new_run_after_the_wall_jump(
+# Criterion 6 of TASK-10.5, rewritten by TASK-10.13 (DEC-0047 §1 and §2): back on the same wall
+# after the wall jump, without the floor or another wall in between, the touch starts a new run
+# on that tick, as any entry, and that run does not renew the double jump: the one jump of the
+# flight stays counted, the stamp stays NEVER, and from the next tick the body runs at 8 m/s
+# with the vertical zeroed. The full re-entry rules are in movement_wall_same_test.gd.
+func test_the_same_wall_accepts_a_new_run_after_the_wall_jump_without_renewing_the_double_jump(
 	tickrate: int,
 	_test_parameters := [[30], [60]],
 ) -> void:
@@ -1209,12 +1221,16 @@ func test_the_same_wall_refuses_a_new_run_after_the_wall_jump(
 	assert_float(rig.position.x).is_greater(MovementRig.WALL_PROBE_DISTANCE)
 	# Thrown back at the wall by hand, with the push of the jump reversed.
 	rig.velocity = Vector3(-THROWN_BACK_MPS, rig.velocity.y, rig.velocity.z)
-	var touched := _fly_without_wall_run(rig, tickrate, WALL_A)
-	assert_bool(touched).override_failure_message("never came back to the wall").is_true()
-	assert_int(rig.state.mode).is_equal(FighterState.Mode.AIR)
-	_assert_wall_id(rig.state, WALL_A)
+	var entry_tick := _fly_until_wall_run(rig, tickrate)
+	_assert_facts_wall(rig.last_facts, WALL_A)
+	_assert_wall_run_entered(rig.state, entry_tick, WALL_A, Vector3.RIGHT)
+	assert_int(rig.state.jumps_used).override_failure_message("the same wall renewed the jumps") \
+			.is_equal(1)
+	assert_int(rig.state.double_jump_tick).is_equal(FighterState.NEVER)
+	var first := rig.step(MovementRig.idle())
+	_assert_run_tick(first, Vector3.FORWARD, WALL_RUN_SPEED_MPS, 0.0)
+	assert_int(rig.state.mode_since).is_equal(entry_tick)
 	assert_int(rig.state.jumps_used).is_equal(1)
-	assert_float(rig.velocity.x).override_failure_message("passed through the wall").is_equal(0.0)
 	assert_float(rig.horizontal_speed()).is_equal_approx(WALL_RUN_SPEED_MPS, HAIR)
 
 
@@ -1245,14 +1261,15 @@ func test_another_wall_in_the_same_plane_accepts_a_run_after_the_wall_jump(
 	_assert_wall_run_started(rig.state, entry_tick, WALL_A2, Vector3.RIGHT)
 
 
-# The same wall in numbers: the same collider with the normal within 10°, inclusive, is the
-# same wall and refuses; beyond 10°, the same collider is another face and accepts: 0°, 5° and
-# the limit refuse; just past the limit, 15° and 90° (the next face of a box) accept
-# (movimento.md, "Corrida na parede": "Mesma parede, em números"; DEC-0042 §3).
-func test_the_same_collider_within_10_degrees_is_the_same_wall_and_beyond_it_is_another(
+# The same wall in numbers (rewritten by TASK-10.13; DEC-0047 §2 and §3): the same collider with
+# the normal within 10°, inclusive, is the same wall: it accepts the run and leaves the double
+# jump as it was; beyond 10°, the same collider is another face: it accepts and renews. 0°, 5°
+# and the limit are the same wall; just past the limit, 15° and 90° (the next face of a box) are
+# another (movimento.md, "Corrida na parede": "Mesma parede, em números"; DEC-0042 §3).
+func test_the_same_collider_within_10_degrees_is_the_same_wall_and_only_beyond_it_renews(
 	tickrate: int,
 	turned_deg: float,
-	accepts: bool,
+	renews: bool,
 	_test_parameters := [
 		[60, 0.0, false],
 		[30, 0.0, false],
@@ -1280,14 +1297,14 @@ func test_the_same_collider_within_10_degrees_is_the_same_wall_and_beyond_it_is_
 	rig.state.wall_normal = Vector3.RIGHT
 	rig.state.jumps_used = 1
 	rig.state.wall_jump_tick = rig.tick - 1
-	if accepts:
-		var entry_tick := _fly_until_wall_run(rig, 2 * tickrate)
+	var entry_tick := _fly_until_wall_run(rig, 2 * tickrate)
+	if renews:
 		_assert_wall_run_started(rig.state, entry_tick, BOX, normal)
 	else:
-		var touched := _fly_without_wall_run(rig, 2 * tickrate, BOX)
-		assert_bool(touched).override_failure_message("the wall was never touched").is_true()
-		_assert_wall_id(rig.state, BOX)
-		assert_int(rig.state.jumps_used).is_equal(1)
+		_assert_wall_run_entered(rig.state, entry_tick, BOX, normal)
+		assert_int(rig.state.jumps_used).override_failure_message("the same face renewed it") \
+				.is_equal(1)
+		assert_int(rig.state.double_jump_tick).is_equal(FighterState.NEVER)
 
 
 # The corridor is climbed by alternating the walls: wall jump from A, run on B, wall jump from

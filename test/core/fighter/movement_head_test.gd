@@ -712,7 +712,8 @@ func test_a_double_jump_still_held_fires_on_a_head(
 
 # Landing on a head renews neither the jumps, nor the double jump, nor the last wall, which the
 # real floor then renews by today's rules (movimento.md, "Pulo e ar": "Renovação do pulo duplo:
-# ao tocar o chão"; "Corrida na parede": "Mesma parede: só vale de novo depois de tocar o chão").
+# ao tocar o chão"; DEC-0047 §3: the last wall changes only on the floor or another wall, and
+# "A cabeça de outro lutador não a muda"; DEC-0046 §1).
 func test_landing_on_a_head_renews_neither_the_jumps_nor_the_double_jump_nor_the_last_wall(
 	tickrate: int,
 	_test_parameters := [[30], [60]],

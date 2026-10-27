@@ -15,7 +15,8 @@
 # arena's own shapes, and has a test of its own; so does the grapple's, gancho (TASK-10.6,
 # criterion 8), whose ray the fighter casts again on every resimulated tick that asks for it. The
 # head's, cabeca (TASK-10.7, criterion 3), lands a fighter on another's head twice, where the rule
-# slides it off, and has a test of its own too.
+# slides it off, and has a test of its own too; so does mesma_parede (TASK-10.13, criterion 5),
+# the fake on the wall: back on the same wall without the double jump (DEC-0047; DEC-0048).
 extends GdUnitTestSuite
 
 const NetfoxTicks := preload("res://test/support/netfox_ticks.gd")
@@ -131,13 +132,16 @@ const DASH_SELF_TEST_LOOPS := 40
 # Parede (TASK-10.5, criterion 7): walls the scenario builds in the arena's empty north-west
 # corner, 8 m tall and 1 m thick, every face along Z. The long lane is one plane in two blocks,
 # 13 m each, meeting at a seam at z = 26: the runner enters it at full speed and runs until the
-# 2,5 s are up, across the seam (F-129). The corridor has the 3,5 m inner gap of the planned one
-# (TASK-10.5, "Números v0"): its west wall runs the whole 26 m, its east one stops at z = 27. The
-# climber enters the west wall, wall-jumps to the east one and back, wall-jumps once more and
-# double-jumps back into the same wall, which refuses it; once landed, it enters the east wall
-# near its south end and runs off it. Once the runner has landed from its long run it steps away
-# from the lane, runs back into it southward and wall-jumps with the stick pointing north, against
-# the run: the turn (TASK-10.10, criterion 6; movimento.md, "A volta no pulo da parede").
+# 2,5 s are up, across the seam (F-129), with the stick into the wall, so once the run is over
+# the same wall refuses it: a run that ends by time does not start again (DEC-0048 §2). The
+# corridor has the 3,5 m inner gap of the planned one (TASK-10.5, "Números v0"): its west wall
+# runs the whole 26 m, its east one stops at z = 27. The climber enters the west wall, wall-jumps
+# to the east one and back, wall-jumps once more and double-jumps back into the same wall, which
+# takes it again without renewing the double jump (DEC-0047 §1 and §2); once landed, it enters
+# the east wall near its south end and runs off it. Once the runner has landed from its long run
+# it steps away from the lane, runs back into it southward and wall-jumps with the stick pointing
+# north, against the run: the turn (TASK-10.10, criterion 6; movimento.md, "A volta no pulo da
+# parede").
 const PAREDE_FROM_Z := 13.0
 const PAREDE_SEAM_Z := 26.0
 const PAREDE_TO_Z := 39.0
@@ -164,9 +168,26 @@ const JUMP_BEFORE_FACE := 0.6
 const RUN_BEFORE_WALL_JUMP := 6
 const TURN_BACK_AFTER := 5
 const BACK_INTO_WEST := Vector3(-1, 0, 1.5)
-const PAREDE_LOOPS := 480
+# m: once landed, the climber walks south until this far south of the east wall's north end
+# before running into it: the run back on the west wall may land it north of that end.
+const EDGE_IN_BEFORE_END := 1.5
+# The ceiling of the scenario: it ends once both bots are done, about 490 loops since TASK-10.13,
+# whose run back on the west wall lengthens the climber's script.
+const PAREDE_LOOPS := 800
 # The self-test needs only the long runner's entry and a few ticks of its run.
 const PAREDE_SELF_TEST_LOOPS := 80
+
+# Mesma parede (TASK-10.13, criterion 5): the fake on the wall, on the walls of parede, with one
+# fighter from the climber's start. It enters the corridor's west wall and wall-jumps toward the
+# east one, as if going there; gives up with the double jump back into the same west wall, which
+# takes it again without renewing the double jump (DEC-0047 §1 and §2; DEC-0048 §1); wall-jumps
+# from that run and presses the jump in the air, which finds no double jump and waits in the
+# slot; then it crosses to the east wall, another wall, which renews the double jump (DEC-0047
+# §2), and lands. The ticks of the script are the climber's.
+const MESMA_PAREDE_STARTS: Array[Vector3] = [Vector3(-29.5, 0, 12)]
+const MESMA_PAREDE_LOOPS := 420
+# The self-test needs only the fake's double jump and the re-entry after it.
+const MESMA_PAREDE_SELF_TEST_LOOPS := 140
 
 # Gancho (TASK-10.6, criterion 8): three walls the scenario builds in the arena's empty south-east,
 # away from its shapes and from the towers of TASK-10.6, all faces along X, on a copy of
@@ -351,11 +372,12 @@ func test_the_dash_tick_netfox_does_not_record_makes_the_sync_test_diverge() -> 
 
 # Criterion 7 of TASK-10.5: the wall run under the rollback of 7 ticks on every tick, with zero
 # divergence in the whole state: the entries, the end by time, the end at the wall's edge, the
-# wall jumps from one wall to the other, the same wall refused, a double jump after a wall jump
-# and a seam crossed in the run (F-129). TASK-10.10 adds a turned wall jump (criterion 6) and the
-# head ray on every wall contact: the walls are 8 m tall, so they cover the body. As many cues as
-# wall jumps, double jumps and wall runs, each run a short trail (movimento.md, "O que se vê na
-# parede").
+# wall jumps from one wall to the other, a double jump after a wall jump and a seam crossed in
+# the run (F-129). TASK-10.10 adds a turned wall jump (criterion 6) and the head ray on every wall
+# contact: the walls are 8 m tall, so they cover the body. TASK-10.13 turns the climber's double
+# jump back into the same wall into a run again, with no renewal (DEC-0047), and the runner's end
+# by time into the same wall refused (DEC-0048 §2). As many cues as wall jumps, double jumps and
+# wall runs, each run a short trail (movimento.md, "O que se vê na parede").
 func test_the_wall_scenario_resimulates_with_zero_divergence() -> void:
 	var parede := await _parede(PAREDE_LOOPS)
 	var message := "%s diverged:\n%s" % [parede.scenario, "\n".join(parede.shown)]
@@ -366,6 +388,8 @@ func test_the_wall_scenario_resimulates_with_zero_divergence() -> void:
 	assert_int(parede.paths["wall_jumps"]).is_greater_equal(2)
 	assert_int(parede.paths["wall_to_wall"]).is_greater_equal(1)
 	assert_int(parede.paths["same_wall_refusals"]).is_greater_equal(1)
+	assert_int(parede.paths["same_wall_re_entries"]).is_greater_equal(1)
+	assert_int(parede.paths["same_wall_renewals"]).is_equal(0)
 	assert_int(parede.paths["double_jumps_after_wall"]).is_greater_equal(1)
 	assert_int(parede.paths["seams"]).is_greater_equal(1)
 	assert_int(parede.paths["turned_wall_jumps"]).is_greater_equal(1)
@@ -378,6 +402,37 @@ func test_the_wall_scenario_resimulates_with_zero_divergence() -> void:
 # entry brings back the wall of the present on the ticks before it.
 func test_the_wall_id_netfox_does_not_record_makes_the_sync_test_diverge() -> void:
 	var observer := await _parede(PAREDE_SELF_TEST_LOOPS, ":state:wall_id")
+	assert_int(observer.mismatches).is_greater(0)
+
+
+# Criterion 5 of TASK-10.13: the fake on the wall under the rollback of 7 ticks on every tick,
+# with zero divergence in the whole state. The run back on the same wall really happened, in the
+# flight of a wall jump, with the double jump the fake spent kept spent (DEC-0047 §2; DEC-0048
+# §1); the press after the next wall jump found none; another wall renewed it; and none of the
+# same-wall entries renewed anything. As many cues as wall jumps, double jumps and wall runs.
+func test_the_same_wall_scenario_resimulates_with_zero_divergence() -> void:
+	var mesma := await _mesma_parede(MESMA_PAREDE_LOOPS)
+	var message := "%s diverged:\n%s" % [mesma.scenario, "\n".join(mesma.shown)]
+	assert_int(mesma.mismatches).override_failure_message(message).is_equal(0)
+	assert_int(mesma.paths["same_wall_re_entries"]).is_greater_equal(1)
+	assert_int(mesma.paths["spent_re_entries"]).is_greater_equal(1)
+	assert_int(mesma.paths["same_wall_renewals"]).is_equal(0)
+	assert_int(mesma.paths["spent_presses"]).is_greater_equal(1)
+	assert_int(mesma.paths["double_jumps"]).is_equal(1)
+	assert_int(mesma.paths["double_jumps_after_wall"]).is_equal(1)
+	assert_int(mesma.paths["wall_jumps"]).is_greater_equal(2)
+	assert_int(mesma.paths["wall_to_wall"]).is_greater_equal(1)
+	assert_int(mesma.paths["renewals_on_another_wall"]).is_greater_equal(1)
+	assert_int(mesma.paths["bots_done"]).is_equal(MESMA_PAREDE_STARTS.size())
+	var cued := mesma.paths["wall_jumps"] + mesma.paths["double_jumps"]
+	_assert_cues(mesma, cued + mesma.paths["wall_entries"])
+
+
+# The jump count of the flight, what keeps the double jump spent through the run back on the same
+# wall (DEC-0047 §2): out of the recording, a rollback across the re-entry brings back the count of
+# the present on the ticks before it.
+func test_the_jumps_used_netfox_does_not_record_makes_the_same_wall_scenario_diverge() -> void:
+	var observer := await _mesma_parede(MESMA_PAREDE_SELF_TEST_LOOPS, ":state:jumps_used")
 	assert_int(observer.mismatches).is_greater(0)
 
 
@@ -585,6 +640,11 @@ func _parede(loops: int, hidden := "") -> SyncObserver:
 	var scenario := "parede" if hidden.is_empty() else "parede without " + hidden
 	var observer := _start(game_match, scenario)
 	for _loop: int in loops:
+		if bots.all(
+			func(bot: DashBot) -> bool:
+				return bot.done(),
+		):
+			break
 		for bot: DashBot in bots:
 			bot.drive()
 		NetfoxTicks.run_loop()
@@ -595,6 +655,26 @@ func _parede(loops: int, hidden := "") -> SyncObserver:
 	observer.paths["bots_done"] = 0
 	for bot: DashBot in bots:
 		observer.paths["bots_done"] += 1 if bot.done() else 0
+	_add_cues(observer, game_match)
+	return _finish(observer, game_match)
+
+
+func _mesma_parede(loops: int, hidden := "") -> SyncObserver:
+	var game_match := await _match_with(MESMA_PAREDE_STARTS, hidden)
+	_build_parede(game_match.arena)
+	var config := game_match.config
+	var bot := FakeBot.new(game_match.fighters[0], config)
+	var path := Walls.new(game_match.fighters[0], config, game_match.arena)
+	var scenario := "mesma_parede" if hidden.is_empty() else "mesma_parede without " + hidden
+	var observer := _start(game_match, scenario)
+	for _loop: int in loops:
+		if bot.done():
+			break
+		bot.drive()
+		NetfoxTicks.run_loop()
+		path.observe()
+	path.add_to(observer.paths)
+	observer.paths["bots_done"] = 1 if bot.done() else 0
 	_add_cues(observer, game_match)
 	return _finish(observer, game_match)
 
@@ -1174,6 +1254,18 @@ class DashBot:
 		return fighter.state.mode == FighterState.Mode.DASH
 
 
+	# On a wall run RUN_BEFORE_WALL_JUMP ticks old, presses the wall jump and says so; otherwise,
+	# on the wall or in the air, it waits.
+	func _wall_jump_now() -> bool:
+		var state := fighter.state
+		if state.mode != FighterState.Mode.WALL_RUN:
+			return false
+		if NetworkTime.tick - state.mode_since != RUN_BEFORE_WALL_JUMP:
+			return false
+		fighter.input.press_jump()
+		return true
+
+
 # Dashes east over the crest and down the ramp, runs back up onto the platform, dashes west off
 # the ledge, then hops and presses the dash just before landing.
 class RampLedgeBot:
@@ -1414,9 +1506,10 @@ class Dashes:
 
 
 # Runs north into the long lane's face, jumping just before it, and rides the run to its end by
-# time, across the seam; then it lands, steps away from the face, runs back into it southward and
-# wall-jumps with the stick pointing north, against the run: the turn (TASK-10.10). Then it lands
-# and stands.
+# time, across the seam, with the stick into the wall: once the run is over, the same wall
+# refuses it (DEC-0048 §2). Then it lands, steps away from the face, runs back into it southward
+# and wall-jumps with the stick pointing north, against the run: the turn (TASK-10.10). Then it
+# lands and stands.
 class LongWallBot:
 	extends DashBot
 
@@ -1454,6 +1547,8 @@ class LongWallBot:
 				if state.mode == FighterState.Mode.WALL_RUN:
 					_step = Step.ON_WALL
 			Step.ON_WALL:
+				# The run is committed, so the stick only acts once it is over (DEC-0041).
+				heading = INTO_WEST.normalized()
 				if state.on_floor:
 					_step = Step.STEP_AWAY
 			Step.STEP_AWAY:
@@ -1480,8 +1575,9 @@ class LongWallBot:
 
 
 # Climbs the corridor: into its west wall, a wall jump to the east one and one back, a last wall
-# jump and a double jump back into the same west wall, which refuses it; then from the floor into
-# the east wall near its south end, and off its edge.
+# jump and a double jump back into the same west wall, which takes it again without renewing the
+# double jump (DEC-0047); then, once landed and walked back south, from the floor into the east
+# wall near its south end, and off its edge.
 class CorridorBot:
 	extends DashBot
 
@@ -1494,6 +1590,7 @@ class CorridorBot:
 		OFF_WEST,
 		BACK_WEST,
 		LANDED,
+		WALK_SOUTH,
 		EDGE_IN,
 		ON_EDGE,
 		DONE,
@@ -1539,7 +1636,13 @@ class CorridorBot:
 					_step = Step.LANDED
 			Step.LANDED:
 				if _floor_ticks > REST_TICKS:
+					_step = Step.WALK_SOUTH
+			Step.WALK_SOUTH:
+				# The run back on the west wall may carry it north past the east wall's end.
+				if where.z < CORRIDOR_EAST_TO_Z - EDGE_IN_BEFORE_END:
 					_step = Step.EDGE_IN
+				else:
+					heading = Vector3.FORWARD
 			Step.EDGE_IN:
 				heading = INTO_EAST_SOUTHWARD.normalized()
 				var touch_x := CORRIDOR_EAST_FACE_X - _config.capsule_radius
@@ -1557,20 +1660,89 @@ class CorridorBot:
 	# On a wall run, the wall jump once the run is RUN_BEFORE_WALL_JUMP ticks old, then the next
 	# step; in the air, it waits for the next wall.
 	func _wall_jump_after_run(next: Step) -> void:
-		var state := fighter.state
-		if state.mode != FighterState.Mode.WALL_RUN:
-			return
-		if NetworkTime.tick - state.mode_since == RUN_BEFORE_WALL_JUMP:
-			fighter.input.press_jump()
+		if _wall_jump_now():
 			_step = next
+
+
+# The fake on the wall (TASK-10.13; F-166 §3): into the corridor's west wall, a wall jump toward
+# the east one, and, given up, the double jump back into the same west wall, which takes it again
+# without the double jump (DEC-0047; DEC-0048 §1). From that run, a wall jump and a press in the
+# air that finds no double jump; then across to the east wall, which renews it, and down.
+class FakeBot:
+	extends DashBot
+
+	enum Step {
+		STAND,
+		RUN_IN,
+		ON_WEST,
+		FAKE,
+		BACK_WEST,
+		ON_WEST_AGAIN,
+		PRESS,
+		TO_EAST,
+		DOWN,
+		DONE,
+	}
+
+	var _step := Step.STAND
+
+
+	func done() -> bool:
+		return _step == Step.DONE
+
+
+	func drive() -> void:
+		_track_floor()
+		var state := fighter.state
+		var running := state.mode == FighterState.Mode.WALL_RUN
+		var after_wall_jump := NetworkTime.tick - state.wall_jump_tick
+		var heading := Vector3.ZERO
+		match _step:
+			Step.STAND:
+				if _floor_ticks > REST_TICKS:
+					_step = Step.RUN_IN
+			Step.RUN_IN:
+				heading = INTO_WEST.normalized()
+				var touch_x := CORRIDOR_WEST_FACE_X + _config.capsule_radius
+				if state.on_floor and fighter.position.x <= touch_x + JUMP_BEFORE_FACE:
+					fighter.input.press_jump()
+				if running:
+					_step = Step.ON_WEST
+			Step.ON_WEST:
+				if _wall_jump_now():
+					_step = Step.FAKE
+			Step.FAKE:
+				if after_wall_jump == TURN_BACK_AFTER:
+					heading = BACK_INTO_WEST.normalized()
+					fighter.input.press_jump()
+					_step = Step.BACK_WEST
+			Step.BACK_WEST:
+				if running:
+					_step = Step.ON_WEST_AGAIN
+			Step.ON_WEST_AGAIN:
+				if _wall_jump_now():
+					_step = Step.PRESS
+			Step.PRESS:
+				if after_wall_jump == TURN_BACK_AFTER:
+					heading = BACK_INTO_WEST.normalized()
+					fighter.input.press_jump()
+					_step = Step.TO_EAST
+			Step.TO_EAST:
+				if running or state.on_floor:
+					_step = Step.DOWN
+			Step.DOWN:
+				if state.on_floor and _floor_ticks > REST_TICKS:
+					_step = Step.DONE
+		run(heading)
 
 
 # Counts the wall's paths of one fighter in its fresh states, after every loop, like Flights: the
 # state on screen is the result of the tick the loop simulated for the first time, and the slide
 # collisions are still those of its move. The end of a run that is neither by time, nor the wall
 # jump, nor the floor, with the body past the end of the face it ran on, is the edge; a touch of
-# the last wall's face in the air, out of a run, is the same wall refusing (movimento.md,
-# "Corrida na parede": "Mesma parede").
+# the last wall's face in the air, out of a run, is the same wall refusing, and an entry on it is
+# the run back on the same wall, which must leave the jump count and the double jump's stamp as
+# they were (movimento.md, "Corrida na parede": "Mesma parede"; DEC-0047; DEC-0048).
 class Walls:
 	var wall_entries := 0
 	var wall_timeouts := 0
@@ -1578,6 +1750,16 @@ class Walls:
 	var wall_jumps := 0
 	var wall_to_wall := 0
 	var same_wall_refusals := 0
+	## Entries on the last wall's face, out of the floor: the run back on the same wall (DEC-0047).
+	var same_wall_re_entries := 0
+	## Of those, the ones that came back with the double jump spent and kept it spent.
+	var spent_re_entries := 0
+	## Of those, the ones that changed the jump count or the double jump's stamp: none, by the rule.
+	var same_wall_renewals := 0
+	## Hops to another wall that renewed the jumps and the double jump (DEC-0047 §2).
+	var renewals_on_another_wall := 0
+	## Presses of the jump in the air kept in the slot with the double jump spent.
+	var spent_presses := 0
 	var double_jumps := 0
 	var double_jumps_after_wall := 0
 	var seams := 0
@@ -1612,6 +1794,16 @@ class Walls:
 			wall_entries += 1
 			if not _jumped_from.is_empty() and state.wall_id != _jumped_from:
 				wall_to_wall += 1
+				if state.jumps_used == 0 and state.double_jump_tick == FighterState.NEVER:
+					renewals_on_another_wall += 1
+			if _same_wall(state, _before):
+				same_wall_re_entries += 1
+				var kept := state.jumps_used == _before.jumps_used
+				kept = kept and state.double_jump_tick == _before.double_jump_tick
+				if not kept:
+					same_wall_renewals += 1
+				elif state.jumps_used == 2:
+					spent_re_entries += 1
 		elif running and was_running and state.wall_id != _before.wall_id:
 			seams += 1
 		var jumped := state.wall_jump_tick == tick
@@ -1626,6 +1818,9 @@ class Walls:
 			var run_along := _along(_before_velocity, state.wall_normal)
 			if run_along.dot(_along(_fighter.velocity, state.wall_normal)) < 0.0:
 				turned_wall_jumps += 1
+		var pressed := state.buffered_command == FighterCommand.JUMP and state.buffered_tick == tick
+		if pressed and not state.on_floor and state.jumps_used == 2 and not running:
+			spent_presses += 1
 		if state.double_jump_tick == tick:
 			double_jumps += 1
 			if state.mode == FighterState.Mode.AIR and state.mode_since == state.wall_jump_tick:
@@ -1646,6 +1841,11 @@ class Walls:
 			"wall_jumps": wall_jumps,
 			"wall_to_wall": wall_to_wall,
 			"same_wall_refusals": same_wall_refusals,
+			"same_wall_re_entries": same_wall_re_entries,
+			"spent_re_entries": spent_re_entries,
+			"same_wall_renewals": same_wall_renewals,
+			"renewals_on_another_wall": renewals_on_another_wall,
+			"spent_presses": spent_presses,
 			"double_jumps": double_jumps,
 			"double_jumps_after_wall": double_jumps_after_wall,
 			"seams": seams,
@@ -1668,6 +1868,14 @@ class Walls:
 		var z := _fighter.position.z
 		var to_z := CORRIDOR_EAST_TO_Z if wall == &"CorredorTesteLeste" else PAREDE_TO_Z
 		return z < PAREDE_FROM_Z or z > to_z
+
+
+	# An entry on the wall the state before it kept as the last one, the same collider within the
+	# same-face angle; the floor clears the last wall, so an entry after it is never this.
+	func _same_wall(state: FighterState, before: FighterState) -> bool:
+		if before.wall_id.is_empty() or state.wall_id != before.wall_id:
+			return false
+		return state.wall_normal.dot(before.wall_normal) >= _config.wall_same_face_cos
 
 
 	# The move of this tick hit the face of the state's last wall: the same collider, within the

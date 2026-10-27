@@ -1,11 +1,11 @@
 ---
 revisado_em: 2026-10-27
-fontes: [F-001, F-028, F-032, F-053, F-061, F-062, F-063, F-166, F-172, F-173]
+fontes: [F-001, F-028, F-032, F-053, F-061, F-062, F-063, F-166, F-172, F-173, F-174]
 ---
 
 # Combate
 
-Estado atual: o v0 do duelo, fechado no desenho do duelo, a primeira rodada da fase 2 (TASK-12; DEC-0036). Os números são v0 do Claude, para o Arthur julgar jogando (DEC-0017); a vitrine "O desenho do duelo" os mostra em linhas do tempo (DEC-0019). O que o estudo trouxe como "números de partida, não medidos" (F-001) passou por duas sondas (F-027; F-061 a F-063) e por uma pesquisa verificada da tribo (F-173); o que mudou está marcado, com o motivo. Os itens marcados **a confirmar** esperam a rodada 2 com o Arthur.
+Estado atual: o v0 do duelo, fechado no desenho do duelo, a primeira rodada da fase 2 (TASK-12; DEC-0036). Os números são v0 do Claude, para o Arthur julgar jogando (DEC-0017); a vitrine "O desenho do duelo" os mostra em linhas do tempo (DEC-0019). O que o estudo trouxe como "números de partida, não medidos" (F-001) passou por duas sondas (F-027; F-061 a F-063) e por uma pesquisa verificada da tribo (F-173); o que mudou está marcado, com o motivo. A matriz de posição, a esquiva como dash e o boneco da fase foram escolhidos pelo Arthur na rodada 2 (F-174 §2; DEC-0050).
 
 ## A referência: Naraka (F-001)
 
@@ -62,7 +62,7 @@ Os tempos seguem o formato preparação / ativo / recuperação. No código, tud
 | Quebra de guarda | 350 / 100 / 400 | 21 / 6 / 24 | 15, no início | 0 | A preparação fica rápida de propósito: a defesa não é escolher durante ela, e sim **o tech**, 333 ms depois do contato ("A quebra de guarda e o tech"; Q-25). Sem tech, 1.000 ms de tranco e um carregado garantido |
 | Bloqueio | sobe em 100; vale enquanto segurar | 6 | 5 por leve bloqueado, 15 por carregado bloqueado | — | Era "10 por golpe" (F-001). Se bloquear custasse mais que o leve (8), quem só bloqueia perderia a guerra de stamina para o spam de leve; o carregado pesa na guarda, e é ele e a quebra que a abrem. Com a guarda alta, anda-se a 3 m/s ("A guarda andando") |
 | Parry | janela de 200 desde o aperto; recupera 200 se aparou, 450 se não | 12; 12 ou 27 | 15, no aperto | — | O v0 "80 / 200 (400 se errar)" admitia duas leituras (`combate.md` anterior); fecha como janela de 200 e recuperação de 200 ou 450. Os 80 ms ficavam abaixo de toda referência medida (F-173 §1 P6; Q-21). **Só apara o carregado** |
-| Esquiva **a confirmar** | é o dash: 200, invulnerável de 50 a 167 | 12; ticks 3 a 10 | 15, no início | — | Recomendação da rodada 2: uma tecla só. O dash ganha a invulnerabilidade e segue só no chão, com a recarga de 400 ms (`movimento.md`, "Dash"); assim "no ar ninguém se defende" nasce de graça. Os dois últimos ticks são vulneráveis: um carregado atrasado pega o fim do dash. O v0 do estudo tinha "60, com 250 invulnerável" numa esquiva à parte (F-001) |
+| Esquiva | é o dash: 200, invulnerável de 50 a 167 | 12; ticks 3 a 10 | 15, no início | — | Escolha do Arthur na rodada 2 (F-174 §2; DEC-0050): uma tecla só. O dash ganha a invulnerabilidade e segue só no chão, com a recarga de 400 ms (`movimento.md`, "Dash"); assim "no ar ninguém se defende" nasce de graça. Os dois últimos ticks são vulneráveis: um carregado atrasado pega o fim do dash. O v0 do estudo tinha "60, com 250 invulnerável" numa esquiva à parte (F-001) |
 | Finta | corta a preparação do carregado até 450 ms; recupera 200 | até 27; 12 | 15, no aperto | — | Só do carregado, e só antes de a janela do parry abrir (500 ms). O carregado fintado não paga os 25: o preço da finta são os 15 (DEC-0016). O For Honor finta até 400 ms antes do contato e recupera em 200 (F-173 §1 §1) |
 | Troca de arma | 700 | 42 | — | — | Sem cancelamento. Entra com o arco e as armas |
 
@@ -116,9 +116,9 @@ A sonda provou que escolher entre parry, guarda e esquiva durante uma preparaç�
 
 A quebra continua "não reagível por escolha" na preparação, e isso é desenho: ela é a ferramenta contra quem só bloqueia. Uma quebra reagível na preparação precisaria de 500 ms ou mais, e aí a esquiva passaria sempre, e a quebra perderia a função (F-173 §1 R8).
 
-## A esquiva e o dash (**a confirmar**)
+## A esquiva e o dash (DEC-0050)
 
-Recomendação da rodada 2: a esquiva **é** o dash. O dash de 4 m em 200 ms (`movimento.md`, "Dash") ganha invulnerabilidade dos 50 aos 167 ms (ticks 3 a 10), mantém os 15 de stamina, a recarga de 400 ms e a regra "só no chão". O que isso dá: uma tecla a menos para aprender, e "no ar ninguém se defende" como consequência, não como regra à parte. O preço: a esquiva leva o corpo 4 m para fora do alcance, então ela dá a vez e a posição, nunca um castigo garantido; e os ticks 1, 2, 11 e 12 são vulneráveis, para um carregado atrasado pegar o fim do dash. Um golpe que pega nesses ticks interrompe o dash. A alternativa é a esquiva do estudo à parte: 60 ms de preparação, 250 invulnerável, recuperação de 200, 20 de stamina, 2 m, numa tecla nova (F-001).
+Escolha do Arthur na rodada 2 (F-174 §2; DEC-0050): a esquiva **é** o dash. O dash de 4 m em 200 ms (`movimento.md`, "Dash") ganha invulnerabilidade dos 50 aos 167 ms (ticks 3 a 10), mantém os 15 de stamina, a recarga de 400 ms e a regra "só no chão". O que isso dá: uma tecla a menos para aprender, e "no ar ninguém se defende" como consequência, não como regra à parte. O preço: a esquiva leva o corpo 4 m para fora do alcance, então ela dá a vez e a posição, nunca um castigo garantido; e os ticks 1, 2, 11 e 12 são vulneráveis, para um carregado atrasado pegar o fim do dash. Um golpe que pega nesses ticks interrompe o dash. A alternativa recusada era a esquiva do estudo à parte: 60 ms de preparação, 250 invulnerável, recuperação de 200, 20 de stamina, 2 m, numa tecla nova (F-001).
 
 ## A finta
 
@@ -166,9 +166,9 @@ O **hitstop** é a pausa curta dos dois lutadores no instante do acerto, que faz
 
 O precedente do parry é o perfect shield do Smash: só o atacante congela (F-173 §2). O tremor é só apresentação, toca uma vez por evento pela chave (DEC-0031 §6), tem opção para desligar na tela de opções, e as amplitudes são pequenas porque a câmera também é a mira (DEC-0014). Com mais lutadores na arena (4v4), o hitstop encolhe, como o Smash faz com 8 jogadores (F-173 §2); número da fase 4.
 
-## A matriz de posição (Q-14; **a confirmar**)
+## A matriz de posição (Q-14; DEC-0050)
 
-Cada lugar tem uma força e uma fraqueza (pilar 2), e a troca tem de ser legível de fora (pilar 1). Recomendação da rodada 2:
+Cada lugar tem uma força e uma fraqueza (pilar 2), e a troca tem de ser legível de fora (pilar 1). Escolha do Arthur na rodada 2 (F-174 §2; DEC-0050):
 
 | Onde | Ataca | Defende | Se leva um golpe | O preço |
 |---|---|---|---|---|
@@ -183,7 +183,7 @@ Cada lugar tem uma força e uma fraqueza (pilar 2), e a troca tem de ser legíve
 - **A quebra** só agarra quem está no chão: agarrar no ar não se lê.
 - **O leve no ar** é comprometido como qualquer golpe: pousar durante o ativo ou a recuperação não o corta.
 - **O gancho não prende em gente** no v0 (a crítica ao Naraka, F-001; `movimento.md`, "Gancho").
-- As alternativas da rodada 2: o leve sai da parede também (uma lâmina correndo de lado numa parede é difícil de ler); ou tudo vale em todo lugar, sem matriz.
+- As alternativas recusadas na rodada 2: o leve sai da parede também (uma lâmina correndo de lado numa parede é difícil de ler); ou tudo vale em todo lugar, sem matriz.
 
 ## Fora do v0
 

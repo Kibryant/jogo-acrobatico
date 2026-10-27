@@ -1,6 +1,6 @@
 ---
 revisado_em: 2026-10-27
-fontes: [F-001, F-012, F-013, F-015, F-084, F-086, F-088, F-100, F-108, F-109, F-121, F-122, F-127, F-128, F-129, F-131, F-132, F-135, F-136, F-140, F-141, F-146, F-147, F-148, F-151, F-152, F-153, F-161, F-167, F-170]
+fontes: [F-001, F-012, F-013, F-015, F-084, F-086, F-088, F-100, F-108, F-109, F-121, F-122, F-127, F-128, F-129, F-131, F-132, F-135, F-136, F-140, F-141, F-146, F-147, F-148, F-151, F-152, F-153, F-161, F-167, F-170, F-174]
 ---
 
 # Movimento
@@ -129,7 +129,7 @@ Cada número tem uma origem, e nem todos têm a mesma firmeza; a vitrine mostra 
 | Pulo depois de um dash que saiu da beirada | o coyote conta da beirada | — | Dentro dos 100 ms do coyote, sai o pulo cheio; depois, é o pulo duplo ("Pulo e ar"). Leitura v0 do Claude (TASK-10.4) |
 | Recarga | 400 | ms | Conta a partir do fim do dash: 24 ticks a 60 e 12 a 30. O dash dura 12 ticks a 60 e 6 a 30 |
 | Custo | 15 | pontos de stamina | |
-| Invulnerabilidade | a confirmar na rodada 2 do desenho do duelo | — | A recomendação é o dash ser a esquiva do combate, invulnerável dos ticks 3 a 10 dos seus 12 (`combate.md`, "A esquiva e o dash"); a alternativa é a esquiva à parte do estudo (F-001) |
+| Invulnerabilidade | dos ticks 3 a 10 dos 12 | ticks | O dash é a esquiva do combate, escolha do Arthur na rodada 2 do desenho do duelo (F-174 §2; DEC-0050; `combate.md`, "A esquiva e o dash"): dos 50 aos 167 ms nada o acerta; nos ticks 1, 2, 11 e 12 um golpe pega e interrompe o dash. A esquiva à parte do estudo (F-001) não existe |
 
 ## Gancho
 

@@ -1,6 +1,6 @@
 ---
 revisado_em: 2026-10-27
-fontes: [F-050, F-051, F-052, F-053, F-054, F-056, F-058, F-059, F-061, F-062, F-063, F-100, F-121, F-122, F-137, F-139, F-140, F-141, F-146, F-147, F-148, F-152, F-153, F-156, F-157, F-158, F-161, F-162, F-170]
+fontes: [F-050, F-051, F-052, F-053, F-054, F-056, F-058, F-059, F-061, F-062, F-063, F-100, F-121, F-122, F-137, F-139, F-140, F-141, F-146, F-147, F-148, F-152, F-153, F-156, F-157, F-158, F-161, F-162, F-170, F-172, F-173, F-174]
 ---
 
 # Visual e áudio
@@ -88,7 +88,8 @@ O portão prova a lista pelo próprio git (`git check-attr`) a cada rodada (DEC-
 
 ## O caminho da animação (DEC-0030)
 
-- **As fontes:** a base CC0 com um rig só, o UAL1 v2.0 do itch e o UAL2; o KayKit para arco, pistola e mosquete depois de um teste de retarget; os 15 a 18 clipes de identidade à mão, com a ferramenta escolhida na fase 1 (F-052 §2.1, §2.2, §7.5 e §8).
+- **As fontes:** a base CC0 com um rig só, o UAL1 v2.0 do itch e o UAL2; o KayKit para arco, pistola e mosquete depois de um teste de retarget; os 15 a 18 clipes de identidade à mão, no Blender, grátis, pela escolha do Arthur na rodada 2 do desenho do duelo (F-052 §2.1, §2.2, §7.5 e §8; DEC-0050; F-174 §2).
+- **Quando o manequim entra:** a cápsula fica até as regras do duelo estarem jogáveis e julgadas; depois entra o manequim do UAL2 com os clipes da base CC0 (TASK-12.9) e os clipes de identidade feitos no Blender (TASK-12.10), antes de os amigos jogarem (DEC-0050; F-174 §2). O motivo: a pose é o canal que a cápsula menos dá (F-063 §3), e o Arthur julga o leve e o parry pela leitura antes de a arte entrar.
 - **O rig:** o do UAL2, 65 ossos com nomes no padrão do Unreal; o manequim feminino tem o mesmo esqueleto (F-056 §3). Retarget só para juntar fontes, com o `BoneMap` e o perfil humanoide (F-051 §1.5).
 - **A pose como função do estado:** a cada quadro, qual clipe e em que ponto, a partir do modo, do tick de início e do tick atual; o mixer em modo manual; sem máquina de estados no AnimationTree; os clipes in place, nunca root motion para mover (DEC-0022 §3; F-051 §1.6; F-052 §6). Posar 16 lutadores custou 0,7 ms por quadro na sonda (F-056 §5).
 - **As marcas e o tempo:** o ativo marcado à mão em cada clipe de golpe (no `Sword_Regular_A`, de 46% a 69%); todo clipe reajustado fase a fase pelo estado, porque nenhum tem os nossos tempos (F-056 §4; F-052 §6.2).
@@ -131,7 +132,7 @@ A sonda não tem rede, física, efeitos, interface nem arena; o jogo de verdade 
 
 Os tempos são do `combate.md`; as cores, da Okabe-Ito (F-053 §3.6); as poses e os sons, os da sonda (F-061 §1). As quatro linhas de baixo entraram no desenho do duelo (TASK-12; `combate.md`, "O tranco e a vantagem", "A quebra de guarda e o tech", "O hitstop e o tremor").
 
-### O som entra na fase 2 (F-172 §2)
+### O som entra na fase 2 (F-172 §2; DEC-0050)
 
 Os três canais só valem com os três (DEC-0031 §1), e o som nunca entrou no jogo porque só entra áudio com licença livre (DEC-0029; Q-32). Pela escolha do Arthur, a fase 2 traz um pacote CC0 pequeno, com um som por token da tabela acima (o "whoosh" do leve, o som longo do carregado, o "swish", o "clang", o "tunk", o "thud", o pisão, o estalo da finta e o baque do agarrão), no bus "leitura" com o sidechain de 12 dB (DEC-0031 §4). A filha do som o escolhe pela política de assets, com a licença ao lado e a linha no `CREDITS.md` (DEC-0029).
 
@@ -301,7 +302,7 @@ A tela que a DEC-0031 §8 promete a quem joga, com as escolhas do Arthur (F-161)
 
 ## Em aberto
 
-- O roxo da arma de longe sob deuteranopia; o som lido com fone (na filha do som); a pose com o boneco (F-063 §3), a confirmar na rodada 2 do desenho do duelo.
+- O roxo da arma de longe sob deuteranopia; o som lido com fone (na filha do som, TASK-12.6); a pose com o boneco (F-063 §3), na filha do manequim (TASK-12.9), depois de as regras estarem jogáveis (DEC-0050).
 - A Q-21 e a Q-25 fecharam no desenho do duelo (`combate.md`, "O parry" e "A quebra de guarda e o tech").
 - Q-09: o jitter da entrega, que a sonda viu e o simulador do netfox não tem (F-061 §3).
 - Q-13: a explicação da acrobacia no mundo do jogo, para a fase 1.

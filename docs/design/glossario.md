@@ -1,6 +1,6 @@
 ---
 revisado_em: 2026-10-27
-fontes: [F-001, F-002, F-005, F-007, F-012, F-013, F-020, F-021, F-025, F-026, F-028, F-030, F-032, F-038, F-039, F-044, F-045, F-046, F-050, F-051, F-052, F-053, F-056, F-058, F-066, F-068, F-069, F-070, F-073, F-078, F-079, F-081, F-083, F-085, F-086, F-087, F-088, F-090, F-091, F-093, F-094, F-095, F-097, F-100, F-112, F-121, F-122, F-129, F-141, F-146, F-147, F-148, F-152, F-170, F-172, F-173]
+fontes: [F-001, F-002, F-005, F-007, F-012, F-013, F-020, F-021, F-025, F-026, F-028, F-030, F-032, F-038, F-039, F-044, F-045, F-046, F-050, F-051, F-052, F-053, F-056, F-058, F-066, F-068, F-069, F-070, F-073, F-078, F-079, F-081, F-083, F-085, F-086, F-087, F-088, F-090, F-091, F-093, F-094, F-095, F-097, F-100, F-112, F-121, F-122, F-129, F-141, F-146, F-147, F-148, F-152, F-170, F-172, F-173, F-174]
 ---
 
 # Glossário
@@ -81,7 +81,7 @@ A linguagem ubíqua do jogo (DEC-0004, regra 5): o mesmo termo na conversa, no d
 | Parry | A defesa de tempo que vence o carregado: uma janela de 200 ms desde o aperto, 15 de stamina. Aparou, recupera em 200 e tem um carregado garantido; errou, 450 de pé. Só o carregado se apara (`combate.md`, "O parry") | ms no design, ticks no código | `parry` |
 | Feint | Cancelar um golpe durante a preparação, pagando stamina | — | `feint` |
 | Quebra de guarda | O agarrão que atravessa o bloqueio e a postura do parry: 350 / 100 / 400 ms, 15 de stamina, sem dano. No contato, os dois ficam presos 333 ms, a janela do tech; sem o tech, 1.000 ms de tranco e um carregado garantido (`combate.md`, "A quebra de guarda e o tech") | ms no design, ticks no código | `guard_break` |
-| Esquiva | O movimento curto com uma janela invulnerável. A recomendação da rodada 2 do desenho do duelo é que ela seja o dash, invulnerável dos ticks 3 a 10 dos seus 12 (`combate.md`, "A esquiva e o dash"; a confirmar) | ms no design, ticks no código | `dodge` |
+| Esquiva | O movimento curto com uma janela invulnerável. É o dash, invulnerável dos ticks 3 a 10 dos seus 12; não existe tecla à parte (`combate.md`, "A esquiva e o dash"; DEC-0050) | ms no design, ticks no código | `dodge` |
 | Stamina | A única barra de recurso, usada para tudo | pontos | `stamina` |
 | Troca de arma | Passar de uma arma do equipamento para outra, com tempo fixo | ms no design, ticks no código | `weapon_swap` |
 | Equipamento | Uma arma corpo a corpo, uma de distância e um utilitário | — | `loadout` |
@@ -96,8 +96,8 @@ A linguagem ubíqua do jogo (DEC-0004, regra 5): o mesmo termo na conversa, no d
 | Castigo garantido | Dano que o outro não evita com nenhuma ação: o carregado depois de um parry ou de uma quebra sem tech (`combate.md`, "O tranco e a vantagem") | — | — |
 | Seguro | O golpe bloqueado que deixa quem bateu para trás, mas não tanto que o outro acerte antes de a guarda subir: aqui, desvantagem menor que 18 ticks, os 24 do leve menos os 6 da guarda (`combate.md`) | ticks | — |
 | Troca | Dois golpes que pegam no mesmo tick: os dois levam o dano e o tranco (`combate.md`) | — | `trade` |
-| Golpe que desce | O leve dado no ar, com o arco inclinado 45° para baixo: o golpe de quem está no alto (`combate.md`, "A matriz de posição"; a confirmar) | ° | `air_light` |
-| Regra das mãos | Uma manobra que ocupa uma mão só deixa usar arma de uma mão: na puxada do gancho, a espada não ataca; a pistola, mais tarde, cabe (`combate.md`, "A matriz de posição"; Q-14, a confirmar) | — | — |
+| Golpe que desce | O leve dado no ar, com o arco inclinado 45° para baixo: o golpe de quem está no alto (`combate.md`, "A matriz de posição"; DEC-0050) | ° | `air_light` |
+| Regra das mãos | Uma manobra que ocupa uma mão só deixa usar arma de uma mão: na puxada do gancho, a espada não ataca; a pistola, mais tarde, cabe (`combate.md`, "A matriz de posição"; Q-14; DEC-0050) | — | — |
 | Guarda andando | Com a guarda alta, o corpo anda a 3 m/s; correr, pular e o dash derrubam a guarda (`combate.md`, "O bloqueio, a guarda andando e a stamina") | m/s | `guard_walk_speed_mps` |
 | Lâmina | O segmento com raio que a conta do golpe usa: começa na mão, a 0,6 m do eixo e 1,3 m de altura, tem 1,4 m e 0,08 m de raio, e varre um arco no ativo (`combate.md`, "A lâmina e o contato") | m | `blade` |
 | Golpe que acerta uma vez | Cada golpe acerta cada alvo no máximo uma vez por janela ativa; o estado guarda quem já foi acertado (`combate.md`; Q-26) | — | `hit_targets` |
@@ -105,7 +105,7 @@ A linguagem ubíqua do jogo (DEC-0004, regra 5): o mesmo termo na conversa, no d
 | Cancelamento | Cortar uma ação para começar outra. Só existe o desenhado: na lista, com preço, com aviso e com janela larga (DEC-0016) | — | `cancel` |
 | Janela | O intervalo em que uma ação vale, como a do parry | ms no design, ticks no código | `window` |
 | Buffer de input | Guardar um comando apertado antes da hora e executá-lo no primeiro tick livre | ms no design, ticks no código | `input_buffer` |
-| Invulnerabilidade | A janela em que nada acerta o jogador (i-frames). No v0, só a esquiva a tem (`combate.md`, "A esquiva e o dash"; a confirmar se a esquiva é o dash) | ms no design, ticks no código | `invulnerable` |
+| Invulnerabilidade | A janela em que nada acerta o jogador (i-frames). No v0, só o dash a tem, nos ticks 3 a 10 (`combate.md`, "A esquiva e o dash"; DEC-0050) | ms no design, ticks no código | `invulnerable` |
 
 ## Partida
 
@@ -133,7 +133,7 @@ A linguagem ubíqua do jogo (DEC-0004, regra 5): o mesmo termo na conversa, no d
 | Termo | O que é | Unidade | No código |
 |---|---|---|---|
 | Corrida na parede | Correr pela parede por um tempo limitado | s | `wall_run` |
-| Dash | Arrancada curta de 4 m em 200 ms, só no chão. A recomendação da rodada 2 do desenho do duelo é que ela seja também a esquiva, invulnerável dos ticks 3 a 10 (`movimento.md`, "Dash"; `combate.md`, "A esquiva e o dash"; a confirmar) | m, ms | `dash` |
+| Dash | Arrancada curta de 4 m em 200 ms, só no chão. É também a esquiva do combate, invulnerável dos ticks 3 a 10 (`movimento.md`, "Dash"; `combate.md`, "A esquiva e o dash"; DEC-0050) | m, ms | `dash` |
 | Gancho | Puxa os pés do jogador até um ponto do cenário, de 3 a 25 m do ponto O, pela mira (`movimento.md`, "Gancho") | m | `grapple` |
 | Mira | A direção para onde a câmera olha, pelo yaw e pelo pitch, saindo do ponto O. Na tela, um anel que ganha um ponto quando o Q prenderia agora; como a mira do CoD, é o centro da tela, e acompanha o raio quando uma parede empurra a câmera (`movimento.md`, "Gancho"; DEC-0045) | m | `Aim.direction`, `Aim.origin`, `pitch` |
 | Ponto O | De onde o raio da mira sai: os pés, mais 1,6 m para cima, mais 0,8 m para a direita do yaw. É a linha do centro da tela na profundidade do corpo, calculada pelo núcleo sem câmera, como um backend que recalcula o preço pela tabela em vez de confiar no front (`movimento.md`, "Gancho"; DEC-0045) | m | `Aim.origin`, `aim_height_m`, `aim_side_m` |
@@ -160,7 +160,7 @@ A linguagem ubíqua do jogo (DEC-0004, regra 5): o mesmo termo na conversa, no d
 | Escala da interface | Um número que multiplica toda a interface, de 0,8 a 1,5, como o zoom do navegador; a arena não muda (DEC-0031 §8) | — | `content_scale_factor` |
 | Trava do gancho | A soltura de quem bateu: a partir do segundo tick da puxada, a velocidade rumo ao ponto abaixo de 9 m/s, a metade da puxada (`movimento.md`, "Gancho") | % | `grapple_block_pct` |
 | No chão | Superestado do modo: o lutador apoiado no chão, parado, correndo ou no dash (`movimento.md`). É onde a defesa vale | — | `is_grounded(mode)` |
-| No ar | Superestado do modo: pulo, queda e gancho; ninguém se defende, e só o leve ataca, descendo em 45°. A corrida na parede conta como ar no combate, e nela nem o leve sai: as mãos estão na parede (`combate.md`, "A matriz de posição"; Q-14, a confirmar) | — | `is_airborne(mode)` |
+| No ar | Superestado do modo: pulo, queda e gancho; ninguém se defende, e só o leve ataca, descendo em 45°. A corrida na parede conta como ar no combate, e nela nem o leve sai: as mãos estão na parede (`combate.md`, "A matriz de posição"; Q-14; DEC-0050) | — | `is_airborne(mode)` |
 | Manobra | O verbo de uma acrobacia como entidade do núcleo: deslocamento, tempo, custo e o que dá para fazer durante ela. É o back-end; a animação só mostra (F-013 §1) | m, ms | `maneuver` |
 | Animação | A apresentação de uma manobra ou de um golpe, no nó. Mostra e nunca decide (DEC-0004) | — | `animation` |
 | Transição | Uma animação deslizando para a próxima sem encurtar nenhuma das duas (blend). É só visual | ms | `blend` |

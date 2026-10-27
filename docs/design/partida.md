@@ -1,11 +1,11 @@
 ---
 revisado_em: 2026-10-27
-fontes: [F-001, F-029, F-166, F-170, F-172, F-173]
+fontes: [F-001, F-029, F-166, F-170, F-172, F-173, F-174]
 ---
 
 # Partida
 
-Estado atual: o v0 do duelo e dos modos da fase 2, fechado no desenho do duelo (TASK-12, rodada 1; DEC-0036). O formato da partida, o plano de morte e o som são escolhas do Arthur (F-172 §2); os números são v0 do Claude, para ele julgar jogando (DEC-0017), e estão na vitrine "O desenho do duelo" (DEC-0019). O combate em si, golpe a golpe, está em `combate.md`; o movimento, em `movimento.md`.
+Estado atual: o v0 do duelo e dos modos da fase 2, fechado no desenho do duelo (TASK-12, rodada 1; DEC-0036). O formato da partida, o plano de morte e o som são escolhas do Arthur (F-172 §2; DEC-0050); os números são v0 do Claude, para ele julgar jogando (DEC-0017), e estão na vitrine "O desenho do duelo" (DEC-0019). O combate em si, golpe a golpe, está em `combate.md`; o movimento, em `movimento.md`.
 
 ## O duelo (Q-29)
 
@@ -15,12 +15,12 @@ Rounds curtos, que preservam o "pensado" do 1v1 (F-001) e dão revanche imediata
 |---|---|---|---|
 | Vida do lutador | 100 | pontos | Para ler em porcentagem: 12 de dano são 12% da barra. A mesma proporção do For Honor, que tem 120 a 140 de vida, com o leve de 13 a 15 e o pesado de 26 a 30 (F-173 §2) |
 | Golpes para matar | 9 leves, ou 4 carregados, ou 2 carregados e 4 leves | — | O leve tira 12 e o carregado 30 (`combate.md`). O round se decide em uns seis golpes certos |
-| Formato | vence quem ganha 3 rounds | — | Melhor de 5. Escolha do Arthur (F-172 §2) |
+| Formato | vence quem ganha 3 rounds | — | Melhor de 5. Escolha do Arthur (F-172 §2; DEC-0050) |
 | Tempo do round | 90 | s | 5.400 ticks. Entre o Tekken (60 s) e o Street Fighter (99 s), longe dos 5 min do For Honor (F-173 §2). Com 9 leves a uns 650 ms cada, matar leva no mínimo uns 6 s; 90 s sobram para ler e tentar de novo, e são curtos o bastante para fugir com gancho e dash não compensar |
 | Tempo esgotado | vence quem tem mais vida | — | A regra do For Honor desde 2017, do Tekken, do Street Fighter e do Smash (F-173 §2). O For Honor só a pôs depois de ver gente fugindo até o relógio zerar; com dash, gancho e parede, fugir é ainda mais fácil aqui, então ela entra desde o v0 |
 | Vida igual no tempo esgotado | vence quem acertou primeiro; se ninguém acertou, round sem ponto | — | O terceiro critério do Naraka, sem o sorteio dele (F-173 §2): nada de aleatoriedade sem semente (DEC-0004). Round vazio não premia ninguém |
 | Morte dos dois no mesmo tick | round sem ponto | — | O Double KO do Tekken e a regra do Duelo do For Honor (F-173 §2) |
-| Cair fora | morte do round; o ponto vai para o outro | — | "O plano de morte", abaixo. Escolha do Arthur (F-172 §2; Q-48) |
+| Cair fora | morte do round; o ponto vai para o outro | — | "O plano de morte", abaixo. Escolha do Arthur (F-172 §2; Q-48; DEC-0050) |
 | Limite de rounds | 9; depois, a partida é empate | — | Só para uma partida de empates não ficar sem fim; não deve acontecer |
 | Pontos de início | os dois pontos da arena, a 10 m um do outro, de frente | m | `SpawnA` e `SpawnB` de hoje. Os lados trocam a cada round, como o For Honor troca o lugar (F-173 §2) |
 | Anti-fuga | fora do v0 | — | Q-50. A regra do tempo esgotado já pune a fuga |
@@ -47,12 +47,12 @@ A partida é o contexto "Partida e round" da arquitetura: uma máquina de estado
 
 ## O plano de morte (Q-48)
 
-Uma altura abaixo do chão mais baixo do mapa: quem passa dela morre. É uma regra do núcleo, com teletransporte, então vale igual no rollback (DEC-0049, "Revisitar se"). Escolha do Arthur (F-172 §2).
+Uma altura abaixo do chão mais baixo do mapa: quem passa dela morre. É uma regra do núcleo, com teletransporte, então vale igual no rollback (DEC-0049, "Revisitar se"). Escolha do Arthur (F-172 §2; DEC-0050).
 
 | Número ou regra | Valor | Unidade | Nota |
 |---|---|---|---|
 | A altura | 5 m abaixo do chão mais baixo | m | Pela gravidade de descida de ≈ 29,9 m/s² (`movimento.md`, "Pulo e ar"), 5 m de queda levam ≈ 0,6 s, 35 ticks: curto para ninguém "cair para sempre", longo para não matar quem tropeçou numa borda. O KillZ do Unreal e a blast line do Smash são a mesma ideia (F-173 §2) |
-| No duelo | morte do round, o ponto vai para o outro; os dois no mesmo tick, round sem ponto | — | O ring-out do For Honor e do Smash (F-172 §2). Jogadores do For Honor acham a morte pelo cenário frustrante no duelo (F-173 §2): a arena de duelo v0 não ganha vão, e a regra fica como rede de segurança |
+| No duelo | morte do round, o ponto vai para o outro; os dois no mesmo tick, round sem ponto | — | O ring-out do For Honor e do Smash (F-172 §2; DEC-0050). Jogadores do For Honor acham a morte pelo cenário frustrante no duelo (F-173 §2): a arena de duelo v0 não ganha vão, e a regra fica como rede de segurança |
 | No percurso cronometrado | volta ao último checkpoint depois de 500 ms (30 ticks), com velocidade zero; o relógio continua | ms | A punição é o tempo perdido, como no Trackmania e no Celeste (F-173 §2 e §3). Os 500 ms dão um respiro para entender o que aconteceu |
 | No Sozinho | volta ao ponto de nascimento depois de 500 ms | ms | Sem partida, sem ponto |
 | A arena de hoje | não tem vazio: a tampa fecha por cima (DEC-0049) | — | Um teste do núcleo prova a regra com um lutador abaixo da altura; um teste da arena prova que nenhum chão fica abaixo dela |

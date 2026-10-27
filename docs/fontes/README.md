@@ -172,3 +172,4 @@ O que chegou ao projeto e como chegou. Uma fonte não muda: só mudam `status`, 
 | [F-166](F-166-arthur-joga-os-15-minutos-e-a-cabeca-online.md) | 2026-10-26 | O Arthur joga a cabeça do bot online e os 15 minutos: continuaria jogando, pede mais ação, quer voltar para a mesma parede e fica entre o sim e o não no dash no ar e na escalada |
 | [F-167](F-167-arthur-decide-a-mesma-parede-e-os-cantos.md) | 2026-10-26 | O Arthur acha a escada em Z entre duas paredes e decide: a mesma parede vale de novo sem devolver o pulo duplo, antes da 0.2.0, e o canto da borda se mede agora |
 | [F-168](F-168-arthur-trava-a-volta-no-pulo-da-parede.md) | 2026-10-27 | O Arthur decide que a volta na mesma parede só vale depois de um pulo da parede, e libera o conserto da cena de um teste travado |
+| [F-169](F-169-arthur-joga-o-fake-na-parede.md) | 2026-10-27 | O Arthur joga o fake na parede: primeiro acha impossível, depois faz com a diagonal e aprova |

@@ -1,9 +1,10 @@
 ---
 id: TASK-10.13
 title: 'A mesma parede de novo: o fake sem devolver o pulo duplo'
-status: Ready
+status: In Progress
 assignee: []
 created_date: '2026-10-26 23:04'
+updated_date: '2026-10-27 10:25'
 labels: []
 dependencies: []
 parent_task_id: TASK-10

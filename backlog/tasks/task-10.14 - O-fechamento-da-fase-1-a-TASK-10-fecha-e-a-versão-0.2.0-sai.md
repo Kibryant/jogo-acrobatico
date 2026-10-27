@@ -1,10 +1,10 @@
 ---
 id: TASK-10.14
 title: 'O fechamento da fase 1: a TASK-10 fecha e a versão 0.2.0 sai'
-status: To Refine
+status: Ready
 assignee: []
 created_date: '2026-10-26 23:04'
-updated_date: '2026-10-26 23:44'
+updated_date: '2026-10-27 14:41'
 labels: []
 dependencies:
   - TASK-10.8

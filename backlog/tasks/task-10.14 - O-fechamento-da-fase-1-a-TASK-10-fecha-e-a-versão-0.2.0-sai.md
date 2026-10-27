@@ -1,10 +1,10 @@
 ---
 id: TASK-10.14
 title: 'O fechamento da fase 1: a TASK-10 fecha e a versão 0.2.0 sai'
-status: In Progress
+status: Done
 assignee: []
 created_date: '2026-10-26 23:04'
-updated_date: '2026-10-27 14:41'
+updated_date: '2026-10-27 14:53'
 labels: []
 dependencies:
   - TASK-10.8
@@ -35,16 +35,22 @@ Confirmadas pelo Arthur (F-165 §1; F-167 §2): a 0.2.0 é pública, com os buil
 
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
-- [ ] #1 Quando as filhas da TASK-10 estão Done, o PR marca os critérios 1 e 2 da TASK-10 com as provas (F-166 §2; o teste da cópia do Resource da TASK-10.8) e fecha a TASK-10 (DEC-0028 §3)
-- [ ] #2 Quando o PR fecha a TASK-10, o mesmo commit sobe `application/config/version` para 0.2.0, e o teste do formato da versão segue verde (DEC-0028 §3)
+- [x] #1 Quando as filhas da TASK-10 estão Done, o PR marca os critérios 1 e 2 da TASK-10 com as provas (F-166 §2; o teste da cópia do Resource da TASK-10.8) e fecha a TASK-10 (DEC-0028 §3)
+- [x] #2 Quando o PR fecha a TASK-10, o mesmo commit sobe `application/config/version` para 0.2.0, e o teste do formato da versão segue verde (DEC-0028 §3)
 - [ ] #3 Quando o Arthur dá o ok, a tag `v0.2.0` sai, e o CI publica a segunda release com os dois builds e as notas de `docs/releases/v0.2.0.md`, em português, tiradas do diário (DEC-0028 §4.3; DEC-0033; F-165 §1)
-- [ ] #4 Quando a release sai, o `roteiro.md` marca a fase 1 fechada e o portão da fase 2, e o `mudancas.md` ganha a linha (DEC-0028)
+- [x] #4 Quando a release sai, o `roteiro.md` marca a fase 1 fechada e o portão da fase 2, e o `mudancas.md` ganha a linha (DEC-0028)
 <!-- AC:END -->
 
 ## Definition of Done
 <!-- DOD:BEGIN -->
-- [ ] #1 Critérios de aceite verificados
-- [ ] #2 Teste automatizado para toda regra do núcleo (core/)
-- [ ] #3 Diário da sessão escrito e glossário atualizado
-- [ ] #4 Mudanças registradas em docs/mudancas.md
+- [x] #1 Critérios de aceite verificados
+- [x] #2 Teste automatizado para toda regra do núcleo (core/)
+- [x] #3 Diário da sessão escrito e glossário atualizado
+- [x] #4 Mudanças registradas em docs/mudancas.md
 <!-- DOD:END -->
+
+## Final Summary
+
+<!-- SECTION:FINAL_SUMMARY:BEGIN -->
+A fase 1 fechou: a TASK-10 está Done com os dois critérios provados, a versão subiu para 0.2.0 no mesmo commit, e as notas da release saíram dos diários. O revisor aprovou, e o portão passou. A tag v0.2.0 e a release pública saem depois do merge, com o ok do Arthur (critério 3).
+<!-- SECTION:FINAL_SUMMARY:END -->

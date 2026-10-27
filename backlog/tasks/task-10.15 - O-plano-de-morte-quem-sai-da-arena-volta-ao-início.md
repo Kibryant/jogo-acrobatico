@@ -1,7 +1,7 @@
 ---
 id: TASK-10.15
 title: 'A tampa da arena: ninguém sai por cima da borda'
-status: Ready
+status: In Progress
 assignee: []
 created_date: '2026-10-26 23:44'
 updated_date: '2026-10-27 13:35'

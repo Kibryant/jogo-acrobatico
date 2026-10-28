@@ -15,6 +15,14 @@ var damage: int
 # rad, relative to the swing's direction; positive turns left, like the yaw.
 var arc_from: float
 var arc_to: float
+# The stuns from the contact, and the hitstops of a hit and of a block (combate.md, "O tranco e a
+# vantagem" and "O hitstop e o tremor"; DEC-0055). A hitstop of 0 freezes nobody.
+var hitstun_ticks: int
+var blockstun_ticks: int
+var hitstop_hit_ticks: int
+var hitstop_block_ticks: int
+# Stamina points whoever blocks the move pays on the contact.
+var block_stamina_cost: float
 
 
 static func create(data: AttackData, tickrate: int) -> AttackConfig:
@@ -29,4 +37,9 @@ static func create(data: AttackData, tickrate: int) -> AttackConfig:
 	config.damage = data.damage
 	config.arc_from = deg_to_rad(data.arc_from_deg)
 	config.arc_to = deg_to_rad(data.arc_to_deg)
+	config.hitstun_ticks = Ticks.from_ms(data.hitstun_ms, tickrate)
+	config.blockstun_ticks = Ticks.from_ms(data.blockstun_ms, tickrate)
+	config.hitstop_hit_ticks = Ticks.from_ms(data.hitstop_hit_ms, tickrate)
+	config.hitstop_block_ticks = Ticks.from_ms(data.hitstop_block_ms, tickrate)
+	config.block_stamina_cost = data.block_stamina_cost
 	return config

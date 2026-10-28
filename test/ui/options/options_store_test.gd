@@ -67,10 +67,14 @@ func _assert_defaults(store: OptionsStore) -> void:
 		var event := store.binding(action)
 		assert_bool(event is InputEventKey).override_failure_message(action).is_true()
 		assert_int(_code(event)).override_failure_message(action).is_equal(expected[action])
-	# The light attack is the left mouse button (F-175 §2).
+	# The light attack is the left mouse button (F-175 §2), and the guard the right one (F-182 §2).
 	var light := store.binding(&"light_attack")
 	assert_bool(light is InputEventMouseButton).override_failure_message("light_attack").is_true()
 	assert_int(_code(light)).is_equal(MOUSE_BUTTON_LEFT)
+	var guard := store.binding(&"guard")
+	assert_bool(guard is InputEventMouseButton).override_failure_message("guard").is_true()
+	assert_int(_code(guard)).is_equal(MOUSE_BUTTON_RIGHT)
+	assert_bool(store.camera_shake).override_failure_message("the shake is off").is_true()
 	# The dash is the left Shift, not either (TASK-10.4, choice 2).
 	assert_int(_location(store.binding(&"dash"))).is_equal(KEY_LOCATION_LEFT)
 	assert_float(store.sensitivity).is_equal_approx(0.06, HAIR)
@@ -85,7 +89,8 @@ func _assert_warned_about(store: OptionsStore, entry: String) -> void:
 	assert_bool(found).override_failure_message(failure).is_true()
 
 
-func test_the_eight_actions_are_the_ones_of_project_godot_in_the_screens_order() -> void:
+# TASK-12.2 adds the guard after the light attack (visual-e-audio.md, "A tela de opções").
+func test_the_nine_actions_are_the_ones_of_project_godot_in_the_screens_order() -> void:
 	assert_array(OptionsStore.ACTIONS).is_equal(
 		[
 			&"move_forward",
@@ -96,6 +101,7 @@ func test_the_eight_actions_are_the_ones_of_project_godot_in_the_screens_order()
 			&"dash",
 			&"grapple",
 			&"light_attack",
+			&"guard",
 		],
 	)
 	for action: StringName in OptionsStore.ACTIONS:
@@ -224,8 +230,9 @@ func test_the_left_and_right_mouse_buttons_and_the_wheel_are_refused() -> void:
 	assert_bool(OptionsStore.accepts(InputEventMouseMotion.new())).is_false()
 
 
-# TASK-12.1: the left button is the light attack's, for no other action; the right one for none,
-# the light attack's included; the light attack takes a key or the middle or a side button too.
+# TASK-12.1: the left button is the light attack's, for no other action; since TASK-12.2 the right
+# one is the guard's alone (F-182 §2); the light attack takes a key or the middle or a side button
+# too.
 func test_the_left_mouse_button_is_the_light_attacks_alone() -> void:
 	var left := OptionsStore.mouse_event(MOUSE_BUTTON_LEFT)
 	var right := OptionsStore.mouse_event(MOUSE_BUTTON_RIGHT)
@@ -233,7 +240,8 @@ func test_the_left_mouse_button_is_the_light_attacks_alone() -> void:
 		var light := action == &"light_attack"
 		assert_bool(OptionsStore.accepts(left, action)).override_failure_message(action) \
 				.is_equal(light)
-		assert_bool(OptionsStore.accepts(right, action)).override_failure_message(action).is_false()
+		assert_bool(OptionsStore.accepts(right, action)).override_failure_message(action) \
+				.is_equal(action == &"guard")
 	var store := OptionsStore.new(_path)
 	assert_str(String(store.bind(&"light_attack", OptionsStore.key_event(KEY_F)))).is_empty()
 	assert_int(_code(store.binding(&"light_attack"))).is_equal(KEY_F)
@@ -374,3 +382,53 @@ func test_the_player_keeps_the_options_in_user_options_cfg() -> void:
 	var store := OptionsStore.new()
 	assert_str(store.path).is_equal("user://options.cfg")
 	print("options: user://options.cfg is %s" % ProjectSettings.globalize_path(store.path))
+
+
+# TASK-12.2 (F-182 §2; DEC-0054 §1): the right button is the guard's, for no other action; the
+# guard takes a key or the middle or a side button too, and the right one back; a file that puts
+# the right button on another action falls back, named.
+func test_the_right_mouse_button_is_the_guards_alone() -> void:
+	var right := OptionsStore.mouse_event(MOUSE_BUTTON_RIGHT)
+	var store := OptionsStore.new(_path)
+	assert_str(String(store.bind(&"guard", OptionsStore.key_event(KEY_C)))).is_empty()
+	assert_int(_code(store.binding(&"guard"))).is_equal(KEY_C)
+	assert_str(String(store.bind(&"guard", right))).is_empty()
+	assert_int(_code(store.binding(&"guard"))).is_equal(MOUSE_BUTTON_RIGHT)
+	store.bind(&"guard", OptionsStore.mouse_event(MOUSE_BUTTON_XBUTTON2))
+	assert_int(store.save_file()).is_equal(OK)
+	var loaded := _loaded()
+	assert_array(loaded.warnings).is_empty()
+	assert_int(_code(loaded.binding(&"guard"))).is_equal(MOUSE_BUTTON_XBUTTON2)
+	_write("[keys]\njump=\"mouse:%d\"\n" % MOUSE_BUTTON_RIGHT)
+	loaded = _loaded()
+	_assert_warned_about(loaded, "jump")
+	assert_int(_code(loaded.binding(&"jump"))).is_equal(KEY_SPACE)
+	assert_int(_code(loaded.binding(&"guard"))).is_equal(MOUSE_BUTTON_RIGHT)
+
+
+# TASK-12.2 (combate.md, "O hitstop e o tremor": "tem opção para desligar"): the camera's shake is
+# on by default, saved and read back off, back on with the defaults, and a value that is not a
+# boolean falls back to on, named; applied, it turns the camera's shake on or off.
+func test_the_camera_shake_is_on_by_default_and_saved_off() -> void:
+	var store := OptionsStore.new(_path)
+	assert_bool(store.camera_shake).is_true()
+	store.camera_shake = false
+	assert_int(store.save_file()).is_equal(OK)
+	var loaded := _loaded()
+	assert_array(loaded.warnings).is_empty()
+	assert_bool(loaded.camera_shake).is_false()
+	loaded.restore_defaults()
+	assert_bool(loaded.camera_shake).is_true()
+	_write("[interface]\ncamera_shake=\"yes\"\n")
+	loaded = _loaded()
+	_assert_warned_about(loaded, "camera_shake")
+	assert_bool(loaded.camera_shake).is_true()
+	var node: Node = auto_free(CameraRigScene.instantiate())
+	assert(node is CameraRig, "camera_rig.tscn must have a CameraRig at its root")
+	var rig := node as CameraRig
+	loaded.camera_shake = false
+	loaded.apply_camera_shake(rig)
+	assert_bool(rig.shake_enabled).is_false()
+	loaded.camera_shake = true
+	loaded.apply_camera_shake(rig)
+	assert_bool(rig.shake_enabled).is_true()

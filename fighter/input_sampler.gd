@@ -9,7 +9,9 @@
 #   same reasons (rede.md §3; TASK-10.6);
 # - jump, dash, grapple and the light attack are one-touch commands kept between frames and taken
 #   once, so a press counts for at most one tick even when a frame runs two (netfox's
-#   one-off-input.gd).
+#   one-off-input.gd);
+# - the guard is held, not touched (TASK-12.2): the state the devices or a bot last set, kept until
+#   they set another, and read by every tick.
 # No node and no engine input here: FighterInput feeds it, from the devices or from a bot.
 class_name InputSampler
 extends RefCounted
@@ -22,6 +24,7 @@ var _jump_pressed := false
 var _dash_pressed := false
 var _grapple_pressed := false
 var _light_attack_pressed := false
+var _guard_held := false
 
 
 # start_yaw is the yaw before any sample: where the fighter looks at its spawn point.
@@ -57,6 +60,16 @@ func press_grapple() -> void:
 # One press of the light attack, kept until take_light_attack() (TASK-12.1).
 func press_light_attack() -> void:
 	_light_attack_pressed = true
+
+
+# The guard button down or up from now on (TASK-12.2; DEC-0054 §1), until the next call.
+func hold_guard(held: bool) -> void:
+	_guard_held = held
+
+
+# Whether the guard is held now: it stays until hold_guard() says otherwise.
+func guard_held() -> bool:
+	return _guard_held
 
 
 # The mean of the move samples since the last call, which starts a new tick's samples. Zero when

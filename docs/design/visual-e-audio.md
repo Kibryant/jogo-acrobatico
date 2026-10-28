@@ -153,6 +153,27 @@ Leituras v0 do Claude (DEC-0017), na cápsula, antes do manequim (DEC-0050):
   - **O flash** pinta a cápsula de branco sem luz por 100 ms e volta ao tom do lutador. Ele toca no tick seguinte ao do contato, o primeiro em que o estado de quem levou o mostra (DEC-0051 §3), e a chave é o tick do contato.
   - **As barras de vida** têm 300 × 24 px na base de 1080p, a largura da barra da stamina e o dobro da altura, com a margem de 24 px do HUD. O número fica do lado de dentro da tela: à direita da barra da esquerda e à esquerda da barra da direita. As cores são as da stamina, do mesmo Theme.
 
+### A guarda e o tranco na tela (TASK-12.2)
+
+Leituras v0 do Claude (DEC-0017), na cápsula e na espada de blocos, antes do manequim (DEC-0050). Os números do tremor são do `combate.md` ("O hitstop e o tremor").
+
+- **Os tokens como dado** (DEC-0031 §5): `data/tokens_v0.tres` (`TokensData`, um `TokenData` por estado) guarda a cor, o nome da pose e a forma do HUD dos quatro estados que o duelo já lê. A cor "Nenhuma" fica guardada com alfa 0.
+
+  | Estado | Quando | Cor | Pose | Forma no HUD |
+  |---|---|---|---|---|
+  | Leve, preparação | `WINDUP` | Nenhuma | `blade_back`, a lâmina para trás | Triângulo |
+  | Ativo | `ACTIVE` | Vermelhão `#D55E00` | `arc`, o arco da regra | Losango |
+  | Guarda | `BLOCK` e `BLOCKSTUN` | Nenhuma | `blade_upright`, a lâmina quase vertical à frente | Quadrado |
+  | Reação | `HITSTUN` | Branco, o flash do corpo | `recoil`, a lâmina jogada para baixo e para fora | Círculo |
+
+  A recuperação e o repouso não têm token. A espada, os sinais e o HUD leem o arquivo; a simulação, nunca.
+- **A pose da guarda:** a mão a −20° da frente, a 0,9 m do chão, e a lâmina erguida a 80°, a ponta perto da cabeça. Ela sobe do repouso até lá em linha reta nos 6 ticks da guarda, e no blockstun fica alta. Na reação, a mão vai a −75°, e a lâmina aponta −70° para o lado e 70° para baixo. A cor da reação é a do flash do corpo, nunca a da lâmina.
+- **A paradinha na tela:** congelado, o corpo fica parado, e a espada e o rastro do arco seguram a pose do impacto: a pose lê o último tick da paradinha, que, com o relógio do golpe andado para a frente, é a do tick antes dela (`Combat.posed_tick`). A chave do rastro é o tick em que o ativo começou antes da paradinha (`Combat.active_began`), então a paradinha de quem bateu nunca faz um segundo rastro.
+- **O tremor da câmera:** no golpe que pega, a câmera de quem levou treme 100 ms com até 0,5°; no bloqueio, a de quem bloqueou, 100 ms com até 0,3° (`combate.md`). É um tremor de 25 Hz no pitch e de 15 Hz no yaw, que cai em linha reta da amplitude a zero nos 100 ms: uma batida, não um balanço. Ele inclina só a vista, nunca o yaw e o pitch que o input lê, então a mira e o corpo ficam onde o mouse os pôs. Toca uma vez por evento, pela chave do lutador e do `hurt_tick` ou do `block_tick`, só na câmera do lutador que este PC vê, e nunca na re-simulação (DEC-0031 §6). Um novo toma o lugar do que toca. A linha "Tremor da câmera" das opções o desliga.
+- **O sinal do bloqueio:** um evento novo dos sinais, uma vez por golpe bloqueado, pela chave do tick do contato, como o do golpe que pega; no v0 ele só treme a câmera, e o "tunk" entra com o som (TASK-12.6).
+- **O token no HUD:** ao lado da vida do outro lutador, do lado de dentro da tela, uma marca de 24 × 24 px na base de 1080p mostra a forma e a cor do token do estado exibido dele: a cor do token, ou o branco neutro do HUD (0,92; 0,92; 0,92) num token sem cor, sobre o contorno escuro do HUD, a 55 %. As formas cabem no círculo da marca, e o lado do quadrado é 80 % do diâmetro, para ele não pesar mais que as outras. Na recuperação e no repouso, nada. As cores e o contorno vêm do Theme (`TokenMark`).
+- **O boneco que ataca** (`partida.md`): virado para quem joga, ele dá um leve a cada 3 s, sem andar. Com a guarda alta de frente, quem joga vê a lâmina erguida, o tremor de 0,3° e a vida cheia; pelas costas, o flash, o tremor de 0,5° e 12 de vida a menos.
+
 ### Onde o sinal mora
 
 No mundo: a pose, o rastro e o brilho na arma. O HUD repete com forma e cor, e cobre o que está fora da tela (F-053 §5). Nunca só por cor (F-053 §2.2).

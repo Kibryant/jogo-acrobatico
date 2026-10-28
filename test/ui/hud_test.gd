@@ -637,3 +637,48 @@ func test_at_every_scale_the_ring_stays_centred_and_the_rows_inside_the_screen(
 		var where := "%s at %s, the screen %s, the scale %s" % [row, rect, screen, factor]
 		assert_bool(screen.encloses(rect)).override_failure_message(where).is_true()
 		assert_float(rect.size.x).override_failure_message(where).is_greater(0.0)
+
+
+# TASK-12.2 (visual-e-audio.md, "O HUD do duelo" and "A guarda e o tranco na tela"): beside the
+# other fighter's health, the token of its displayed state, with the shape and the colour of
+# tokens_v0.tres: the windup's triangle and the guard's square in the neutral white, the active's
+# diamond in vermilion, the reaction's circle in white; nothing at rest or in a recovery, and
+# nothing before show_tokens().
+func test_beside_the_others_health_the_hud_shows_its_token_by_shape_and_colour() -> void:
+	var hud := _hud()
+	hud.show_health(_match.combat, _match.fighters)
+	var dummy := _match.spawn_fighter(Match.DUMMY_SLOT, multiplayer.get_unique_id())
+	hud.show_at(SPENT_AT)
+	assert_str(String(hud.shown_token_shape())).override_failure_message("before show_tokens") \
+			.is_empty()
+	var tokens := _match.tokens
+	hud.show_tokens(tokens)
+	hud.show_at(SPENT_AT)
+	assert_str(String(hud.shown_token_shape())).override_failure_message("at rest").is_empty()
+	var cases: Dictionary[FighterState.Action, TokenData] = {
+		FighterState.Action.WINDUP: tokens.light_windup,
+		FighterState.Action.ACTIVE: tokens.active,
+		FighterState.Action.BLOCK: tokens.guard,
+		FighterState.Action.BLOCKSTUN: tokens.guard,
+		FighterState.Action.HITSTUN: tokens.reaction,
+	}
+	var neutral := ThemeDB.get_project_theme().get_color(&"neutral_color", Hud.TOKEN_MARK_TYPE)
+	var shapes: Array[StringName] = []
+	for action: FighterState.Action in cases:
+		dummy.state.action = action
+		hud.show_at(SPENT_AT)
+		var token := cases[action]
+		var which := str(FighterState.Action.find_key(action))
+		assert_str(String(hud.shown_token_shape())).override_failure_message(which).is_equal(
+			String(token.hud_shape)
+		)
+		var expected := token.color if token.color.a > 0.0 else neutral
+		var colour := hud.shown_token_colour()
+		var wrong := "%s drawn in %s, expected %s" % [which, colour, expected]
+		assert_bool(colour.is_equal_approx(expected)).override_failure_message(wrong).is_true()
+		if not shapes.has(token.hud_shape):
+			shapes.append(token.hud_shape)
+	assert_int(shapes.size()).override_failure_message("two tokens share a shape").is_equal(4)
+	dummy.state.action = FighterState.Action.RECOVERY
+	hud.show_at(SPENT_AT)
+	assert_str(String(hud.shown_token_shape())).override_failure_message("recovery").is_empty()

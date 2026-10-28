@@ -78,3 +78,68 @@ func test_the_pose_is_a_function_of_the_state_and_the_tick() -> void:
 	var first := Sword.pose(state, SINCE + 5, combat)
 	Sword.pose(state, SINCE + 20, combat)
 	assert_bool(Sword.pose(state, SINCE + 5, combat).is_equal_approx(first)).is_true()
+
+
+const TOKENS_V0 := "res://data/tokens_v0.tres"
+
+
+func _tokens() -> TokensData:
+	var resource: Resource = load(TOKENS_V0)
+	assert(resource is TokensData, "%s must load as a TokensData" % TOKENS_V0)
+	return resource as TokensData
+
+
+# TASK-12.2 (visual-e-audio.md, "A guarda e o tranco na tela"): the guard's token names the upright
+# pose: from the rest, the blade rises over the guard's ticks to nearly vertical in front of the
+# body, its tip above the hand and ahead of the feet, and stays there in the blockstun; it wears no
+# colour, the token's none.
+func test_the_guard_raises_the_blade_upright_in_front_without_colour() -> void:
+	var combat := _combat()
+	var tokens := _tokens()
+	var guard := FighterState.new()
+	guard.action = FighterState.Action.BLOCK
+	guard.action_since = SINCE
+	assert_str(String(Sword.pose_name(guard, tokens))).is_equal(String(tokens.guard.pose))
+	var rising := Sword.pose(guard, SINCE, combat, tokens)
+	var up := Sword.pose(guard, SINCE + combat.guard_raise_ticks - 1, combat, tokens)
+	var tip := Sword.tip_of(up, combat)
+	assert_float(tip.y - up.origin.y).is_greater(0.9 * combat.blade_length)
+	assert_float(tip.z).override_failure_message("the guard is not in front").is_less(0.0)
+	assert_float(Sword.tip_of(rising, combat).y).is_less(tip.y)
+	var stunned := guard.copy()
+	stunned.action = FighterState.Action.BLOCKSTUN
+	assert_bool(Sword.pose(stunned, SINCE, combat, tokens).is_equal_approx(up)).is_true()
+	assert_float(Sword.blade_colour(guard, tokens).a).is_equal(0.0)
+
+
+# The active wears the token's vermilion; the reaction's white is the body's flash, never the
+# blade's, and its pose throws the blade down.
+func test_the_tokens_paint_the_active_and_leave_the_reaction_to_the_body() -> void:
+	var combat := _combat()
+	var tokens := _tokens()
+	var active := _swinging(FighterState.Action.ACTIVE, 0.0)
+	assert_bool(Sword.blade_colour(active, tokens).is_equal_approx(Sword.ACTIVE_COLOUR)).is_true()
+	var hit := FighterState.new()
+	hit.action = FighterState.Action.HITSTUN
+	hit.action_since = SINCE
+	assert_float(Sword.blade_colour(hit, tokens).a).is_equal(0.0)
+	assert_str(String(Sword.pose_name(hit, tokens))).is_equal(String(tokens.reaction.pose))
+	var recoil := Sword.pose(hit, SINCE, combat, tokens)
+	assert_float(Sword.tip_of(recoil, combat).y).is_less(recoil.origin.y)
+
+
+# On a frozen tick of the hitstop the sword holds the impact's pose (Combat.posed_tick): the
+# attacker's clock moved forward by the freeze, and every frozen tick shows the slice of the tick
+# before the freeze.
+func test_a_frozen_swing_holds_the_pose_of_the_impact() -> void:
+	var combat := _combat()
+	var state := _swinging(FighterState.Action.ACTIVE, 0.0)
+	var before := Sword.pose(state, SINCE + 3, combat)
+	var hitstop := 4
+	state.action_since = SINCE + hitstop
+	state.contact_tick = SINCE + 2
+	state.frozen_until_tick = SINCE + 2 + 1 + hitstop
+	for tick: int in range(SINCE + 4, state.frozen_until_tick + 1):
+		var frozen := Sword.pose(state, tick, combat)
+		assert_bool(frozen.is_equal_approx(before)).override_failure_message("tick %d" % tick) \
+				.is_true()

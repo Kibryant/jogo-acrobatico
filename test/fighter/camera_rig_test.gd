@@ -260,3 +260,39 @@ func test_a_wall_to_the_right_slides_the_shoulder_toward_the_centre(
 	_assert_basis(rig.camera.global_basis, Basis.IDENTITY, "pushed, it still looks down -Z")
 	if layer == PhysicsLayers.WORLD and face_x < SHOULDER_M:
 		assert_float(face_x - rig.camera.global_position.x).is_equal_approx(MARGIN_M, NEAR)
+
+
+# TASK-12.2 (combate.md, "O hitstop e o tremor"; visual-e-audio.md, "A guarda e o tranco na tela"):
+# the impact's shake tilts the view by up to its amplitude for its length and then stops, never
+# moving the yaw and the pitch the input samples; off by the option, it does nothing.
+func test_the_shake_tilts_the_view_within_its_amplitude_for_its_length_only() -> void:
+	var rig := _rig(null, 0.4)
+	rig.pitch = 0.1
+	var seconds := 0.1
+	var amplitude := deg_to_rad(0.5)
+	rig.shake(seconds, 0.5)
+	assert_bool(rig.shaking()).is_true()
+	var largest := 0.0
+	var step := 1.0 / 240.0
+	var time := 0.0
+	while time < seconds - step:
+		rig.advance_shake(step)
+		time += step
+		var tilt := rig.shake_offset()
+		largest = maxf(largest, maxf(absf(tilt.x), absf(tilt.y)))
+		assert_float(absf(tilt.x)).is_less_equal(amplitude + HAIR)
+		assert_float(absf(tilt.y)).is_less_equal(amplitude + HAIR)
+		assert_float(rig.yaw).is_equal(0.4)
+		assert_float(rig.pitch).is_equal(0.1)
+	assert_float(largest).override_failure_message("the view never moved").is_greater(0.0)
+	rig.advance_shake(step * 2.0)
+	assert_bool(rig.shaking()).is_false()
+	assert_vector(rig.shake_offset()).is_equal(Vector2.ZERO)
+
+
+func test_with_the_option_off_the_shake_does_nothing() -> void:
+	var rig := _rig(null)
+	rig.shake_enabled = false
+	rig.shake(0.1, 0.5)
+	assert_bool(rig.shaking()).is_false()
+	assert_vector(rig.shake_offset()).is_equal(Vector2.ZERO)

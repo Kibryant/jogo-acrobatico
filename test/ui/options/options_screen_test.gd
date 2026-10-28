@@ -4,7 +4,9 @@
 # the middle or a side mouse button, applied to the InputMap and saved at once, unless another
 # action has it; the labels are the active keyboard's; the scale reaches content_scale_factor and
 # the sensitivity the camera. TASK-12.1 adds the row "Golpe leve", on the left mouse button, the
-# one action that button takes (F-175 §2). The tests run headless, as the gate does, where the
+# one action that button takes (F-175 §2). TASK-12.2 adds the row "Guarda", on the right mouse
+# button, the one action that button takes (F-182 §2), and the toggle "Tremor da câmera", on by
+# default (combate.md, "O hitstop e o tremor"). The tests run headless, as the gate does, where the
 # Match creates no screen (Match.has_screen), so they make the screen themselves and give it the
 # fighter, the camera and a store on a temporary file, never user://options.cfg. The events go
 # through the viewport, the way the window delivers them.
@@ -455,3 +457,56 @@ func test_at_the_largest_scale_the_panel_fits_the_screen() -> void:
 			.override_failure_message(where) \
 			.is_true()
 	get_tree().root.size = size_before
+
+
+# TASK-12.2 (F-182 §2; DEC-0054 §1): the row "Guarda" shows "Mouse direito", takes a key and the
+# right button back, and the right button is no other row's.
+func test_the_guard_row_takes_a_key_and_the_right_button_back() -> void:
+	await _watched()
+	var screen := _screen()
+	screen.open()
+	assert_str(screen.shown_key(&"guard")).is_equal("Mouse direito")
+	TranslationServer.set_locale("en")
+	assert_str(screen.binding_label(_store.binding(&"guard"))).is_equal("Right mouse")
+	assert_str(GameText.text(GameText.OPTIONS_ACTION_GUARD)).is_equal("Guard")
+	TranslationServer.set_locale("pt_BR")
+	assert_str(GameText.text(GameText.OPTIONS_ACTION_GUARD)).is_equal("Guarda")
+	_key_button(screen, &"guard").pressed.emit()
+	get_viewport().push_input(_mouse(MOUSE_BUTTON_LEFT))
+	assert_str(String(screen.waiting_for())).is_equal("guard")
+	_tap(KEY_C)
+	assert_str(String(screen.waiting_for())).is_empty()
+	_assert_physical(&"guard", KEY_C)
+	assert_str(str(_saved("keys", "guard"))).is_equal("key:%d" % KEY_C)
+	_key_button(screen, &"guard").pressed.emit()
+	get_viewport().push_input(_mouse(MOUSE_BUTTON_RIGHT))
+	assert_str(String(screen.waiting_for())).is_empty()
+	var event := _first_event(&"guard")
+	assert_bool(event is InputEventMouseButton).is_true()
+	assert_int((event as InputEventMouseButton).button_index).is_equal(MOUSE_BUTTON_RIGHT)
+	assert_str(screen.shown_key(&"guard")).is_equal("Mouse direito")
+	assert_str(str(_saved("keys", "guard"))).is_equal("mouse:%d" % MOUSE_BUTTON_RIGHT)
+
+
+# TASK-12.2 (combate.md, "O hitstop e o tremor": "tem opção para desligar"): "Tremor da câmera" is
+# on by default; turned off, it reaches the camera at once and is saved; "Voltar ao padrão" turns
+# it back on.
+func test_the_camera_shake_toggle_reaches_the_camera_and_is_saved() -> void:
+	await _watched()
+	var screen := _screen()
+	screen.open()
+	var camera := _match.camera_rig
+	assert_bool(screen.camera_shake_toggle.button_pressed).is_true()
+	assert_bool(camera.shake_enabled).is_true()
+	assert_str(screen.camera_shake_toggle.text).is_equal(String(GameText.OPTIONS_CAMERA_SHAKE))
+	assert_str(GameText.text(GameText.OPTIONS_CAMERA_SHAKE)).is_equal("Tremor da câmera")
+	screen.camera_shake_toggle.button_pressed = false
+	assert_bool(_store.camera_shake).is_false()
+	assert_bool(camera.shake_enabled).is_false()
+	assert_bool(_saved("interface", "camera_shake")).is_false()
+	camera.shake(0.1, 0.5)
+	assert_bool(camera.shaking()).is_false()
+	screen.restore_defaults()
+	assert_bool(screen.camera_shake_toggle.button_pressed).is_true()
+	assert_bool(camera.shake_enabled).is_true()
+	assert_bool(_saved("interface", "camera_shake")).is_true()

@@ -9,3 +9,7 @@ var velocity := Vector3.ZERO
 # The aim request (DEC-0044 §1): true on a tick whose slot holds a grapple press that can fire.
 # The node then casts the aim's ray after the move and answers in MoveFacts.aim_hit and aim_point.
 var aim_request := false
+# The hitstop (DEC-0055 §5): true on a frozen tick. The node then skips move_and_slide() and
+# after_move, so the body stays where it is and keeps its velocity for after; the state is the
+# end of the tick.
+var frozen := false

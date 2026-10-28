@@ -32,6 +32,9 @@ const RECOVERY_TICKS: Dictionary[int, int] = { 30: 6, 60: 12 }
 # último golpe levado; by hand 60 ticks at 30.
 const MAX_HEALTH := 100
 const REFILL_TICKS: Dictionary[int, int] = { 30: 60, 60: 120 }
+# combate.md, "O hitstop e o tremor": "Leve acerta: os dois, 67 ms, 4 ticks", 2 at 30. Since
+# TASK-12.2 a swing that hits ends that much later (DEC-0055 §5).
+const HITSTOP_HIT_TICKS: Dictionary[int, int] = { 30: 2, 60: 4 }
 const NO_REFILL_MS := 0 # TASK-12.1 plan: a refill of 0 turns the refill off
 
 # The target 2,0 m dead ahead of the attacker, who looks down -Z (yaw 0), looking back at it
@@ -419,11 +422,12 @@ func test_health_returns_to_100_120_ticks_after_the_last_contact(
 
 
 # Many: a second hit restarts the refill clock: 120 ticks after the first contact the health is
-# still down by both, and it returns to 100 only 120 ticks after the second.
+# still down by both, and it returns to 100 only 120 ticks after the second. The second light is
+# pressed when the first swing ends, its hitstop included (TASK-12.2; DEC-0055 §5).
 func test_a_second_hit_restarts_the_refill_clock() -> void:
 	var tickrate := 60
 	var pair := _pair(tickrate)
-	var second_swing := FIRST_TICK + _swing_ticks(tickrate)
+	var second_swing := FIRST_TICK + _swing_ticks(tickrate) + HITSTOP_HIT_TICKS[tickrate]
 	var first_contact := FIRST_TICK + CONTACT_OFFSET[tickrate]
 	var second_contact := second_swing + CONTACT_OFFSET[tickrate]
 	var refill := second_contact + REFILL_TICKS[tickrate]

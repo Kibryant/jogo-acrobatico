@@ -16,6 +16,9 @@ extends GdUnitTestSuite
 const NetfoxTicks := preload("res://test/support/netfox_ticks.gd")
 const MATCH_SCENE := preload("res://match/match.tscn")
 const AimAt := preload("res://test/support/aim_at.gd")
+const CAMERA_RIG_SCENE := preload("res://fighter/camera_rig.tscn")
+## Floating-point slack on the shake read back, not a design number.
+const HAIR := 1e-6
 
 ## Ticks netfox rolls back on every loop in the rollback test: the SyncTest's depth (rede.md §4).
 const DEPTH := 7
@@ -654,3 +657,81 @@ class Counter:
 		var state := _fighter.state
 		if state.mode == FighterState.Mode.DASH and state.dash_tick == tick:
 			starts += 1
+
+
+# TASK-12.2 (combate.md, "O hitstop e o tremor"; visual-e-audio.md, "A guarda e o tranco na tela"):
+# a light that hits the fighter this PC watches shakes its camera 100 ms with up to 0,5°, once,
+# by the hit's key; a light it blocks, from the front with the guard up, shakes it 100 ms with up
+# to 0,3°, once, by the block's key; the rollback of 7 ticks on every loop never shakes it again;
+# with the option off nothing shakes.
+func test_a_hit_and_a_block_of_the_watched_fighter_shake_its_camera_once_each() -> void:
+	await _start()
+	var target := _match.spawn_fighter(Match.DUMMY_SLOT, multiplayer.get_unique_id())
+	# 2,0 m dead ahead of the fighter, which looks down -Z, looking back at it.
+	target.position = _fighter.position + Vector3(0.0, 0.0, -2.0)
+	await get_tree().process_frame
+	await get_tree().physics_frame
+	var camera: CameraRig = auto_free(CAMERA_RIG_SCENE.instantiate())
+	var cues := ManeuverCues.new(_match.config, true)
+	cues.camera = camera
+	cues.watched = target
+	cues.combat_data = _match.combat_data
+	_match.add_child(cues)
+	cues.watch(_fighter)
+	cues.watch(target)
+	NetworkRollback.before_loop.connect(_force_rollback)
+	var light: AttackData = _match.combat_data.light_attack
+	var shakes: Array[float] = []
+	var guard_from := 60
+	for loop: int in 150:
+		_fighter.input.sample_frame(Vector2.ZERO, 0.0)
+		target.input.sample_frame(Vector2.ZERO, PI)
+		target.input.hold_guard(loop >= guard_from)
+		if loop == STAND_TICKS or loop == guard_from + 20:
+			_fighter.input.press_light_attack()
+		NetfoxTicks.run_loop()
+		if camera.shaking():
+			shakes.append(camera.shake_degrees())
+			assert_float(camera.shake_seconds()).is_equal_approx(0.1, HAIR)
+			# The screen's frames would play it out; here it ends at once.
+			camera.advance_shake(1.0)
+	NetworkRollback.before_loop.disconnect(_force_rollback)
+	assert_int(target.state.hurt_tick).override_failure_message("never hit").is_not_equal(
+		FighterState.NEVER
+	)
+	assert_int(target.state.block_tick).override_failure_message("never blocked").is_not_equal(
+		FighterState.NEVER
+	)
+	assert_int(shakes.size()).override_failure_message("shakes: %s" % [shakes]).is_equal(2)
+	assert_float(shakes[0]).is_equal_approx(light.hit_shake_deg, HAIR)
+	assert_float(shakes[1]).is_equal_approx(light.block_shake_deg, HAIR)
+	cues.free()
+
+
+# With the option off, a hit of the watched fighter shakes nothing; its flash still plays.
+func test_with_the_option_off_a_hit_shakes_nothing() -> void:
+	await _start()
+	var target := _match.spawn_fighter(Match.DUMMY_SLOT, multiplayer.get_unique_id())
+	target.position = _fighter.position + Vector3(0.0, 0.0, -2.0)
+	await get_tree().process_frame
+	await get_tree().physics_frame
+	var camera: CameraRig = auto_free(CAMERA_RIG_SCENE.instantiate())
+	camera.shake_enabled = false
+	var cues := ManeuverCues.new(_match.config, true)
+	cues.camera = camera
+	cues.watched = target
+	cues.combat_data = _match.combat_data
+	_match.add_child(cues)
+	cues.watch(_fighter)
+	cues.watch(target)
+	var flashed := false
+	for loop: int in 40:
+		_fighter.input.sample_frame(Vector2.ZERO, 0.0)
+		target.input.sample_frame(Vector2.ZERO, PI)
+		if loop == STAND_TICKS:
+			_fighter.input.press_light_attack()
+		NetfoxTicks.run_loop()
+		assert_bool(camera.shaking()).override_failure_message("loop %d" % loop).is_false()
+		flashed = flashed or target.flashing()
+	assert_bool(flashed).override_failure_message("the hit did not flash").is_true()
+	cues.free()

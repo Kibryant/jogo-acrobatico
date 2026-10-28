@@ -193,3 +193,17 @@ func test_a_light_attack_press_is_taken_once_and_apart_from_the_others() -> void
 	sampler.press_dash()
 	assert_bool(sampler.take_light_attack()).is_false()
 	assert_bool(sampler.take_dash()).is_true()
+
+
+# TASK-12.2 (DEC-0054 §1): the guard is held, not touched: it reads the last state the devices or
+# a bot set, on every tick, until they set another; taking the move or the presses leaves it.
+func test_the_guard_is_held_until_it_is_let_go() -> void:
+	var sampler := InputSampler.new()
+	assert_bool(sampler.guard_held()).is_false()
+	sampler.hold_guard(true)
+	sampler.take_move()
+	sampler.take_light_attack()
+	assert_bool(sampler.guard_held()).is_true()
+	assert_bool(sampler.guard_held()).is_true()
+	sampler.hold_guard(false)
+	assert_bool(sampler.guard_held()).is_false()

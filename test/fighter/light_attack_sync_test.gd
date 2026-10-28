@@ -286,7 +286,10 @@ class Lights:
 	func observe() -> void:
 		var state := _fighter.state
 		var tick := NetworkTime.tick - 1
-		if state.action == FighterState.Action.ACTIVE and state.action_since == tick:
+		# A swing begins its active once; since TASK-12.2 the hitstop moves action_since forward
+		# inside the active (DEC-0055 §5), so the start is read as the change into ACTIVE.
+		var was_active := _before.action == FighterState.Action.ACTIVE
+		if state.action == FighterState.Action.ACTIVE and not was_active:
 			swings += 1
 		if state.contact_tick == tick:
 			contacts += 1

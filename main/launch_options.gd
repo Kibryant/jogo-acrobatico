@@ -11,7 +11,7 @@
 # --measure-fps=PATH measures the frame rate in fullscreen once the game's own fighter plays.
 # With a screen, --watch=FILE [--force] [--trace=PATH] plays a replay in Sozinho instead of the
 # keyboard, and records none.
-# Sozinho puts a still dummy at the second spawn point to stand on and bump into (TASK-10.7);
+# Sozinho puts a dummy at the second spawn point to stand on and bump into (TASK-10.7);
 # --dummy=off leaves it out.
 # When netfox's network simulator connects the game (SimulatorLink), the address is its own: an
 # address in the arguments that differs is refused, and so is Sozinho, which has no network.
@@ -102,7 +102,7 @@ var watch := ""
 var trace := ""
 ## With --watch: plays a replay of another build anyway (ReplayFile's refusals).
 var force := false
-## Sozinho's still dummy at the second spawn point (TASK-10.7); --dummy=off leaves it out. Only
+## Sozinho's dummy at the second spawn point (TASK-10.7); --dummy=off leaves it out. Only
 ## Sozinho's own play has one: a server, a client and --watch never do.
 var dummy := false
 ## netfox's network simulator, when it connects the game; null otherwise.

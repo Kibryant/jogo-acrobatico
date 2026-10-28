@@ -2,7 +2,7 @@
 
 [ext_resource type="Script" path="res://ui/options/options_screen.gd" id="1_opts"]
 
-[node name="OptionsScreen" type="CanvasLayer" unique_id=1834016627 node_paths=PackedStringArray("keys", "prompt", "sensitivity_slider", "turn_label", "scale_slider", "scale_label", "restore_button", "close_button")]
+[node name="OptionsScreen" type="CanvasLayer" unique_id=1834016627 node_paths=PackedStringArray("keys", "prompt", "sensitivity_slider", "turn_label", "scale_slider", "scale_label", "camera_shake_toggle", "restore_button", "close_button")]
 layer = 2
 visible = false
 script = ExtResource("1_opts")
@@ -12,6 +12,7 @@ sensitivity_slider = NodePath("Backdrop/Panel/Content/SensitivityRow/Sensitivity
 turn_label = NodePath("Backdrop/Panel/Content/SensitivityRow/Turn")
 scale_slider = NodePath("Backdrop/Panel/Content/ScaleRow/Scale")
 scale_label = NodePath("Backdrop/Panel/Content/ScaleRow/ScaleValue")
+camera_shake_toggle = NodePath("Backdrop/Panel/Content/CameraShake")
 restore_button = NodePath("Backdrop/Panel/Content/Buttons/Restore")
 close_button = NodePath("Backdrop/Panel/Content/Buttons/Close")
 
@@ -91,6 +92,11 @@ size_flags_vertical = 4
 [node name="ScaleValue" type="Label" parent="Backdrop/Panel/Content/ScaleRow" unique_id=884301287]
 layout_mode = 2
 auto_translate_mode = 2
+
+[node name="CameraShake" type="CheckButton" parent="Backdrop/Panel/Content" unique_id=1612094473]
+layout_mode = 2
+size_flags_horizontal = 0
+text = "OPTIONS_CAMERA_SHAKE"
 
 [node name="Buttons" type="HBoxContainer" parent="Backdrop/Panel/Content" unique_id=1499127005]
 layout_mode = 2

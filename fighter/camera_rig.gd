@@ -15,6 +15,9 @@
 # never rewritten by the engine. Free, the camera sits shoulder_m to the right of the pivot and
 # distance_m behind it, looking along the view, so its optical axis passes through the aim's
 # point O, Aim.origin of the same feet and yaw (DEC-0045 §2).
+# The impact's shake (TASK-12.2; combate.md, "O hitstop e o tremor") tilts the view a fraction of a
+# degree on top of the yaw and the pitch, for the screen only: the yaw and the pitch the fighter's
+# input samples never move with it, so the aim and the body stay where the mouse put them.
 #
 # CameraRig (pivot; rotation.y = yaw)
 # └ Arm (SpringArm3D; rotation.x = pitch; casts along its +Z, behind)
@@ -24,6 +27,12 @@
 #         └ Camera3D (the quarter turn undone: it looks along the view)
 class_name CameraRig
 extends Node3D
+
+## Hz: how fast the shake swings on the pitch, and the yaw's rate against it. Claude's v0 reading
+## (DEC-0017; visual-e-audio.md, "A guarda e o tranco na tela"): two and a half swings in 100 ms,
+## a knock rather than a wobble.
+const SHAKE_HZ := 25.0
+const SHAKE_YAW_RATIO := 0.6
 
 ## Where the camera looks, in rad: 0 looks down -Z and a positive turn goes left, the core's
 ## convention for the yaw (TickInput.yaw).
@@ -42,6 +51,8 @@ var sensitivity_deg_per_px := 0.0:
 ## True while a screen over the game holds the mouse, as the options screen does (TASK-10.9): the
 ## mouse shows, a click does not capture it and a motion does not turn the camera.
 var mouse_free := false
+## The option "Tremor da câmera" (visual-e-audio.md, "A tela de opções"): off, shake() does nothing.
+var shake_enabled := true
 
 ## Rotates with the pitch and pulls the camera in when a wall is behind: the first step.
 @export var arm: SpringArm3D
@@ -55,6 +66,10 @@ var _target: Node3D
 var _pivot_height := 0.0
 var _turn_per_pixel := 0.0 # rad per screen pixel
 var _max_pitch := 0.0 # rad
+# The shake playing now: its amplitude in rad, its length and the time it has run, in seconds.
+var _shake_amplitude := 0.0
+var _shake_length_s := 0.0
+var _shake_age_s := 0.0
 
 
 # Takes the numbers of movimento.md from the data and starts looking along start_yaw. Called by
@@ -99,8 +114,56 @@ func _exit_tree() -> void:
 
 # After netfox's tick loop of the frame, which interpolates the fighter between two ticks
 # (TickInterpolator): the camera follows what the screen shows.
-func _process(_delta: float) -> void:
+func _process(delta: float) -> void:
+	advance_shake(delta)
 	_follow()
+
+
+## Shakes the view for seconds, by up to degrees on the pitch and on the yaw, fading linearly to
+## nothing (combate.md, "O hitstop e o tremor"). A new shake takes the place of the one playing.
+## With the option off it does nothing. The cues call it once per hit or block, by its key.
+func shake(seconds: float, degrees: float) -> void:
+	if not shake_enabled or seconds <= 0.0 or degrees <= 0.0:
+		return
+	_shake_amplitude = deg_to_rad(degrees)
+	_shake_length_s = seconds
+	_shake_age_s = 0.0
+
+
+## Runs the shake for delta seconds; _process calls it every frame.
+func advance_shake(delta: float) -> void:
+	if _shake_length_s <= 0.0:
+		return
+	_shake_age_s += delta
+	if _shake_age_s >= _shake_length_s:
+		_shake_length_s = 0.0
+		_shake_age_s = 0.0
+		_shake_amplitude = 0.0
+
+
+## True while a shake plays.
+func shaking() -> bool:
+	return _shake_length_s > 0.0
+
+
+## The amplitude of the shake playing, in degrees, and its length in seconds; 0 without one.
+func shake_degrees() -> float:
+	return rad_to_deg(_shake_amplitude)
+
+
+func shake_seconds() -> float:
+	return _shake_length_s
+
+
+## The shake's tilt now, in rad: x on the pitch and y on the yaw, each within the amplitude. Two
+## swings of different speed on the two axes, so the view knocks rather than nods, under an
+## envelope that fades from the full amplitude to nothing over the shake's length.
+func shake_offset() -> Vector2:
+	if _shake_length_s <= 0.0:
+		return Vector2.ZERO
+	var envelope := _shake_amplitude * (1.0 - _shake_age_s / _shake_length_s)
+	var phase := TAU * SHAKE_HZ * _shake_age_s
+	return Vector2(sin(phase), sin(phase * SHAKE_YAW_RATIO)) * envelope
 
 
 # One mouse motion, in screen pixels: right turns right and up looks up. The pitch stops at the
@@ -156,5 +219,6 @@ static func _is_left_click(event: InputEvent) -> bool:
 func _follow() -> void:
 	if _target != null:
 		global_position = _target.global_position + Vector3.UP * _pivot_height
-	rotation = Vector3(0.0, yaw, 0.0)
-	arm.rotation = Vector3(pitch, 0.0, 0.0)
+	var tilt := shake_offset()
+	rotation = Vector3(0.0, yaw + tilt.y, 0.0)
+	arm.rotation = Vector3(pitch + tilt.x, 0.0, 0.0)

@@ -1,7 +1,8 @@
 # The options screen (TASK-10.9; visual-e-audio.md, "A tela de opções"; DEC-0031 §8): the Esc
-# opens it over the game and the HUD, and the Esc or "Fechar (Esc)" closes it. It lists the eight
+# opens it over the game and the HUD, and the Esc or "Fechar (Esc)" closes it. It lists the nine
 # actions with the label of their key on the active keyboard, the mouse's sensitivity with the
-# centimetres of a full turn, the interface's scale, and "Voltar ao padrão". Every change applies
+# centimetres of a full turn, the interface's scale, the camera's shake (TASK-12.2), and "Voltar
+# ao padrão". Every change applies
 # at once and is saved in the player's options file (OptionsStore).
 # Open, the game does not pause, as online, where nothing can (F-161): netfox's clock goes on, the
 # fighter of whoever plays receives neutral frames, so it stands still, and the mouse shows.
@@ -30,6 +31,7 @@ const ACTION_TEXTS: Dictionary[StringName, StringName] = {
 	&"dash": GameText.OPTIONS_ACTION_DASH,
 	&"grapple": GameText.OPTIONS_ACTION_GRAPPLE,
 	&"light_attack": GameText.OPTIONS_ACTION_LIGHT_ATTACK,
+	&"guard": GameText.OPTIONS_ACTION_GUARD,
 }
 ## The number each accepted mouse button shows: "Mouse 3", "Mouse 4" and "Mouse 5".
 const MOUSE_NUMBERS: Dictionary[MouseButton, int] = {
@@ -38,7 +40,7 @@ const MOUSE_NUMBERS: Dictionary[MouseButton, int] = {
 	MOUSE_BUTTON_XBUTTON2: 5,
 }
 
-## The grid of the eight actions: a name and the button of its key on each row.
+## The grid of the nine actions: a name and the button of its key on each row.
 @export var keys: GridContainer
 ## The line below the keys: the wait for a new key, or the action that already has it.
 @export var prompt: Label
@@ -46,6 +48,8 @@ const MOUSE_NUMBERS: Dictionary[MouseButton, int] = {
 @export var turn_label: Label
 @export var scale_slider: HSlider
 @export var scale_label: Label
+## "Tremor da câmera": on, the camera shakes on a hit or a block (TASK-12.2).
+@export var camera_shake_toggle: CheckButton
 @export var restore_button: Button
 @export var close_button: Button
 
@@ -90,6 +94,7 @@ func _ready() -> void:
 	scale_slider.value_changed.connect(_on_scale_changed)
 	scale_slider.drag_started.connect(_on_scale_drag_started)
 	scale_slider.drag_ended.connect(_on_scale_drag_ended)
+	camera_shake_toggle.toggled.connect(_on_camera_shake_toggled)
 	# The names a screen reader says for the sliders (DEC-0031 §8: "nomes de acessibilidade").
 	sensitivity_slider.accessibility_name = GameText.text(GameText.OPTIONS_SENSITIVITY)
 	scale_slider.accessibility_name = GameText.text(GameText.OPTIONS_SCALE)
@@ -143,6 +148,7 @@ func restore_defaults() -> void:
 	_store.apply_scale(get_window())
 	if _camera != null:
 		_store.apply_sensitivity(_camera)
+		_store.apply_camera_shake(_camera)
 	_store.save_file()
 	_refresh()
 
@@ -153,12 +159,15 @@ func waiting_for() -> StringName:
 
 
 # What the screen shows for an action's key: the label of the physical key on the active keyboard,
-# "Mouse esquerdo" for the left button, or "Mouse 3", "Mouse 4" or "Mouse 5".
+# "Mouse esquerdo" for the left button, "Mouse direito" for the right one, or "Mouse 3", "Mouse 4"
+# or "Mouse 5".
 func binding_label(event: InputEvent) -> String:
 	if event is InputEventMouseButton:
 		var button := event as InputEventMouseButton
 		if button.button_index == MOUSE_BUTTON_LEFT:
 			return GameText.text(GameText.OPTIONS_MOUSE_LEFT)
+		if button.button_index == MOUSE_BUTTON_RIGHT:
+			return GameText.text(GameText.OPTIONS_MOUSE_RIGHT)
 		assert(MOUSE_NUMBERS.has(button.button_index), "%s is no accepted button" % event)
 		var pattern := GameText.text(GameText.OPTIONS_MOUSE_BUTTON)
 		return pattern.format({ "number": MOUSE_NUMBERS[button.button_index] })
@@ -199,8 +208,8 @@ func _input(event: InputEvent) -> void:
 
 
 # While a key waits: the Esc cancels, a key or a mouse button the action accepts is offered (the
-# middle or a side one, and the left one for the light attack), and every other press is kept from
-# the screen's buttons. True when the event was the wait's.
+# middle or a side one, the left one for the light attack and the right one for the guard), and
+# every other press is kept from the screen's buttons. True when the event was the wait's.
 func _take(event: InputEvent) -> bool:
 	if event is InputEventKey:
 		var key := event as InputEventKey
@@ -263,6 +272,13 @@ func _on_scale_changed(value: float) -> void:
 		_apply_scale()
 
 
+func _on_camera_shake_toggled(on: bool) -> void:
+	_store.camera_shake = on
+	if _camera != null:
+		_store.apply_camera_shake(_camera)
+	_store.save_file()
+
+
 func _on_scale_drag_started() -> void:
 	_dragging_scale = true
 
@@ -287,6 +303,7 @@ func _refresh() -> void:
 		button.accessibility_name = "%s: %s" % [action_text, button.text]
 	sensitivity_slider.set_value_no_signal(_store.sensitivity)
 	scale_slider.set_value_no_signal(_store.scale)
+	camera_shake_toggle.set_pressed_no_signal(_store.camera_shake)
 	_show_turn()
 	_show_scale()
 

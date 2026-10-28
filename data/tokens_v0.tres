@@ -1,0 +1,35 @@
+[gd_resource type="Resource" script_class="TokensData" format=3]
+
+[ext_resource type="Script" path="res://data/tokens_data.gd" id="1_tkns0"]
+[ext_resource type="Script" path="res://data/token_data.gd" id="2_tokn0"]
+
+[sub_resource type="Resource" id="Resource_windup"]
+script = ExtResource("2_tokn0")
+color = Color(0, 0, 0, 0)
+pose = &"blade_back"
+hud_shape = &"triangle"
+
+[sub_resource type="Resource" id="Resource_active"]
+script = ExtResource("2_tokn0")
+color = Color(0.8352941, 0.36862746, 0, 1)
+pose = &"arc"
+hud_shape = &"diamond"
+
+[sub_resource type="Resource" id="Resource_guard"]
+script = ExtResource("2_tokn0")
+color = Color(0, 0, 0, 0)
+pose = &"blade_upright"
+hud_shape = &"square"
+
+[sub_resource type="Resource" id="Resource_reaction"]
+script = ExtResource("2_tokn0")
+color = Color(1, 1, 1, 1)
+pose = &"recoil"
+hud_shape = &"circle"
+
+[resource]
+script = ExtResource("1_tkns0")
+light_windup = SubResource("Resource_windup")
+active = SubResource("Resource_active")
+guard = SubResource("Resource_guard")
+reaction = SubResource("Resource_reaction")

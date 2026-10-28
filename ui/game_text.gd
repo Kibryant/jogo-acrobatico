@@ -25,7 +25,7 @@ const HUD_GRAPPLE_COOLDOWN := &"HUD_GRAPPLE_COOLDOWN"
 # Every row of a replay played in the window has played (--watch; TASK-10.3).
 const REPLAY_ENDED := &"REPLAY_ENDED"
 # The options screen (TASK-10.9; visual-e-audio.md, "A tela de opções"): its title, its three
-# groups, the eight actions, the two sliders and the two buttons.
+# groups, the nine actions, the two sliders, the shake's toggle and the two buttons.
 const OPTIONS_TITLE := &"OPTIONS_TITLE"
 const OPTIONS_GROUP_KEYS := &"OPTIONS_GROUP_KEYS"
 const OPTIONS_GROUP_MOUSE := &"OPTIONS_GROUP_MOUSE"
@@ -39,12 +39,16 @@ const OPTIONS_ACTION_DASH := &"OPTIONS_ACTION_DASH"
 const OPTIONS_ACTION_GRAPPLE := &"OPTIONS_ACTION_GRAPPLE"
 # The light attack, remappable since TASK-12.1 (F-175 §2).
 const OPTIONS_ACTION_LIGHT_ATTACK := &"OPTIONS_ACTION_LIGHT_ATTACK"
+# The guard, remappable since TASK-12.2 (F-182 §2; DEC-0054 §1).
+const OPTIONS_ACTION_GUARD := &"OPTIONS_ACTION_GUARD"
 const OPTIONS_SENSITIVITY := &"OPTIONS_SENSITIVITY"
 # Beside the sensitivity: the mouse's travel for a full turn at 800 DPI, {cm} whole centimetres.
 const OPTIONS_SENSITIVITY_TURN := &"OPTIONS_SENSITIVITY_TURN"
 const OPTIONS_SCALE := &"OPTIONS_SCALE"
 # Beside the scale: its value, {whole} and {tenth} its digits, with the language's separator.
 const OPTIONS_SCALE_VALUE := &"OPTIONS_SCALE_VALUE"
+# The camera's shake on the impact, on or off (TASK-12.2; combate.md, "O hitstop e o tremor").
+const OPTIONS_CAMERA_SHAKE := &"OPTIONS_CAMERA_SHAKE"
 const OPTIONS_RESTORE := &"OPTIONS_RESTORE"
 const OPTIONS_CLOSE := &"OPTIONS_CLOSE"
 # A key clicked: the screen waits for the new one for {action}.
@@ -56,6 +60,8 @@ const OPTIONS_MOUSE_BUTTON := &"OPTIONS_MOUSE_BUTTON"
 # The left mouse button, the light attack's default (TASK-12.1; visual-e-audio.md, "A tela de
 # opções").
 const OPTIONS_MOUSE_LEFT := &"OPTIONS_MOUSE_LEFT"
+# The right mouse button, the guard's default (TASK-12.2; visual-e-audio.md, "A tela de opções").
+const OPTIONS_MOUSE_RIGHT := &"OPTIONS_MOUSE_RIGHT"
 ## Every key the code shows; StatusMessage, the HUD and the options screen take no other.
 const KEYS: Array[StringName] = [
 	CONNECTING,
@@ -83,16 +89,19 @@ const KEYS: Array[StringName] = [
 	OPTIONS_ACTION_DASH,
 	OPTIONS_ACTION_GRAPPLE,
 	OPTIONS_ACTION_LIGHT_ATTACK,
+	OPTIONS_ACTION_GUARD,
 	OPTIONS_SENSITIVITY,
 	OPTIONS_SENSITIVITY_TURN,
 	OPTIONS_SCALE,
 	OPTIONS_SCALE_VALUE,
+	OPTIONS_CAMERA_SHAKE,
 	OPTIONS_RESTORE,
 	OPTIONS_CLOSE,
 	OPTIONS_WAITING,
 	OPTIONS_TAKEN,
 	OPTIONS_MOUSE_BUTTON,
 	OPTIONS_MOUSE_LEFT,
+	OPTIONS_MOUSE_RIGHT,
 ]
 ## The keys whose message is the same word in pt-BR and in en: a loanword or a name the two
 ## languages share, not a copy of the other file.

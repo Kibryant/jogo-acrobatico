@@ -18,6 +18,10 @@ var max_health: int
 # The health returns to max_health this many ticks after the last hit's contact; 0 turns the
 # refill off (partida.md, "A vida sem partida").
 var health_refill_ticks: int
+# The guard is up this many ticks after it began to rise (combate.md, "O bloqueio, a guarda andando
+# e a stamina"), and covers this many radians to each side of the facing (DEC-0054 §2).
+var guard_raise_ticks: int
+var guard_half_angle: float
 
 
 static func create(data: CombatData, tickrate: int) -> CombatConfig:
@@ -30,4 +34,6 @@ static func create(data: CombatData, tickrate: int) -> CombatConfig:
 	config.blade_radius = data.blade_radius_m
 	config.max_health = data.max_health
 	config.health_refill_ticks = Ticks.from_ms(data.health_refill_ms, tickrate)
+	config.guard_raise_ticks = Ticks.from_ms(data.guard_raise_ms, tickrate)
+	config.guard_half_angle = deg_to_rad(data.guard_half_angle_deg)
 	return config

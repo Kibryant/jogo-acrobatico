@@ -381,6 +381,27 @@ func test_the_light_attack_is_the_left_mouse_button() -> void:
 	assert_bool(click.is_action_pressed(&"light_attack")).is_true()
 
 
+# TASK-12.2 (F-182 §2; DEC-0054 §1; combate.md, "O bloqueio, a guarda andando e a stamina": "A
+# tecla"): the guard is the right mouse button, Arthur's choice, and only it, held.
+func test_the_guard_is_the_right_mouse_button() -> void:
+	var has_action := InputMap.has_action(&"guard")
+	assert_bool(has_action).override_failure_message("missing action guard").is_true()
+	if not has_action:
+		return
+	var buttons: Array[MouseButton] = []
+	for event: InputEvent in InputMap.action_get_events(&"guard"):
+		var other := "guard binds %s, not a mouse button (F-182 §2)" % event
+		assert_bool(event is InputEventMouseButton).override_failure_message(other).is_true()
+		if event is InputEventMouseButton:
+			buttons.append((event as InputEventMouseButton).button_index)
+	var message := "guard must be the right mouse button alone, found %s (F-182 §2)" % [buttons]
+	assert_array(buttons).override_failure_message(message).is_equal([MOUSE_BUTTON_RIGHT])
+	var click := InputEventMouseButton.new()
+	click.button_index = MOUSE_BUTTON_RIGHT
+	click.pressed = true
+	assert_bool(click.is_action_pressed(&"guard")).is_true()
+
+
 # A key pressed as the operating system reports it: by physical position, with its location.
 func _key_event(physical: Key, location: KeyLocation) -> InputEventKey:
 	var event := InputEventKey.new()

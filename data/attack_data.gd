@@ -22,6 +22,23 @@ extends Resource
 ## angle turns left, like the yaw (combate.md, "O leve no tick": "O arco do leve").
 @export var arc_from_deg: float
 @export var arc_to_deg: float
+## The stuns, counted from the contact (combate.md, "O tranco e a vantagem"): how long whoever took
+## the hit, or blocked it, does not act. The hitstop comes on top (TASK-12.2).
+@export var hitstun_ms: int
+@export var blockstun_ms: int
+## The hitstop of a hit and of a block (combate.md, "O hitstop e o tremor"): how long each fighter
+## freezes, from the tick it knows the result (DEC-0055 §4). 0 freezes nobody.
+@export var hitstop_hit_ms: int
+@export var hitstop_block_ms: int
+## Stamina points whoever blocks this move pays on the contact (combate.md, "Os golpes e as
+## defesas", the row "Bloqueio").
+@export var block_stamina_cost: float
+## The camera's shake of whoever took the hit, or blocked it: presentation only, never in the
+## state (combate.md, "O hitstop e o tremor"; visual-e-audio.md, "A guarda e o tranco na tela").
+@export var hit_shake_ms: int
+@export var hit_shake_deg: float
+@export var block_shake_ms: int
+@export var block_shake_deg: float
 
 
 # One message per impossible number, each naming its field after prefix ("light_attack." in a
@@ -34,6 +51,23 @@ func validate(prefix := "") -> PackedStringArray:
 		_time_error(prefix + "recovery_ms", recovery_ms, false),
 		_not_negative_error(prefix + "stamina_cost", stamina_cost, "a cost cannot be negative"),
 		_not_negative_error(prefix + "damage", damage, "a hit cannot heal"),
+		_time_error(prefix + "hitstun_ms", hitstun_ms, false),
+		_time_error(prefix + "blockstun_ms", blockstun_ms, false),
+		_time_error(prefix + "hitstop_hit_ms", hitstop_hit_ms, false),
+		_time_error(prefix + "hitstop_block_ms", hitstop_block_ms, false),
+		_not_negative_error(
+			prefix + "block_stamina_cost",
+			block_stamina_cost,
+			"a cost cannot be negative",
+		),
+		_time_error(prefix + "hit_shake_ms", hit_shake_ms, false),
+		_not_negative_error(prefix + "hit_shake_deg", hit_shake_deg, "a shake cannot be negative"),
+		_time_error(prefix + "block_shake_ms", block_shake_ms, false),
+		_not_negative_error(
+			prefix + "block_shake_deg",
+			block_shake_deg,
+			"a shake cannot be negative",
+		),
 	]
 	var errors := PackedStringArray()
 	for message: String in checks:

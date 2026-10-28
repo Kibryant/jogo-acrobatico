@@ -180,3 +180,4 @@ O que chegou ao projeto e como chegou. Uma fonte não muda: só mudam `status`, 
 | [F-174](F-174-arthur-fecha-a-rodada-2-do-desenho-do-duelo.md) | 2026-10-27 | O Arthur fecha a rodada 2 do desenho do duelo: aceita a matriz de posição com a regra das mãos, a esquiva como dash e a cápsula até as regras jogáveis, com o manequim e os clipes no Blender depois, e responde à conferência da vantagem |
 | [F-175](F-175-arthur-abre-a-task-12-1.md) | 2026-10-27 | O Arthur abre a TASK-12.1: o golpe andando a 3 m/s e o leve no botão esquerdo do mouse |
 | [F-176](F-176-arthur-aprova-o-plano-da-task-12-1.md) | 2026-10-27 | O Arthur aprova o plano da TASK-12.1 no modo de plano: a foto do tick, o passo do combate antes do movimento e o contato no tick seguinte |
+| [F-177](F-177-arthur-libera-a-linha-452-da-task-12-1.md) | 2026-10-28 | O Arthur libera a correção de uma linha de um teste travado da TASK-12.1: o estado do fim do tick no lugar do estado do meio |

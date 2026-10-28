@@ -449,7 +449,9 @@ func test_a_press_in_a_dash_waits_and_fires_on_the_first_tick_back_on_the_ground
 	var fighter := _fighter(tickrate)
 	var dash_tick := fighter.tick()
 	fighter.step(MovementRig.press_dash_toward(FORWARD))
-	assert_int(fighter.fought.mode).override_failure_message("no dash").is_equal(
+	# The state at the end of the tick: the dash starts in before_move, after the combat's step
+	# (DEC-0041 §1), so fought, the state before the movement, still reads GROUND (F-177).
+	assert_int(fighter.state().mode).override_failure_message("no dash").is_equal(
 		FighterState.Mode.DASH
 	)
 	var exit_tick := dash_tick + DASH_TICKS[tickrate]

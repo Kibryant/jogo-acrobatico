@@ -13,6 +13,10 @@
 # The grapple is the one rule that asks the scenery (DEC-0044): while a press that can fire waits
 # in the slot, before_move sets MovePlan.aim_request, the node casts the aim's ray after the move,
 # and after_move fires on the answer in MoveFacts.
+# The combat's action reaches the movement in three ways (DEC-0055): on a frozen tick of the
+# hitstop, before_move only fills the slot and plans nothing, and the node skips the engine and
+# after_move; in a stun, the stick reads as zero and no command fires; with the guard, the floor's
+# speed is the slow walk, and a command that fires drops the guard.
 # Another fighter's head is never floor for the rules (movimento.md, "O corpo": "A cabeça do
 # outro"; TASK-10.7): the engine's on_floor stays its verdict, which contour D aligns with
 # (DEC-0025 §2; DEC-0037), and every rule that asked it for a floor jump, a dash, a renewal or the
@@ -39,11 +43,16 @@ static func before_move(
 	state: FighterState,
 	position: Vector3,
 	velocity: Vector3,
-	input: TickInput,
+	tick_input: TickInput,
 	config: MovementConfig,
 	tick: int,
 ) -> MovePlan:
 	var next := state.copy()
+	if Combat.frozen(state, tick):
+		return _frozen(next, velocity, tick_input, config, tick)
+	# In the stun the stick is ignored: the floor stops the body and the air keeps its path
+	# (combate.md, "O tranco e o corpo").
+	var input := _stilled(tick_input) if Combat.stunned(state) else tick_input
 	# The body looks where the camera looks (movimento.md, "Princípios"), and from a swing's first
 	# active tick to its end, where the swing goes (combate.md, "O leve no tick": "A direção").
 	next.facing_yaw = input.yaw
@@ -96,14 +105,15 @@ static func before_move(
 		horizontal = _horizontal(current, input, state, config)
 	if next.slide_off_dir != Vector3.ZERO:
 		horizontal = _slide(horizontal, next.slide_off_dir, config)
-	# A swing holds every command in the slot until its end (DEC-0051 §5).
-	var free := not swinging(next)
+	# A swing or a stun holds every command in the slot until its end (DEC-0051 §5; DEC-0055).
+	var free := not holds_commands(next)
 	if free and next.buffered_command == FighterCommand.JUMP:
 		if _can_jump(next, tick, config):
 			# Always a full jump, from the floor or off a ledge: it replaces the vertical speed.
 			vertical = config.jump_speed
 			next.jumps_used = 1
 			_clear_slot(next)
+			_drop_guard(next, tick)
 		elif _can_double_jump(next, tick, config):
 			# It replaces the vertical speed too, and the press tick is the first of its rise.
 			vertical = config.double_jump_speed
@@ -125,6 +135,7 @@ static func before_move(
 			next.dash_direction = _dash_direction(input, next.facing_yaw)
 			Stamina.spend(next, config, tick, config.dash_cost)
 			_clear_slot(next)
+			_drop_guard(next, tick)
 			horizontal = next.dash_direction * config.dash_speed
 		# Otherwise the press waits in the slot while its window lives: in the air, in the
 		# cooldown or with the bar short, it dashes on the first tick it can (movimento.md, "Dash"
@@ -156,11 +167,51 @@ static func take_presses(
 		_clear_slot(next)
 
 
-# Whether a swing is in progress (FighterState.action): then no command leaves the slot, and the
-# grapple asks for no aim; the presses wait for the swing's end (combate.md, "O leve no tick": "O
-# corpo durante o golpe"; DEC-0051 §5).
-static func swinging(state: FighterState) -> bool:
-	return state.action != FighterState.Action.NONE
+# Whether a swing or a stun is in progress (FighterState.action): then no command leaves the slot,
+# and the grapple asks for no aim; the presses wait for its end (combate.md, "O leve no tick": "O
+# corpo durante o golpe" and "O tranco e o corpo"; DEC-0051 §5). The guard holds nothing: a
+# command fires from it and drops it (DEC-0055 §2).
+static func holds_commands(state: FighterState) -> bool:
+	return Combat.swinging(state) or Combat.stunned(state)
+
+
+# A frozen tick of the hitstop (DEC-0055 §5): the presses go into the slot, where they wait for
+# their window as in a swing, and nothing else changes, not even the facing; the plan says frozen,
+# so the node neither moves the body nor confers, and the velocity stays in the body for after.
+static func _frozen(
+	next: FighterState,
+	velocity: Vector3,
+	input: TickInput,
+	config: MovementConfig,
+	tick: int,
+) -> MovePlan:
+	take_presses(next, input, tick, config)
+	var plan := MovePlan.new()
+	plan.state = next
+	plan.velocity = velocity
+	plan.frozen = true
+	return plan
+
+
+# The input of a tick in the stun: the presses and the camera as they came, the stick at rest.
+static func _stilled(input: TickInput) -> TickInput:
+	var still := TickInput.new()
+	for property: Dictionary in input.get_property_list():
+		var usage: int = property["usage"]
+		if usage & PROPERTY_USAGE_SCRIPT_VARIABLE:
+			var field: String = property["name"]
+			still.set(field, input.get(field))
+	still.move = Vector2.ZERO
+	return still
+
+
+# A command that fires from the guard drops it on its tick (DEC-0055 §2): the jump and the dash
+# here, the grapple when it hooks; with the button still held the guard rises again once the body
+# stands on the floor.
+static func _drop_guard(next: FighterState, tick: int) -> void:
+	if next.action == FighterState.Action.BLOCK:
+		next.action = FighterState.Action.NONE
+		next.action_since = tick
 
 
 # Reads the engine's verdict: the floor renews the jump and the double jump, clears the last wall
@@ -315,7 +366,7 @@ static func can_grapple(state: FighterState, tick: int, config: MovementConfig) 
 # "Gancho": "O erro": the aim is cast again on every tick, with that tick's direction).
 static func _asking(plan: MovePlan, config: MovementConfig, tick: int) -> MovePlan:
 	var waiting := plan.state.buffered_command == FighterCommand.GRAPPLE
-	waiting = waiting and not swinging(plan.state)
+	waiting = waiting and not holds_commands(plan.state)
 	plan.aim_request = waiting and can_grapple(plan.state, tick, config)
 	return plan
 
@@ -333,7 +384,7 @@ static func _hooks(
 ) -> bool:
 	if state.buffered_command != FighterCommand.GRAPPLE or not facts.aim_hit:
 		return false
-	if swinging(state):
+	if holds_commands(state):
 		return false
 	if not can_grapple(state, tick, config):
 		return false
@@ -357,6 +408,7 @@ static func _fire(next: FighterState, point: Vector3, tick: int) -> void:
 	next.grapple_fired_tick = tick
 	next.grapple_point = point
 	_clear_slot(next)
+	_drop_guard(next, tick)
 	if next.mode == FighterState.Mode.WALL_RUN:
 		_leave_wall(next, tick)
 
@@ -377,7 +429,7 @@ static func _releases(
 	tick: int,
 ) -> bool:
 	var pull_from := next.grapple_fired_tick + config.grapple_attach_ticks
-	var jumped := next.buffered_command == FighterCommand.JUMP and not swinging(next)
+	var jumped := next.buffered_command == FighterCommand.JUMP and not holds_commands(next)
 	if jumped and next.buffered_tick >= pull_from:
 		_clear_slot(next)
 		return true
@@ -459,11 +511,12 @@ static func _horizontal(
 		return current
 	if standing:
 		# The light does not slow the body: it runs at the run speed (DEC-0052; combate.md, "O leve
-		# no tick"). The slow walk comes back with the guard and the charged attack.
-		return current.move_toward(
-			_world(move, input.yaw) * config.run_speed,
-			config.ground_accel_per_tick,
-		)
+		# no tick"). With the guard the body walks slowly, in any direction, and an excess falls by
+		# the ground acceleration (combate.md, "A guarda andando"; movimento.md, "Chão").
+		var walk := config.run_speed
+		if state.action == FighterState.Action.BLOCK:
+			walk = config.slow_walk_speed
+		return current.move_toward(_world(move, input.yaw) * walk, config.ground_accel_per_tick)
 	var speed := maxf(config.run_speed, current.length())
 	return current.move_toward(_world(move, input.yaw) * speed, config.air_accel_per_tick)
 
@@ -493,7 +546,7 @@ static func _wall_run(
 	var vertical := 0.0
 	if age >= config.wall_hold_ticks:
 		vertical = -(age - config.wall_hold_ticks + 1) * config.wall_slide_gravity_per_tick
-	if next.buffered_command == FighterCommand.JUMP and not swinging(next):
+	if next.buffered_command == FighterCommand.JUMP and not holds_commands(next):
 		vertical = config.wall_jump_speed
 		if _points_back(input, along):
 			horizontal = -horizontal

@@ -1,11 +1,12 @@
 # The player's options (DEC-0031 §8; F-161; visual-e-audio.md, "A tela de opções"): the key of
-# each of the eight actions, by physical position, the mouse's sensitivity and the interface's
-# scale, kept in user://options.cfg, a ConfigFile, like a settings.json in a home folder. The
-# defaults are the InputMap as project.godot loads it, camera_v0.tres's sensitivity and the scale
-# 1.0. Reading checks every entry on its own: a bad one falls back to its default with a warning
-# that names it, and a file that cannot be read falls back whole; a missing file is the first
-# launch, and says nothing. Nothing here enters the simulation: the core only ever receives the
-# translated input (DEC-0004), so a replay records actions, never keys.
+# each of the nine actions, by physical position, the mouse's sensitivity, the interface's scale
+# and the camera's shake on the impact (TASK-12.2), kept in user://options.cfg, a ConfigFile, like
+# a settings.json in a home folder. The defaults are the InputMap as project.godot loads it,
+# camera_v0.tres's sensitivity, the scale 1.0 and the shake on. Reading checks every entry on its
+# own: a bad one falls back to its default with a warning that names it, and a file that cannot be
+# read falls back whole; a missing file is the first launch, and says nothing. Nothing here enters
+# the simulation: the core only ever receives the translated input (DEC-0004), so a replay records
+# actions, never keys.
 # The path is a parameter, so the tests use a temporary file and never touch the player's own.
 class_name OptionsStore
 extends RefCounted
@@ -22,12 +23,15 @@ const ACTIONS: Array[StringName] = [
 	&"dash",
 	&"grapple",
 	&"light_attack",
+	&"guard",
 ]
 ## The action the left mouse button may take: the light attack, its default (F-175 §2; TASK-12.1).
 const LIGHT_ATTACK := &"light_attack"
+## The action the right mouse button may take: the guard, its default (F-182 §2; DEC-0054 §1).
+const GUARD := &"guard"
 ## The mouse buttons any action may take: the middle one and the two side ones. The left one is the
-## light attack's alone (LIGHT_ATTACK), and the right one stays free for the guard of TASK-12.2
-## (F-161; visual-e-audio.md, "A tela de opções").
+## light attack's alone (LIGHT_ATTACK), and the right one the guard's (GUARD) (F-161;
+## visual-e-audio.md, "A tela de opções").
 const MOUSE_BUTTONS: Array[MouseButton] = [
 	MOUSE_BUTTON_MIDDLE,
 	MOUSE_BUTTON_XBUTTON1,
@@ -49,6 +53,7 @@ const MOUSE_SECTION := "mouse"
 const INTERFACE_SECTION := "interface"
 const SENSITIVITY_KEY := "sensitivity"
 const SCALE_KEY := "scale"
+const CAMERA_SHAKE_KEY := "camera_shake"
 # A float read back from the file may sit a hair off the edge of its range.
 const EDGE := 1e-6
 
@@ -57,6 +62,9 @@ var path: String
 var sensitivity: float
 ## The interface's content_scale_factor.
 var scale: float
+## The camera's shake on a hit or a block (combate.md, "O hitstop e o tremor": "tem opção para
+## desligar"); on by default.
+var camera_shake: bool
 ## One line per bad entry the last load_file() fell back on, each naming the entry.
 var warnings := PackedStringArray()
 
@@ -68,13 +76,14 @@ func _init(file_path := DEFAULT_PATH) -> void:
 	restore_defaults()
 
 
-# Every option back to its default: the keys of project.godot, camera_v0.tres's sensitivity and
-# the scale 1.0. Nothing is applied or saved here.
+# Every option back to its default: the keys of project.godot, camera_v0.tres's sensitivity, the
+# scale 1.0 and the shake on. Nothing is applied or saved here.
 func restore_defaults() -> void:
 	for action: StringName in ACTIONS:
 		_bindings[action] = default_binding(action)
 	sensitivity = default_sensitivity()
 	scale = SCALE_DEFAULT
+	camera_shake = true
 
 
 # Reads the file at path. A missing file keeps the defaults quietly; an unreadable one keeps them
@@ -96,6 +105,7 @@ func load_file() -> void:
 		_load_binding(file, action)
 	_load_sensitivity(file)
 	_load_scale(file)
+	_load_camera_shake(file)
 	_load_conflicts()
 
 
@@ -106,6 +116,7 @@ func save_file() -> Error:
 		file.set_value(KEYS_SECTION, action, binding_text(_bindings[action]))
 	file.set_value(MOUSE_SECTION, SENSITIVITY_KEY, sensitivity)
 	file.set_value(INTERFACE_SECTION, SCALE_KEY, scale)
+	file.set_value(INTERFACE_SECTION, CAMERA_SHAKE_KEY, camera_shake)
 	var error := file.save(path)
 	if error != OK:
 		push_warning("options: cannot write %s: %s" % [path, error_string(error)])
@@ -155,9 +166,15 @@ func apply_sensitivity(camera: CameraRig) -> void:
 	camera.sensitivity_deg_per_px = sensitivity
 
 
+# The shake on the impact plays on this camera, or not (TASK-12.2).
+func apply_camera_shake(camera: CameraRig) -> void:
+	camera.shake_enabled = camera_shake
+
+
 # True when event may trigger action: a key known by its physical position, other than the Esc
-# that opens and closes the screen, or the middle or a side mouse button; and the left mouse button
-# for the light attack alone. Without an action, what any action may take.
+# that opens and closes the screen, or the middle or a side mouse button; the left mouse button
+# for the light attack alone, and the right one for the guard alone. Without an action, what any
+# action may take.
 static func accepts(event: InputEvent, action: StringName = &"") -> bool:
 	if event is InputEventKey:
 		var key := event as InputEventKey
@@ -166,6 +183,8 @@ static func accepts(event: InputEvent, action: StringName = &"") -> bool:
 		var button := event as InputEventMouseButton
 		if button.button_index == MOUSE_BUTTON_LEFT:
 			return action == LIGHT_ATTACK
+		if button.button_index == MOUSE_BUTTON_RIGHT:
+			return action == GUARD
 		return MOUSE_BUTTONS.has(button.button_index)
 	return false
 
@@ -337,6 +356,20 @@ func _load_scale(file: ConfigFile) -> void:
 	var value := _number(file, INTERFACE_SECTION, SCALE_KEY, SCALE_MIN, SCALE_MAX)
 	if not is_nan(value):
 		scale = snappedf(value, SCALE_STEP)
+
+
+# The shake on or off: a boolean, or back to on with a warning that names the entry.
+func _load_camera_shake(file: ConfigFile) -> void:
+	if not file.has_section_key(INTERFACE_SECTION, CAMERA_SHAKE_KEY):
+		return
+	var value: Variant = file.get_value(INTERFACE_SECTION, CAMERA_SHAKE_KEY)
+	if value is bool:
+		camera_shake = value
+		return
+	_warn(
+		"[%s] %s = %s is not true or false: back to %s"
+		% [INTERFACE_SECTION, CAMERA_SHAKE_KEY, var_to_str(value), camera_shake]
+	)
 
 
 # The number of an entry when it is one from low to high; NAN, with a warning, when it is not,

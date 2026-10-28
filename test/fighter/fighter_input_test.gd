@@ -3,7 +3,8 @@
 # when a frame runs two ticks to catch the clock. Ticks run by hand (DEC-0027 §3), in Sozinho.
 # TASK-10.4 adds the dash on the left Shift; TASK-10.6, criterion 2, the camera's pitch, the last
 # sample like the yaw, and the grapple on the Q, a one-touch command like the others; TASK-12.1,
-# the light attack on the left mouse button, one more (F-175 §2).
+# the light attack on the left mouse button, one more (F-175 §2); TASK-12.2, the guard on the right
+# mouse button, held rather than touched (F-182 §2; DEC-0054 §1).
 extends GdUnitTestSuite
 
 const NetfoxTicks := preload("res://test/support/netfox_ticks.gd")
@@ -23,6 +24,7 @@ func before_test() -> void:
 
 
 func after_test() -> void:
+	Input.action_release(&"guard")
 	if NetworkRollback.after_process_tick.is_connected(_keep_box):
 		NetworkRollback.after_process_tick.disconnect(_keep_box)
 	NetfoxTicks.reset()
@@ -337,3 +339,43 @@ func test_the_left_click_presses_the_light_attack_once() -> void:
 		assert_bool(_boxes[tick].light_attack) \
 				.override_failure_message("a held button counted again on tick %d" % tick) \
 				.is_false()
+
+
+# TASK-12.2: the guard is held: once hold_guard(true), every tick's box has it, the two ticks of a
+# frame that runs two included, until hold_guard(false); it presses nothing else.
+func test_a_held_guard_is_in_every_box_until_it_is_let_go() -> void:
+	var fighter := await _fighter_in_a_match()
+	NetfoxTicks.run_loops(3)
+	_watch_boxes(fighter)
+	var from := NetworkTime.tick
+	fighter.input.hold_guard(true)
+	NetfoxTicks.run_loop(2)
+	NetfoxTicks.run_loops(2)
+	var let_go := NetworkTime.tick
+	fighter.input.hold_guard(false)
+	NetfoxTicks.run_loops(2)
+	for tick: int in range(from, NetworkTime.tick):
+		assert_bool(_boxes[tick].guard).override_failure_message("tick %d" % tick).is_equal(
+			tick < let_go
+		)
+		assert_bool(_boxes[tick].light_attack).is_false()
+		assert_bool(_boxes[tick].jump).is_false()
+
+
+# TASK-12.2 (F-182 §2): at the keyboard, the guard action held, the right mouse button by default,
+# is read on every physics step like the keys of the move, and let go it drops from the next box.
+func test_at_the_keyboard_the_guard_action_held_is_in_the_box() -> void:
+	var fighter := await _fighter_at_the_keyboard()
+	NetfoxTicks.run_loops(2)
+	_watch_boxes(fighter)
+	Input.action_press(&"guard")
+	await get_tree().physics_frame
+	var held := NetworkTime.tick
+	NetfoxTicks.run_loop()
+	Input.action_release(&"guard")
+	await get_tree().physics_frame
+	var released := NetworkTime.tick
+	NetfoxTicks.run_loop()
+	assert_bool(_boxes[held].guard).override_failure_message("the held guard was not read") \
+			.is_true()
+	assert_bool(_boxes[released].guard).override_failure_message("the guard stayed up").is_false()

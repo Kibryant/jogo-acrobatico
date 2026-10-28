@@ -182,11 +182,11 @@ func test_the_header_says_which_game_recorded_it_with_the_whole_configuration() 
 	assert_int(fields["arena_sha256"].length()).is_equal(SHA256_LENGTH)
 	assert_str(fields["seed"]).is_equal("0")
 	assert_str(fields["config"]).is_equal(MOVEMENT_V0)
-	# TASK-10.6 added pitch and grapple, by reflection over TickInput (criterion 2), and TASK-12.1
-	# the light attack.
+	# TASK-10.6 added pitch and grapple, by reflection over TickInput (criterion 2), TASK-12.1
+	# the light attack, and TASK-12.2 the guard, held.
 	assert_str(fields["columns"]).is_equal(
 		"tick:int,loop:int,fighter:int,move.x:f64,move.y:f64,yaw:f64,pitch:f64,jump:bool,dash:bool,"
-		+ "grapple:bool,light_attack:bool,check:hex8",
+		+ "grapple:bool,light_attack:bool,guard:bool,check:hex8",
 	)
 	# One line per field of MovementData, typed, with the .tres's value in its cell.
 	var resource: Resource = load(MOVEMENT_V0)
@@ -207,6 +207,25 @@ func test_the_header_says_which_game_recorded_it_with_the_whole_configuration() 
 	var combat_types := ReplayFile.combat_types()
 	assert_bool(combat_types.has("light_attack.windup_ms")).is_true()
 	assert_bool(combat_types.has("max_health")).is_true()
+	# TASK-12.2: the guard's numbers and the light's stun, hitstop, block cost and shake, by
+	# reflection like the others.
+	var guard_types: Dictionary[String, String] = {
+		"guard_raise_ms": ReplayFile.INT,
+		"guard_half_angle_deg": ReplayFile.F64,
+		"light_attack.hitstun_ms": ReplayFile.INT,
+		"light_attack.blockstun_ms": ReplayFile.INT,
+		"light_attack.hitstop_hit_ms": ReplayFile.INT,
+		"light_attack.hitstop_block_ms": ReplayFile.INT,
+		"light_attack.block_stamina_cost": ReplayFile.F64,
+		"light_attack.hit_shake_ms": ReplayFile.INT,
+		"light_attack.hit_shake_deg": ReplayFile.F64,
+		"light_attack.block_shake_ms": ReplayFile.INT,
+		"light_attack.block_shake_deg": ReplayFile.F64,
+	}
+	for field: String in guard_types:
+		assert_str(combat_types.get(field, "")).override_failure_message(field).is_equal(
+			guard_types[field]
+		)
 	for field: String in combat_types:
 		var key := "%s%s:%s" % [ReplayFile.COMBAT_PREFIX, field, combat_types[field]]
 		assert_bool(fields.has(key)).override_failure_message("no %s" % key).is_true()

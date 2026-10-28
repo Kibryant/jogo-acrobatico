@@ -19,3 +19,6 @@ var dash := false
 var grapple := false
 # A one-tick touch too: the light attack (combate.md, "O leve no tick"; TASK-12.1).
 var light_attack := false
+# Held, not touched: true on every tick the guard button is down (combate.md, "O bloqueio, a guarda
+# andando e a stamina"; DEC-0054 §1; TASK-12.2).
+var guard := false

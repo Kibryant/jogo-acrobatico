@@ -1,7 +1,8 @@
 # The entry scene (DEC-0026 §6; rede.md §9): it reads how the game was opened, like a main.ts
 # reading process.argv, and starts that mode:
 # - no argument: Sozinho, Godot's offline peer, where this PC is its own server (rede.md §8), with
-#   a still dummy at the second spawn point (TASK-10.7), which records the session as a replay
+#   a dummy at the second spawn point (TASK-10.7) that presses a light every 3 s toward the
+#   player (TASK-12.2), which records the session as a replay
 #   (ReplayRecorder; TASK-10.3), and plays one with --watch;
 # - --server, or the build exported as a dedicated server: the server, without a screen or a
 #   fighter of its own, which gives a fighter to each player the handshake accepts;
@@ -51,8 +52,9 @@ const SIMULATOR_FRAMES := 10
 ## loop of 1 ms (network-simulator.gd).
 const PROXY_DRAIN_MARGIN_MS := 100
 const USAGE := """Usage, with the game's arguments after "--":
-  (no argument)            play Sozinho: this PC is its own server, with a still dummy at the
-                           second spawn point to stand on and bump into.
+  (no argument)            play Sozinho: this PC is its own server, with a dummy at the second
+                           spawn point to stand on and bump into, which swings a light at the
+                           player every 3 s without walking.
     --dummy=off            play Sozinho without the dummy.
   --server                 run the dedicated server; open Godot with --headless, it has no screen.
     --port=N               the server's port, 7777/udp when not given.
@@ -172,8 +174,10 @@ func _first_frame() -> void:
 # server's clock; the server, Sozinho's role, does not wait.
 # The dummy (TASK-10.7; visual-e-audio.md, "A cabeça do outro na tela"), unless --dummy=off: a
 # second fighter at the second spawn point, driven by this PC with no camera, no keyboard and no
-# bot, so its input box stays neutral and it stands still, in the other fighter's tone. The
-# player judges a rule of two bodies against it, the head first. The replay records both.
+# bot, in the other fighter's tone. It does not walk; since TASK-12.2 it presses a light every 3 s
+# turned toward the player (partida.md, "O boneco que ataca"), through its input box alone. The
+# player judges a rule of two bodies against it, the head first, and the guard. The replay records
+# both.
 func start_solo() -> void:
 	var started: int = await NetworkTime.start()
 	assert(started == OK, "netfox's clock did not start: %s" % error_string(started))
@@ -185,8 +189,12 @@ func start_solo() -> void:
 	if options.dummy:
 		var dummy := current_match.spawn_fighter(Match.DUMMY_SLOT, me)
 		dummy.wear(Match.solo_tone(Match.DUMMY_SLOT))
+		current_match.let_dummy_attack(dummy, fighter)
 		recorded.append(dummy)
-		_log("sozinho: a still dummy stands at the second spawn point (--dummy=off leaves it out)")
+		_log(
+			"sozinho: a dummy at the second spawn point swings a light at the player every 3 s"
+			+ " (--dummy=off leaves it out)"
+		)
 	if options.records_replay():
 		_start_replay(recorded)
 	_measure_from_now()

@@ -41,7 +41,7 @@ const HEAD_PROBE_DISTANCE := 0.05
 const FLOOR_ANGLE_THRESHOLD := 0.01
 
 ## The input box, recorded by netfox as Input:move, Input:yaw, Input:pitch, Input:jump,
-## Input:dash, Input:grapple and Input:light_attack.
+## Input:dash, Input:grapple, Input:light_attack and Input:guard.
 @export var input: FighterInput
 ## netfox's node that records the boxes on every tick and sends them over the network.
 @export var synchronizer: RollbackSynchronizer
@@ -154,15 +154,15 @@ func setup(
 
 
 ## The combat of the match (DEC-0051): its numbers, the photo of the tick every fighter reads, a
-## full health at the spawn (partida.md, "A vida sem partida") and the block sword. The Match calls
-## it after setup(), before the fighter enters the tree, so netfox records the full health as the
-## first state.
-func arm(combat_config: CombatConfig, tick_photo: TickPhoto) -> void:
+## full health at the spawn (partida.md, "A vida sem partida") and the block sword, which wears the
+## tokens (tokens_v0.tres; null, its defaults). The Match calls it after setup(), before the
+## fighter enters the tree, so netfox records the full health as the first state.
+func arm(combat_config: CombatConfig, tick_photo: TickPhoto, tokens: TokensData = null) -> void:
 	combat = combat_config
 	photo = tick_photo
 	state.health = combat.max_health
 	if sword == null:
-		sword = Sword.new(combat)
+		sword = Sword.new(combat, tokens)
 		add_child(sword)
 
 
@@ -200,14 +200,15 @@ func _process(delta: float) -> void:
 		sword.show_pose(state, NetworkTime.tick - 1)
 
 
-## Paints the body white for seconds, on screen only: the flash of a hit taken (visual-e-audio.md,
-## "Os três canais por estado": "Reação"). ManeuverCues calls it once per hit, by its key.
-func flash(seconds: float) -> void:
+## Paints the body in colour, white by default, for seconds, on screen only: the flash of a hit
+## taken (visual-e-audio.md, "Os três canais por estado": "Reação"; the reaction token of
+## tokens_v0.tres). ManeuverCues calls it once per hit, by its key.
+func flash(seconds: float, colour := Color.WHITE) -> void:
 	_flash_left_s = seconds
-	var white := StandardMaterial3D.new()
-	white.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
-	white.albedo_color = Color.WHITE
-	body_mesh.material_override = white
+	var lit := StandardMaterial3D.new()
+	lit.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	lit.albedo_color = colour
+	body_mesh.material_override = lit
 
 
 ## True while the white flash of a hit shows.
@@ -263,6 +264,11 @@ func _rollback_tick(_delta: float, tick: int, _is_fresh: bool) -> void:
 		var me := StringName(name)
 		state = Combat.step(state, me, global_position, seen, tick_input, combat, config, tick)
 	var plan := Movement.before_move(state, global_position, velocity, tick_input, config, tick)
+	if plan.frozen:
+		# A frozen tick of the hitstop (DEC-0055 §5): the body stays where it is, with the velocity
+		# it had, which the next free tick moves it by; the engine is not asked, so nothing confers.
+		state = plan.state
+		return
 	# move_and_slide() moves by velocity times the frame's delta, and a tick is not a frame:
 	# physics_factor turns the move into exactly one tick (netfox's rollback-caveats.md). The
 	# velocity is divided back, so the state keeps m/s. With the tick in the physics step it is

@@ -49,6 +49,13 @@ func has(fighter_name: StringName) -> bool:
 	return _entries.has(fighter_name)
 
 
+# The fighter of that name, or null when the photo has none.
+func find(fighter_name: StringName) -> Entry:
+	if not _entries.has(fighter_name):
+		return null
+	return _entries[fighter_name]
+
+
 # The fighters, in name order.
 func entries() -> Array[Entry]:
 	var ordered: Array[Entry] = []

@@ -15,6 +15,10 @@
 # At the top, two health bars with their numbers (TASK-12.1; visual-e-audio.md, "O leve na tela"):
 # the followed fighter's on the left and the first other fighter of the match on the right, read
 # from the displayed state every frame, like the stamina.
+# Beside the other fighter's health, the token of its state on screen, with shape and colour,
+# never by colour alone (TASK-12.2; visual-e-audio.md, "O HUD do duelo" and "A guarda e o tranco na
+# tela"): the shape and the colour of tokens_v0.tres, a token without a colour drawn in the HUD's
+# neutral white, and nothing at rest or in a recovery.
 # Only a PC with a screen has one: the Match creates it in watch().
 class_name Hud
 extends CanvasLayer
@@ -34,9 +38,13 @@ const RETICLE_TYPE := &"Reticle"
 const HEALTH_MARGIN_TYPE := &"HealthMargin"
 const HEALTH_BACK_TYPE := &"HealthBarBack"
 const HEALTH_FILL_TYPE := &"HealthBarFill"
+const TOKEN_MARK_TYPE := &"TokenMark"
 ## px at the 1080p base: each health bar, as wide as the stamina's and twice as tall. Claude's v0
 ## reading (DEC-0017; TASK-12.1).
 const HEALTH_BAR_SIZE := Vector2(300, 24)
+## px at the 1080p base: the box of the other fighter's token, as tall as its health bar. Claude's
+## v0 reading (DEC-0017; TASK-12.2).
+const TOKEN_MARK_SIZE := Vector2(24, 24)
 ## px at the 1080p base: the box of the dash's cooldown arc, twice the bar's height. Claude's v0
 ## reading (DEC-0017; TASK-10.4). The grapple's arc is the same ring.
 const ARC_SIZE := Vector2(24, 24)
@@ -75,6 +83,9 @@ var _combat: CombatConfig
 var _match_fighters: Array[Fighter] = []
 var _own_health := HealthBar.new(false)
 var _other_health := HealthBar.new(true)
+# The other fighter's token, and the tokens it reads; null until show_tokens().
+var _token_mark := TokenMark.new()
+var _tokens: TokensData
 
 
 func _init() -> void:
@@ -176,10 +187,17 @@ func _init() -> void:
 	gap.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	gap.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	health_row.add_child(gap)
+	_token_mark.name = "OtherToken"
+	_token_mark.theme_type_variation = TOKEN_MARK_TYPE
+	_token_mark.custom_minimum_size = TOKEN_MARK_SIZE
+	_token_mark.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	_token_mark.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	health_row.add_child(_token_mark)
 	_other_health.name = "OtherHealth"
 	health_row.add_child(_other_health)
 	_own_health.visible = false
 	_other_health.visible = false
+	_token_mark.visible = false
 
 	# The reticle at the screen's centre, where the aim's ray from the point O goes with the camera
 	# free (DEC-0045 §2); with a camera, _show_reticle moves it to where the ray shows on screen.
@@ -235,6 +253,11 @@ func show_health(combat: CombatConfig, fighters: Array[Fighter]) -> void:
 	_match_fighters = fighters
 
 
+# The tokens the mark beside the other fighter's health reads from now on (tokens_v0.tres).
+func show_tokens(tokens: TokensData) -> void:
+	_tokens = tokens
+
+
 # The fighter the right bar shows: the first of the match that is not the followed one; null when
 # the match has no other.
 func rival() -> Fighter:
@@ -251,8 +274,11 @@ func _show_health() -> void:
 	_own_health.show_state(_fighter.state, _combat.max_health)
 	var other := rival()
 	_other_health.visible = other != null
+	_token_mark.visible = other != null and _tokens != null
 	if other != null:
 		_other_health.show_state(other.state, _combat.max_health)
+	if _token_mark.visible:
+		_token_mark.show_token(_tokens.for_action(other.state.action))
 
 
 # The ticks until the next dash may start, counted from the stamp of the last one: its ticks and
@@ -431,6 +457,17 @@ func other_health_width() -> float:
 	return _other_health.fill_width()
 
 
+# The shape of the other fighter's token as the HUD draws it now; empty when it shows none.
+func shown_token_shape() -> StringName:
+	return _token_mark.shape if _token_mark.visible else &""
+
+
+# The colour the other fighter's token is drawn in now: its own, or the neutral for a token
+# without one.
+func shown_token_colour() -> Color:
+	return _token_mark.drawn_colour()
+
+
 # The rows of the bottom-left corner, top to bottom, by name.
 func row_names() -> PackedStringArray:
 	var names := PackedStringArray()
@@ -492,6 +529,79 @@ class Reticle:
 			return
 		draw_circle(center, dot_size / 2.0 + outline, dark)
 		draw_circle(center, dot_size / 2.0, ring)
+
+
+# The token of a state beside the other's health (TASK-12.2): its shape, a triangle, a diamond, a
+# square or a circle, filled with its colour over the Theme's dark outline, or with the Theme's
+# neutral colour when the token has none; nothing when the state has no token. Its colours and
+# outline come from the Theme's TokenMark, the token's own from tokens_v0.tres.
+class TokenMark:
+	extends Control
+
+	var shape: StringName = &""
+	var colour := Color(0, 0, 0, 0)
+
+
+	func show_token(token: TokenData) -> void:
+		var next_shape: StringName = token.hud_shape if token != null else &""
+		var next_colour := token.color if token != null else Color(0, 0, 0, 0)
+		if next_shape == shape and next_colour == colour:
+			return
+		shape = next_shape
+		colour = next_colour
+		queue_redraw()
+
+
+	# The token's colour, or the neutral one when the token has none.
+	func drawn_colour() -> Color:
+		if shape.is_empty():
+			return Color(0, 0, 0, 0)
+		if colour.a > 0.0:
+			return colour
+		return get_theme_color(&"neutral_color")
+
+
+	func _draw() -> void:
+		if shape.is_empty():
+			return
+		var outline := float(get_theme_constant(&"outline_size"))
+		var dark := get_theme_color(&"outline_color")
+		var centre := size / 2.0
+		var radius := minf(size.x, size.y) / 2.0 - outline
+		_draw_shape(centre, radius + outline, dark)
+		_draw_shape(centre, radius, drawn_colour())
+
+
+	func _draw_shape(centre: Vector2, radius: float, fill: Color) -> void:
+		match shape:
+			&"triangle":
+				draw_colored_polygon(
+					PackedVector2Array(
+						[
+							centre + Vector2(0.0, -radius),
+							centre + Vector2(radius, radius),
+							centre + Vector2(-radius, radius),
+						]
+					),
+					fill,
+				)
+			&"diamond":
+				draw_colored_polygon(
+					PackedVector2Array(
+						[
+							centre + Vector2(0.0, -radius),
+							centre + Vector2(radius, 0.0),
+							centre + Vector2(0.0, radius),
+							centre + Vector2(-radius, 0.0),
+						]
+					),
+					fill,
+				)
+			&"square":
+				var side := radius * 0.8
+				draw_rect(Rect2(centre - Vector2(side, side), Vector2(side, side) * 2.0), fill)
+			_:
+				draw_circle(centre, radius, fill)
 
 
 # One health bar with its number (TASK-12.1): the bar's back, its fill over the share of the max,

@@ -1,8 +1,9 @@
 # The input box of a fighter (visao-geral.md, "O estado em quatro caixas"): move, yaw, pitch,
-# jump, dash, grapple and light_attack, which netfox records for every tick through "Input:move",
-# "Input:yaw", "Input:pitch", "Input:jump", "Input:dash", "Input:grapple" and "Input:light_attack".
-# Whoever owns the fighter fills them through the same calls, sample_frame(), press_jump(),
-# press_dash(), press_grapple() and press_light_attack(): this PC's
+# jump, dash, grapple, light_attack and guard, which netfox records for every tick through
+# "Input:move", "Input:yaw", "Input:pitch", "Input:jump", "Input:dash", "Input:grapple",
+# "Input:light_attack" and "Input:guard". Whoever owns the fighter fills them through the same
+# calls, sample_frame(), press_jump(), press_dash(), press_grapple(), press_light_attack() and
+# hold_guard(): this PC's
 # keyboard and mouse after use_devices(), or a bot, so the rules never know who presses
 # (DEC-0004). How the frames become the input of a tick is the InputSampler's job (DEC-0026 §1).
 # A replay takes the place of all of them through play_rows() (TASK-10.3): each tick's box is then
@@ -18,6 +19,7 @@ var jump := false
 var dash := false
 var grapple := false
 var light_attack := false
+var guard := false
 
 var _sampler := InputSampler.new()
 # The camera of whoever plays this fighter on this PC; null when nobody here does.
@@ -110,6 +112,12 @@ func press_light_attack() -> void:
 	_sampler.press_light_attack()
 
 
+# The guard button held (true) or let go (false) from now on, from the devices or a bot: a hold,
+# not a touch, so every tick reads it until it changes (TASK-12.2; DEC-0054 §1).
+func hold_guard(held: bool) -> void:
+	_sampler.hold_guard(held)
+
+
 # The input of the tick being simulated, as the core reads it.
 func to_tick_input() -> TickInput:
 	var tick_input := TickInput.new()
@@ -120,6 +128,7 @@ func to_tick_input() -> TickInput:
 	tick_input.dash = dash
 	tick_input.grapple = grapple
 	tick_input.light_attack = light_attack
+	tick_input.guard = guard
 	return tick_input
 
 
@@ -128,11 +137,15 @@ func _physics_process(_delta: float) -> void:
 		return
 	if _muted:
 		sample_frame(Vector2.ZERO, _camera.yaw, _camera.pitch)
+		hold_guard(false)
 		return
 	# Keys by physical position (DEC-0031): the InputMap actions use physical_keycode, which the
 	# options remap (OptionsStore).
 	var keys := Input.get_vector(&"move_left", &"move_right", &"move_back", &"move_forward")
 	sample_frame(keys, _camera.yaw, _camera.pitch)
+	# The right mouse button by default (project.godot, [input]; F-182 §2), or the player's key or
+	# mouse button (OptionsStore): held, read on every frame like the keys of the move.
+	hold_guard(Input.is_action_pressed(&"guard"))
 
 
 # A held key repeats as echo events, which is_action_pressed leaves out: a hold is one press.
@@ -163,6 +176,7 @@ func _gather() -> void:
 	move = _sampler.take_move()
 	yaw = _sampler.last_yaw()
 	pitch = _sampler.last_pitch()
+	guard = _sampler.guard_held()
 
 
 # netfox records the box of tick right after this (NetworkTime._loop), so what is set here is the

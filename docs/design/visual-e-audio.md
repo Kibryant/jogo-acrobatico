@@ -1,6 +1,6 @@
 ---
-revisado_em: 2026-10-27
-fontes: [F-050, F-051, F-052, F-053, F-054, F-056, F-058, F-059, F-061, F-062, F-063, F-100, F-121, F-122, F-137, F-139, F-140, F-141, F-146, F-147, F-148, F-152, F-153, F-156, F-157, F-158, F-161, F-162, F-170, F-172, F-173, F-174, F-175]
+revisado_em: 2026-10-28
+fontes: [F-001, F-050, F-051, F-052, F-053, F-054, F-056, F-058, F-059, F-061, F-062, F-063, F-100, F-121, F-122, F-137, F-139, F-140, F-141, F-146, F-147, F-148, F-152, F-153, F-156, F-157, F-158, F-161, F-162, F-170, F-172, F-173, F-174, F-175, F-182]
 ---
 
 # Visual e áudio
@@ -153,6 +153,27 @@ Leituras v0 do Claude (DEC-0017), na cápsula, antes do manequim (DEC-0050):
   - **O flash** pinta a cápsula de branco sem luz por 100 ms e volta ao tom do lutador. Ele toca no tick seguinte ao do contato, o primeiro em que o estado de quem levou o mostra (DEC-0051 §3), e a chave é o tick do contato.
   - **As barras de vida** têm 300 × 24 px na base de 1080p, a largura da barra da stamina e o dobro da altura, com a margem de 24 px do HUD. O número fica do lado de dentro da tela: à direita da barra da esquerda e à esquerda da barra da direita. As cores são as da stamina, do mesmo Theme.
 
+### A guarda e o tranco na tela (TASK-12.2)
+
+Leituras v0 do Claude (DEC-0017), na cápsula e na espada de blocos, antes do manequim (DEC-0050). Os números do tremor são do `combate.md` ("O hitstop e o tremor").
+
+- **Os tokens como dado** (DEC-0031 §5): `data/tokens_v0.tres` (`TokensData`, um `TokenData` por estado) guarda a cor, o nome da pose e a forma do HUD dos quatro estados que o duelo já lê. A cor "Nenhuma" fica guardada com alfa 0.
+
+  | Estado | Quando | Cor | Pose | Forma no HUD |
+  |---|---|---|---|---|
+  | Leve, preparação | `WINDUP` | Nenhuma | `blade_back`, a lâmina para trás | Triângulo |
+  | Ativo | `ACTIVE` | Vermelhão `#D55E00` | `arc`, o arco da regra | Losango |
+  | Guarda | `BLOCK` e `BLOCKSTUN` | Nenhuma | `blade_upright`, a lâmina quase vertical à frente | Quadrado |
+  | Reação | `HITSTUN` | Branco, o flash do corpo | `recoil`, a lâmina jogada para baixo e para fora | Círculo |
+
+  A recuperação e o repouso não têm token. A espada, os sinais e o HUD leem o arquivo; a simulação, nunca.
+- **A pose da guarda:** a mão a −20° da frente, a 0,9 m do chão, e a lâmina erguida a 80°, a ponta perto da cabeça. Ela sobe do repouso até lá em linha reta nos 6 ticks da guarda, e no blockstun fica alta. Na reação, a mão vai a −75°, e a lâmina aponta −70° para o lado e 70° para baixo. A cor da reação é a do flash do corpo, nunca a da lâmina.
+- **A paradinha na tela:** congelado, o corpo fica parado, e a espada e o rastro do arco seguram a pose do impacto: a pose lê o último tick da paradinha, que, com o relógio do golpe andado para a frente, é a do tick antes dela (`Combat.posed_tick`). A chave do rastro é o tick em que o ativo começou antes da paradinha (`Combat.active_began`), então a paradinha de quem bateu nunca faz um segundo rastro.
+- **O tremor da câmera:** no golpe que pega, a câmera de quem levou treme 100 ms com até 0,5°; no bloqueio, a de quem bloqueou, 100 ms com até 0,3° (`combate.md`). É um tremor de 25 Hz no pitch e de 15 Hz no yaw, que cai em linha reta da amplitude a zero nos 100 ms: uma batida, não um balanço. Ele inclina só a vista, nunca o yaw e o pitch que o input lê, então a mira e o corpo ficam onde o mouse os pôs. Toca uma vez por evento, pela chave do lutador e do `hurt_tick` ou do `block_tick`, só na câmera do lutador que este PC vê, e nunca na re-simulação (DEC-0031 §6). Um novo toma o lugar do que toca. A linha "Tremor da câmera" das opções o desliga.
+- **O sinal do bloqueio:** um evento novo dos sinais, uma vez por golpe bloqueado, pela chave do tick do contato, como o do golpe que pega; no v0 ele só treme a câmera, e o "tunk" entra com o som (TASK-12.6).
+- **O token no HUD:** ao lado da vida do outro lutador, do lado de dentro da tela, uma marca de 24 × 24 px na base de 1080p mostra a forma e a cor do token do estado exibido dele: a cor do token, ou o branco neutro do HUD (0,92; 0,92; 0,92) num token sem cor, sobre o contorno escuro do HUD, a 55 %. As formas cabem no círculo da marca, e o lado do quadrado é 80 % do diâmetro, para ele não pesar mais que as outras. Na recuperação e no repouso, nada. As cores e o contorno vêm do Theme (`TokenMark`).
+- **O boneco que ataca** (`partida.md`): virado para quem joga, ele dá um leve a cada 3 s, sem andar. Com a guarda alta de frente, quem joga vê a lâmina erguida, o tremor de 0,3° e a vida cheia; pelas costas, o flash, o tremor de 0,5° e 12 de vida a menos.
+
 ### Onde o sinal mora
 
 No mundo: a pose, o rastro e o brilho na arma. O HUD repete com forma e cor, e cobre o que está fora da tela (F-053 §5). Nunca só por cor (F-053 §2.2).
@@ -303,9 +324,9 @@ A tela que a DEC-0031 §8 promete a quem joga, com as escolhas do Arthur (F-161)
 
 - **Onde abre:** com o Esc, no Sozinho e online, onde quem joga tem tela; por cima do jogo e do HUD. O Esc ou o botão "Fechar (Esc)" fecham.
 - **Aberta:** o jogo não pausa; o lutador de quem joga fica parado, porque as teclas vão para a tela; o mouse aparece. Fechada, o mouse volta para a câmera (F-161).
-- **O layout:** o título "Opções" e três grupos, nesta ordem. Teclas: "Andar para a frente", "Andar para trás", "Andar para a esquerda", "Andar para a direita", "Pular", "Dash", "Gancho" e, desde a TASK-12.1, "Golpe leve", cada uma com o rótulo da sua tecla. Mouse: "Sensibilidade". Interface: "Escala". Embaixo, "Voltar ao padrão" e "Fechar (Esc)".
+- **O layout:** o título "Opções" e três grupos, nesta ordem. Teclas: "Andar para a frente", "Andar para trás", "Andar para a esquerda", "Andar para a direita", "Pular", "Dash", "Gancho" e, desde a TASK-12.1, "Golpe leve", e desde a TASK-12.2, "Guarda", cada uma com o rótulo da sua tecla. Mouse: "Sensibilidade". Interface: "Escala" e, desde a TASK-12.2, "Tremor da câmera", ligado por padrão, que desliga o tremor do impacto (`combate.md`, "O hitstop e o tremor"). Embaixo, "Voltar ao padrão" e "Fechar (Esc)".
 - **O rótulo da tecla:** o da tecla física no teclado ativo (`DisplayServer.keyboard_get_label_from_physical`): o lugar do W mostra "Z" num teclado francês. Os botões do mouse aparecem como "Mouse 3" (o do meio), "Mouse 4" e "Mouse 5" (os laterais); o esquerdo, o padrão do golpe leve, como "Mouse esquerdo".
-- **Remapear:** clicar numa tecla mostra "Aperte a nova tecla para <ação>. O Esc cancela."; a próxima tecla, ou o botão do meio ou um lateral do mouse, toma o lugar. O esquerdo do mouse só vale para o "Golpe leve", que o tem de padrão (F-175 §2); o direito não vale para nenhuma ação, porque fica para a guarda da TASK-12.2. Uma tecla que já é de outra ação não troca, e a tela diz "<tecla> já é de <ação>. Escolha outra tecla ou troque <ação> primeiro."
+- **Remapear:** clicar numa tecla mostra "Aperte a nova tecla para <ação>. O Esc cancela."; a próxima tecla, ou o botão do meio ou um lateral do mouse, toma o lugar. O esquerdo do mouse só vale para o "Golpe leve", que o tem de padrão (F-175 §2), e o direito só para a "Guarda", que o tem de padrão (F-182 §2; DEC-0054). Uma tecla que já é de outra ação não troca, e a tela diz "<tecla> já é de <ação>. Escolha outra tecla ou troque <ação> primeiro."
 - **A sensibilidade:** de 0,02 a 0,20 grau por pixel, de 0,005 em 0,005, com o padrão 0,06 (`movimento.md`, "Câmera"); ao lado, "Uma volta inteira com uns N cm de mouse, a 800 DPI", com N = 360 ÷ sensibilidade ÷ 800 × 2,54, arredondado.
 - **A escala:** de 0,8 a 1,5, de 0,1 em 0,1, com o padrão 1,0, pelo `content_scale_factor` (DEC-0031 §8). Multiplica a barra, os textos, as recargas e a mira; a mira segue no centro da tela com a câmera livre.
 - **Vale na hora e fica salvo:** toda mudança aplica e grava no `user://options.cfg`. Uma entrada ruim volta ao padrão, com um aviso no log; "Voltar ao padrão" restaura tudo.

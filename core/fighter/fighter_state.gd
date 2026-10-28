@@ -23,12 +23,17 @@ enum Mode {
 # The second state machine, parallel to the mode (DEC-0022; DEC-0051 §6; visao-geral.md, "A
 # máquina de estados"): the phase of the swing in progress, changed only by Combat.step. A swing
 # goes WINDUP, ACTIVE and RECOVERY, each counted from the tick it began, and back to NONE; no input
-# cuts it (DEC-0016).
+# cuts it (DEC-0016). TASK-12.2 adds the guard and the two stuns (DEC-0055 §1): BLOCK is the guard,
+# since the tick it began to rise, up once guard_raise_ticks have passed; HITSTUN and BLOCKSTUN
+# hold the fighter until stun_until_tick, after a hit taken or a hit blocked.
 enum Action {
 	NONE,
 	WINDUP,
 	ACTIVE,
 	RECOVERY,
+	BLOCK,
+	HITSTUN,
+	BLOCKSTUN,
 }
 
 # The stamp of "never": far enough in the past that no window reaches it, so a fresh state
@@ -116,6 +121,15 @@ var contact_move: StringName = &""
 var health := 0
 # The tick of the contact of the last hit taken: the key of the flash and the refill's clock.
 var hurt_tick := NEVER
+# The stun (combate.md, "O tranco no tick"; DEC-0055 §1): the tick a fighter in HITSTUN or
+# BLOCKSTUN acts again, the contact plus the stun plus the hitstop. It stays after the stun.
+var stun_until_tick := NEVER
+# The tick of the contact of the last hit blocked: the key of the block's cues, and what the
+# attacker reads in the photo to know the hit was blocked (DEC-0055 §4). It stays, like hurt_tick.
+var block_tick := NEVER
+# The hitstop (combate.md, "A paradinha no tick"; DEC-0055 §5): the last frozen tick. A tick at or
+# before it only fills the slot and takes new contacts, and the body does not move.
+var frozen_until_tick := NEVER
 
 
 # An equal and independent state: the rules change the copy, never the state they receive.
@@ -151,4 +165,7 @@ func copy() -> FighterState:
 	other.contact_move = contact_move
 	other.health = health
 	other.hurt_tick = hurt_tick
+	other.stun_until_tick = stun_until_tick
+	other.block_tick = block_tick
+	other.frozen_until_tick = frozen_until_tick
 	return other

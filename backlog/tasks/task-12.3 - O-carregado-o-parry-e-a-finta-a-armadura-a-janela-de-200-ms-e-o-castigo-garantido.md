@@ -6,6 +6,7 @@ title: >-
 status: To Refine
 assignee: []
 created_date: '2026-10-27 22:02'
+updated_date: '2026-10-28 14:53'
 labels:
   - jogo
 milestone: m-2
@@ -54,3 +55,9 @@ Nenhuma: os números estão no `combate.md` ("Os golpes e as defesas", "A armadu
 - [ ] #3 Diário da sessão escrito e glossário atualizado
 - [ ] #4 Mudanças registradas em docs/mudancas.md
 <!-- DOD:END -->
+
+## Implementation Notes
+
+<!-- SECTION:NOTES:BEGIN -->
+Do refino a fazer, pela F-188 §2 (o Arthur depois de jogar a guarda): ele imagina o parry refletindo a espada, com a animação mostrando o reflexo; quem apara ganha e combina, "talvez dois golpes e um golpe forte", contra o carregado garantido do desenho (combate.md, "O tranco e a vantagem"); e "não existe parry infinito", o que o parry no vazio de 450 ms já cobra. Conferir com ele, com pesquisa, se o leve continua sem parry ("quando os dois apertaram ao mesmo tempo, a pessoa que apertou [...] refletir ali e ganhar").
+<!-- SECTION:NOTES:END -->

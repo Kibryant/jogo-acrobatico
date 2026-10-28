@@ -12,6 +12,15 @@ stamina_cost = 8.0
 damage = 12
 arc_from_deg = -60.0
 arc_to_deg = 60.0
+hitstun_ms = 400
+blockstun_ms = 250
+hitstop_hit_ms = 67
+hitstop_block_ms = 33
+block_stamina_cost = 5.0
+hit_shake_ms = 100
+hit_shake_deg = 0.5
+block_shake_ms = 100
+block_shake_deg = 0.3
 
 [resource]
 script = ExtResource("1_cmbt0")
@@ -22,3 +31,5 @@ blade_length_m = 1.4
 blade_radius_m = 0.08
 max_health = 100
 health_refill_ms = 2000
+guard_raise_ms = 100
+guard_half_angle_deg = 90.0

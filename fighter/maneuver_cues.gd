@@ -22,6 +22,12 @@
 # of whoever took a hit, 100 ms, once per hit, keyed by the tick of the hit's contact. That stamp
 # is the attacker's tick, and the hit first shows in the target's state on the next one, the first
 # whose photo shows the contact (DEC-0051 §3): the event says the tick it first shows on.
+# The guard and the hitstop add one (visual-e-audio.md, "A guarda e o tranco na tela"; TASK-12.2):
+# the block, once per blocked hit, keyed by its contact's tick like the hit. A hit or a block of
+# the fighter this PC watches shakes its camera, by the attack's numbers, unless the option turns
+# the shake off; the flash's white comes from the reaction token (tokens_v0.tres). The swing's key
+# is the tick its active began before the hitstop moved its clock (Combat.active_began), so the
+# freeze of whoever hit never makes a second swing of one.
 # It also counts, for the SyncTest, the events the simulation made on its fresh ticks: there,
 # with the rollback forced on every tick, the cues presented must equal the events (DEC-0031 §6;
 # rede.md §4).
@@ -39,6 +45,7 @@ enum Kind {
 	HEAD_SLIDE,
 	SWING,
 	HIT,
+	BLOCK,
 }
 
 ## The cue's opacity when it appears; it fades to nothing. Claude's v0 reading (DEC-0017): seen
@@ -58,6 +65,14 @@ const FLASH_S := 0.1
 ## estado").
 const SWING_COLOUR := Sword.ACTIVE_COLOUR
 
+## The camera of whoever plays on this PC and the fighter it follows, which the hits and the blocks
+## of shake (Match.watch and Match.view); null without them, and nothing shakes.
+var camera: CameraRig
+var watched: Fighter
+## The combat numbers in the units of the paper, the shakes' (AttackData); null, nothing shakes.
+var combat_data: CombatData
+## The tokens the cues read their colours from (tokens_v0.tres); null, the flash is plain white.
+var tokens: TokensData
 ## Cues played: one per key, when its event first shows in the displayed state.
 var presented := 0
 ## Events the simulation made on its fresh ticks, one per key. On a client it sees only the
@@ -131,10 +146,13 @@ static func shown_events(fighter: Fighter) -> Array[Event]:
 	if state.slide_off_dir != Vector3.ZERO:
 		shown.append(Event.new(fighter, Kind.HEAD_SLIDE, state.head_landing_tick))
 	if state.action == FighterState.Action.ACTIVE:
-		shown.append(Event.new(fighter, Kind.SWING, state.action_since))
+		shown.append(Event.new(fighter, Kind.SWING, Combat.active_began(state)))
 	if state.hurt_tick != FighterState.NEVER:
 		# The contact's tick, applied on the next one: like the double jump's stamp, it stays.
 		shown.append(Event.new(fighter, Kind.HIT, state.hurt_tick, state.hurt_tick + 1))
+	if state.block_tick != FighterState.NEVER:
+		# The block's contact, resolved on the next tick, like the hit's.
+		shown.append(Event.new(fighter, Kind.BLOCK, state.block_tick, state.block_tick + 1))
 	return shown
 
 
@@ -201,9 +219,47 @@ func _draw(fighter: Fighter, kind: Kind) -> void:
 			if fighter.combat != null:
 				add_child(SwingTrail.new(fighter, fighter.combat))
 		Kind.HIT:
-			fighter.flash(FLASH_S)
+			fighter.flash(FLASH_S, _flash_colour())
+			_shake(fighter, true)
+		Kind.BLOCK:
+			_shake(fighter, false)
 		_:
 			add_child(Puff.new(fighter, _config, Vector3.ZERO))
+
+
+# The reaction token's colour, white in tokens_v0.tres; plain white without tokens.
+func _flash_colour() -> Color:
+	if tokens == null or tokens.reaction == null or tokens.reaction.color.a <= 0.0:
+		return Color.WHITE
+	return tokens.reaction.color
+
+
+# The camera of the watched fighter shakes on its hit or its block (combate.md, "O hitstop e o
+# tremor": "em quem levou", "em quem bloqueou"), by the numbers of the attack that made it: the
+# attacker whose contact stamp is the event's, read from the displayed state like the event, and
+# the light when none shows it any more. The camera's option decides whether it plays.
+func _shake(fighter: Fighter, hit: bool) -> void:
+	if camera == null or combat_data == null or fighter != watched:
+		return
+	var stamp := fighter.state.hurt_tick if hit else fighter.state.block_tick
+	var attack := combat_data.attack(_attack_of(fighter, stamp))
+	if attack == null:
+		return
+	if hit:
+		camera.shake(attack.hit_shake_ms / 1000.0, attack.hit_shake_deg)
+	else:
+		camera.shake(attack.block_shake_ms / 1000.0, attack.block_shake_deg)
+
+
+# The move whose contact against fighter is stamped on tick, by any fighter the cues watch.
+func _attack_of(fighter: Fighter, tick: int) -> StringName:
+	for other: Fighter in _fighters:
+		if not is_instance_valid(other) or other == fighter:
+			continue
+		var state := other.state
+		if state.contact_tick == tick and state.contact_target == StringName(fighter.name):
+			return state.contact_move
+	return FighterCommand.LIGHT_ATTACK
 
 
 # One event of a fighter, with its key: the fighter, the kind and the stamp; and the tick it first
@@ -508,7 +564,7 @@ class SwingTrail:
 		name = "SwingTrail"
 		_fighter = fighter
 		_combat = combat
-		_stamp = fighter.state.action_since
+		_stamp = Combat.active_began(fighter.state)
 		_yaw = fighter.state.action_yaw
 		_attack = combat.attacks[fighter.state.action_move]
 		_material.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
@@ -528,9 +584,12 @@ class SwingTrail:
 		if _left_s < 0.0:
 			var state := _fighter.state if is_instance_valid(_fighter) else null
 			var swinging := state != null and state.action == FighterState.Action.ACTIVE
-			if swinging and state.action_since == _stamp:
+			if swinging and Combat.active_began(state) == _stamp:
 				global_position = _fighter.global_position
-				_sweep(NetworkTime.tick - 1 - _stamp + 1)
+				# The state on screen is the one of the tick before netfox's clock; frozen, the
+				# trail holds where the impact left it (Combat.posed_tick).
+				var shown := Combat.posed_tick(state, NetworkTime.tick - 1)
+				_sweep(shown - state.action_since + 1)
 				return
 			_sweep(_attack.active_ticks)
 			_left_s = FADE_S

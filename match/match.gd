@@ -13,6 +13,7 @@ const OPTIONS_SCREEN_SCENE := preload("res://ui/options/options_screen.tscn")
 const MOVEMENT_DATA_PATH := "res://data/movement_v0.tres"
 const COMBAT_DATA_PATH := "res://data/combat_v0.tres"
 const CAMERA_DATA_PATH := "res://data/camera_v0.tres"
+const TOKENS_DATA_PATH := "res://data/tokens_v0.tres"
 ## spawn_fighter() without a first tick: netfox picks it.
 const NO_TICK := -1
 ## spawn_fighter() without a node name: the match names the fighter.
@@ -37,6 +38,9 @@ var combat: CombatConfig
 ## every tick of every loop, before any fighter simulates it (DEC-0051 §1).
 var photo := TickPhoto.new()
 var camera_data: CameraData
+## The combat tokens the screen reads, by the state on screen (visual-e-audio.md, "Os três canais
+## por estado"; TASK-12.2): the sword, the cues and the HUD; never the simulation.
+var tokens: TokensData
 var arena: Arena
 var fighters: Array[Fighter] = []
 ## The camera of whoever plays on this PC, a person or the bot; null until watch() or
@@ -54,6 +58,9 @@ var options: OptionsStore
 var options_screen: OptionsScreen
 ## The bot that plays on this PC; null unless let_bot_play().
 var bot: BotPlayer
+## Sozinho's dummy that attacks (partida.md, "O boneco que ataca"; TASK-12.2); null unless
+## let_dummy_attack().
+var attacking_dummy: AttackingDummy
 ## The cues of every fighter's maneuvers, played once per event (DEC-0031 §6; TASK-10.4). They
 ## draw only with a screen, and count everywhere.
 var cues: ManeuverCues
@@ -84,6 +91,7 @@ func _ready() -> void:
 	)
 	combat = CombatConfig.create(combat_data, NetworkTime.tickrate)
 	camera_data = _load_camera_data()
+	tokens = _load_tokens()
 	if options == null:
 		options = OptionsStore.new()
 	var node := ARENA_SCENE.instantiate()
@@ -91,6 +99,8 @@ func _ready() -> void:
 	arena = node as Arena
 	add_child(arena)
 	cues = ManeuverCues.new(config, has_screen())
+	cues.combat_data = combat_data
+	cues.tokens = tokens
 	add_child(cues)
 
 
@@ -136,7 +146,7 @@ func spawn_fighter(
 	# The match is never turned, so the spawn point's yaw in the world is its yaw in the match.
 	fighter.setup(config, to_local(point.global_position), point.global_rotation.y, own)
 	fighter.arena = arena
-	fighter.arm(combat, photo)
+	fighter.arm(combat, photo, tokens)
 	fighter.input.set_multiplayer_authority(input_owner)
 	fighter.synchronizer.spawn_tick = NetworkTime.tick if first_tick == NO_TICK else first_tick
 	add_child(fighter)
@@ -163,6 +173,10 @@ func remove_fighter(slot: int) -> void:
 	_by_slot.erase(slot)
 	fighters.erase(fighter)
 	cues.forget(fighter)
+	var attacks := attacking_dummy != null
+	if attacks and (attacking_dummy.dummy == fighter or attacking_dummy.target == fighter):
+		attacking_dummy.queue_free()
+		attacking_dummy = null
 	if fighter == _watched:
 		camera_rig.queue_free()
 		camera_rig = null
@@ -176,6 +190,8 @@ func remove_fighter(slot: int) -> void:
 		if bot != null:
 			bot.queue_free()
 			bot = null
+		cues.camera = null
+		cues.watched = null
 	fighter.queue_free()
 
 
@@ -185,6 +201,7 @@ func remove_fighter(slot: int) -> void:
 func watch(fighter: Fighter) -> CameraRig:
 	_follow(fighter, true)
 	options.apply_sensitivity(camera_rig)
+	options.apply_camera_shake(camera_rig)
 	fighter.input.use_devices(camera_rig)
 	_show_hud(fighter)
 	_show_options(fighter)
@@ -196,6 +213,7 @@ func watch(fighter: Fighter) -> CameraRig:
 # the replay turns the camera to where the fighter looks.
 func view(fighter: Fighter) -> CameraRig:
 	_follow(fighter, false)
+	options.apply_camera_shake(camera_rig)
 	_show_hud(fighter)
 	return camera_rig
 
@@ -229,6 +247,15 @@ func let_bot_play(fighter: Fighter) -> BotPlayer:
 	return bot
 
 
+# Sozinho's dummy presses a light every 3 s, turned toward target (partida.md, "O boneco que
+# ataca"), its clock starting on the dummy's first tick. It only fills the dummy's input box.
+func let_dummy_attack(dummy: Fighter, target: Fighter) -> AttackingDummy:
+	var first_tick: int = dummy.synchronizer.spawn_tick
+	attacking_dummy = AttackingDummy.new(dummy, target, first_tick, config.tickrate)
+	add_child(attacking_dummy)
+	return attacking_dummy
+
+
 func _on_tick_loop_start() -> void:
 	_loop_first_tick = NetworkTime.tick
 
@@ -240,6 +267,7 @@ func _show_hud(fighter: Fighter) -> void:
 	if hud != null:
 		hud.follow(fighter, config, camera_rig)
 		hud.show_health(combat, fighters)
+		hud.show_tokens(tokens)
 
 
 func _show_options(fighter: Fighter) -> void:
@@ -260,6 +288,9 @@ func _follow(fighter: Fighter, takes_mouse: bool) -> void:
 	camera_rig.setup(camera_data, fighter, fighter.state.facing_yaw, takes_mouse)
 	add_child(camera_rig)
 	_watched = fighter
+	# The impact's shake plays on the camera of the fighter this PC watches (TASK-12.2).
+	cues.camera = camera_rig
+	cues.watched = fighter
 
 
 # netfox simulates from the oldest tick that has news from the network, and with no news only the
@@ -291,6 +322,12 @@ static func _load_combat_data() -> CombatData:
 	var resource: Resource = load(COMBAT_DATA_PATH)
 	assert(resource is CombatData, "%s must load as a CombatData" % COMBAT_DATA_PATH)
 	return resource as CombatData
+
+
+static func _load_tokens() -> TokensData:
+	var resource: Resource = load(TOKENS_DATA_PATH)
+	assert(resource is TokensData, "%s must load as a TokensData" % TOKENS_DATA_PATH)
+	return resource as TokensData
 
 
 static func _load_camera_data() -> CameraData:

@@ -3,8 +3,10 @@
 # fighter and its camera. An argument it does not know is refused (.claude/harness/registro.md,
 # 2026-10-07). Ending the session stops the clock before the match goes, the clean exit the probe
 # lacked (F-026 §4). The server and client modes need two processes; tools/net_check.sh runs them
-# (TASK-9, part 2). Sozinho puts a still dummy at the second spawn point, in the other fighter's
-# tone, with no camera, unless --dummy=off, and its replay records both (TASK-10.7, criterion 5).
+# (TASK-9, part 2). Sozinho puts a dummy at the second spawn point, in the other fighter's tone,
+# with no camera, unless --dummy=off, and its replay records both (TASK-10.7, criterion 5); since
+# TASK-12.2 the dummy swings a light at the player every 3 s without walking (partida.md, "O boneco
+# que ataca").
 # Sozinho records a replay of every session in user://replays/ (TASK-10.3; F-112 §2), and the gate
 # never writes there: these tests open the Main with --no-replay, or with --replay-dir in a
 # temporary folder, and tools/run_tests.sh checks the folder after the run.
@@ -95,8 +97,9 @@ func test_with_no_argument_the_main_plays_sozinho() -> void:
 
 
 # TASK-10.7, criterion 5: the dummy stands at the second spawn point, driven by this PC, in the
-# other fighter's tone, with no camera and no bot, and stays still while the clock runs.
-func test_sozinho_has_a_still_dummy_at_the_second_spawn_point() -> void:
+# other fighter's tone, with no camera and no bot, and does not walk while the clock runs; TASK-12.2
+# gives it the node that swings a light every 3 s, turned toward the player.
+func test_sozinho_has_a_dummy_that_does_not_walk_at_the_second_spawn_point() -> void:
 	var main := _main(["--no-replay"])
 	await get_tree().process_frame
 	var dummy := main.current_match.fighter_at(Match.DUMMY_SLOT)
@@ -105,6 +108,10 @@ func test_sozinho_has_a_still_dummy_at_the_second_spawn_point() -> void:
 	assert_int(dummy.input.get_multiplayer_authority()).is_equal(multiplayer.get_unique_id())
 	assert_str(str(dummy.tone)).is_equal(str(Fighter.OTHER_TONE))
 	assert_object(main.current_match.bot).is_null()
+	var attacking := main.current_match.attacking_dummy
+	assert_object(attacking).override_failure_message("the dummy does not attack").is_not_null()
+	assert_object(attacking.dummy).is_same(dummy)
+	assert_object(attacking.target).is_same(main.current_match.fighter_at(Match.PLAYER_SLOT))
 	# One camera in the match, the player's.
 	var cameras := 0
 	for child: Node in main.current_match.get_children():

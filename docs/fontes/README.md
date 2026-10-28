@@ -190,3 +190,4 @@ O que chegou ao projeto e como chegou. Uma fonte não muda: só mudam `status`, 
 | [F-184](F-184-arthur-responde-as-conferencias.md) | 2026-10-28 | O Arthur responde às três conferências pendentes: a da paradinha certa, a do leve rápido em parte, e a da foto do tick sem resposta |
 | [F-185](F-185-arthur-pensa-na-foto-do-tick.md) | 2026-10-28 | O Arthur pensa em voz alta sobre a foto do tick e acha que, com tudo igual entre os dois, ninguém teria vantagem |
 | [F-186](F-186-arthur-acerta-a-foto-do-tick.md) | 2026-10-28 | O Arthur acerta a conferência da foto do tick: o computador calcula um lutador depois do outro |
+| [F-187](F-187-arthur-libera-o-contador-da-task-12-2.md) | 2026-10-28 | O Arthur libera a correção do contador de golpes de um teste travado da TASK-12.2: contar a entrada no ativo |

@@ -345,7 +345,13 @@ class Exchanges:
 	func observe() -> void:
 		var state := _fighter.state
 		var tick := NetworkTime.tick - 1
-		if state.action == FighterState.Action.ACTIVE and state.action_since == tick:
+		# A swing counts when its active begins, against the tick before: the hitstop moves
+		# action_since forward on the attacker's first frozen tick (DEC-0055 §5), so a stamp equal
+		# to the tick would count a hit twice (F-187).
+		if (
+			state.action == FighterState.Action.ACTIVE
+			and _before.action != FighterState.Action.ACTIVE
+		):
 			swings += 1
 		if state.contact_tick == tick:
 			contacts += 1

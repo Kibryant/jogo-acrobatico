@@ -187,3 +187,6 @@ O que chegou ao projeto e como chegou. Uma fonte não muda: só mudam `status`, 
 | [F-181](F-181-arthur-aceita-o-golpe-por-pulo.md) | 2026-10-28 | O Arthur aceita um golpe no ar por pulo, o golpe saindo da parede e nada na puxada do gancho na fase 2, e aprova o jeito de pesquisar antes de recomendar |
 | [F-182](F-182-arthur-refina-a-task-12-2.md) | 2026-10-28 | O Arthur refina a TASK-12.2: a guarda no botão direito segurado, cobrindo a metade da frente, e as leituras v0 do tranco, da paradinha e do boneco que ataca |
 | [F-183](F-183-arthur-aprova-o-plano-da-task-12-2.md) | 2026-10-28 | O Arthur aprova o plano da TASK-12.2 no modo de plano: a guarda e o tranco na ação, o contato resolvido por quem defende e a paradinha de cada um a partir de quando sabe |
+| [F-184](F-184-arthur-responde-as-conferencias.md) | 2026-10-28 | O Arthur responde às três conferências pendentes: a da paradinha certa, a do leve rápido em parte, e a da foto do tick sem resposta |
+| [F-185](F-185-arthur-pensa-na-foto-do-tick.md) | 2026-10-28 | O Arthur pensa em voz alta sobre a foto do tick e acha que, com tudo igual entre os dois, ninguém teria vantagem |
+| [F-186](F-186-arthur-acerta-a-foto-do-tick.md) | 2026-10-28 | O Arthur acerta a conferência da foto do tick: o computador calcula um lutador depois do outro |

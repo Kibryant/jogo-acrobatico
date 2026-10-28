@@ -1,7 +1,8 @@
 # Criterion 7 of TASK-9: how the frames become the input of a tick (DEC-0026 §1; rede.md §3).
 # move is the mean of the frame samples, yaw is the last sample and jump is a one-touch command
 # taken once. TASK-10.4 adds the dash, and TASK-10.6 the pitch, the last sample like the yaw, and
-# the grapple, one more one-touch command (criterion 2).
+# the grapple, one more one-touch command (criterion 2). TASK-12.1 adds the light attack, a
+# one-touch command too.
 extends GdUnitTestSuite
 
 const HAIR := 1e-9 # floating-point slack, not a design number
@@ -175,4 +176,20 @@ func test_the_grapple_the_dash_and_the_jump_are_taken_apart() -> void:
 	sampler.press_dash()
 	assert_bool(sampler.take_grapple()).is_false()
 	assert_bool(sampler.take_jump()).is_true()
+	assert_bool(sampler.take_dash()).is_true()
+
+
+# TASK-12.1: the light attack is a one-touch command like the jump: presses before one take are
+# one, and taking it leaves the other commands where they are.
+func test_a_light_attack_press_is_taken_once_and_apart_from_the_others() -> void:
+	var sampler := InputSampler.new()
+	assert_bool(sampler.take_light_attack()).is_false()
+	sampler.press_light_attack()
+	sampler.press_light_attack()
+	sampler.press_jump()
+	assert_bool(sampler.take_light_attack()).is_true()
+	assert_bool(sampler.take_light_attack()).is_false()
+	assert_bool(sampler.take_jump()).is_true()
+	sampler.press_dash()
+	assert_bool(sampler.take_light_attack()).is_false()
 	assert_bool(sampler.take_dash()).is_true()

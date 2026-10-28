@@ -43,6 +43,47 @@ func test_the_match_runs_on_netfox_tickrate_with_the_movement_data() -> void:
 	assert_int(game_match.arena.spawn_point_count()).is_equal(2)
 
 
+# TASK-12.1 (DEC-0051 §1 and §6): the match makes the combat configuration from combat_v0.tres
+# once, arms every fighter with it, a full health and the one photo it shares; on every tick the
+# photo holds every fighter by its node's name, its feet and a copy of its state, as netfox
+# restored them. A combat_data set before the match enters the tree replaces combat_v0.tres, as a
+# replay's header does.
+func test_the_match_arms_its_fighters_with_the_combat_and_the_photo_of_the_tick() -> void:
+	var game_match := await _match_with_fighters(2)
+	assert_int(game_match.combat.tickrate).is_equal(NetworkTime.tickrate)
+	assert_str(game_match.combat_data.resource_path).is_equal(Match.COMBAT_DATA_PATH)
+	for fighter: Fighter in game_match.fighters:
+		assert_object(fighter.combat).is_same(game_match.combat)
+		assert_object(fighter.photo).is_same(game_match.photo)
+		assert_int(fighter.state.health).is_equal(game_match.combat.max_health)
+		assert_object(fighter.sword).is_not_null()
+	NetfoxTicks.run_loop()
+	var photo := game_match.photo
+	assert_int(photo.size()).is_equal(2)
+	var names: Array[StringName] = []
+	for entry: TickPhoto.Entry in photo.entries():
+		names.append(entry.name)
+		var fighter := game_match.get_node(NodePath(String(entry.name)))
+		assert(fighter is Fighter, "the photo names a fighter of the match")
+		assert_vector(entry.feet).is_equal_approx((fighter as Fighter).position, Vector3.ONE * HAIR)
+		assert_bool(entry.state != (fighter as Fighter).state).override_failure_message("no copy") \
+				.is_true()
+	assert_array(names).is_equal([&"Fighter0", &"Fighter1"])
+
+	var tuned: Resource = load(Match.COMBAT_DATA_PATH).duplicate(true)
+	assert(tuned is CombatData, "combat_v0.tres must load as a CombatData")
+	var data := tuned as CombatData
+	data.max_health = 150
+	var node := MATCH_SCENE.instantiate()
+	assert(node is Match, "match.tscn must have a Match at its root")
+	var other: Match = auto_free(node)
+	other.combat_data = data
+	add_child(other)
+	var fighter := other.spawn_fighter(0, multiplayer.get_unique_id())
+	assert_int(other.combat.max_health).is_equal(150)
+	assert_int(fighter.state.health).is_equal(150)
+
+
 # The fighter spawns standing at SpawnA and, with no input, stays there: no jump, no slide.
 func test_in_sozinho_the_fighter_rests_on_the_floor_at_its_spawn() -> void:
 	var game_match := await _match_with_fighters(1)

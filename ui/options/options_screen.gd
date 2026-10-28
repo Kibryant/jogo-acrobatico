@@ -1,5 +1,5 @@
 # The options screen (TASK-10.9; visual-e-audio.md, "A tela de opções"; DEC-0031 §8): the Esc
-# opens it over the game and the HUD, and the Esc or "Fechar (Esc)" closes it. It lists the seven
+# opens it over the game and the HUD, and the Esc or "Fechar (Esc)" closes it. It lists the eight
 # actions with the label of their key on the active keyboard, the mouse's sensitivity with the
 # centimetres of a full turn, the interface's scale, and "Voltar ao padrão". Every change applies
 # at once and is saved in the player's options file (OptionsStore).
@@ -29,6 +29,7 @@ const ACTION_TEXTS: Dictionary[StringName, StringName] = {
 	&"jump": GameText.OPTIONS_ACTION_JUMP,
 	&"dash": GameText.OPTIONS_ACTION_DASH,
 	&"grapple": GameText.OPTIONS_ACTION_GRAPPLE,
+	&"light_attack": GameText.OPTIONS_ACTION_LIGHT_ATTACK,
 }
 ## The number each accepted mouse button shows: "Mouse 3", "Mouse 4" and "Mouse 5".
 const MOUSE_NUMBERS: Dictionary[MouseButton, int] = {
@@ -37,7 +38,7 @@ const MOUSE_NUMBERS: Dictionary[MouseButton, int] = {
 	MOUSE_BUTTON_XBUTTON2: 5,
 }
 
-## The grid of the seven actions: a name and the button of its key on each row.
+## The grid of the eight actions: a name and the button of its key on each row.
 @export var keys: GridContainer
 ## The line below the keys: the wait for a new key, or the action that already has it.
 @export var prompt: Label
@@ -152,10 +153,12 @@ func waiting_for() -> StringName:
 
 
 # What the screen shows for an action's key: the label of the physical key on the active keyboard,
-# or "Mouse 3", "Mouse 4" or "Mouse 5".
+# "Mouse esquerdo" for the left button, or "Mouse 3", "Mouse 4" or "Mouse 5".
 func binding_label(event: InputEvent) -> String:
 	if event is InputEventMouseButton:
 		var button := event as InputEventMouseButton
+		if button.button_index == MOUSE_BUTTON_LEFT:
+			return GameText.text(GameText.OPTIONS_MOUSE_LEFT)
 		assert(MOUSE_NUMBERS.has(button.button_index), "%s is no accepted button" % event)
 		var pattern := GameText.text(GameText.OPTIONS_MOUSE_BUTTON)
 		return pattern.format({ "number": MOUSE_NUMBERS[button.button_index] })
@@ -195,8 +198,9 @@ func _input(event: InputEvent) -> void:
 		get_viewport().set_input_as_handled()
 
 
-# While a key waits: the Esc cancels, a key or the middle or a side mouse button is offered, and
-# every other press is kept from the screen's buttons. True when the event was the wait's.
+# While a key waits: the Esc cancels, a key or a mouse button the action accepts is offered (the
+# middle or a side one, and the left one for the light attack), and every other press is kept from
+# the screen's buttons. True when the event was the wait's.
 func _take(event: InputEvent) -> bool:
 	if event is InputEventKey:
 		var key := event as InputEventKey
@@ -209,8 +213,9 @@ func _take(event: InputEvent) -> bool:
 		return true
 	if event is InputEventMouseButton:
 		var button := event as InputEventMouseButton
-		if button.pressed and OptionsStore.MOUSE_BUTTONS.has(button.button_index):
-			_offer(OptionsStore.mouse_event(button.button_index))
+		var offered := OptionsStore.mouse_event(button.button_index)
+		if button.pressed and OptionsStore.accepts(offered, _waiting):
+			_offer(offered)
 		return true
 	return false
 
@@ -218,7 +223,7 @@ func _take(event: InputEvent) -> bool:
 # The new key of the action that waits: it takes it, applied and saved at once, unless another
 # action has it, and then the screen names that action and goes on waiting (criterion 6).
 func _offer(event: InputEvent) -> void:
-	if not OptionsStore.accepts(event):
+	if not OptionsStore.accepts(event, _waiting):
 		return
 	var holder := _store.bind(_waiting, event)
 	if not holder.is_empty():

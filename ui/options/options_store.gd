@@ -1,5 +1,5 @@
 # The player's options (DEC-0031 §8; F-161; visual-e-audio.md, "A tela de opções"): the key of
-# each of the seven actions, by physical position, the mouse's sensitivity and the interface's
+# each of the eight actions, by physical position, the mouse's sensitivity and the interface's
 # scale, kept in user://options.cfg, a ConfigFile, like a settings.json in a home folder. The
 # defaults are the InputMap as project.godot loads it, camera_v0.tres's sensitivity and the scale
 # 1.0. Reading checks every entry on its own: a bad one falls back to its default with a warning
@@ -21,9 +21,13 @@ const ACTIONS: Array[StringName] = [
 	&"jump",
 	&"dash",
 	&"grapple",
+	&"light_attack",
 ]
-## The mouse buttons an action may take: the middle one and the two side ones. The left and the
-## right stay free for the combat of phase 2 (F-161).
+## The action the left mouse button may take: the light attack, its default (F-175 §2; TASK-12.1).
+const LIGHT_ATTACK := &"light_attack"
+## The mouse buttons any action may take: the middle one and the two side ones. The left one is the
+## light attack's alone (LIGHT_ATTACK), and the right one stays free for the guard of TASK-12.2
+## (F-161; visual-e-audio.md, "A tela de opções").
 const MOUSE_BUTTONS: Array[MouseButton] = [
 	MOUSE_BUTTON_MIDDLE,
 	MOUSE_BUTTON_XBUTTON1,
@@ -118,7 +122,7 @@ func binding(action: StringName) -> InputEvent:
 # and returns that action (criterion 6). The event must be one accepts() takes.
 func bind(action: StringName, event: InputEvent) -> StringName:
 	assert(_bindings.has(action), "%s is not an action of the options" % action)
-	assert(accepts(event), "%s cannot trigger an action" % event)
+	assert(accepts(event, action), "%s cannot trigger %s" % [event, action])
 	var holder := holder_of(event, action)
 	if not holder.is_empty():
 		return holder
@@ -151,14 +155,17 @@ func apply_sensitivity(camera: CameraRig) -> void:
 	camera.sensitivity_deg_per_px = sensitivity
 
 
-# True when event may trigger an action: a key known by its physical position, other than the Esc
-# that opens and closes the screen, or the middle or a side mouse button.
-static func accepts(event: InputEvent) -> bool:
+# True when event may trigger action: a key known by its physical position, other than the Esc
+# that opens and closes the screen, or the middle or a side mouse button; and the left mouse button
+# for the light attack alone. Without an action, what any action may take.
+static func accepts(event: InputEvent, action: StringName = &"") -> bool:
 	if event is InputEventKey:
 		var key := event as InputEventKey
 		return key.physical_keycode != KEY_ESCAPE and is_key_code(key.physical_keycode)
 	if event is InputEventMouseButton:
 		var button := event as InputEventMouseButton
+		if button.button_index == MOUSE_BUTTON_LEFT:
+			return action == LIGHT_ATTACK
 		return MOUSE_BUTTONS.has(button.button_index)
 	return false
 
@@ -234,8 +241,8 @@ static func binding_text(event: InputEvent) -> String:
 			return "key:%d" % key.physical_keycode
 
 
-# The binding a text of the file names; null when it names none this game accepts.
-static func parse_binding(text: String) -> InputEvent:
+# The binding a text of the file names; null when it names none this game accepts for action.
+static func parse_binding(text: String, action: StringName = &"") -> InputEvent:
 	var parts := text.split(":")
 	if parts.size() < 2 or not parts[1].is_valid_int():
 		return null
@@ -248,7 +255,7 @@ static func parse_binding(text: String) -> InputEvent:
 	elif parts[0] == "key" and parts.size() == 3 and parts[2] in ["left", "right"]:
 		var side := KEY_LOCATION_LEFT if parts[2] == "left" else KEY_LOCATION_RIGHT
 		event = key_event(code as Key, side)
-	if event == null or not accepts(event):
+	if event == null or not accepts(event, action):
 		return null
 	return event
 
@@ -265,7 +272,7 @@ static func default_binding(action: StringName) -> InputEvent:
 	var first: Variant = list[0]
 	assert(first is InputEvent, "project.godot's %s is no input event" % action)
 	var event: InputEvent = first
-	assert(accepts(event), "project.godot's %s is no binding" % action)
+	assert(accepts(event, action), "project.godot's %s is no binding" % action)
 	return normalized(event)
 
 
@@ -283,7 +290,7 @@ func _load_binding(file: ConfigFile, action: StringName) -> void:
 	var event: InputEvent = null
 	if value is String:
 		var text: String = value
-		event = parse_binding(text)
+		event = parse_binding(text, action)
 	if event == null:
 		_warn(
 			"[%s] %s = %s is not a key or an accepted mouse button: back to %s"

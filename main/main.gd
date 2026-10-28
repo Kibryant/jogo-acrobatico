@@ -207,7 +207,7 @@ func start_watch() -> void:
 		return
 	var started: int = await NetworkTime.start()
 	assert(started == OK, "netfox's clock did not start: %s" % error_string(started))
-	_start_match(replay.movement_data())
+	_start_match(replay.movement_data(), replay.combat_data())
 	var fighters: Array[Fighter] = []
 	for slot: int in replay.fighter_count():
 		var fighter := current_match.spawn_fighter(slot, multiplayer.get_unique_id())
@@ -475,13 +475,15 @@ func _remove_fighter(slot: int) -> void:
 	current_match.remove_fighter(slot)
 
 
-# The match of the session; movement_data, when given, replaces movement_v0.tres, as a replay's
-# numbers do. The player's options go with it, for the camera and the options screen.
-func _start_match(movement_data: MovementData = null) -> void:
+# The match of the session; movement_data and combat_data, when given, replace movement_v0.tres
+# and combat_v0.tres, as a replay's numbers do. The player's options go with it, for the camera and
+# the options screen.
+func _start_match(movement_data: MovementData = null, combat_data: CombatData = null) -> void:
 	var node := MATCH_SCENE.instantiate()
 	assert(node is Match, "match.tscn must have a Match at its root")
 	current_match = node as Match
 	current_match.movement_data = movement_data
+	current_match.combat_data = combat_data
 	current_match.options = player_options
 	add_child(current_match)
 

@@ -9,6 +9,12 @@ bg_color = Color(0.92, 0.92, 0.92, 1)
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_low_mark"]
 bg_color = Color(0.92, 0.92, 0.92, 1)
 
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_health_back"]
+bg_color = Color(0, 0, 0, 0.55)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_health_fill"]
+bg_color = Color(0.92, 0.92, 0.92, 1)
+
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_options_panel"]
 content_margin_left = 24.0
 content_margin_top = 24.0
@@ -45,3 +51,11 @@ Reticle/constants/thickness = 2
 Reticle/constants/outline_size = 1
 OptionsPanel/base_type = &"PanelContainer"
 OptionsPanel/styles/panel = SubResource("StyleBoxFlat_options_panel")
+HealthMargin/base_type = &"MarginContainer"
+HealthMargin/constants/margin_left = 24
+HealthMargin/constants/margin_top = 24
+HealthMargin/constants/margin_right = 24
+HealthBarBack/base_type = &"Panel"
+HealthBarBack/styles/panel = SubResource("StyleBoxFlat_health_back")
+HealthBarFill/base_type = &"Panel"
+HealthBarFill/styles/panel = SubResource("StyleBoxFlat_health_fill")

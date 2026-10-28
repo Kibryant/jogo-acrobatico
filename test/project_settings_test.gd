@@ -358,6 +358,29 @@ func test_the_dash_is_the_left_shift_and_not_the_right_one() -> void:
 	assert_bool(right.is_action_pressed(&"dash")).override_failure_message("right Shift").is_false()
 
 
+# TASK-12.1 (F-175 §2; combate.md, "O leve no tick": "A tecla"): the light attack is the left
+# mouse button, Arthur's choice, and only it: no key, so no keyboard layout moves it.
+func test_the_light_attack_is_the_left_mouse_button() -> void:
+	var has_action := InputMap.has_action(&"light_attack")
+	assert_bool(has_action).override_failure_message("missing action light_attack").is_true()
+	if not has_action:
+		return
+	var buttons: Array[MouseButton] = []
+	for event: InputEvent in InputMap.action_get_events(&"light_attack"):
+		var other := "light_attack binds %s, not a mouse button (F-175 §2)" % event
+		assert_bool(event is InputEventMouseButton).override_failure_message(other).is_true()
+		if event is InputEventMouseButton:
+			buttons.append((event as InputEventMouseButton).button_index)
+	var message := "light_attack must be the left mouse button alone, found %s (F-175 §2)" % [
+		buttons,
+	]
+	assert_array(buttons).override_failure_message(message).is_equal([MOUSE_BUTTON_LEFT])
+	var click := InputEventMouseButton.new()
+	click.button_index = MOUSE_BUTTON_LEFT
+	click.pressed = true
+	assert_bool(click.is_action_pressed(&"light_attack")).is_true()
+
+
 # A key pressed as the operating system reports it: by physical position, with its location.
 func _key_event(physical: Key, location: KeyLocation) -> InputEventKey:
 	var event := InputEventKey.new()

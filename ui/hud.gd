@@ -12,6 +12,9 @@
 # (DEC-0031 §2); the reticle's dot is a shape too. Its
 # look comes from the one Theme of the project (ui/theme/game_theme.tres, DEC-0031 §8): its nodes
 # take type variations, the Theme's classes, and never a font, a size or a colour of their own.
+# At the top, two health bars with their numbers (TASK-12.1; visual-e-audio.md, "O leve na tela"):
+# the followed fighter's on the left and the first other fighter of the match on the right, read
+# from the displayed state every frame, like the stamina.
 # Only a PC with a screen has one: the Match creates it in watch().
 class_name Hud
 extends CanvasLayer
@@ -28,6 +31,12 @@ const LOW_MARK_TYPE := &"StaminaLowMark"
 const COOLDOWN_ARC_TYPE := &"DashCooldownArc"
 const GRAPPLE_ARC_TYPE := &"GrappleCooldownArc"
 const RETICLE_TYPE := &"Reticle"
+const HEALTH_MARGIN_TYPE := &"HealthMargin"
+const HEALTH_BACK_TYPE := &"HealthBarBack"
+const HEALTH_FILL_TYPE := &"HealthBarFill"
+## px at the 1080p base: each health bar, as wide as the stamina's and twice as tall. Claude's v0
+## reading (DEC-0017; TASK-12.1).
+const HEALTH_BAR_SIZE := Vector2(300, 24)
 ## px at the 1080p base: the box of the dash's cooldown arc, twice the bar's height. Claude's v0
 ## reading (DEC-0017; TASK-10.4). The grapple's arc is the same ring.
 const ARC_SIZE := Vector2(24, 24)
@@ -60,6 +69,12 @@ var _reticle := Reticle.new()
 # The camera of whoever plays here: the reticle's ray goes along its yaw and pitch. Null without
 # one, and then the reticle shows no dot.
 var _camera: CameraRig
+# The combat numbers and the match's own list of fighters, shared, so a fighter that spawns later
+# shows too; the health bars stay hidden until show_health().
+var _combat: CombatConfig
+var _match_fighters: Array[Fighter] = []
+var _own_health := HealthBar.new(false)
+var _other_health := HealthBar.new(true)
 
 
 func _init() -> void:
@@ -143,6 +158,29 @@ func _init() -> void:
 	_low_mark.visible = false
 	mark_slot.add_child(_low_mark)
 
+	# The two health bars at the top, the own one on the left and the other's on the right.
+	var top := MarginContainer.new()
+	top.name = "HealthFrame"
+	top.theme_type_variation = HEALTH_MARGIN_TYPE
+	top.set_anchors_preset(Control.PRESET_TOP_WIDE)
+	top.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	add_child(top)
+	var health_row := HBoxContainer.new()
+	health_row.name = "HealthRow"
+	health_row.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	top.add_child(health_row)
+	_own_health.name = "OwnHealth"
+	health_row.add_child(_own_health)
+	var gap := Control.new()
+	gap.name = "HealthGap"
+	gap.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	gap.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	health_row.add_child(gap)
+	_other_health.name = "OtherHealth"
+	health_row.add_child(_other_health)
+	_own_health.visible = false
+	_other_health.visible = false
+
 	# The reticle at the screen's centre, where the aim's ray from the point O goes with the camera
 	# free (DEC-0045 §2); with a camera, _show_reticle moves it to where the ray shows on screen.
 	_reticle.name = "Reticle"
@@ -187,6 +225,34 @@ func show_at(tick: int) -> void:
 	_show_cooldown(tick)
 	_show_grapple_cooldown(tick)
 	_show_reticle(tick)
+	_show_health()
+
+
+# The health bars from now on: the followed fighter's and the first other one of fighters, the
+# match's own list, which the HUD reads every frame (visual-e-audio.md, "O leve na tela").
+func show_health(combat: CombatConfig, fighters: Array[Fighter]) -> void:
+	_combat = combat
+	_match_fighters = fighters
+
+
+# The fighter the right bar shows: the first of the match that is not the followed one; null when
+# the match has no other.
+func rival() -> Fighter:
+	for fighter: Fighter in _match_fighters:
+		if is_instance_valid(fighter) and fighter != _fighter:
+			return fighter
+	return null
+
+
+func _show_health() -> void:
+	if _combat == null:
+		return
+	_own_health.visible = true
+	_own_health.show_state(_fighter.state, _combat.max_health)
+	var other := rival()
+	_other_health.visible = other != null
+	if other != null:
+		_other_health.show_state(other.state, _combat.max_health)
 
 
 # The ticks until the next dash may start, counted from the stamp of the last one: its ticks and
@@ -336,6 +402,35 @@ func shows_reticle_dot() -> bool:
 	return _reticle.visible and _reticle.dotted
 
 
+# True while the followed fighter's health bar shows.
+func shows_own_health() -> bool:
+	return _own_health.visible
+
+
+# True while the other fighter's health bar shows.
+func shows_other_health() -> bool:
+	return _other_health.visible
+
+
+# The number beside the followed fighter's health bar.
+func shown_own_health() -> String:
+	return _own_health.shown_number()
+
+
+# The number beside the other fighter's health bar.
+func shown_other_health() -> String:
+	return _other_health.shown_number()
+
+
+# px at the 1080p base: the filled widths of the own and the other's health bars.
+func own_health_width() -> float:
+	return _own_health.fill_width()
+
+
+func other_health_width() -> float:
+	return _other_health.fill_width()
+
+
 # The rows of the bottom-left corner, top to bottom, by name.
 func row_names() -> PackedStringArray:
 	var names := PackedStringArray()
@@ -397,3 +492,53 @@ class Reticle:
 			return
 		draw_circle(center, dot_size / 2.0 + outline, dark)
 		draw_circle(center, dot_size / 2.0, ring)
+
+
+# One health bar with its number (TASK-12.1): the bar's back, its fill over the share of the max,
+# and the whole points beside it, on the inner side of the screen; colours from the Theme's
+# HealthBarBack and HealthBarFill (DEC-0031 §8).
+class HealthBar:
+	extends HBoxContainer
+
+	var _fill := Panel.new()
+	var _number := Label.new()
+
+
+	# number_first puts the number on the bar's left, for the bar on the screen's right.
+	func _init(number_first: bool) -> void:
+		mouse_filter = Control.MOUSE_FILTER_IGNORE
+		var bar := Panel.new()
+		bar.name = "Bar"
+		bar.theme_type_variation = HEALTH_BACK_TYPE
+		bar.custom_minimum_size = HEALTH_BAR_SIZE
+		bar.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+		bar.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		_fill.name = "Fill"
+		_fill.theme_type_variation = HEALTH_FILL_TYPE
+		_fill.size = HEALTH_BAR_SIZE
+		_fill.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		bar.add_child(_fill)
+		_number.name = "Number"
+		# A number, the same in every language: nothing to translate.
+		_number.auto_translate_mode = Node.AUTO_TRANSLATE_MODE_DISABLED
+		if number_first:
+			add_child(_number)
+			add_child(bar)
+		else:
+			add_child(bar)
+			add_child(_number)
+
+
+	# The bar of a displayed state: the share of the max, and the whole points.
+	func show_state(state: FighterState, max_health: int) -> void:
+		var share := clampf(float(state.health) / maxi(1, max_health), 0.0, 1.0)
+		_fill.size = Vector2(HEALTH_BAR_SIZE.x * share, HEALTH_BAR_SIZE.y)
+		_number.text = str(state.health)
+
+
+	func shown_number() -> String:
+		return _number.text
+
+
+	func fill_width() -> float:
+		return _fill.size.x

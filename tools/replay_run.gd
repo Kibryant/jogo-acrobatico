@@ -1,7 +1,7 @@
 # The headless replay player (TASK-10.3, criterion 4; DEC-0027 §5): plays a replay file through
-# the real Match in Sozinho, with the movement numbers of its header, and returns the state trace
-# of every tick (StateTrace) with its sha256. tools/replay_play.gd runs it from the command line,
-# for tools/replay.sh, and test/replay/ runs it in the gate, the same way.
+# the real Match in Sozinho, with the movement and the combat numbers of its header, and returns
+# the state trace of every tick (StateTrace) with its sha256. tools/replay_play.gd runs it from
+# the command line, for tools/replay.sh, and test/replay/ runs it in the gate, the same way.
 # The run is the reference's (test/reference/reference_run.gd): Godot's offline peer, a SubViewport
 # with a physics world of its own, and netfox's ticks by hand, inside a physics frame
 # (test/support/netfox_ticks.gd, the exception of DEC-0027 §3). It plays loop by loop, as recorded:
@@ -33,6 +33,8 @@ class Result:
 	var first_apart_fighter := -1
 	## The movement data the Match played.
 	var movement_data: MovementData
+	## The combat data the Match played.
+	var combat_data: CombatData
 
 
 	# One line, for the log.
@@ -46,9 +48,14 @@ class Result:
 		)
 
 
-# Plays replay under host, which must be in the tree, with the movement numbers movement, and
-# frees everything it made.
-func play(host: Node, replay: ReplayFile, movement: MovementData) -> Result:
+# Plays replay under host, which must be in the tree, with the movement numbers movement and the
+# combat numbers combat, the header's when null, and frees everything it made.
+func play(
+	host: Node,
+	replay: ReplayFile,
+	movement: MovementData,
+	combat: CombatData = null,
+) -> Result:
 	assert(replay.errors.is_empty(), "play a file without errors: %s" % replay.errors)
 	var first_tick := replay.first_tick()
 	NetfoxTicks.reset()
@@ -60,6 +67,7 @@ func play(host: Node, replay: ReplayFile, movement: MovementData) -> Result:
 	assert(node is Match, "match.tscn must have a Match at its root")
 	var game_match := node as Match
 	game_match.movement_data = movement
+	game_match.combat_data = combat if combat != null else replay.combat_data()
 	stage.add_child(game_match)
 	var fighters: Array[Fighter] = []
 	for slot: int in replay.fighter_count():
@@ -73,6 +81,7 @@ func play(host: Node, replay: ReplayFile, movement: MovementData) -> Result:
 	result.checked = replay.has_check()
 	result.jumps = replay.jumps
 	result.movement_data = game_match.movement_data
+	result.combat_data = game_match.combat_data
 	# netfox's synchronizer registers with call_deferred; the ticks then run inside a physics
 	# frame (test/support/netfox_ticks.gd).
 	await host.get_tree().process_frame

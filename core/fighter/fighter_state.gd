@@ -20,6 +20,17 @@ enum Mode {
 	GRAPPLE = 4,
 }
 
+# The second state machine, parallel to the mode (DEC-0022; DEC-0051 §6; visao-geral.md, "A
+# máquina de estados"): the phase of the swing in progress, changed only by Combat.step. A swing
+# goes WINDUP, ACTIVE and RECOVERY, each counted from the tick it began, and back to NONE; no input
+# cuts it (DEC-0016).
+enum Action {
+	NONE,
+	WINDUP,
+	ACTIVE,
+	RECOVERY,
+}
+
 # The stamp of "never": far enough in the past that no window reaches it, so a fresh state
 # never reads as a press or a ledge. Any tick minus NEVER still fits in 64-bit ints.
 const NEVER := -1073741824
@@ -85,6 +96,26 @@ var grapple_end_tick := NEVER
 # off it. after_move writes them from the head facts; before_move slides along slide_off_dir.
 var slide_off_dir := Vector3.ZERO
 var head_landing_tick := NEVER
+# The action (combate.md, "O leve no tick"; DEC-0051 §6): the phase, the tick it began and the
+# move by its ID (FighterCommand.LIGHT_ATTACK), never the Resource (F-007 §5). Out of a swing the
+# move is empty.
+var action: Action = Action.NONE
+var action_since := NEVER
+var action_move: StringName = &""
+# Where the swing goes, in rad: the camera's yaw on every tick of the windup, fixed from the first
+# active tick to the end ("A direção").
+var action_yaw := 0.0
+# The contact (DEC-0026 §3): stamped on the attacker's own state on the tick its slice touched,
+# with the target's name, the photo's key, and the move. It stays after the swing; a swing whose
+# active window holds a stamp tests the blade no more (Q-26).
+var contact_tick := NEVER
+var contact_target: StringName = &""
+var contact_move: StringName = &""
+# The health (partida.md, "A vida sem partida"): 0 in a fresh state, filled with the combat's
+# max at the spawn; never below 0.
+var health := 0
+# The tick of the contact of the last hit taken: the key of the flash and the refill's clock.
+var hurt_tick := NEVER
 
 
 # An equal and independent state: the rules change the copy, never the state they receive.
@@ -111,4 +142,13 @@ func copy() -> FighterState:
 	other.grapple_end_tick = grapple_end_tick
 	other.slide_off_dir = slide_off_dir
 	other.head_landing_tick = head_landing_tick
+	other.action = action
+	other.action_since = action_since
+	other.action_move = action_move
+	other.action_yaw = action_yaw
+	other.contact_tick = contact_tick
+	other.contact_target = contact_target
+	other.contact_move = contact_move
+	other.health = health
+	other.hurt_tick = hurt_tick
 	return other

@@ -18,6 +18,9 @@ var buffer_ticks: int
 var stamina_wait_ticks: int
 
 var run_speed: float # m/s
+# m/s: the target speed standing during a swing, and with the guard up from TASK-12.2
+# (movimento.md, "Chão": "Andar devagar").
+var slow_walk_speed: float
 var max_fall_speed: float # m/s
 var floor_max_angle: float # rad: the engine judges the floor with it
 var capsule_height: float # m
@@ -128,6 +131,7 @@ static func create(data: MovementData, tickrate: int) -> MovementConfig:
 	config.dash_ticks = Ticks.from_ms(data.dash_ms, tickrate)
 	config.dash_cooldown_ticks = Ticks.from_ms(data.dash_cooldown_ms, tickrate)
 	config.run_speed = data.run_speed_mps
+	config.slow_walk_speed = data.slow_walk_speed_mps
 	config.max_fall_speed = data.max_fall_speed_mps
 	config.floor_max_angle = deg_to_rad(data.max_slope_deg)
 	config.capsule_height = data.capsule_height_m

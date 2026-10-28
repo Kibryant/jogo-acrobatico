@@ -181,3 +181,5 @@ O que chegou ao projeto e como chegou. Uma fonte não muda: só mudam `status`, 
 | [F-175](F-175-arthur-abre-a-task-12-1.md) | 2026-10-27 | O Arthur abre a TASK-12.1: o golpe andando a 3 m/s e o leve no botão esquerdo do mouse |
 | [F-176](F-176-arthur-aprova-o-plano-da-task-12-1.md) | 2026-10-27 | O Arthur aprova o plano da TASK-12.1 no modo de plano: a foto do tick, o passo do combate antes do movimento e o contato no tick seguinte |
 | [F-177](F-177-arthur-libera-a-linha-452-da-task-12-1.md) | 2026-10-28 | O Arthur libera a correção de uma linha de um teste travado da TASK-12.1: o estado do fim do tick no lugar do estado do meio |
+| [F-178](F-178-arthur-joga-o-leve.md) | 2026-10-28 | O Arthur joga o leve de 400 ms e diz que ele não parece leve: demora e prende o corpo; o replay mostra 42 cliques perdidos na preparação |
+| [F-179](F-179-arthur-testa-o-leve-rapido.md) | 2026-10-28 | O Arthur escolhe testar o leve rápido, que se defende segurando a guarda, e o leve que não freia o corpo, sem decidir que fica |

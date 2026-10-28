@@ -5,9 +5,9 @@
 
 [sub_resource type="Resource" id="Resource_light"]
 script = ExtResource("2_atck0")
-windup_ms = 400
+windup_ms = 250
 active_ms = 100
-recovery_ms = 250
+recovery_ms = 200
 stamina_cost = 8.0
 damage = 12
 arc_from_deg = -60.0

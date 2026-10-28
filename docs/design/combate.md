@@ -28,7 +28,7 @@ Cada perna do triângulo é uma regra concreta, não uma intenção (F-173 §1, 
 ## Princípios v0 (F-001)
 
 - Tempo de animação fixo: o jogador não deforma a animação (lição do Mordhau; DEC-0014).
-- Antecipação proporcional ao dano: o leve de 12 prepara em 400 ms, o carregado de 30 em 700.
+- Antecipação proporcional ao dano: o leve de 12 prepara em 250 ms, em teste (F-179), o carregado de 30 em 700.
 - Indicador visual no mundo e som: os três canais por estado (DEC-0031).
 - Feint custa stamina (DEC-0016).
 - Arma de longe paga antes do tiro.
@@ -57,7 +57,7 @@ Os tempos seguem o formato preparação / ativo / recuperação. No código, tud
 
 | Ação | Tempos (ms) | Em ticks | Stamina | Dano | O que mudou e por quê |
 |---|---|---|---|---|---|
-| Golpe leve | 400 / 100 / 250 | 24 / 6 / 15 | 8, no início | 12 | A preparação era 300: ninguém reage a 300 ms com os 100 do bloqueio, e o Arthur sentiu "não tinha nem como reagir" (F-053 §2.4; F-062 §1). Os 400 são o leve mais rápido do For Honor, que tem 500 em 77 de 79 golpes (F-173 §1 C04). O dano era "sem número" (F-083 §5): 12 é ≈ 1/8 da vida, a proporção do leve do For Honor (F-173 §2). **Não se apara** |
+| Golpe leve, **em teste** | 250 / 100 / 200 | 15 / 6 / 12 | 8, no início | 12 | **Em teste desde 28/10/2026 (F-179):** o leve rápido, que se defende segurando a guarda antes, e não reagindo. Com 400 / 100 / 250, o Arthur jogou e disse "parece que é um golpe pesado. Porque ele demora, você não pode se mexer muito"; o replay mostrou 42 cliques na preparação, uns 250 ms depois do anterior (F-178). Os 400 tinham nascido do "não tinha nem como reagir" da sonda, que foi com ping de 100 ms (F-062 §1), e do leve mais rápido do For Honor, 500 ms em 77 de 79 golpes (F-173 §1 C04); mas a regra dos tokens já dizia que ninguém reage ao leve (`visual-e-audio.md`, "O HUD do duelo"). O jogo de reação fica no carregado e na quebra. O dano era "sem número" (F-083 §5): 12 é ≈ 1/8 da vida, a proporção do leve do For Honor (F-173 §2). **Não se apara** |
 | Golpe carregado | 700 / 120 / 450, preparação fixa | 42 / 7 / 27 | 25, pagos na soltura; precisa de 25 para começar | 30 | A carga sorteada entre 500 e 900 deu 0 parries em 21 ao Arthur, porque ninguém sabia quando a lâmina descia (F-063 §3; Q-21). Com a preparação fixa, o parry vira tempo, como os 3 parries dele no leve de preparação fixa (F-063 §2). O For Honor tem os pesados fixos em 800 ou 900 ms (F-173 §1 C04). **Armadura contra leves** durante a preparação |
 | Quebra de guarda | 350 / 100 / 400 | 21 / 6 / 24 | 15, no início | 0 | A preparação fica rápida de propósito: a defesa não é escolher durante ela, e sim **o tech**, 333 ms depois do contato ("A quebra de guarda e o tech"; Q-25). Sem tech, 1.000 ms de tranco e um carregado garantido |
 | Bloqueio | sobe em 100; vale enquanto segurar | 6 | 5 por leve bloqueado, 15 por carregado bloqueado | — | Era "10 por golpe" (F-001). Se bloquear custasse mais que o leve (8), quem só bloqueia perderia a guerra de stamina para o spam de leve; o carregado pesa na guarda, e é ele e a quebra que a abrem. Com a guarda alta, anda-se a 3 m/s ("A guarda andando") |
@@ -74,8 +74,8 @@ O **tranco** é o tempo em que quem levou (hitstun) ou bloqueou (blockstun) um g
 
 | Troca | Tranco | Quem bateu ainda ocupado | Vantagem | O que garante |
 |---|---|---|---|---|
-| Leve acerta | 400 ms, 24 ticks | 350 ms, 21 ticks | quem bateu +3 | Nada: o leve seguinte pegaria no tick 45 e a guarda do outro já sobe no 30. Iniciativa, não combo |
-| Leve bloqueado | 250 ms, 15 ticks | 350 ms, 21 ticks | quem bloqueou +6 | Nada: o leve é seguro. Quem bloqueou ganha a vez |
+| Leve acerta | 400 ms, 24 ticks | 300 ms, 18 ticks | quem bateu +6 | Nada: o leve seguinte pegaria no tick 33 e a guarda do outro já sobe no 30. Iniciativa, não combo (leve em teste, F-179) |
+| Leve bloqueado | 250 ms, 15 ticks | 300 ms, 18 ticks | quem bloqueou +3 | Nada: o leve é seguro. Quem bloqueou ganha a vez, por pouco: quem apertar primeiro depois do bloqueio pega primeiro (leve em teste, F-179) |
 | Carregado acerta | 700 ms, 42 ticks | 570 ms, 34 ticks | quem bateu +8 | Nada garantido; os 30 já saíram |
 | Carregado bloqueado | 417 ms, 25 ticks | 570 ms, 34 ticks | quem bloqueou +9 | Nada: o bloqueio dá a vez, e o parry dá o castigo (F-173 §1, P4) |
 | Carregado aparado | quem foi aparado: 900 ms, 54 ticks, mais 9 ticks de hitstop sozinho | quem aparou recupera em 200 ms, 12 ticks | quem aparou +42 | **Um carregado garantido:** começa no tick 12, pega no 54; a guarda do outro só subiria no 60 |
@@ -85,7 +85,7 @@ O **tranco** é o tempo em que quem levou (hitstun) ou bloqueou (blockstun) um g
 | Leve contra leve, começados juntos | os dois: 24 ticks | — | neutra | Troca: os dois levam 12 |
 | Carregado contra carregado | os dois: 42 ticks | — | neutra | Troca: os dois levam 30. Como o "clash" do Naraka (F-173 §1) |
 
-**Por que "seguro" aqui é diferente do jogo de luta.** No Street Fighter e no Tekken, bloquear é instantâneo; aqui, a guarda leva 6 ticks para subir. Um golpe bloqueado só vira castigo quando a desvantagem de quem bateu passa de 18 ticks: os 24 do leve menos os 6 da guarda (F-173 §1, P2). Nenhum golpe v0 chega lá no bloqueio; só o parry e a quebra sem tech passam, e por isso só eles garantem dano.
+**Por que "seguro" aqui é diferente do jogo de luta.** No Street Fighter e no Tekken, bloquear é instantâneo; aqui, a guarda leva 6 ticks para subir. Um golpe bloqueado só vira castigo quando a desvantagem de quem bateu passa de 9 ticks: os 15 da preparação do leve em teste menos os 6 da guarda (F-173 §1, P2; F-179); com o leve de 400 ms eram 18. Nenhum golpe v0 passa disso no bloqueio: o carregado bloqueado dá 9, exatamente no limite; só o parry e a quebra sem tech passam, e por isso só eles garantem dano.
 
 **Hitstun maior que blockstun**, sempre, como no Tekken (F-173 §1 C22): levar um golpe custa mais tempo do que bloqueá-lo.
 
@@ -156,8 +156,8 @@ Como as regras acima viram ticks. O que não estava no papel é leitura v0 do Cl
 
 - **Quando o leve sai:** em pé no chão (o modo `GROUND`, fora da cabeça de outro lutador; `movimento.md`, "O corpo"), sem golpe em curso e com 8 de stamina, pagos no primeiro tick da preparação. Fora disso, o aperto espera na vaga do buffer pelos 150 ms (`movimento.md`, "Perdão" e "Stamina"). Num dash, o leve guardado sai no tick seguinte ao da saída do dash, e não nele: o combate decide antes do movimento, e é o movimento que termina o dash (DEC-0051 §2). A tecla é o botão esquerdo do mouse, remapeável (F-175 §2; DEC-0031 §8).
 - **A vaga dividida:** uma vaga só para todo comando (DEC-0039). No mesmo tick, o pulo vence o dash, que vence o gancho, que vence o leve: qualquer tecla de movimento apertada junto com o leve leva a vaga.
-- **As fases:** a preparação de 24 ticks, o ativo de 6 e a recuperação de 15, um depois do outro, contados do tick em que cada fase começou. Nenhum input corta a sequência (DEC-0016).
-- **O corpo durante o golpe** (F-175 §2): em pé, o corpo anda a até 3 m/s em qualquer direção, o mesmo andar devagar da guarda; vindo da corrida, cai de 7 para 3 m/s em uns 90 ms, pela aceleração do chão. Nenhum comando sai da vaga durante o golpe: um pulo, um dash ou um gancho apertados nele esperam e saem no primeiro tick depois da recuperação, se ainda estiverem nos 150 ms. Saindo de uma beirada no meio do golpe, valem as regras do ar, e o golpe continua.
+- **As fases:** a preparação de 15 ticks, o ativo de 6 e a recuperação de 12, em teste (F-179; eram 24, 6 e 15), um depois do outro, contados do tick em que cada fase começou. Nenhum input corta a sequência (DEC-0016).
+- **O corpo durante o golpe, em teste** (F-179): o leve não freia o corpo. Em pé, valem as regras do chão: o corpo corre a até 7 m/s, acelera e para como sempre, e a preparação de 250 ms soma até 1,75 m de alcance. O andar devagar de 3 m/s fica para a guarda e para o carregado. Com o leve de 400 ms, o golpe andava a 3 m/s (F-175 §2). Nenhum comando sai da vaga durante o golpe: um pulo, um dash ou um gancho apertados nele esperam e saem no primeiro tick depois da recuperação, se ainda estiverem nos 150 ms. Saindo de uma beirada no meio do golpe, valem as regras do ar, e o golpe continua.
 - **A direção:** em cada tick da preparação, a direção do golpe é a da câmera, e o corpo olha para ela. Do primeiro tick ativo ao fim da recuperação, ela fica, e o corpo olha para ela, por mais que a câmera gire.
 - **O arco do leve:** da direita, o lado da mão, para a esquerda: de −60° a +60° da direção do golpe, com o ângulo positivo girando para a esquerda, como o yaw. A fatia do tick k do ativo, de 1 a 6, vai de −60° + 20°·(k − 1) a −60° + 20°·k: a coroa de círculo entre 0,6 m e 2,0 m do eixo de quem bate, na altura da mão, 1,3 m acima dos pés dele.
 - **O toque:** a fatia toca o alvo quando a menor distância entre ela e o eixo da cápsula do alvo, o segmento de 0,35 m a 1,45 m acima dos pés dele, é de até 0,43 m, os 0,35 do corpo mais os 0,08 da lâmina. A conta é exata, sem amostrar ângulos: um alvo entre a lâmina do fim de um tick e a do fim do seguinte é acertado.

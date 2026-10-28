@@ -62,6 +62,7 @@
 | [DEC-0051](DEC-0051-o-combate-no-tick.md) | 2026-10-27 | O combate no tick: a foto no começo do tick, o passo do combate antes do movimento, o contato aplicado no tick seguinte e a vaga dividida com o leve | aceita (F-176; F-175); completa a DEC-0022 (o sanduíche) e a DEC-0026 §3 (a forma da foto); a frase do §5 sobre o andar devagar no golpe foi substituída pela DEC-0052 |
 | [DEC-0052](DEC-0052-o-leve-rapido.md) | 2026-10-28 | O leve rápido: 250 / 100 / 200 ms, defendido segurando a guarda antes, e o leve que não freia o corpo; o andar devagar fica para a guarda e o carregado | aceita (F-180; F-179) |
 | [DEC-0053](DEC-0053-um-golpe-no-ar-por-pulo.md) | 2026-10-28 | Um golpe no ar por pulo: o pulo do chão ou a queda de uma beirada, o pulo duplo, o pulo da parede e a soltura do gancho dão um leve no ar cada; nada correndo na parede nem na puxada do gancho, e o golpe próprio do gancho espera os estilos | aceita (F-181); completa a DEC-0050 |
+| [DEC-0054](DEC-0054-a-guarda-pela-frente.md) | 2026-10-28 | A guarda pela frente: o botão direito do mouse, segurado, levanta uma guarda que cobre a metade da frente, 90° para cada lado de onde o corpo olha; pelas costas, o golpe pega | aceita (F-182) |
 
 ## Propostas — ainda não são regra
 

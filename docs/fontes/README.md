@@ -185,3 +185,4 @@ O que chegou ao projeto e como chegou. Uma fonte não muda: só mudam `status`, 
 | [F-179](F-179-arthur-testa-o-leve-rapido.md) | 2026-10-28 | O Arthur escolhe testar o leve rápido, que se defende segurando a guarda, e o leve que não freia o corpo, sem decidir que fica |
 | [F-180](F-180-arthur-aprova-o-leve-rapido-e-pede-golpe-no-ar.md) | 2026-10-28 | O Arthur aprova o leve rápido jogando, pede golpe no ar com um golpe por pulo, questiona a parede e o gancho sem golpe, e pede que o Claude traga dados antes de concordar |
 | [F-181](F-181-arthur-aceita-o-golpe-por-pulo.md) | 2026-10-28 | O Arthur aceita um golpe no ar por pulo, o golpe saindo da parede e nada na puxada do gancho na fase 2, e aprova o jeito de pesquisar antes de recomendar |
+| [F-182](F-182-arthur-refina-a-task-12-2.md) | 2026-10-28 | O Arthur refina a TASK-12.2: a guarda no botão direito segurado, cobrindo a metade da frente, e as leituras v0 do tranco, da paradinha e do boneco que ataca |

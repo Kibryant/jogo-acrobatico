@@ -1,6 +1,6 @@
 ---
-revisado_em: 2026-10-27
-fontes: [F-050, F-051, F-052, F-053, F-054, F-056, F-058, F-059, F-061, F-062, F-063, F-100, F-121, F-122, F-137, F-139, F-140, F-141, F-146, F-147, F-148, F-152, F-153, F-156, F-157, F-158, F-161, F-162, F-170, F-172, F-173, F-174, F-175]
+revisado_em: 2026-10-28
+fontes: [F-001, F-050, F-051, F-052, F-053, F-054, F-056, F-058, F-059, F-061, F-062, F-063, F-100, F-121, F-122, F-137, F-139, F-140, F-141, F-146, F-147, F-148, F-152, F-153, F-156, F-157, F-158, F-161, F-162, F-170, F-172, F-173, F-174, F-175, F-182]
 ---
 
 # Visual e áudio
@@ -303,9 +303,9 @@ A tela que a DEC-0031 §8 promete a quem joga, com as escolhas do Arthur (F-161)
 
 - **Onde abre:** com o Esc, no Sozinho e online, onde quem joga tem tela; por cima do jogo e do HUD. O Esc ou o botão "Fechar (Esc)" fecham.
 - **Aberta:** o jogo não pausa; o lutador de quem joga fica parado, porque as teclas vão para a tela; o mouse aparece. Fechada, o mouse volta para a câmera (F-161).
-- **O layout:** o título "Opções" e três grupos, nesta ordem. Teclas: "Andar para a frente", "Andar para trás", "Andar para a esquerda", "Andar para a direita", "Pular", "Dash", "Gancho" e, desde a TASK-12.1, "Golpe leve", cada uma com o rótulo da sua tecla. Mouse: "Sensibilidade". Interface: "Escala". Embaixo, "Voltar ao padrão" e "Fechar (Esc)".
+- **O layout:** o título "Opções" e três grupos, nesta ordem. Teclas: "Andar para a frente", "Andar para trás", "Andar para a esquerda", "Andar para a direita", "Pular", "Dash", "Gancho" e, desde a TASK-12.1, "Golpe leve", e desde a TASK-12.2, "Guarda", cada uma com o rótulo da sua tecla. Mouse: "Sensibilidade". Interface: "Escala" e, desde a TASK-12.2, "Tremor da câmera", ligado por padrão, que desliga o tremor do impacto (`combate.md`, "O hitstop e o tremor"). Embaixo, "Voltar ao padrão" e "Fechar (Esc)".
 - **O rótulo da tecla:** o da tecla física no teclado ativo (`DisplayServer.keyboard_get_label_from_physical`): o lugar do W mostra "Z" num teclado francês. Os botões do mouse aparecem como "Mouse 3" (o do meio), "Mouse 4" e "Mouse 5" (os laterais); o esquerdo, o padrão do golpe leve, como "Mouse esquerdo".
-- **Remapear:** clicar numa tecla mostra "Aperte a nova tecla para <ação>. O Esc cancela."; a próxima tecla, ou o botão do meio ou um lateral do mouse, toma o lugar. O esquerdo do mouse só vale para o "Golpe leve", que o tem de padrão (F-175 §2); o direito não vale para nenhuma ação, porque fica para a guarda da TASK-12.2. Uma tecla que já é de outra ação não troca, e a tela diz "<tecla> já é de <ação>. Escolha outra tecla ou troque <ação> primeiro."
+- **Remapear:** clicar numa tecla mostra "Aperte a nova tecla para <ação>. O Esc cancela."; a próxima tecla, ou o botão do meio ou um lateral do mouse, toma o lugar. O esquerdo do mouse só vale para o "Golpe leve", que o tem de padrão (F-175 §2), e o direito só para a "Guarda", que o tem de padrão (F-182 §2; DEC-0054). Uma tecla que já é de outra ação não troca, e a tela diz "<tecla> já é de <ação>. Escolha outra tecla ou troque <ação> primeiro."
 - **A sensibilidade:** de 0,02 a 0,20 grau por pixel, de 0,005 em 0,005, com o padrão 0,06 (`movimento.md`, "Câmera"); ao lado, "Uma volta inteira com uns N cm de mouse, a 800 DPI", com N = 360 ÷ sensibilidade ÷ 800 × 2,54, arredondado.
 - **A escala:** de 0,8 a 1,5, de 0,1 em 0,1, com o padrão 1,0, pelo `content_scale_factor` (DEC-0031 §8). Multiplica a barra, os textos, as recargas e a mira; a mira segue no centro da tela com a câmera livre.
 - **Vale na hora e fica salvo:** toda mudança aplica e grava no `user://options.cfg`. Uma entrada ruim volta ao padrão, com um aviso no log; "Voltar ao padrão" restaura tudo.

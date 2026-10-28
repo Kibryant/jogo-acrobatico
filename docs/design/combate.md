@@ -1,6 +1,6 @@
 ---
-revisado_em: 2026-10-27
-fontes: [F-001, F-028, F-032, F-053, F-061, F-062, F-063, F-166, F-172, F-173, F-174, F-175, F-176]
+revisado_em: 2026-10-28
+fontes: [F-001, F-012, F-027, F-028, F-032, F-053, F-061, F-062, F-063, F-073, F-083, F-166, F-172, F-173, F-174, F-175, F-176, F-178, F-180, F-181, F-182]
 ---
 
 # Combate
@@ -89,6 +89,8 @@ O **tranco** é o tempo em que quem levou (hitstun) ou bloqueou (blockstun) um g
 
 **Hitstun maior que blockstun**, sempre, como no Tekken (F-173 §1 C22): levar um golpe custa mais tempo do que bloqueá-lo.
 
+**O tranco no tick** (TASK-12.2; leitura v0 do Claude, F-182, contexto). O tranco conta do tick do contato: quem levou um leve volta a agir no tick contato + 24, e quem bloqueou, no contato + 15, mais a paradinha. Como quem defende só vê o contato um tick depois, pela foto (DEC-0051 §3), o tick do contato já passou para ele, e um golpe que ele começou nesse tick acaba quando o tranco chega. Um golpe novo no meio do tranco o recomeça do contato novo.
+
 **O tranco e o corpo.** No tranco não há input de movimento nem de ação; a gravidade continua, e a velocidade horizontal cai pela desaceleração do chão. No ar, o corpo segue a trajetória. Um golpe não empurra no v0: o recuo do corpo é só pose (DEC-0031, "Reação").
 
 ## A armadura do carregado
@@ -126,8 +128,11 @@ Só o carregado finta, até 450 ms (27 ticks) da preparação, antes de a janela
 
 ## O bloqueio, a guarda andando e a stamina
 
+- **A tecla:** o botão direito do mouse, segurado, por posição física e remapeável (F-182 §2; DEC-0054; DEC-0031 §8).
 - **Segurar** a tecla levanta a guarda em 100 ms (6 ticks); soltar derruba na hora. A guarda alta bloqueia o leve e o carregado, não a quebra.
-- **A guarda andando:** com a guarda alta, o corpo anda a 3 m/s em qualquer direção (o "modo de guarda" que o `movimento.md`, "Chão", deixava para o combate). Correr a 7 m/s, pular e dar o dash derrubam a guarda: o dash sai e a guarda cai. No ar não há guarda.
+- **A guarda pela frente** (DEC-0054): ela bloqueia o golpe de quem está a até 90° de onde o corpo olha, medido no plano do chão, do eixo de quem defende ao eixo de quem ataca. Além disso, pelas costas, o golpe pega como se não houvesse guarda. Com a guarda alta, o corpo olha para onde a câmera olha: virar a câmera vira a guarda.
+- **A guarda andando:** com a guarda alta, o corpo anda a até 3 m/s em qualquer direção (o "modo de guarda" que o `movimento.md`, "Chão", deixava para o combate); não há corrida com a guarda. Pular, dar o dash ou golpear derrubam a guarda: o comando sai e a guarda cai. Com o botão ainda apertado, ela sobe sozinha de novo, em 6 ticks, assim que o corpo está em pé no chão, sem golpe e sem tranco. No ar não há guarda. Leitura v0 do Claude (F-182, contexto).
+- **Quando o bloqueio vale** (DEC-0051 §3): quem defende aplica o contato no tick seguinte, pela foto, e o bloqueio vale se a guarda estava alta, com os 6 ticks completos e o atacante na frente, no tick do contato. Leitura v0 do Claude.
 - **O custo:** 5 de stamina por leve bloqueado e 15 por carregado bloqueado, pagos no contato. O For Honor não cobra stamina de quem bloqueia; o Chivalry cobra um terço do dano (F-173 §1 C14). O v0 fica no meio: bloquear leve é sustentável, bloquear carregado cansa.
 - **Sem stamina** para o custo, a guarda cai no golpe: o golpe pega com o tranco cheio.
 
@@ -179,6 +184,8 @@ O **hitstop** é a pausa curta dos dois lutadores no instante do acerto, que faz
 | Carregado bloqueado | os dois | 67 | 4 | 100 ms, 0,3° |
 | Parry | só quem foi aparado | 150 | 9 | 150 ms, 1,0°, nos dois |
 | Golpe que mata | os dois | 200 | 12 | 300 ms, 2,0° |
+
+**A paradinha no tick** (TASK-12.2; leitura v0 do Claude, F-182, contexto): os dois congelam os mesmos ticks, do tick seguinte ao contato até o contato mais a duração da tabela, porque quem bateu sabe do contato no tick dele e quem levou, no seguinte, pela foto (DEC-0051 §3). Congelado, o corpo não anda nem cai, e a velocidade que ele tinha volta depois; o relógio do golpe e o do tranco param, então o tranco e a recuperação terminam a duração da paradinha mais tarde, e a vantagem não muda.
 
 O precedente do parry é o perfect shield do Smash: só o atacante congela (F-173 §2). O tremor é só apresentação, toca uma vez por evento pela chave (DEC-0031 §6), tem opção para desligar na tela de opções, e as amplitudes são pequenas porque a câmera também é a mira (DEC-0014). Com mais lutadores na arena (4v4), o hitstop encolhe, como o Smash faz com 8 jogadores (F-173 §2); número da fase 4.
 

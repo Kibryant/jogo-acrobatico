@@ -184,3 +184,4 @@ O que chegou ao projeto e como chegou. Uma fonte não muda: só mudam `status`, 
 | [F-178](F-178-arthur-joga-o-leve.md) | 2026-10-28 | O Arthur joga o leve de 400 ms e diz que ele não parece leve: demora e prende o corpo; o replay mostra 42 cliques perdidos na preparação |
 | [F-179](F-179-arthur-testa-o-leve-rapido.md) | 2026-10-28 | O Arthur escolhe testar o leve rápido, que se defende segurando a guarda, e o leve que não freia o corpo, sem decidir que fica |
 | [F-180](F-180-arthur-aprova-o-leve-rapido-e-pede-golpe-no-ar.md) | 2026-10-28 | O Arthur aprova o leve rápido jogando, pede golpe no ar com um golpe por pulo, questiona a parede e o gancho sem golpe, e pede que o Claude traga dados antes de concordar |
+| [F-181](F-181-arthur-aceita-o-golpe-por-pulo.md) | 2026-10-28 | O Arthur aceita um golpe no ar por pulo, o golpe saindo da parede e nada na puxada do gancho na fase 2, e aprova o jeito de pesquisar antes de recomendar |

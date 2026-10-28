@@ -182,7 +182,7 @@ O **hitstop** é a pausa curta dos dois lutadores no instante do acerto, que faz
 
 O precedente do parry é o perfect shield do Smash: só o atacante congela (F-173 §2). O tremor é só apresentação, toca uma vez por evento pela chave (DEC-0031 §6), tem opção para desligar na tela de opções, e as amplitudes são pequenas porque a câmera também é a mira (DEC-0014). Com mais lutadores na arena (4v4), o hitstop encolhe, como o Smash faz com 8 jogadores (F-173 §2); número da fase 4.
 
-## A matriz de posição (Q-14; DEC-0050)
+## A matriz de posição (Q-14; DEC-0050; DEC-0053)
 
 Cada lugar tem uma força e uma fraqueza (pilar 2), e a troca tem de ser legível de fora (pilar 1). Escolha do Arthur na rodada 2 (F-174 §2; DEC-0050):
 
@@ -190,14 +190,16 @@ Cada lugar tem uma força e uma fraqueza (pilar 2), e a troca tem de ser legíve
 |---|---|---|---|---|
 | Chão (parado, correndo, guarda andando) | leve, carregado, quebra, finta | bloqueio, parry, esquiva | tranco normal | nenhum: é a base |
 | Dash | nada: comprometido | invulnerável nos ticks 3 a 10 | nos ticks 1, 2, 11 e 12: tranco normal, e o dash acaba | sai 4 m do alcance; recarga de 400 ms |
-| Ar (pulo, pulo duplo, queda) | só o leve, que desce em 45°: o golpe de quem está no alto (F-012 §1) | nada: "no ar ninguém se defende" (F-001) | tranco, e continua caindo | sem defesa; o pulo duplo é a única carta |
-| Parede (corrida) | nada: as mãos estão na parede | nada | cai da parede, com tranco | a altura e o ângulo em troca de até 2,5 s exposto |
-| Gancho (puxada) | nada: uma mão no cabo (a regra das mãos) | nada | solta o gancho, com tranco | atravessa 25 m em 1,4 s sem poder responder |
+| Ar (pulo, pulo duplo, queda) | só o leve, que desce em 45°: o golpe de quem está no alto (F-012 §1); um por pulo (DEC-0053) | nada: "no ar ninguém se defende" (F-001) | tranco, e continua caindo | sem defesa; o pulo duplo é a única carta |
+| Parede (corrida) | nada: as mãos estão na parede; o golpe da parede é o pulo da parede seguido do leve no ar (DEC-0053) | nada | cai da parede, com tranco | a altura e o ângulo em troca de até 2,5 s exposto |
+| Gancho (puxada) | nada: uma mão no cabo (a regra das mãos); depois da soltura, o leve no ar vale (DEC-0053) | nada | solta o gancho, com tranco | atravessa 25 m em 1,4 s sem poder responder |
 | Tranco e preso no agarrão | nada | nada (só o tech) | um acerto por janela ativa; a quebra não agarra quem está no ar | — |
 
 - **A regra das mãos** (proposta na Q-14): uma manobra que ocupa uma mão só deixa usar arma de uma mão. Na fase 2, com a espada longa, a puxada do gancho não ataca; mais tarde, a pistola cabe na puxada e a espada não.
 - **A quebra** só agarra quem está no chão: agarrar no ar não se lê.
 - **O leve no ar** é comprometido como qualquer golpe: pousar durante o ativo ou a recuperação não o corta.
+- **Um golpe no ar por pulo** (DEC-0053; F-181): o leve no ar sai uma vez por pulo. Cada um destes dá um: o pulo do chão ou a queda de uma beirada, o pulo duplo, o pulo da parede e a soltura do gancho. Depois do golpe, o aperto espera na vaga até o próximo deles. Na física de hoje, um pulo dura 630 ms e o leve inteiro 550, então a regra é mais clareza do que freio: os "20 golpes no ar" que o Arthur temia não cabem num voo (F-180 §2).
+- **O golpe próprio do gancho**, à moda do Naraka, fica para os estilos de luta (Q-52; DEC-0053).
 - **O gancho não prende em gente** no v0 (a crítica ao Naraka, F-001; `movimento.md`, "Gancho").
 - As alternativas recusadas na rodada 2: o leve sai da parede também (uma lâmina correndo de lado numa parede é difícil de ler); ou tudo vale em todo lugar, sem matriz.
 

@@ -99,7 +99,8 @@ A linguagem ubíqua do jogo (DEC-0004, regra 5): o mesmo termo na conversa, no d
 | Castigo garantido | Dano que o outro não evita com nenhuma ação: o carregado depois de um parry ou de uma quebra sem tech (`combate.md`, "O tranco e a vantagem") | — | — |
 | Seguro | O golpe bloqueado que deixa quem bateu para trás, mas não tanto que o outro acerte antes de a guarda subir: aqui, desvantagem menor que 18 ticks, os 24 do leve menos os 6 da guarda (`combate.md`) | ticks | — |
 | Troca | Dois golpes que pegam no mesmo tick: os dois levam o dano e o tranco (`combate.md`) | — | `trade` |
-| Golpe que desce | O leve dado no ar, com o arco inclinado 45° para baixo: o golpe de quem está no alto (`combate.md`, "A matriz de posição"; DEC-0050) | ° | `air_light` |
+| Golpe que desce | O leve dado no ar, com o arco inclinado 45° para baixo: o golpe de quem está no alto (`combate.md`, "A matriz de posição"; DEC-0050). Um por pulo (DEC-0053) | ° | `air_light` |
+| Golpe por pulo | O limite do golpe no ar: um leve no ar por pulo. O pulo do chão ou a queda de uma beirada, o pulo duplo, o pulo da parede e a soltura do gancho dão um cada; depois do golpe, o aperto espera o próximo (`combate.md`, "A matriz de posição"; DEC-0053) | — | — |
 | Regra das mãos | Uma manobra que ocupa uma mão só deixa usar arma de uma mão: na puxada do gancho, a espada não ataca; a pistola, mais tarde, cabe (`combate.md`, "A matriz de posição"; Q-14; DEC-0050) | — | — |
 | Guarda andando | Com a guarda alta, o corpo anda a 3 m/s; correr, pular e o dash derrubam a guarda (`combate.md`, "O bloqueio, a guarda andando e a stamina"). O carregado anda no mesmo andar devagar; o leve não freia o corpo (DEC-0052) | m/s | `slow_walk_speed_mps` |
 | Lâmina | O segmento com raio que a conta do golpe usa: começa na mão, a 0,6 m do eixo e 1,3 m de altura, tem 1,4 m e 0,08 m de raio, e varre um arco no ativo (`combate.md`, "A lâmina e o contato") | m | `blade` |

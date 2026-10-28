@@ -3,10 +3,10 @@ id: TASK-12.2
 title: >-
   A guarda e o tranco: o bloqueio, o hitstun, o blockstun, o hitstop e os tokens
   como dado
-status: Ready
+status: In Progress
 assignee: []
 created_date: '2026-10-27 22:02'
-updated_date: '2026-10-28 12:11'
+updated_date: '2026-10-28 12:17'
 labels:
   - jogo
 milestone: m-2
@@ -45,7 +45,7 @@ Nenhuma: a guarda no botão direito segurado e cobrindo a metade da frente são 
 - [ ] #3 Quando o leve vem de mais de 90° de onde a guarda olha, pelas costas, ou chega antes de os 6 ticks da guarda se completarem, ele pega como sem guarda (DEC-0054).
 - [ ] #4 Quando um leve pega sem guarda, o alvo perde 12, fica 24 ticks sem input de movimento nem de ação contados do contato, o golpe dele em curso acaba, e a gravidade segue; quem bateu fica 6 ticks à frente; um golpe novo no meio do tranco o recomeça do contato novo.
 - [ ] #5 Quando quem bloqueia tem menos de 5 de stamina, a guarda cai no contato e o golpe pega com o tranco cheio.
-- [ ] #6 Quando um leve pega ou é bloqueado, os dois congelam 4 ou 2 ticks a partir do tick seguinte ao contato, sem se mover e sem cair, os relógios do golpe e do tranco dos dois param junto, e depois os corpos seguem com a velocidade que tinham; a vantagem medida depois do congelamento é a mesma de antes.
+- [ ] #6 Quando um leve pega ou é bloqueado, quem levou ou bloqueou congela 4 ou 2 ticks a partir do tick seguinte ao contato, e quem bateu congela a mesma duração a partir do tick seguinte a esse, quando a foto mostra o resultado; congelados, os corpos não se movem nem caem e depois seguem com a velocidade que tinham; o relógio do golpe e o do tranco andam a duração para a frente, e a vantagem medida depois é a mesma de antes; um contato sem resultado não congela ninguém (DEC-0055).
 - [ ] #7 Quando um leve pega, a câmera de quem levou treme por 100 ms com até 0,5°, e no bloqueio a de quem bloqueou, com até 0,3°, uma vez por evento, nunca de novo na re-simulação; a linha "Tremor da câmera" da tela de opções desliga o tremor.
 - [ ] #8 Quando a cena da guarda roda na SyncTest com o rollback de 7 ticks, com acertos, bloqueios e paradinhas, nenhum campo diverge, e o veneno no campo do congelamento a faz acusar.
 - [ ] #9 Quando o Arthur joga contra o boneco que dá um leve a cada 3 s virado para ele, ele bloqueia de frente, leva pelas costas, sente a paradinha e o tremor, troca a tecla da guarda nas opções, e vê a cor, a pose e a forma do HUD de cada estado dos tokens, lidos de um Resource em `data/`.

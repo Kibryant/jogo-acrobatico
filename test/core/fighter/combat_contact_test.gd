@@ -21,12 +21,13 @@ const ATTACKER := &"A"
 const TARGET := &"B"
 const OTHER := &"C"
 
-# combate.md, "Os golpes e as defesas", the row "Golpe leve": 12 de dano; by hand 24 / 6 / 15
-# ticks at 60 and 12 / 3 / 8 at 30 (the 250 ms a tie that rounds up), a swing of 45 or 23 ticks.
+# combate.md, "Os golpes e as defesas", the row "Golpe leve": 250 / 100 / 200 ms, 12 de dano
+# (DEC-0052); by hand 15 / 6 / 12 ticks at 60 and 8 / 3 / 6 at 30 (the 250 ms a tie of 7.5 that
+# rounds up), a swing of 33 or 17 ticks.
 const LIGHT_DAMAGE := 12
-const WINDUP_TICKS: Dictionary[int, int] = { 30: 12, 60: 24 }
+const WINDUP_TICKS: Dictionary[int, int] = { 30: 8, 60: 15 }
 const ACTIVE_TICKS: Dictionary[int, int] = { 30: 3, 60: 6 }
-const RECOVERY_TICKS: Dictionary[int, int] = { 30: 8, 60: 15 }
+const RECOVERY_TICKS: Dictionary[int, int] = { 30: 6, 60: 12 }
 # partida.md, "A vida sem partida": vida 100, de volta a 100 dois segundos, 120 ticks, depois do
 # último golpe levado; by hand 60 ticks at 30.
 const MAX_HEALTH := 100
@@ -37,11 +38,11 @@ const NO_REFILL_MS := 0 # TASK-12.1 plan: a refill of 0 turns the refill off
 # (yaw pi): its axis sits under the blade's tip at theta 0 (combate.md, "A lâmina e o contato").
 # By hand, the active tick that first reaches theta 0: at 60 the slices are 20° wide and the third,
 # [-20°, 0°], is the first (the second's end blade at -20° passes 2,0 · sin 20° = 0,684 m from the
-# axis, beyond the 0,43 of the touch), so the contact comes on the 24 + 2 = 26th tick of the swing;
-# at 30 the slices are 40° wide and the second, [-20°, 20°], is the first, on the 12 + 1 = 13th.
+# axis, beyond the 0,43 of the touch), so the contact comes 15 + 2 = 17 ticks into the swing; at
+# 30 the slices are 40° wide and the second, [-20°, 20°], is the first, 8 + 1 = 9 ticks in.
 const FACING := Vector3(0.0, 0.0, -2.0)
 const TARGET_YAW := PI
-const CONTACT_OFFSET: Dictionary[int, int] = { 30: 13, 60: 26 }
+const CONTACT_OFFSET: Dictionary[int, int] = { 30: 9, 60: 17 }
 # Criterion 6, the parked blade: a target 0,5 m dead ahead is within 0,43 m of every slice of the
 # swing, so the blade is inside its body on every active tick. By hand, the farthest slice is the
 # first, [-60°, -40°] at 60: its nearest point is the hand on the blade at -40°, 0,6 m out, at

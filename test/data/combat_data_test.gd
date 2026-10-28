@@ -3,8 +3,9 @@
 # defesas", the light attack row; "A lâmina e o contato") and of docs/design/partida.md ("A vida
 # sem partida"), passes its own data check, and CombatConfig.create turns every ms into the nearest
 # tick, ties up (core/time/ticks.gd), at 60 ticks, the game's rate (DEC-0024), and at 30, netfox's
-# default. The slow walk of the attack lives in the movement data (movimento.md, "Chão": "Andar
-# devagar"). Every number is cited next to its value; the arithmetic is marked as such.
+# default. The slow walk of 3 m/s stays in the movement data for the guard and the charged attack
+# (movimento.md, "Chão": "Andar devagar"; DEC-0052): the light no longer uses it. Every number is
+# cited next to its value; the arithmetic is marked as such.
 extends GdUnitTestSuite
 
 const COMBAT_V0 := "res://data/combat_v0.tres"
@@ -16,11 +17,11 @@ const HAIR := 1e-9 # floating-point slack, not a design number
 ## (glossario.md, "Golpe leve"; TASK-12.1 plan).
 const LIGHT := &"light_attack"
 
-# combate.md, "Os golpes e as defesas", the row "Golpe leve": 400 / 100 / 250 ms, 8 de stamina no
-# início, 12 de dano.
-const WINDUP_MS := 400
+# combate.md, "Os golpes e as defesas", the row "Golpe leve": 250 / 100 / 200 ms, 8 de stamina no
+# início, 12 de dano (DEC-0052: the light was 400 / 100 / 250).
+const WINDUP_MS := 250
 const ACTIVE_MS := 100
-const RECOVERY_MS := 250
+const RECOVERY_MS := 200
 const LIGHT_COST := 8.0
 const LIGHT_DAMAGE := 12
 # combate.md, "A lâmina e o contato": the light sweeps "±60° da frente", from the right, the
@@ -37,20 +38,21 @@ const BLADE_RADIUS_M := 0.08
 # segundos, 120 ticks, depois do último golpe que ele levou".
 const MAX_HEALTH := 100
 const HEALTH_REFILL_MS := 2000
-# movimento.md, "Chão": "Andar devagar: com a guarda alta ou durante um golpe: 3 m/s".
+# movimento.md, "Chão": "Andar devagar: com a guarda alta ou durante o carregado: 3 m/s"; the
+# light does not slow the body (DEC-0052).
 const SLOW_WALK_MPS := 3.0
 
-# By hand (combate.md, "Os golpes e as defesas": "Em ticks: 24 / 6 / 15"): at 60 ticks a tick is
-# 16.7 ms, so 400 ms are 24 ticks, 100 are 6 and 250 are 15, all exact. At 30 a tick is 33.3 ms:
-# 400 ms are 12, 100 are 3, and 250 ms are 7.5 ticks, the tie, which rounds up to 8 (DEC-0022;
-# visao-geral.md, "O tempo e a física no estado"). The refill of 2000 ms is 120 ticks at 60 and
+# By hand (combate.md, "Os golpes e as defesas": "Em ticks: 15 / 6 / 12"): at 60 ticks a tick is
+# 16.7 ms, so 250 ms are 15 ticks, 100 are 6 and 200 are 12, all exact. At 30 a tick is 33.3 ms:
+# 250 ms are 7.5 ticks, the tie, which rounds up to 8 (DEC-0022; visao-geral.md, "O tempo e a
+# física no estado"), 100 ms are 3 and 200 are 6. The refill of 2000 ms is 120 ticks at 60 and
 # 60 at 30, exact.
-const WINDUP_TICKS: Dictionary[int, int] = { 30: 12, 60: 24 }
+const WINDUP_TICKS: Dictionary[int, int] = { 30: 8, 60: 15 }
 const ACTIVE_TICKS: Dictionary[int, int] = { 30: 3, 60: 6 }
-const RECOVERY_TICKS: Dictionary[int, int] = { 30: 8, 60: 15 }
+const RECOVERY_TICKS: Dictionary[int, int] = { 30: 6, 60: 12 }
 const REFILL_TICKS: Dictionary[int, int] = { 30: 60, 60: 120 }
-# Arithmetic on the tie: 250 ms * 30 ticks/s = 7500, exactly 7.5 ticks in the units of
-# core/time/ticks.gd (ms * tickrate, a whole tick being 1000).
+# Arithmetic on the tie, now the windup's (DEC-0052): 250 ms * 30 ticks/s = 7500, exactly 7.5
+# ticks in the units of core/time/ticks.gd (ms * tickrate, a whole tick being 1000).
 const TIE_MS := 250
 const TIE_TICKRATE := 30
 const TIE_ROUNDED_UP := 8
@@ -188,10 +190,10 @@ func test_every_combat_data_under_data_passes_the_data_check() -> void:
 	assert_int(checked).override_failure_message("no CombatData under %s" % DATA_DIR).is_greater(0)
 
 
-# The light's times by hand (combate.md, "Os golpes e as defesas": "24 / 6 / 15" at 60): 400 ms
-# are 24 ticks at 60 and 12 at 30; 100 ms are 6 and 3; 250 ms are 15 at 60 and 7.5 at 30, the tie
-# that rounds up to 8.
-func test_the_light_times_become_24_6_15_ticks_at_60_and_12_3_8_at_30(
+# The light's times by hand (combate.md, "Os golpes e as defesas": "15 / 6 / 12" at 60): 250 ms
+# are 15 ticks at 60 and 7.5 at 30, the tie that rounds up to 8; 100 ms are 6 and 3; 200 ms are 12
+# at 60 and 6 at 30.
+func test_the_light_times_become_15_6_12_ticks_at_60_and_8_3_6_at_30(
 	tickrate: int,
 	_test_parameters := [[30], [60]],
 ) -> void:
@@ -203,13 +205,16 @@ func test_the_light_times_become_24_6_15_ticks_at_60_and_12_3_8_at_30(
 	assert_int(light.recovery_ticks).is_equal(RECOVERY_TICKS[tickrate])
 
 
-# The one tie among the combat's times: 250 ms at 30 ticks is exactly 7.5 ticks, and the tie goes
-# up (DEC-0022; visao-geral.md, "O tempo e a física no estado").
+# The one tie among the combat's times: the windup of 250 ms at 30 ticks is exactly 7.5 ticks, and
+# the tie goes up (DEC-0022; visao-geral.md, "O tempo e a física no estado"); the recovery of
+# 200 ms is 6 whole ticks there, no tie.
 func test_250_ms_at_30_ticks_is_the_tie_that_rounds_up_to_8() -> void:
 	assert_int(TIE_MS * TIE_TICKRATE).is_equal(7500) # 7.5 ticks in the units of Ticks.from_ms
 	assert_int(Ticks.from_ms(TIE_MS, TIE_TICKRATE)).is_equal(TIE_ROUNDED_UP)
 	var light := _light_of(CombatConfig.create(_load_v0(), TIE_TICKRATE))
-	assert_int(light.recovery_ticks).is_equal(TIE_ROUNDED_UP)
+	assert_int(light.windup_ticks).is_equal(TIE_ROUNDED_UP)
+	assert_int(RECOVERY_MS * TIE_TICKRATE).is_equal(6000) # 6 whole ticks: no tie
+	assert_int(light.recovery_ticks).is_equal(RECOVERY_TICKS[TIE_TICKRATE])
 
 
 # Every time of the light follows Ticks.from_ms, whatever the number in the file.
@@ -360,8 +365,10 @@ func test_two_impossible_numbers_name_both_fields() -> void:
 	_assert_some_message_names(errors, "damage")
 
 
-# The slow walk of the attack is a movement number (movimento.md, "Chão": "Andar devagar: 3 m/s"),
-# in movement_v0.tres and copied as a speed into the config at any rate (TASK-12.1 plan).
+# The slow walk is a movement number (movimento.md, "Chão": "Andar devagar: com a guarda alta ou
+# durante o carregado: 3 m/s"), kept in movement_v0.tres for the guard (TASK-12.2) and the charged
+# attack (TASK-12.3) and copied as a speed into the config at any rate; the light no longer uses
+# it (DEC-0052).
 func test_movement_v0_holds_the_slow_walk_of_3_mps() -> void:
 	assert_float(_load_movement_v0().slow_walk_speed_mps).is_equal_approx(SLOW_WALK_MPS, HAIR)
 

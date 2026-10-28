@@ -27,12 +27,13 @@ const LEVE_STARTS: Array[Vector3] = [Vector3(-6, 0, 6), Vector3(-6, 0, 4)]
 const LEVE_YAWS: Array[float] = [0.0, PI]
 const APART_M := 2.0
 # The loops each fighter presses the light on: both on the 3rd, the trade; the first alone on the
-# 60th and the second alone on the 120th, each well after its own swing of 45 ticks is over.
+# 60th and the second alone on the 120th, each well after its own swing of 33 ticks is over
+# (15 / 6 / 12 at 60: combate.md, "Os golpes e as defesas"; DEC-0052).
 const LEVE_PRESSES: Array[Array] = [[3, 60], [3, 120]]
-# The last hit lands on the 120th loop's swing, about 26 ticks in; its refill comes 120 ticks later,
-# before loop 270: 290 loops see both refills.
+# The last hit lands on the 120th loop's swing, about 17 ticks in; its refill comes 120 ticks later,
+# before loop 260: 290 loops see both refills.
 const LEVE_LOOPS := 290
-# The self-tests need only the first swing and its hits: the trade is applied around the 30th loop.
+# The self-tests need only the first swing and its hits: the trade is applied around the 21st loop.
 const LEVE_SELF_TEST_LOOPS := 60
 
 # What the scenario must have done: four swings, four contacts, four hits, one trade, two refills.

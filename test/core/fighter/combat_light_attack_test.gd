@@ -3,9 +3,10 @@
 # the whole tick sandwich played by CombatRig (DEC-0051 §2: Combat.step, then Movement.before_move,
 # the engine by hand, Movement.after_move). The phases in ticks, the stamina on the first tick, no
 # input cutting the sequence (DEC-0016), the refusals that wait in the one slot of the buffer
-# (movimento.md, "Perdão" and "Stamina"; DEC-0039), the slow walk during the swing (movimento.md,
-# "Chão": "Andar devagar"), the commands that wait for the recovery's end, the tie order on one
-# tick and the arc's direction fixed on the last tick of the windup (combate.md, "O leve no tick").
+# (movimento.md, "Perdão" and "Stamina"; DEC-0039), the body that keeps the ground's rules during
+# the swing (DEC-0052; movimento.md, "Chão"), the commands that wait for the recovery's end, the
+# tie order on one tick and the arc's direction fixed on the last tick of the windup (combate.md,
+# "O leve no tick").
 # Every number comes from docs/design, cited by section; ticks by hand from the ms, nearest tick
 # with ties up (visao-geral.md, "O tempo e a física no estado").
 extends GdUnitTestSuite
@@ -16,13 +17,14 @@ const MovementRig := preload("res://test/core/fighter/movement_rig.gd")
 const FIRST_TICK := 1000 # any tick: the rules read stamps, not counts (visao-geral.md)
 const LIGHT := &"light_attack" # the move's ID (glossario.md, "Golpe leve"; TASK-12.1 plan)
 
-# combate.md, "Os golpes e as defesas", the row "Golpe leve": 400 / 100 / 250 ms, 8 de stamina
-# no início. By hand: 24 / 6 / 15 ticks at 60; 12 / 3 / 8 at 30, the 250 ms a tie of 7.5 that
-# rounds up (DEC-0022). A swing lasts 45 ticks at 60 and 23 at 30; fired at F, the body is free
-# again on F + 45 (combate.md, "O leve no tick": "As fases").
-const WINDUP_TICKS: Dictionary[int, int] = { 30: 12, 60: 24 }
+# combate.md, "Os golpes e as defesas", the row "Golpe leve": 250 / 100 / 200 ms, 8 de stamina
+# no início (DEC-0052). By hand: 15 / 6 / 12 ticks at 60; 8 / 3 / 6 at 30, the 250 ms a tie of
+# 7.5 that rounds up (DEC-0022). A swing lasts 33 ticks at 60 and 17 at 30; fired at F, the
+# windup is F..F+14, the active F+15..F+20, the recovery F+21..F+32, and the body is free again
+# on F + 33 (combate.md, "O leve no tick": "As fases").
+const WINDUP_TICKS: Dictionary[int, int] = { 30: 8, 60: 15 }
 const ACTIVE_TICKS: Dictionary[int, int] = { 30: 3, 60: 6 }
-const RECOVERY_TICKS: Dictionary[int, int] = { 30: 8, 60: 15 }
+const RECOVERY_TICKS: Dictionary[int, int] = { 30: 6, 60: 12 }
 const LIGHT_COST := 8.0
 const STAMINA_MAX := 100.0 # movimento.md, "Stamina": "Máximo"
 const BELOW_COST := 7.5 # criterion 2: a bar of 7.5 cannot pay the cost of 8
@@ -37,12 +39,19 @@ const REGEN_PER_TICK: Dictionary[int, float] = { 30: 1.0, 60: 0.5 }
 const DASH_COST := 15.0 # movimento.md, "Dash": "Custo"
 # movimento.md, "Dash": "Duração": 200 ms is 6 ticks at 30 and 12 at 60.
 const DASH_TICKS: Dictionary[int, int] = { 30: 6, 60: 12 }
-# movimento.md, "Chão": "Andar devagar: com a guarda alta ou durante um golpe: 3 m/s"; "Velocidade
-# de corrida: 7 m/s"; "Tempo até a velocidade máxima: 150 ms", 5 ticks at 30 and 9 at 60, so a
-# tick of full input adds 7 / 9 = 0,778 m/s at 60 and 1,4 at 30 ("Deriva a aceleração").
-const SLOW_WALK_MPS := 3.0
+# movimento.md, "Chão": "Velocidade de corrida: 7 m/s"; "Tempo até a velocidade máxima: 150 ms",
+# 5 ticks at 30 and 9 at 60, so a tick of full input adds 7 / 9 = 0,778 m/s at 60 and 1,4 at 30
+# ("Deriva a aceleração"); "Tempo até parar: 100 ms", 3 ticks at 30 and 6 at 60, exact. The
+# light does not slow the body: these are the rules during the swing too (DEC-0052; combate.md,
+# "O leve no tick": "O corpo durante o golpe"). The slow walk of 3 m/s is the guard's and the
+# charged attack's, not the light's (movimento.md, "Chão": "Andar devagar").
 const RUN_SPEED_MPS := 7.0
 const ACCEL_TICKS: Dictionary[int, int] = { 30: 5, 60: 9 }
+const STOP_TICKS: Dictionary[int, int] = { 30: 3, 60: 6 }
+const HALF_TICK := 0.5 # the stop's tolerance, as in test/core/fighter/movement_ground_test.gd
+# combate.md, "O leve no tick": "a preparação de 250 ms soma até 1,75 m de alcance" (DEC-0052 §3):
+# 15 ticks at 7 / 60 m each, at 60 ticks.
+const WINDUP_REACH_M := 1.75
 
 const FORWARD := Vector2(0, 1) # move.y goes forward: yaw 0 looks down -Z (TASK-9 plan)
 const RIGHT := Vector2(1, 0)
@@ -213,7 +222,7 @@ func test_a_fresh_state_has_no_action_no_contact_and_full_health() -> void:
 # Criterion 1: standing on the floor with no swing in progress and a full bar, the press fires the
 # light on its own tick, and the action goes through the windup, the active and the recovery, each
 # counted from the tick it began, and is NONE again right after (combate.md, "O leve no tick":
-# "As fases"): 24 / 6 / 15 ticks at 60, 12 / 3 / 8 at 30.
+# "As fases"): 15 / 6 / 12 ticks at 60, 8 / 3 / 6 at 30 (DEC-0052).
 func test_the_light_runs_windup_active_and_recovery_tick_by_tick(
 	tickrate: int,
 	_test_parameters := [[30], [60]],
@@ -229,8 +238,8 @@ func test_the_light_runs_windup_active_and_recovery_tick_by_tick(
 	assert_int(fighter.fought.mode).is_equal(FighterState.Mode.GROUND)
 
 
-# The ticks of each phase by hand against the config the swing runs on: the windup is 400 ms, the
-# active 100 and the recovery 250, nearest tick with ties up.
+# The ticks of each phase by hand against the config the swing runs on: the windup is 250 ms, the
+# active 100 and the recovery 200, nearest tick with ties up (DEC-0052).
 func test_the_phases_follow_the_config_made_from_combat_v0(
 	tickrate: int,
 	_test_parameters := [[30], [60]],
@@ -267,18 +276,23 @@ func test_the_light_pays_8_stamina_on_its_first_tick_and_nothing_more(
 
 # Criterion 1: no input cuts the sequence (DEC-0016): a jump, a dash, a grapple, another light and
 # a full push during the swing leave the phases as they are, start no maneuver and pay nothing
-# more; the pushes only walk the body (criterion 3).
+# more; the pushes only run the body (criterion 3).
 func test_no_input_cuts_the_light(tickrate: int, _test_parameters := [[30], [60]]) -> void:
 	var fighter := _fighter(tickrate)
 	var first := _fire(fighter)
 	var swing := _swing_ticks(tickrate)
-	# Each press lands in a different phase; none of them is within the buffer of the swing's end.
+	# Each press lands in a different phase; none of them is within the buffer of the swing's end:
+	# the last, on the recovery's first tick, is 12 ticks before the end at 60 and 6 at 30, past
+	# the window of 9 and 5 (movimento.md, "Perdão").
 	var presses: Dictionary[int, TickInput] = {
 		2: MovementRig.press_jump_toward(FORWARD),
 		WINDUP_TICKS[tickrate] - 1: MovementRig.press_dash_toward(RIGHT),
 		WINDUP_TICKS[tickrate] + 1: MovementRig.press_grapple_toward(BACK),
-		WINDUP_TICKS[tickrate] + ACTIVE_TICKS[tickrate] + 1: CombatRig.press_light(FORWARD),
+		WINDUP_TICKS[tickrate] + ACTIVE_TICKS[tickrate]: CombatRig.press_light(FORWARD),
 	}
+	for offset: int in presses:
+		assert_int(swing - offset).override_failure_message("press %d is in the buffer" % offset) \
+				.is_greater(BUFFER_TICKS[tickrate])
 	var violations: Array[String] = []
 	for offset: int in range(1, swing + 1):
 		var input := presses[offset] if presses.has(offset) else CombatRig.walk(FORWARD)
@@ -524,74 +538,128 @@ func test_a_press_during_a_swing_past_the_buffer_does_not_fire_at_its_end(
 	assert_int(fighter.fought.stamina_spent_tick).is_equal(first)
 
 
-# Criterion 3: standing, the body walks at up to 3 m/s in any direction during the swing, from
-# the swing's first tick, by the ground acceleration (movimento.md, "Chão": "Andar devagar";
-# combate.md, "O leve no tick": "O corpo durante o golpe"): from rest, 7 / 9 = 0,778 m/s more per
-# tick at 60 until 3, and 1,4 at 30. On the swing's end tick the run of 7 is the target again.
-func test_the_body_walks_at_most_3_mps_standing_during_the_light(
+# Criterion 3: standing, the light does not slow the body (DEC-0052; combate.md, "O leve no tick":
+# "O corpo durante o golpe"): from rest, a push in any direction during the swing runs the body by
+# the ground acceleration, 7 / 9 = 0,778 m/s more per tick at 60 and 1,4 at 30, from the swing's
+# first tick, up to the run of 7 m/s, reached inside the windup and held while the phases run; the
+# swing's end tick runs on at 7.
+func test_the_body_runs_up_to_7_mps_standing_during_the_light(
 	tickrate: int,
 	move: Vector2,
 	_test_parameters := [[30, FORWARD], [60, FORWARD], [60, RIGHT], [60, BACK]],
 ) -> void:
 	var fighter := _fighter(tickrate)
+	var first := fighter.tick()
 	var accel := _accel_per_tick(tickrate)
 	var direction := _world_direction(move, 0.0)
 	var violations: Array[String] = []
 	var swing := _swing_ticks(tickrate)
+	# 9 ticks of acceleration against 15 of windup at 60, 5 against 8 at 30: the run comes first.
+	assert_int(ACCEL_TICKS[tickrate]).is_less(WINDUP_TICKS[tickrate])
 	for offset: int in swing:
 		var input := CombatRig.press_light(move) if offset == 0 else CombatRig.walk(move)
-		var plan := fighter.step(input)
-		var expected := minf(SLOW_WALK_MPS, (offset + 1) * accel)
+		var plan := _step_checking_phase(fighter, input, first, violations)
+		var expected := minf(RUN_SPEED_MPS, (offset + 1) * accel)
 		var horizontal := _horizontal(plan.velocity)
 		if horizontal.distance_to(direction * expected) > HAIR:
 			violations.append(
 				"tick %d of the swing: %s, expected %s" % [offset, horizontal, direction * expected]
-			)
-		if horizontal.length() > SLOW_WALK_MPS + HAIR:
-			violations.append(
-				"tick %d of the swing: %.3f m/s, above 3" % [offset, horizontal.length()]
 			)
 		if plan.velocity.y != 0.0:
 			violations.append("tick %d of the swing: vertical %.3f" % [offset, plan.velocity.y])
 	assert_array(violations).override_failure_message("\n".join(violations)).is_empty()
-	_assert_phase(
-		fighter.fought,
-		FighterState.Action.RECOVERY,
-		fighter.tick() - RECOVERY_TICKS[tickrate],
-	)
+	assert_float(fighter.horizontal_speed()).is_equal_approx(RUN_SPEED_MPS, HAIR)
 	var free := fighter.step(CombatRig.walk(move))
 	_assert_none(fighter.fought)
 	assert_float(_horizontal(free.velocity).length()) \
-			.override_failure_message("the end tick must run again") \
-			.is_equal_approx(SLOW_WALK_MPS + accel, HAIR)
+			.override_failure_message("the end tick must keep the run") \
+			.is_equal_approx(RUN_SPEED_MPS, HAIR)
 
 
-# Criterion 3: from the run, the speed falls from 7 toward 3 by the ground acceleration, 0,778
-# m/s per tick at 60 and 1,4 at 30, the swing's first tick included (combate.md, "O leve no tick":
-# "vindo da corrida, cai de 7 para 3 m/s em uns 90 ms, pela aceleração do chão"): 6 ticks at 60,
-# 3 at 30, and 3 m/s from then on.
-func test_a_run_slows_to_3_mps_during_the_light_by_the_ground_acceleration(
+# Criterion 3: from the run, the body keeps the 7 m/s through the whole swing, the first tick
+# included, and past its end (DEC-0052 §3: "o leve não freia o corpo"; combate.md, "O leve no
+# tick": "o corpo corre a até 7 m/s"), and the windup carries it 15 ticks at 7 / 60 m, the 1,75 m
+# of reach, at 60. With the light of 400 ms the run fell to 3 m/s here (F-175 §2).
+func test_a_run_keeps_7_mps_through_the_light(
 	tickrate: int,
 	_test_parameters := [[30], [60]],
 ) -> void:
 	var fighter := _fighter(tickrate)
-	var accel := _accel_per_tick(tickrate)
 	for _tick: int in ACCEL_TICKS[tickrate] + 2:
 		fighter.step(CombatRig.walk(FORWARD))
 	assert_float(fighter.horizontal_speed()).is_equal_approx(RUN_SPEED_MPS, HAIR)
+	var first := fighter.tick()
+	var start := fighter.feet()
 	var violations: Array[String] = []
 	var direction := _world_direction(FORWARD, 0.0)
-	for offset: int in _swing_ticks(tickrate):
+	var windup_travel := Vector3.ZERO
+	for offset: int in _swing_ticks(tickrate) + 2:
 		var input := CombatRig.press_light(FORWARD) if offset == 0 else CombatRig.walk(FORWARD)
-		var plan := fighter.step(input)
-		var expected := maxf(SLOW_WALK_MPS, RUN_SPEED_MPS - (offset + 1) * accel)
+		var plan := _step_checking_phase(fighter, input, first, violations)
 		var horizontal := _horizontal(plan.velocity)
-		if horizontal.distance_to(direction * expected) > HAIR:
+		if horizontal.distance_to(direction * RUN_SPEED_MPS) > HAIR:
 			violations.append(
-				"tick %d of the swing: %s, expected %s" % [offset, horizontal, direction * expected]
+				"tick %d of the swing: %s, expected %s"
+				% [offset, horizontal, direction * RUN_SPEED_MPS]
 			)
+		if offset == WINDUP_TICKS[tickrate] - 1:
+			windup_travel = fighter.feet() - start
 	assert_array(violations).override_failure_message("\n".join(violations)).is_empty()
-	assert_float(fighter.horizontal_speed()).is_equal_approx(SLOW_WALK_MPS, HAIR)
+	assert_float(fighter.horizontal_speed()).is_equal_approx(RUN_SPEED_MPS, HAIR)
+	# The windup's reach: its ticks at the run, 7 / tickrate m each; 1,75 m at 60.
+	var reach := WINDUP_TICKS[tickrate] * RUN_SPEED_MPS / tickrate
+	if tickrate == 60:
+		assert_float(reach).is_equal_approx(WINDUP_REACH_M, HAIR)
+	assert_vector(windup_travel).override_failure_message("windup travel %s" % windup_travel) \
+			.is_equal_approx(direction * reach, Vector3.ONE * HAIR)
+
+
+# Criterion 3: the stop is the ground's too (DEC-0052 §3: "a aceleração e a parada de sempre"): a
+# push released during the swing stops the body from 7 m/s in the 100 ms of movimento.md, "Chão"
+# ("Tempo até parar"), within half a tick, 6 ticks at 60 and 3 at 30, never speeding up nor
+# reversing, while the phases run on.
+func test_a_push_released_during_the_light_stops_the_body_in_100_ms(
+	tickrate: int,
+	_test_parameters := [[30], [60]],
+) -> void:
+	var fighter := _fighter(tickrate)
+	for _tick: int in ACCEL_TICKS[tickrate] + 2:
+		fighter.step(CombatRig.walk(FORWARD))
+	assert_float(fighter.horizontal_speed()).is_equal_approx(RUN_SPEED_MPS, HAIR)
+	var first := fighter.tick()
+	var released := first + 1 # the swing's second tick: the light fired at a run
+	var violations: Array[String] = []
+	var direction := _world_direction(FORWARD, 0.0)
+	var previous := RUN_SPEED_MPS
+	var stop_step := 0
+	for offset: int in _swing_ticks(tickrate):
+		var tick := first + offset
+		var input := CombatRig.press_light(FORWARD) if offset == 0 else CombatRig.idle()
+		var plan := _step_checking_phase(fighter, input, first, violations)
+		var speed := _horizontal(plan.velocity).length()
+		if tick < released:
+			if absf(speed - RUN_SPEED_MPS) > HAIR:
+				violations.append("tick %d: %.3f m/s, expected the run of 7" % [tick, speed])
+		else:
+			if speed > previous + HAIR:
+				violations.append(
+					"tick %d: sped up from %.6f to %.6f m/s" % [tick, previous, speed]
+				)
+			if plan.velocity.dot(direction) < -HAIR:
+				violations.append("tick %d: reversed instead of stopping" % tick)
+			if stop_step == 0 and speed <= HAIR:
+				stop_step = tick - released + 1
+		previous = speed
+	assert_array(violations).override_failure_message("\n".join(violations)).is_empty()
+	assert_bool(stop_step > 0).override_failure_message("never stopped during the swing").is_true()
+	var message := "stopped %d ticks after the release, the design says %d (100 ms at %d ticks)" % [
+		stop_step,
+		STOP_TICKS[tickrate],
+		tickrate,
+	]
+	assert_float(absf(stop_step - STOP_TICKS[tickrate])).override_failure_message(message) \
+			.is_less_equal(HALF_TICK)
+	assert_float(fighter.horizontal_speed()).is_equal_approx(0.0, HAIR)
 
 
 # Criterion 3: a jump, a dash or a grapple pressed during the swing waits in the slot and comes out

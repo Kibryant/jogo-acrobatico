@@ -191,3 +191,5 @@ O que chegou ao projeto e como chegou. Uma fonte não muda: só mudam `status`, 
 | [F-185](F-185-arthur-pensa-na-foto-do-tick.md) | 2026-10-28 | O Arthur pensa em voz alta sobre a foto do tick e acha que, com tudo igual entre os dois, ninguém teria vantagem |
 | [F-186](F-186-arthur-acerta-a-foto-do-tick.md) | 2026-10-28 | O Arthur acerta a conferência da foto do tick: o computador calcula um lutador depois do outro |
 | [F-187](F-187-arthur-libera-o-contador-da-task-12-2.md) | 2026-10-28 | O Arthur libera a correção do contador de golpes de um teste travado da TASK-12.2: contar a entrada no ativo |
+| [F-188](F-188-arthur-joga-a-guarda.md) | 2026-10-28 | O Arthur joga a guarda, o tranco e a paradinha e gosta; pensa no parry que reflete e abre combo, num jogo sério e sangrento com finalizações, e em refletir bala com a espada |
+| [F-189](F-189-arthur-fecha-a-task-12-2.md) | 2026-10-28 | O Arthur fecha a TASK-12.2 com a nota no critério 9: sem golpe pelas costas nem troca da tecla na sessão |

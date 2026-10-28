@@ -3,10 +3,10 @@ id: TASK-12.2
 title: >-
   A guarda e o tranco: o bloqueio, o hitstun, o blockstun, o hitstop e os tokens
   como dado
-status: In Progress
+status: Done
 assignee: []
 created_date: '2026-10-27 22:02'
-updated_date: '2026-10-28 12:17'
+updated_date: '2026-10-28 14:54'
 labels:
   - jogo
 milestone: m-2
@@ -40,21 +40,27 @@ Nenhuma: a guarda no botão direito segurado e cobrindo a metade da frente são 
 
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
-- [ ] #1 Quando o jogador segura o botão direito em pé no chão, a guarda sobe em 6 ticks, e com ela alta o corpo anda a até 3 m/s; soltar a derruba na hora; pular, dar o dash ou golpear a derrubam, e com o botão ainda apertado ela sobe sozinha de novo em 6 ticks assim que o corpo está em pé no chão, sem golpe e sem tranco; no ar não há guarda (DEC-0054).
-- [ ] #2 Quando um leve toca quem tem a guarda alta, com o atacante a até 90° de onde o corpo de quem defende olha, o golpe não tira vida, quem bloqueou paga 5 de stamina e fica 15 ticks no blockstun contados do contato, quem bateu segue a recuperação, e quem bloqueou fica 3 ticks à frente (DEC-0052).
-- [ ] #3 Quando o leve vem de mais de 90° de onde a guarda olha, pelas costas, ou chega antes de os 6 ticks da guarda se completarem, ele pega como sem guarda (DEC-0054).
-- [ ] #4 Quando um leve pega sem guarda, o alvo perde 12, fica 24 ticks sem input de movimento nem de ação contados do contato, o golpe dele em curso acaba, e a gravidade segue; quem bateu fica 6 ticks à frente; um golpe novo no meio do tranco o recomeça do contato novo.
-- [ ] #5 Quando quem bloqueia tem menos de 5 de stamina, a guarda cai no contato e o golpe pega com o tranco cheio.
-- [ ] #6 Quando um leve pega ou é bloqueado, quem levou ou bloqueou congela 4 ou 2 ticks a partir do tick seguinte ao contato, e quem bateu congela a mesma duração a partir do tick seguinte a esse, quando a foto mostra o resultado; congelados, os corpos não se movem nem caem e depois seguem com a velocidade que tinham; o relógio do golpe e o do tranco andam a duração para a frente, e a vantagem medida depois é a mesma de antes; um contato sem resultado não congela ninguém (DEC-0055).
-- [ ] #7 Quando um leve pega, a câmera de quem levou treme por 100 ms com até 0,5°, e no bloqueio a de quem bloqueou, com até 0,3°, uma vez por evento, nunca de novo na re-simulação; a linha "Tremor da câmera" da tela de opções desliga o tremor.
-- [ ] #8 Quando a cena da guarda roda na SyncTest com o rollback de 7 ticks, com acertos, bloqueios e paradinhas, nenhum campo diverge, e o veneno no campo do congelamento a faz acusar.
-- [ ] #9 Quando o Arthur joga contra o boneco que dá um leve a cada 3 s virado para ele, ele bloqueia de frente, leva pelas costas, sente a paradinha e o tremor, troca a tecla da guarda nas opções, e vê a cor, a pose e a forma do HUD de cada estado dos tokens, lidos de um Resource em `data/`.
+- [x] #1 Quando o jogador segura o botão direito em pé no chão, a guarda sobe em 6 ticks, e com ela alta o corpo anda a até 3 m/s; soltar a derruba na hora; pular, dar o dash ou golpear a derrubam, e com o botão ainda apertado ela sobe sozinha de novo em 6 ticks assim que o corpo está em pé no chão, sem golpe e sem tranco; no ar não há guarda (DEC-0054).
+- [x] #2 Quando um leve toca quem tem a guarda alta, com o atacante a até 90° de onde o corpo de quem defende olha, o golpe não tira vida, quem bloqueou paga 5 de stamina e fica 15 ticks no blockstun contados do contato, quem bateu segue a recuperação, e quem bloqueou fica 3 ticks à frente (DEC-0052).
+- [x] #3 Quando o leve vem de mais de 90° de onde a guarda olha, pelas costas, ou chega antes de os 6 ticks da guarda se completarem, ele pega como sem guarda (DEC-0054).
+- [x] #4 Quando um leve pega sem guarda, o alvo perde 12, fica 24 ticks sem input de movimento nem de ação contados do contato, o golpe dele em curso acaba, e a gravidade segue; quem bateu fica 6 ticks à frente; um golpe novo no meio do tranco o recomeça do contato novo.
+- [x] #5 Quando quem bloqueia tem menos de 5 de stamina, a guarda cai no contato e o golpe pega com o tranco cheio.
+- [x] #6 Quando um leve pega ou é bloqueado, quem levou ou bloqueou congela 4 ou 2 ticks a partir do tick seguinte ao contato, e quem bateu congela a mesma duração a partir do tick seguinte a esse, quando a foto mostra o resultado; congelados, os corpos não se movem nem caem e depois seguem com a velocidade que tinham; o relógio do golpe e o do tranco andam a duração para a frente, e a vantagem medida depois é a mesma de antes; um contato sem resultado não congela ninguém (DEC-0055).
+- [x] #7 Quando um leve pega, a câmera de quem levou treme por 100 ms com até 0,5°, e no bloqueio a de quem bloqueou, com até 0,3°, uma vez por evento, nunca de novo na re-simulação; a linha "Tremor da câmera" da tela de opções desliga o tremor.
+- [x] #8 Quando a cena da guarda roda na SyncTest com o rollback de 7 ticks, com acertos, bloqueios e paradinhas, nenhum campo diverge, e o veneno no campo do congelamento a faz acusar.
+- [x] #9 Quando o Arthur joga contra o boneco que dá um leve a cada 3 s virado para ele, ele bloqueia de frente, leva pelas costas, sente a paradinha e o tremor, troca a tecla da guarda nas opções, e vê a cor, a pose e a forma do HUD de cada estado dos tokens, lidos de um Resource em `data/`.
 <!-- AC:END -->
 
 ## Definition of Done
 <!-- DOD:BEGIN -->
-- [ ] #1 Critérios de aceite verificados
-- [ ] #2 Teste automatizado para toda regra do núcleo (core/)
-- [ ] #3 Diário da sessão escrito e glossário atualizado
-- [ ] #4 Mudanças registradas em docs/mudancas.md
+- [x] #1 Critérios de aceite verificados
+- [x] #2 Teste automatizado para toda regra do núcleo (core/)
+- [x] #3 Diário da sessão escrito e glossário atualizado
+- [x] #4 Mudanças registradas em docs/mudancas.md
 <!-- DOD:END -->
+
+## Implementation Notes
+
+<!-- SECTION:NOTES:BEGIN -->
+O critério 9 fechou com o Arthur jogando contra o boneco que ataca (F-188): 12 bloqueios, 11 respostas que acertaram, a paradinha e o tremor. Ele não levou golpe pelas costas com a guarda alta nem trocou a tecla da guarda na sessão; os testes travados cobrem as duas regras, e ele liberou fechar assim (F-189).
+<!-- SECTION:NOTES:END -->

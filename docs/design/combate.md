@@ -21,7 +21,7 @@ Cada perna do triângulo é uma regra concreta, não uma intenção (F-173 §1, 
 
 | Perna | A regra que a sustenta | De onde vem |
 |---|---|---|
-| Carregado vence leve | **Armadura:** durante toda a preparação do carregado, um leve que acerta tira o dano e não interrompe. Sem ela, um leve começado junto pega aos 24 ticks e o carregado só aos 42, e o triângulo se inverte | O Naraka dá armadura durante toda a carga (F-173 §1 C17). No For Honor e no Chivalry, sem armadura, o leve interrompe o pesado (F-173 §1 C11 e C15) |
+| Carregado vence leve | **Armadura:** durante toda a preparação do carregado, um leve que acerta tira o dano e não interrompe. Sem ela, um leve começado junto pega aos 15 ticks e o carregado só aos 42, e o triângulo se inverte | O Naraka dá armadura durante toda a carga (F-173 §1 C17). No For Honor e no Chivalry, sem armadura, o leve interrompe o pesado (F-173 §1 C11 e C15) |
 | Parry vence carregado | **A janela de 200 ms** nos últimos 200 ms da preparação fixa do carregado, e um carregado inteiro garantido para quem apara | A janela do For Honor (de 300 a 100 ms antes do contato) e a do Sekiro (12 frames) são de 200 ms (F-173 §1 C01 e C19) |
 | Leve vence parry | **O leve não se apara:** a postura do parry não para o leve, que pega e dá o tranco. Um parry no vazio custa 450 ms de recuperação | No Naraka, os básicos não se aparam (F-173 §1 C18) |
 
@@ -152,7 +152,7 @@ A conta do golpe é do núcleo, com formas simples: a lâmina é um segmento com
 
 ### O leve no tick (TASK-12.1; DEC-0051)
 
-Como as regras acima viram ticks. O que não estava no papel é leitura v0 do Claude (DEC-0017), salvo o andar no golpe e a tecla, que são escolhas do Arthur (F-175 §2).
+Como as regras acima viram ticks. O que não estava no papel é leitura v0 do Claude (DEC-0017), salvo a tecla, escolha do Arthur (F-175 §2), e o leve rápido que não freia o corpo, decidido por ele jogando (F-180; DEC-0052).
 
 - **Quando o leve sai:** em pé no chão (o modo `GROUND`, fora da cabeça de outro lutador; `movimento.md`, "O corpo"), sem golpe em curso e com 8 de stamina, pagos no primeiro tick da preparação. Fora disso, o aperto espera na vaga do buffer pelos 150 ms (`movimento.md`, "Perdão" e "Stamina"). Num dash, o leve guardado sai no tick seguinte ao da saída do dash, e não nele: o combate decide antes do movimento, e é o movimento que termina o dash (DEC-0051 §2). A tecla é o botão esquerdo do mouse, remapeável (F-175 §2; DEC-0031 §8).
 - **A vaga dividida:** uma vaga só para todo comando (DEC-0039). No mesmo tick, o pulo vence o dash, que vence o gancho, que vence o leve: qualquer tecla de movimento apertada junto com o leve leva a vaga.
@@ -168,7 +168,7 @@ Como as regras acima viram ticks. O que não estava no papel é leitura v0 do Cl
 
 ## O hitstop e o tremor
 
-O **hitstop** é a pausa curta dos dois lutadores no instante do acerto, que faz o golpe parecer ter encostado em algo. No v0 ele é **simulado**, curto e simétrico: os dois congelam o mesmo tempo, o relógio do golpe dos dois para junto, e por isso a vantagem não muda (F-173 §2, princípio 7); o relógio do round e os outros lutadores não param. Ser estado do núcleo faz a animação nunca descolar da simulação e o rollback refazê-lo igual; o custo é uma correção do tamanho do hitstop quando um acerto chega atrasado pela rede, e por isso ele é curto. A definição anterior do glossário, "só apresentação", muda com este desenho (`mudancas.md`). O jogo de luta 2D usa 9 a 13 frames; o Celeste, 3 (F-173 §2); aqui o leve inteiro dura 24, então 4 a 7.
+O **hitstop** é a pausa curta dos dois lutadores no instante do acerto, que faz o golpe parecer ter encostado em algo. No v0 ele é **simulado**, curto e simétrico: os dois congelam o mesmo tempo, o relógio do golpe dos dois para junto, e por isso a vantagem não muda (F-173 §2, princípio 7); o relógio do round e os outros lutadores não param. Ser estado do núcleo faz a animação nunca descolar da simulação e o rollback refazê-lo igual; o custo é uma correção do tamanho do hitstop quando um acerto chega atrasado pela rede, e por isso ele é curto. A definição anterior do glossário, "só apresentação", muda com este desenho (`mudancas.md`). O jogo de luta 2D usa 9 a 13 frames; o Celeste, 3 (F-173 §2); aqui o leve inteiro dura 33 ticks (DEC-0052), então 4 a 7.
 
 | Evento | Quem congela | ms | Ticks | Tremor da câmera (apresentação) |
 |---|---|---|---|---|
@@ -247,4 +247,4 @@ Com ping, o golpe do outro chega atrasado na tela de quem defende. No relógio d
 
 - **Q-07:** qual a técnica própria do jogo, o equivalente ao K-style do GunZ? O duelo é o próximo lugar onde ela pode aparecer (F-166).
 - **Q-34 e Q-44:** o dash no ar e a escalada voltam com o primeiro oponente, na filha do bot (F-166 §4 e §6).
-- **O que o duelo jogável mede,** na ordem em que o Arthur vai sentir: se o leve de 400 ms se lê e se defende; se o carregado de 700 se apara contando; se a quebra se responde com o tech; se o bloqueio a 5 e 15 de stamina sustenta; se o hitstop de 4 e 7 ticks pesa sem grudar; se a recuperação do leve para a esquiva (DEC-0016) faz falta. Cada um é um número no Resource, trocado sem tocar no código (DEC-0004, regra 3).
+- **O que o duelo jogável mede,** na ordem em que o Arthur vai sentir: se o leve de 250 ms se lê e se bloqueia segurando a guarda (DEC-0052); se o carregado de 700 se apara contando; se a quebra se responde com o tech; se o bloqueio a 5 e 15 de stamina sustenta; se o hitstop de 4 e 7 ticks pesa sem grudar; se a recuperação do leve para a esquiva (DEC-0016) faz falta. Cada um é um número no Resource, trocado sem tocar no código (DEC-0004, regra 3).

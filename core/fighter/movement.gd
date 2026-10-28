@@ -458,8 +458,8 @@ static func _horizontal(
 			return current.move_toward(Vector3.ZERO, config.stop_decel_per_tick)
 		return current
 	if standing:
-		# The light does not slow the body: it runs at the run speed, in test (F-179; combate.md,
-		# "O leve no tick"). The slow walk comes back with the guard and the charged attack.
+		# The light does not slow the body: it runs at the run speed (DEC-0052; combate.md, "O leve
+		# no tick"). The slow walk comes back with the guard and the charged attack.
 		return current.move_toward(
 			_world(move, input.yaw) * config.run_speed,
 			config.ground_accel_per_tick,

@@ -6,8 +6,10 @@ status: aceita
 decidido_por: Arthur (F-176; F-175 §2)
 fontes: [F-007, F-073, F-173, F-175, F-176]
 substitui:
-substituida_por:
+substituida_por: DEC-0052, só a frase do §5 de que, em pé, o alvo da velocidade durante um golpe é o andar devagar, 3 m/s
 ---
+
+> ⚠️ Em parte substituída por DEC-0052 em 2026-10-28: o leve não freia o corpo; o andar devagar de 3 m/s fica para a guarda e o carregado. O resto desta DEC continua valendo.
 
 # DEC-0051 — O combate no tick
 

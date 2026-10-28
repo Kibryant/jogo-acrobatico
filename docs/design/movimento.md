@@ -50,7 +50,7 @@ Cada número tem uma origem, e nem todos têm a mesma firmeza; a vitrine mostra 
 | Velocidade de corrida | 7 | m/s | A mesma para frente, para o lado e para trás |
 | Tempo até a velocidade máxima | 150 | ms | Deriva a aceleração: ≈ 46,7 m/s² |
 | Tempo até parar | 100 | ms | Deriva a desaceleração: 70 m/s² |
-| Andar devagar | com a guarda alta ou durante o carregado: 3 m/s | m/s | A guarda andando do combate (`combate.md`, "O bloqueio, a guarda andando e a stamina"; TASK-12) e o carregado (TASK-12.3). O leve não freia o corpo, em teste desde 28/10/2026 (F-179; `combate.md`, "O leve no tick"); antes, o golpe andava a 3 m/s (F-175 §2). Fora deles, não existe andar devagar. Leitura v0 do Claude |
+| Andar devagar | com a guarda alta ou durante o carregado: 3 m/s | m/s | A guarda andando do combate (`combate.md`, "O bloqueio, a guarda andando e a stamina"; TASK-12) e o carregado (TASK-12.3). O leve não freia o corpo, desde 28/10/2026 (DEC-0052; F-180; `combate.md`, "O leve no tick"); antes, o golpe andava a 3 m/s (F-175 §2). Fora deles, não existe andar devagar. Leitura v0 do Claude |
 
 ## Pulo e ar
 

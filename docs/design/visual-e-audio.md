@@ -116,7 +116,7 @@ A sonda não tem rede, física, efeitos, interface nem arena; o jogo de verdade 
 
 | Estado | Cor | Pose | Som |
 |---|---|---|---|
-| Leve, preparação (250 ms, em teste: F-179) | Nenhuma: é o padrão | A lâmina vai para trás | "Whoosh" curto |
+| Leve, preparação (250 ms; DEC-0052) | Nenhuma: é o padrão | A lâmina vai para trás | "Whoosh" curto |
 | Carregado, preparação (700 ms) | Azul celeste `#56B4E9` na lâmina e na aura, desde o tick 0 | A espada acima da cabeça desde o tick 0 | Som longo, subindo |
 | Ativo | Vermelhão `#D55E00` na lâmina e no rastro | O arco da lâmina | "Swish" |
 | Parry, janela (200 ms) e acerto | Amarelo `#F0E442` na lâmina e na aura; flash e faíscas no acerto | A lâmina cruzada à frente | Um toque; o "clang" no acerto, o mais forte |

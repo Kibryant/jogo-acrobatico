@@ -94,6 +94,8 @@ A rampa de aprendizado do estudo: um percurso com fantasma, como o Gauntlet do T
 
 A `Main` abre hoje em três papéis (DEC-0026 §6): servidor dedicado, cliente e Sozinho. A fase 2 põe dentro do Sozinho a escolha do que jogar: o duelo contra o bot (com o nível), o percurso cronometrado, e a arena livre de hoje com o boneco. Uma tela simples, no Theme (DEC-0031 §8); o detalhe sai na filha da partida.
 
+**A vida sem partida** (TASK-12.1; leitura v0 do Claude, DEC-0017): até a partida da TASK-12.7, todo lutador tem vida 100, que nunca desce de 0, e ela volta a 100 dois segundos, 120 ticks, depois do último golpe que ele levou. É o treino contra o boneco: a barra mostra cada acerto e se refaz sozinha. Na partida, os rounds tomam o lugar dessa regra (`combate.md`, "O leve no tick").
+
 ## O relatório de crash pelo log (DEC-0034)
 
 Quando os amigos testarem, o jogo precisa deixar o log no PC deles, com a pilha de chamadas, e o passo a passo precisa dizer onde ele fica e como mandar. As configurações do Godot e os passos estão em `docs/arquitetura/testes-e-entrega.md` §13, e o passo a passo público nasce na filha do log.

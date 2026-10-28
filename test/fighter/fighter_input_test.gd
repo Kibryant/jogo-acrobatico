@@ -2,7 +2,8 @@
 # netfox records for each tick (DEC-0026 §1), and a jump press counts for at most one tick, even
 # when a frame runs two ticks to catch the clock. Ticks run by hand (DEC-0027 §3), in Sozinho.
 # TASK-10.4 adds the dash on the left Shift; TASK-10.6, criterion 2, the camera's pitch, the last
-# sample like the yaw, and the grapple on the Q, a one-touch command like the others.
+# sample like the yaw, and the grapple on the Q, a one-touch command like the others; TASK-12.1,
+# the light attack on the left mouse button, one more (F-175 §2).
 extends GdUnitTestSuite
 
 const NetfoxTicks := preload("res://test/support/netfox_ticks.gd")
@@ -285,4 +286,54 @@ func test_the_q_key_presses_the_grapple_once_and_its_key_repeat_is_not_a_second_
 	for tick: int in range(press_tick + 1, NetworkTime.tick):
 		assert_bool(_boxes[tick].grapple) \
 				.override_failure_message("a key repeat counted as a press on tick %d" % tick) \
+				.is_false()
+
+
+# TASK-12.1: pressed once, the light attack is in the box of the first tick of a frame that runs
+# two, and only there; it is no jump, dash or grapple.
+func test_a_light_attack_press_counts_for_one_tick_when_a_frame_runs_two() -> void:
+	var fighter := await _fighter_in_a_match()
+	NetfoxTicks.run_loops(3)
+	_watch_boxes(fighter)
+	var press_tick := NetworkTime.tick
+	fighter.input.press_light_attack()
+	NetfoxTicks.run_loop(2)
+	assert_bool(_boxes[press_tick].light_attack).is_true()
+	assert_bool(_boxes[press_tick + 1].light_attack).is_false()
+	assert_bool(fighter.input.to_tick_input().light_attack).is_false()
+	assert_bool(_boxes[press_tick].jump).is_false()
+	assert_bool(_boxes[press_tick].dash).is_false()
+	assert_bool(_boxes[press_tick].grapple).is_false()
+
+
+# The left mouse button as the operating system reports it: the InputMap's light_attack action
+# (project.godot, [input]; F-175 §2).
+static func _left_click(pressed: bool) -> InputEventMouseButton:
+	var event := InputEventMouseButton.new()
+	event.button_index = MOUSE_BUTTON_LEFT
+	event.pressed = pressed
+	return event
+
+
+# TASK-12.1 (F-175 §2): a click of the left button through the viewport presses the light attack
+# on its tick; holding it is one press. A headless run cannot capture the mouse, and the camera
+# spends a click on a mouse that got away to capture it (CameraRig): with the camera's mouse set
+# free, the click reaches the fighter's input as a captured one would.
+func test_the_left_click_presses_the_light_attack_once() -> void:
+	var fighter := await _fighter_at_the_keyboard()
+	_game_match.camera_rig.free_mouse()
+	NetfoxTicks.run_loops(3)
+	_watch_boxes(fighter)
+	var press_tick := NetworkTime.tick
+	get_viewport().push_input(_left_click(true))
+	NetfoxTicks.run_loop()
+	NetfoxTicks.run_loops(3)
+	get_viewport().push_input(_left_click(false))
+	NetfoxTicks.run_loop()
+	assert_bool(_boxes[press_tick].light_attack) \
+			.override_failure_message("the left click did not press the light attack") \
+			.is_true()
+	for tick: int in range(press_tick + 1, NetworkTime.tick):
+		assert_bool(_boxes[tick].light_attack) \
+				.override_failure_message("a held button counted again on tick %d" % tick) \
 				.is_false()

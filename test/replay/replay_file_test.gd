@@ -11,6 +11,7 @@ extends GdUnitTestSuite
 ## netfox's tick of the files' first rows: not 0, as in a long session.
 const FIRST_TICK := 500
 const MOVEMENT_V0 := "res://data/movement_v0.tres"
+const COMBAT_V0 := "res://data/combat_v0.tres"
 const SHA256_LENGTH := 64
 
 
@@ -181,10 +182,11 @@ func test_the_header_says_which_game_recorded_it_with_the_whole_configuration() 
 	assert_int(fields["arena_sha256"].length()).is_equal(SHA256_LENGTH)
 	assert_str(fields["seed"]).is_equal("0")
 	assert_str(fields["config"]).is_equal(MOVEMENT_V0)
-	# TASK-10.6 added pitch and grapple, by reflection over TickInput (criterion 2).
+	# TASK-10.6 added pitch and grapple, by reflection over TickInput (criterion 2), and TASK-12.1
+	# the light attack.
 	assert_str(fields["columns"]).is_equal(
 		"tick:int,loop:int,fighter:int,move.x:f64,move.y:f64,yaw:f64,pitch:f64,jump:bool,dash:bool,"
-		+ "grapple:bool,check:hex8",
+		+ "grapple:bool,light_attack:bool,check:hex8",
 	)
 	# One line per field of MovementData, typed, with the .tres's value in its cell.
 	var resource: Resource = load(MOVEMENT_V0)
@@ -196,13 +198,33 @@ func test_the_header_says_which_game_recorded_it_with_the_whole_configuration() 
 		var key := "%s%s:%s" % [ReplayFile.CONFIG_PREFIX, field, types[field]]
 		assert_bool(fields.has(key)).override_failure_message("no %s" % key).is_true()
 		assert_str(fields[key]).is_equal(ReplayFile.write_cell(data.get(field), types[field]))
-	# The fields in the order of the format, the configuration after "config".
+	# TASK-12.1: one line per field of CombatData, the light attack's as light_attack.<field>,
+	# typed, with combat_v0.tres's value in its cell.
+	assert_str(fields["combat"]).is_equal(COMBAT_V0)
+	var combat_resource: Resource = load(COMBAT_V0)
+	assert_bool(combat_resource is CombatData).is_true()
+	var combat := combat_resource as CombatData
+	var combat_types := ReplayFile.combat_types()
+	assert_bool(combat_types.has("light_attack.windup_ms")).is_true()
+	assert_bool(combat_types.has("max_health")).is_true()
+	for field: String in combat_types:
+		var key := "%s%s:%s" % [ReplayFile.COMBAT_PREFIX, field, combat_types[field]]
+		assert_bool(fields.has(key)).override_failure_message("no %s" % key).is_true()
+		var value: Variant = combat.get(field)
+		if field.begins_with("light_attack."):
+			value = combat.light_attack.get(field.trim_prefix("light_attack."))
+		assert_str(fields[key]).is_equal(ReplayFile.write_cell(value, combat_types[field]))
+	# The fields in the order of the format, the configuration after "config", the combat's after
+	# "combat".
 	var order := PackedStringArray()
 	for key: String in keys:
-		if not key.begins_with(ReplayFile.CONFIG_PREFIX):
+		var numbers := key.begins_with(ReplayFile.CONFIG_PREFIX)
+		if not numbers and not key.begins_with(ReplayFile.COMBAT_PREFIX):
 			order.append(key)
 	assert_array(Array(order)).is_equal(Array(ReplayFile.KEYS))
 	assert_int(keys.find("config.capsule_height_m:f64")).is_equal(keys.find("config") + 1)
+	var first_combat := "%slight_attack.windup_ms:int" % ReplayFile.COMBAT_PREFIX
+	assert_int(keys.find(first_combat)).is_equal(keys.find("combat") + 1)
 
 
 # Criterion 2 of TASK-10.6: the pitch travels with every bit, like the yaw (a mouse never stops on

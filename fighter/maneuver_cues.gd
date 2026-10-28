@@ -17,6 +17,11 @@
 # The grapple's pull and the slide off a head wear the same short trail. The grapple's cable is
 # the one opaque cue: a line from the shoulder to the point, drawn by Godot's own shapes too
 # (visual-e-audio.md, "O gancho na tela").
+# The light attack adds two cues (visual-e-audio.md, "O leve na tela"; TASK-12.1): the arc's trail
+# in vermilion, once per swing, keyed by the tick its active began; and the white flash of the body
+# of whoever took a hit, 100 ms, once per hit, keyed by the tick of the hit's contact. That stamp
+# is the attacker's tick, and the hit first shows in the target's state on the next one, the first
+# whose photo shows the contact (DEC-0051 §3): the event says the tick it first shows on.
 # It also counts, for the SyncTest, the events the simulation made on its fresh ticks: there,
 # with the rollback forced on every tick, the cues presented must equal the events (DEC-0031 §6;
 # rede.md §4).
@@ -32,6 +37,8 @@ enum Kind {
 	GRAPPLE_CABLE,
 	GRAPPLE_PULL,
 	HEAD_SLIDE,
+	SWING,
+	HIT,
 }
 
 ## The cue's opacity when it appears; it fades to nothing. Claude's v0 reading (DEC-0017): seen
@@ -44,6 +51,12 @@ const PUFF_GROWTH := 3.0
 const DISC_THICKNESS := 0.01
 ## m: the grapple's cable, a line this thick (visual-e-audio.md, "O gancho na tela").
 const CABLE_THICKNESS := 0.03
+## s: the white flash of a hit taken (visual-e-audio.md, "O leve na tela": "o flash branco do
+## corpo de quem levou, 100 ms").
+const FLASH_S := 0.1
+## The active token's vermilion, on the arc's trail (visual-e-audio.md, "Os três canais por
+## estado").
+const SWING_COLOUR := Sword.ACTIVE_COLOUR
 
 ## Cues played: one per key, when its event first shows in the displayed state.
 var presented := 0
@@ -117,6 +130,11 @@ static func shown_events(fighter: Fighter) -> Array[Event]:
 		shown.append(Event.new(fighter, Kind.GRAPPLE_PULL, state.mode_since))
 	if state.slide_off_dir != Vector3.ZERO:
 		shown.append(Event.new(fighter, Kind.HEAD_SLIDE, state.head_landing_tick))
+	if state.action == FighterState.Action.ACTIVE:
+		shown.append(Event.new(fighter, Kind.SWING, state.action_since))
+	if state.hurt_tick != FighterState.NEVER:
+		# The contact's tick, applied on the next one: like the double jump's stamp, it stays.
+		shown.append(Event.new(fighter, Kind.HIT, state.hurt_tick, state.hurt_tick + 1))
 	return shown
 
 
@@ -136,7 +154,7 @@ func _present() -> void:
 	_forget_old(_played)
 
 
-# After every tick netfox simulates: on a fresh one, the events whose stamp is that tick.
+# After every tick netfox simulates: on a fresh one, the events that first show on that tick.
 func _count(tick: int) -> void:
 	if tick <= _newest_tick:
 		return
@@ -145,7 +163,7 @@ func _count(tick: int) -> void:
 		if not is_instance_valid(fighter):
 			continue
 		for event: Event in shown_events(fighter):
-			if event.stamp == tick and not _counted.has(event.key):
+			if event.shows == tick and not _counted.has(event.key):
 				_counted[event.key] = tick
 				events += 1
 	_forget_old(_counted)
@@ -179,20 +197,33 @@ func _draw(fighter: Fighter, kind: Kind) -> void:
 			add_child(Cable.new(fighter, _config))
 		Kind.WALL_JUMP:
 			add_child(Puff.new(fighter, _config, fighter.state.wall_normal))
+		Kind.SWING:
+			if fighter.combat != null:
+				add_child(SwingTrail.new(fighter, fighter.combat))
+		Kind.HIT:
+			fighter.flash(FLASH_S)
 		_:
 			add_child(Puff.new(fighter, _config, Vector3.ZERO))
 
 
-# One event of a fighter, with its key: the fighter, the kind and the stamp.
+# One event of a fighter, with its key: the fighter, the kind and the stamp; and the tick it first
+# shows on, the stamp itself but for a hit.
 class Event:
 	var kind: Kind
 	var stamp: int
+	var shows: int
 	var key: String
 
 
-	func _init(fighter: Fighter, event_kind: Kind, event_stamp: int) -> void:
+	func _init(
+		fighter: Fighter,
+		event_kind: Kind,
+		event_stamp: int,
+		first_shown := FighterState.NEVER,
+	) -> void:
 		kind = event_kind
 		stamp = event_stamp
+		shows = event_stamp if first_shown == FighterState.NEVER else first_shown
 		key = "%d/%d/%d" % [fighter.get_instance_id(), event_kind, event_stamp]
 
 
@@ -448,3 +479,89 @@ class Puff:
 	func _grow(share: float) -> void:
 		var radius := _radius * lerpf(1.0, PUFF_GROWTH, share)
 		basis = basis.orthonormalized().scaled_local(Vector3(radius, 1.0, radius))
+
+
+# The arc's trail of a swing (visual-e-audio.md, "O leve na tela"): the ring the blade swept, from
+# the hand's 0,6 m to the tip's 2,0 m off the attacker's axis at the hand's height, from the arc's
+# start to the end of the displayed tick's slice, in vermilion and seen through. It follows the
+# body while that swing's active lasts, then fades over FADE_S. Claude's v0 reading of "o rastro
+# do arco" (DEC-0017): Godot's own triangles, no new asset (DEC-0029).
+class SwingTrail:
+	extends MeshInstance3D
+
+	## s: the fade after the active. Claude's v0 reading (DEC-0017).
+	const FADE_S := 0.2
+	## Steps of the ring per radian of arc: two triangles each.
+	const STEPS_PER_RAD := 12.0
+
+	var _fighter: Fighter
+	var _combat: CombatConfig
+	var _attack: AttackConfig
+	var _stamp: int
+	var _yaw: float
+	var _left_s := -1.0
+	var _material := StandardMaterial3D.new()
+	var _mesh := ImmediateMesh.new()
+
+
+	func _init(fighter: Fighter, combat: CombatConfig) -> void:
+		name = "SwingTrail"
+		_fighter = fighter
+		_combat = combat
+		_stamp = fighter.state.action_since
+		_yaw = fighter.state.action_yaw
+		_attack = combat.attacks[fighter.state.action_move]
+		_material.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+		_material.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+		_material.cull_mode = BaseMaterial3D.CULL_DISABLED
+		_material.albedo_color = Color(SWING_COLOUR, OPACITY)
+		mesh = _mesh
+		material_override = _material
+		cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+		top_level = true
+		# Top level, its position is the world's once in the tree.
+		position = fighter.global_position
+		_sweep(1)
+
+
+	func _process(delta: float) -> void:
+		if _left_s < 0.0:
+			var state := _fighter.state if is_instance_valid(_fighter) else null
+			var swinging := state != null and state.action == FighterState.Action.ACTIVE
+			if swinging and state.action_since == _stamp:
+				global_position = _fighter.global_position
+				_sweep(NetworkTime.tick - 1 - _stamp + 1)
+				return
+			_sweep(_attack.active_ticks)
+			_left_s = FADE_S
+		_left_s -= delta
+		if _left_s <= 0.0:
+			queue_free()
+			return
+		_material.albedo_color.a = OPACITY * _left_s / FADE_S
+
+
+	## The ring from the arc's start to the end of the k-th slice, around the node's origin, the
+	## attacker's feet.
+	func _sweep(k: int) -> void:
+		var to := Blade.slice_of(_attack, clampi(k, 1, _attack.active_ticks)).y
+		var from := _attack.arc_from
+		var steps := maxi(1, ceili(absf(to - from) * STEPS_PER_RAD))
+		var inner := _combat.hand_offset
+		var outer := _combat.hand_offset + _combat.blade_length
+		var up := Vector3.UP * _combat.hand_height
+		_mesh.clear_surfaces()
+		_mesh.surface_begin(Mesh.PRIMITIVE_TRIANGLES, _material)
+		for step: int in steps:
+			var a := Blade.direction(_yaw + lerpf(from, to, float(step) / steps))
+			var b := Blade.direction(_yaw + lerpf(from, to, float(step + 1) / steps))
+			for corner: Vector3 in [
+				a * inner,
+				a * outer,
+				b * outer,
+				a * inner,
+				b * outer,
+				b * inner,
+			]:
+				_mesh.surface_add_vertex(up + corner)
+		_mesh.surface_end()

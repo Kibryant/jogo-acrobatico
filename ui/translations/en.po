@@ -107,6 +107,10 @@ msgstr "Dash"
 msgid "OPTIONS_ACTION_GRAPPLE"
 msgstr "Grapple"
 
+# The action light attack (TASK-12.1).
+msgid "OPTIONS_ACTION_LIGHT_ATTACK"
+msgstr "Light attack"
+
 # The mouse's sensitivity, from 0.02 to 0.20 degrees per pixel (F-161).
 msgid "OPTIONS_SENSITIVITY"
 msgstr "Sensitivity"
@@ -145,3 +149,7 @@ msgstr "{key} already belongs to {action}. Choose another key or change {action}
 # The same words in both languages.
 msgid "OPTIONS_MOUSE_BUTTON"
 msgstr "Mouse {number}"
+
+# The left mouse button, the light attack's default (TASK-12.1).
+msgid "OPTIONS_MOUSE_LEFT"
+msgstr "Left mouse"

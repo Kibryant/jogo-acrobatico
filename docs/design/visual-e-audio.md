@@ -1,6 +1,6 @@
 ---
 revisado_em: 2026-10-27
-fontes: [F-050, F-051, F-052, F-053, F-054, F-056, F-058, F-059, F-061, F-062, F-063, F-100, F-121, F-122, F-137, F-139, F-140, F-141, F-146, F-147, F-148, F-152, F-153, F-156, F-157, F-158, F-161, F-162, F-170, F-172, F-173, F-174]
+fontes: [F-050, F-051, F-052, F-053, F-054, F-056, F-058, F-059, F-061, F-062, F-063, F-100, F-121, F-122, F-137, F-139, F-140, F-141, F-146, F-147, F-148, F-152, F-153, F-156, F-157, F-158, F-161, F-162, F-170, F-172, F-173, F-174, F-175]
 ---
 
 # Visual e áudio
@@ -116,10 +116,10 @@ A sonda não tem rede, física, efeitos, interface nem arena; o jogo de verdade 
 
 | Estado | Cor | Pose | Som |
 |---|---|---|---|
-| Leve, preparação (300 ms) | Nenhuma: é o padrão | A lâmina vai para trás | "Whoosh" curto |
-| Carregado, preparação (500 a 900 ms) | Azul celeste `#56B4E9` na lâmina e na aura, desde o tick 0 | A espada acima da cabeça desde o tick 0 | Som longo, subindo |
+| Leve, preparação (250 ms; DEC-0052) | Nenhuma: é o padrão | A lâmina vai para trás | "Whoosh" curto |
+| Carregado, preparação (700 ms) | Azul celeste `#56B4E9` na lâmina e na aura, desde o tick 0 | A espada acima da cabeça desde o tick 0 | Som longo, subindo |
 | Ativo | Vermelhão `#D55E00` na lâmina e no rastro | O arco da lâmina | "Swish" |
-| Parry, janela (80 ms) e acerto | Amarelo `#F0E442` na lâmina e na aura; flash e faíscas no acerto | A lâmina cruzada à frente | Um toque; o "clang" no acerto, o mais forte |
+| Parry, janela (200 ms) e acerto | Amarelo `#F0E442` na lâmina e na aura; flash e faíscas no acerto | A lâmina cruzada à frente | Um toque; o "clang" no acerto, o mais forte |
 | Quebra de guarda, preparação (350 ms) | A mão em vermelhão desde o tick 0 (hipótese, F-063 §4) | A espada baixa, a mão à frente, o contorno pulsando | Um pisão |
 | Finta, o corte (300 a 450 ms) | Nenhuma | A pose volta num estalo | Um estalo seco |
 | Arma de longe carregada | Roxo-avermelhado `#CC79A7`, a conferir sob deuteranopia | A puxada | A puxada ouvida pelo alvo, com direção |
@@ -130,7 +130,7 @@ A sonda não tem rede, física, efeitos, interface nem arena; o jogo de verdade 
 | Hitstop, de 2 a 12 ticks | — | Os dois parados na pose do impacto; a câmera treme (só apresentação, com opção para desligar) | — |
 | Golpe que mata | Um flash | O corpo cai | O "thud" mais grave, e o hitstop de 12 ticks |
 
-Os tempos são do `combate.md`; as cores, da Okabe-Ito (F-053 §3.6); as poses e os sons, os da sonda (F-061 §1). As quatro linhas de baixo entraram no desenho do duelo (TASK-12; `combate.md`, "O tranco e a vantagem", "A quebra de guarda e o tech", "O hitstop e o tremor").
+Os tempos são do `combate.md`, com os números do desenho do duelo desde a TASK-12.1 (os 300, os 500 a 900 e os 80 ms eram os do estudo); as cores, da Okabe-Ito (F-053 §3.6); as poses e os sons, os da sonda (F-061 §1). As quatro linhas de baixo entraram no desenho do duelo (TASK-12; `combate.md`, "O tranco e a vantagem", "A quebra de guarda e o tech", "O hitstop e o tremor").
 
 ### O som entra na fase 2 (F-172 §2; DEC-0050)
 
@@ -139,6 +139,19 @@ Os três canais só valem com os três (DEC-0031 §1), e o som nunca entrou no j
 ### O HUD do duelo (TASK-12)
 
 A vida dos dois no topo, o placar e o relógio no centro, a stamina onde já está, e o token do golpe do outro repetido com forma e cor (`partida.md`, "O que se vê"). O detalhe sai na filha da partida. Por que o leve não tem cor: ninguém reage a 300 ms com os 100 ms do bloqueio, então ele se defende por leitura ou distância, e a cor marca a exceção que exige outra resposta (F-053 §2.4; For Honor e Naraka, F-053 §1).
+
+### O leve na tela (TASK-12.1)
+
+Leituras v0 do Claude (DEC-0017), na cápsula, antes do manequim (DEC-0050):
+
+- **A espada de blocos:** uma caixa de 1,4 × 0,06 × 0,02 m, presa na mão, a 0,6 m do eixo e 1,3 m acima dos pés. Em repouso, à direita, apontando para a frente e para baixo. Na preparação, vai para trás, sem cor: a pose do leve é a lâmina indo para trás. No ativo, varre exatamente o arco que a regra testa, da direita para a esquerda, em vermelhão `#D55E00`. Na recuperação, volta ao repouso. A pose é uma função do estado (a ação, o tick em que a fase começou e a direção do golpe) e do tick, como a DEC-0030 §4 pede ao manequim; o rollback nunca a toca.
+- **Dois sinais, uma vez por evento, pela chave** (DEC-0031 §6): o rastro do arco em vermelhão, um por golpe, pela chave do tick em que o ativo começou; e o flash branco do corpo de quem levou, 100 ms, pela chave do tick do contato do golpe levado. A re-simulação não os toca de novo, e a SyncTest exige os sinais apresentados iguais aos golpes mais os acertos.
+- **As duas vidas no HUD:** a de quem joga no topo à esquerda e a do outro lutador no topo à direita, cada uma com a barra e o número, lidas do estado exibido a cada quadro, como a stamina. A do boneco desce 12 por acerto e volta a 100 dois segundos depois do último (`partida.md`, "A vida sem partida"). O HUD do duelo da TASK-12.7 parte delas.
+- **Detalhes do implementer** (TASK-12.1, leituras v0 do Claude, DEC-0017):
+  - **A espada de blocos** tem a origem na mão. Em repouso, a mão fica a −60° da frente, à direita, e a lâmina aponta 20° para a direita e 50° para baixo; a ponta fica a uns 0,23 m do chão. No último tick da preparação, a mão vai a −80° e a lâmina aponta para trás, a −150°, nivelada. A preparação e a recuperação passam entre essas poses em linha reta, tick a tick. No ativo, a mão e a lâmina ficam no fim da fatia do tick, exatamente onde a regra mede (`Blade.segment`). Fora do ativo, a lâmina é cinza neutro, (0,55; 0,55; 0,57), fora das cores dos tokens; no ativo, vermelhão sem luz, para não escurecer na sombra.
+  - **O rastro do arco** é a coroa da fatia varrida, de 0,6 m a 2,0 m do eixo, na altura da mão, do começo do arco até o fim da fatia do tick exibido, em vermelhão a 40 % de opacidade, como os outros rastros. Ele segue o corpo enquanto dura o ativo daquele golpe e some em 200 ms depois dele.
+  - **O flash** pinta a cápsula de branco sem luz por 100 ms e volta ao tom do lutador. Ele toca no tick seguinte ao do contato, o primeiro em que o estado de quem levou o mostra (DEC-0051 §3), e a chave é o tick do contato.
+  - **As barras de vida** têm 300 × 24 px na base de 1080p, a largura da barra da stamina e o dobro da altura, com a margem de 24 px do HUD. O número fica do lado de dentro da tela: à direita da barra da esquerda e à esquerda da barra da direita. As cores são as da stamina, do mesmo Theme.
 
 ### Onde o sinal mora
 
@@ -290,9 +303,9 @@ A tela que a DEC-0031 §8 promete a quem joga, com as escolhas do Arthur (F-161)
 
 - **Onde abre:** com o Esc, no Sozinho e online, onde quem joga tem tela; por cima do jogo e do HUD. O Esc ou o botão "Fechar (Esc)" fecham.
 - **Aberta:** o jogo não pausa; o lutador de quem joga fica parado, porque as teclas vão para a tela; o mouse aparece. Fechada, o mouse volta para a câmera (F-161).
-- **O layout:** o título "Opções" e três grupos, nesta ordem. Teclas: "Andar para a frente", "Andar para trás", "Andar para a esquerda", "Andar para a direita", "Pular", "Dash" e "Gancho", cada uma com o rótulo da sua tecla. Mouse: "Sensibilidade". Interface: "Escala". Embaixo, "Voltar ao padrão" e "Fechar (Esc)".
-- **O rótulo da tecla:** o da tecla física no teclado ativo (`DisplayServer.keyboard_get_label_from_physical`): o lugar do W mostra "Z" num teclado francês. Os botões do mouse aparecem como "Mouse 3" (o do meio), "Mouse 4" e "Mouse 5" (os laterais).
-- **Remapear:** clicar numa tecla mostra "Aperte a nova tecla para <ação>. O Esc cancela."; a próxima tecla, ou o botão do meio ou um lateral do mouse, toma o lugar. O esquerdo e o direito do mouse não valem: ficam para o combate. Uma tecla que já é de outra ação não troca, e a tela diz "<tecla> já é de <ação>. Escolha outra tecla ou troque <ação> primeiro."
+- **O layout:** o título "Opções" e três grupos, nesta ordem. Teclas: "Andar para a frente", "Andar para trás", "Andar para a esquerda", "Andar para a direita", "Pular", "Dash", "Gancho" e, desde a TASK-12.1, "Golpe leve", cada uma com o rótulo da sua tecla. Mouse: "Sensibilidade". Interface: "Escala". Embaixo, "Voltar ao padrão" e "Fechar (Esc)".
+- **O rótulo da tecla:** o da tecla física no teclado ativo (`DisplayServer.keyboard_get_label_from_physical`): o lugar do W mostra "Z" num teclado francês. Os botões do mouse aparecem como "Mouse 3" (o do meio), "Mouse 4" e "Mouse 5" (os laterais); o esquerdo, o padrão do golpe leve, como "Mouse esquerdo".
+- **Remapear:** clicar numa tecla mostra "Aperte a nova tecla para <ação>. O Esc cancela."; a próxima tecla, ou o botão do meio ou um lateral do mouse, toma o lugar. O esquerdo do mouse só vale para o "Golpe leve", que o tem de padrão (F-175 §2); o direito não vale para nenhuma ação, porque fica para a guarda da TASK-12.2. Uma tecla que já é de outra ação não troca, e a tela diz "<tecla> já é de <ação>. Escolha outra tecla ou troque <ação> primeiro."
 - **A sensibilidade:** de 0,02 a 0,20 grau por pixel, de 0,005 em 0,005, com o padrão 0,06 (`movimento.md`, "Câmera"); ao lado, "Uma volta inteira com uns N cm de mouse, a 800 DPI", com N = 360 ÷ sensibilidade ÷ 800 × 2,54, arredondado.
 - **A escala:** de 0,8 a 1,5, de 0,1 em 0,1, com o padrão 1,0, pelo `content_scale_factor` (DEC-0031 §8). Multiplica a barra, os textos, as recargas e a mira; a mira segue no centro da tela com a câmera livre.
 - **Vale na hora e fica salvo:** toda mudança aplica e grava no `user://options.cfg`. Uma entrada ruim volta ao padrão, com um aviso no log; "Voltar ao padrão" restaura tudo.

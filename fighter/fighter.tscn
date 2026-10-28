@@ -38,8 +38,8 @@ script = ExtResource("2_jt8mh")
 [node name="RollbackSynchronizer" type="Node" parent="." unique_id=1892651429 node_paths=PackedStringArray("root")]
 script = ExtResource("3_np4d7")
 root = NodePath("..")
-state_properties = Array[String]([":position", ":velocity", ":state:mode", ":state:mode_since", ":state:on_floor", ":state:left_floor_tick", ":state:buffered_command", ":state:buffered_tick", ":state:jumps_used", ":state:facing_yaw", ":state:stamina_at_spend", ":state:stamina_spent_tick", ":state:double_jump_tick", ":state:dash_tick", ":state:dash_direction", ":state:wall_normal", ":state:wall_id", ":state:wall_jump_tick", ":state:grapple_fired_tick", ":state:grapple_point", ":state:grapple_end_tick", ":state:slide_off_dir", ":state:head_landing_tick"])
-input_properties = Array[String](["Input:move", "Input:yaw", "Input:pitch", "Input:jump", "Input:dash", "Input:grapple"])
+state_properties = Array[String]([":position", ":velocity", ":state:mode", ":state:mode_since", ":state:on_floor", ":state:left_floor_tick", ":state:buffered_command", ":state:buffered_tick", ":state:jumps_used", ":state:facing_yaw", ":state:stamina_at_spend", ":state:stamina_spent_tick", ":state:double_jump_tick", ":state:dash_tick", ":state:dash_direction", ":state:wall_normal", ":state:wall_id", ":state:wall_jump_tick", ":state:grapple_fired_tick", ":state:grapple_point", ":state:grapple_end_tick", ":state:slide_off_dir", ":state:head_landing_tick", ":state:action", ":state:action_since", ":state:action_move", ":state:action_yaw", ":state:contact_tick", ":state:contact_target", ":state:contact_move", ":state:health", ":state:hurt_tick"])
+input_properties = Array[String](["Input:move", "Input:yaw", "Input:pitch", "Input:jump", "Input:dash", "Input:grapple", "Input:light_attack"])
 
 [node name="TickInterpolator" type="Node" parent="." unique_id=1758612698 node_paths=PackedStringArray("root")]
 script = ExtResource("4_7n60b")

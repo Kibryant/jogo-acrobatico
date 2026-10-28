@@ -19,6 +19,7 @@ Rules:
 - Test names describe behavior in English (`test_parry_beats_charged_attack`).
 - Write only under `test/`. Format with `gdscript-formatter`.
 - A helper that decides when an engine event happened (a contact, a landing, a clamp, a release) uses the rig's own predicate and tolerance, never a looser one such as a probe distance. Three locked tests had to be fixed for an assumption the rig did not share (F-102; F-130; F-143).
+- A rig that exposes a state between two slices of the tick (the combat's output before the movement, a plan before the move) shows only what the slices before it have done. Assert a field on the state after the slice that sets it: a fourth locked test read the dash's mode before the movement started it (F-177).
 - Run `bash tools/run_tests.sh` and confirm the new tests fail for the right reason, because the implementation is missing.
 
 Return, in English:

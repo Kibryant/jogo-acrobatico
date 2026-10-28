@@ -1,6 +1,6 @@
 ---
-revisado_em: 2026-10-26
-fontes: [F-002, F-005, F-006, F-007, F-018, F-020, F-021, F-022, F-024, F-025, F-026, F-030, F-032, F-033, F-039, F-049, F-100, F-121, F-122, F-127, F-129, F-140, F-141, F-146, F-147, F-148]
+revisado_em: 2026-10-27
+fontes: [F-002, F-005, F-006, F-007, F-018, F-020, F-021, F-022, F-024, F-025, F-026, F-030, F-032, F-033, F-039, F-049, F-100, F-121, F-122, F-127, F-129, F-140, F-141, F-146, F-147, F-148, F-175, F-176]
 ---
 
 # Visão geral
@@ -77,34 +77,36 @@ Tudo o que a regra lê ou escreve num tick precisa estar numa caixa que o netfox
 flowchart LR
   subgraph fighter["Nó Fighter (CharacterBody3D)"]
     corpo["Corpo<br/>position, velocity"]
-    regras["Regras: FighterState<br/>mode, mode_since, on_floor,<br/>left_floor_tick, buffered_command, buffered_tick,<br/>stamina_at_spend, stamina_spent_tick, double_jump_tick,<br/>jumps_used, facing_yaw,<br/>dash_tick, dash_direction,<br/>wall_normal, wall_id, wall_jump_tick,<br/>grapple_fired_tick, grapple_point, grapple_end_tick,<br/>slide_off_dir, head_landing_tick"]
+    regras["Regras: FighterState<br/>mode, mode_since, on_floor,<br/>left_floor_tick, buffered_command, buffered_tick,<br/>stamina_at_spend, stamina_spent_tick, double_jump_tick,<br/>jumps_used, facing_yaw,<br/>dash_tick, dash_direction,<br/>wall_normal, wall_id, wall_jump_tick,<br/>grapple_fired_tick, grapple_point, grapple_end_tick,<br/>slide_off_dir, head_landing_tick,<br/>action, action_since, action_move, action_yaw,<br/>contact_tick, contact_target, contact_move,<br/>health, hurt_tick"]
   end
-  input["Nó Input (do dono: jogador ou bot)<br/>move, yaw, pitch, jump, dash, grapple"]
+  input["Nó Input (do dono: jogador ou bot)<br/>move, yaw, pitch, jump, dash, grapple, light_attack"]
   config["MovementConfig<br/>imutável, em ticks"]
   rbs["RollbackSynchronizer<br/>(netfox)"]
   rbs -- ":position, :velocity" --> corpo
   rbs -- ":state:mode, ..." --> regras
-  rbs -- "Input:move, Input:yaw, Input:pitch,<br/>Input:jump, Input:dash, Input:grapple" --> input
+  rbs -- "Input:move, Input:yaw, Input:pitch,<br/>Input:jump, Input:dash, Input:grapple,<br/>Input:light_attack" --> input
   config -. "só leitura" .-> regras
 ```
 
 | Caixa | Onde mora | O que guarda no esqueleto andante | Por que ali |
 |---|---|---|---|
 | Corpo | Nó `Fighter` | `position` (Vector3), `velocity` (Vector3, m/s) | O netfox restaura todos os corpos juntos antes de cada tick re-simulado, e um lutador colide com o outro na posição daquele tick |
-| Regras | `FighterState`, um objeto só de valores | `mode`, `mode_since` (tick), `on_floor`, `left_floor_tick`, `buffered_command` e `buffered_tick` (a vaga do buffer, DEC-0039), `stamina_at_spend` e `stamina_spent_tick` (a stamina como valor mais carimbo), `double_jump_tick`, `jumps_used`, `facing_yaw` (rad), `dash_tick` e `dash_direction` (o tick em que o último dash começou e a direção fixada nele, um vetor horizontal unitário; TASK-10.4), `wall_normal`, `wall_id` e `wall_jump_tick` (a normal achatada e o caminho do colisor, relativo à `Arena`, da parede da corrida atual ou da última, que ficam até o chão, e o tick do último pulo da parede; DEC-0042; TASK-10.5), `grapple_fired_tick`, `grapple_point` e `grapple_end_tick` (o tick do disparo enquanto um cabo está no ar, voando ou puxando, o ponto fixado nele e a última soltura, de onde a recarga conta; TASK-10.6), `slide_off_dir` e `head_landing_tick` (a direção horizontal unitária para longe do lutador de baixo enquanto o corpo está na cabeça dele, `Vector3.ZERO` fora dela, e o tick em que esse contato começou, a chave do sinal; TASK-10.7) | O núcleo puro recebe e devolve esse tipo; o netfox grava campo a campo, por valor |
-| Input | Nó `Input` (script `FighterInput`) | `move` (Vector2, relativo à câmera, até 1), `yaw` (rad), `pitch` (rad, positivo para cima, a última amostra da câmera; TASK-10.6), `jump` (um toque), `dash` (um toque, o Shift esquerdo; TASK-10.4), `grapple` (um toque, o Q; TASK-10.6) | O bot preenche os mesmos campos; a regra não sabe quem aperta (DEC-0004) |
-| Configuração | `MovementConfig`, fora do estado | Os números do `movimento.md` em ticks e a física derivada para o tick | Nunca muda na partida, então não precisa voltar no tempo |
+| Regras | `FighterState`, um objeto só de valores | `mode`, `mode_since` (tick), `on_floor`, `left_floor_tick`, `buffered_command` e `buffered_tick` (a vaga do buffer, DEC-0039), `stamina_at_spend` e `stamina_spent_tick` (a stamina como valor mais carimbo), `double_jump_tick`, `jumps_used`, `facing_yaw` (rad), `dash_tick` e `dash_direction` (o tick em que o último dash começou e a direção fixada nele, um vetor horizontal unitário; TASK-10.4), `wall_normal`, `wall_id` e `wall_jump_tick` (a normal achatada e o caminho do colisor, relativo à `Arena`, da parede da corrida atual ou da última, que ficam até o chão, e o tick do último pulo da parede; DEC-0042; TASK-10.5), `grapple_fired_tick`, `grapple_point` e `grapple_end_tick` (o tick do disparo enquanto um cabo está no ar, voando ou puxando, o ponto fixado nele e a última soltura, de onde a recarga conta; TASK-10.6), `slide_off_dir` e `head_landing_tick` (a direção horizontal unitária para longe do lutador de baixo enquanto o corpo está na cabeça dele, `Vector3.ZERO` fora dela, e o tick em que esse contato começou, a chave do sinal; TASK-10.7), e desde a TASK-12.1 o combate: `action` e `action_since` (a fase do golpe, `NONE`, `WINDUP`, `ACTIVE` ou `RECOVERY`, e o tick em que ela começou), `action_move` (o golpe por ID, `&"light_attack"`), `action_yaw` (a direção do golpe), `contact_tick`, `contact_target` e `contact_move` (o carimbo do contato, no estado de quem bateu), `health` (a vida, 100) e `hurt_tick` (o tick do contato do último golpe levado) (DEC-0051) | O núcleo puro recebe e devolve esse tipo; o netfox grava campo a campo, por valor |
+| Input | Nó `Input` (script `FighterInput`) | `move` (Vector2, relativo à câmera, até 1), `yaw` (rad), `pitch` (rad, positivo para cima, a última amostra da câmera; TASK-10.6), `jump` (um toque), `dash` (um toque, o Shift esquerdo; TASK-10.4), `grapple` (um toque, o Q; TASK-10.6), `light_attack` (um toque, o botão esquerdo do mouse; TASK-12.1; F-175) | O bot preenche os mesmos campos; a regra não sabe quem aperta (DEC-0004) |
+| Configuração | `MovementConfig` e, desde a TASK-12.1, `CombatConfig`, fora do estado | Os números do `movimento.md` e do `combate.md` em ticks, e a física derivada para o tick | Nunca muda na partida, então não precisa voltar no tempo |
 
 - **Fase 1, esboçado nas filhas da TASK-10 (a ordem das filhas é a F-100; os campos, as descrições da TASK-10.1 à TASK-10.7):** a vaga do buffer, a stamina como valor mais carimbo e o `double_jump_tick` (TASK-10.1); `dash_tick` e `dash_direction` com o modo DASH (TASK-10.4, já no estado); `wall_normal`, `wall_id` (o caminho do colisor relativo à arena, nunca um id do motor) e `wall_jump_tick` com o modo WALL_RUN (TASK-10.5, já no estado); `grapple_fired_tick`, `grapple_point` e `grapple_end_tick` com o modo GRAPPLE (TASK-10.6, já no estado); `slide_off_dir` e `head_landing_tick` (TASK-10.7, já no estado). No input, `dash` (TASK-10.4) e, desde a TASK-10.6, `pitch` e `grapple`. Os carimbos de fim substituem os `*_ready_tick` do esboço antigo: a recarga conta do fim da manobra.
-- **Fase 2, só o nome:** `action`, `action_since` e o golpe por ID, nunca o Resource (F-007 §5).
+- **Fase 2, o leve (TASK-12.1; DEC-0051):** a ação, a direção do golpe, o carimbo do contato, a vida e o carimbo do golpe levado, com o golpe por ID, nunca o Resource (F-007 §5). No input, `light_attack`. A guarda, o carregado, o parry e a quebra somam campos nas filhas seguintes.
 
 ## O tick por dentro: o sanduíche (DEC-0022; contornos da DEC-0025)
 
 ```mermaid
 flowchart LR
-  r["1. netfox restaura<br/>o estado do tick e o input"] --> t["2. contorno do transform<br/>(todo tick refeito)"]
+  r["1. netfox restaura<br/>o estado do tick e o input"] --> f["1b. a foto do tick<br/>(Match; DEC-0051)"]
+  f --> t["2. contorno do transform<br/>(todo tick refeito)"]
   t --> d["3. contorno D<br/>(primeiro tick do rollback)"]
-  d --> b["4. núcleo decide<br/>before_move()"]
+  d --> c["3b. núcleo luta<br/>Combat.step()"]
+  c --> b["4. núcleo decide<br/>before_move()"]
   b --> m["5. motor move<br/>move_and_slide()"]
   m --> raio["5b. raio da mira<br/>(só com o pedido; DEC-0044)"]
   raio --> a["6. núcleo confere<br/>after_move()"]
@@ -117,12 +119,16 @@ Os dois contornos são código do nó, porque tocam o motor, e foram provados pe
 - **O contorno D** alinha o "estava no chão" que o `move_and_slide()` guarda sozinho, com um micro-movimento de sonda no primeiro tick de cada rollback. Sem ele, o pouso e a rampa saem diferentes ao refazer.
 
 ```
+Combat.step(state, me, position, photo, input, combat, config, tick) -> FighterState  # puro: luta (TASK-12.1)
 before_move(state, position, velocity, input, config, tick) -> MovePlan    # puro: decide; aim_request pede o raio
 move_and_slide()                                                  # motor: move e colide
 aim_ray(feet, yaw, pitch)                                         # nó: só com o pedido, o raio de O e o segundo raio do ombro
 after_move(state, facts, config, tick) -> FighterState            # puro: confere; dispara o gancho
 ```
 
+- **A foto do tick** (TASK-12.1; DEC-0051; DEC-0026 §3): no `after_prepare_tick` do netfox, depois de ele restaurar o estado, o `Match` copia de cada lutador o nome do nó, os pés e uma cópia do `FighterState` para a `TickPhoto` (`core/fighter/`), só de valores. Cada lutador lê os outros só nela, nunca o estado vivo, e por isso a ordem dos nós na árvore não muda o resultado. Como dar a cada função do `Promise.all` uma cópia do estado do começo, e não o objeto que a anterior acabou de mexer. Sem `Match`, a foto fica vazia.
+- **O combate** (`Combat.step`, `core/fighter/combat.gd`; DEC-0051), antes do `before_move`, nesta ordem: aplica os contatos da foto contra o lutador carimbados no tick anterior (o dano, a vida nunca abaixo de 0, o `hurt_tick`); faz a vida voltar ao máximo 2 s depois do `hurt_tick`, quando a configuração liga o treino; avança a fase da ação; escreve o aperto do leve na vaga e chama a escrita dos comandos do movimento (`Movement.take_presses`), e dispara o leve quando a vaga o guarda, em pé no chão, sem golpe em curso, com a stamina; na preparação, a direção do golpe segue a câmera; no ativo, testa a fatia do tick contra os outros da foto (`Blade`, `core/fighter/blade.gd`) e carimba um contato por golpe. O contato aparece para quem levou na foto do tick seguinte: 16,7 ms depois, com o dano e o tranco contando do tick do contato (`combate.md`, "O leve no tick").
+- **O movimento lê a ação** (DEC-0051 §5): com um golpe em curso, nenhum comando sai da vaga e não há pedido de mira; em pé, o alvo da velocidade é o andar devagar, 3 m/s; do primeiro tick ativo ao fim, o corpo olha para a direção do golpe. A escrita da vaga continua no `before_move`, só com os três comandos dele: escrever o leve de novo devolveria à vaga o aperto que o combate acabou de disparar.
 - `before_move` carimba o input, aplica buffer, coyote, pulo, aceleração e gravidade, e devolve o estado novo e a velocidade pedida.
 - **A troca por comando** (DEC-0041): o `before_move` também troca o modo quando a vaga guarda um comando vivo e legal. O primeiro é o dash, `GROUND → DASH`, com o `mode_since` carimbado no tick do aperto. Um modo comprometido só termina pela própria regra, no mesmo `before_move`: o `DASH` acaba quando os 12 ticks passam, sai na velocidade desenhada, 7 m/s na mesma direção, em `GROUND` ou `AIR` conforme o `on_floor` do estado, e no mesmo tick um aperto guardado pode sair (a saída desenhada; `movimento.md`, "Dash").
 - O nó multiplica a velocidade pelo `physics_factor`, move e divide de volta (`docs/netfox/tutorials/rollback-caveats.md`, commit `cf5189d`).
@@ -165,7 +171,7 @@ stateDiagram-v2
 
 - **Fase 1:** o DASH entrou na TASK-10.4, o primeiro modo comprometido: um comando o começa no `before_move`, e só a própria regra o termina (DEC-0041). O WALL_RUN entrou na TASK-10.5, também comprometido, mas começado por contato, no `after_move`; o tempo e o pulo da parede o terminam no `before_move`, e o contato perdido, no `after_move` (DEC-0041). O GRAPPLE entrou na TASK-10.6, comprometido também: o disparo acontece no `after_move`, a puxada começa no `before_move` quando o cabo voou, de qualquer modo, e só as três solturas a terminam, no `before_move`. O contato não troca o modo durante a puxada (DEC-0041 §3).
 - **Hierarquia como função:** `is_grounded(mode)` e `is_airborne(mode)`.
-- **Combate em paralelo (fase 2):** um segundo modo, `action`, com NONE, WINDUP, ACTIVE, RECOVERY, BLOCK e PARRY. Correr enquanto golpeia não multiplica estados. "No ar ninguém se defende" vira uma regra entre os dois modos, e é ali que a matriz de posição da Q-14 vai morar.
+- **Combate em paralelo (fase 2):** um segundo modo, `action`, com NONE, WINDUP, ACTIVE e RECOVERY desde a TASK-12.1, e BLOCK e PARRY nas filhas seguintes. A fase troca pelo tempo do golpe, no `Combat.step`, e o tick em que ela começou fica no `action_since`, como o `mode_since`. Andar enquanto golpeia não multiplica estados: o movimento só lê a ação (DEC-0051 §5). "No ar ninguém se defende" vira uma regra entre os dois modos, e é ali que a matriz de posição da Q-14 vai morar (DEC-0050).
 - **Animação e efeito:** trocam no `NetworkTime.after_tick_loop`, comparando o modo desenhado com o do estado. Assim nunca tocam duas vezes num rollback. É o mesmo sinal que a `RewindableStateMachine` usa por dentro (`addons/netfox/network-time.gd`; `addons/netfox.extras/state-machine/rewindable-state-machine.gd`, commit `cf5189d`). Não existe barramento de eventos (F-007 §8).
 - **Os sinais das manobras** são os primeiros assim (TASK-10.4): o `ManeuverCues` (`fighter/maneuver_cues.gd`), criado pelo `Match`, lê o estado exibido depois de cada laço de ticks e toca a baforada do pulo duplo e o rastro do dash uma vez por chave (lutador, tipo, carimbo): o `double_jump_tick`, e o `dash_tick` enquanto o modo é `DASH`. Desde a TASK-10.5, a marca do pulo da parede, um disco em pé na parede, pelo `wall_jump_tick`, durante o voo que ele começou (`AIR` desde o carimbo). Desde a TASK-10.6, o cabo do gancho, uma linha opaca de 3 cm do ombro exibido à ponta, pelo `grapple_fired_tick` enquanto o cabo está no ar, e o rastro curto da puxada, pelo `mode_since` enquanto o modo é `GRAPPLE` (`visual-e-audio.md`, "O gancho na tela"). A chave que já tocou não toca de novo quando o rollback refaz o tick, e o sinal nunca se desfaz (DEC-0031 §6). Ele também conta os eventos que os ticks novos produzem, e a SyncTest exige que os sinais apresentados sejam iguais aos eventos (`rede.md` §4).
 - **Por que não a `RewindableStateMachine`:** ela é plana, grava só o nome do estado e põe a regra num nó por estado (`addons/netfox.extras/state-machine/rewindable-state-machine.gd`, commit `cf5189d`). A regra presa em nó também não acompanharia o núcleo se ele mudasse de linguagem (DEC-0020).

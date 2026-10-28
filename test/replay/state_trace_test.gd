@@ -89,7 +89,8 @@ func test_the_stamps_are_the_fields_named_tick_or_since() -> void:
 # the trace, or a count or an enum, written as it is. A new int field with another name fails
 # here, not as a silent mismatch between the window and the headless player (review of TASK-10.3).
 func test_every_int_field_of_the_state_is_a_stamp_or_listed_as_not_one() -> void:
-	var not_stamps: Array[String] = ["mode", "jumps_used"]
+	# TASK-12.1: the action is an enum and the health a count of points, both written as they are.
+	var not_stamps: Array[String] = ["mode", "jumps_used", "action", "health"]
 	var state := FighterState.new()
 	for field: String in ReplayFile.script_fields(state):
 		if typeof(state.get(field)) != TYPE_INT:

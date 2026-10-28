@@ -1,7 +1,8 @@
 # The input box of a fighter (visao-geral.md, "O estado em quatro caixas"): move, yaw, pitch,
-# jump, dash and grapple, which netfox records for every tick through "Input:move", "Input:yaw",
-# "Input:pitch", "Input:jump", "Input:dash" and "Input:grapple". Whoever owns the fighter fills them
-# through the same calls, sample_frame(), press_jump(), press_dash() and press_grapple(): this PC's
+# jump, dash, grapple and light_attack, which netfox records for every tick through "Input:move",
+# "Input:yaw", "Input:pitch", "Input:jump", "Input:dash", "Input:grapple" and "Input:light_attack".
+# Whoever owns the fighter fills them through the same calls, sample_frame(), press_jump(),
+# press_dash(), press_grapple() and press_light_attack(): this PC's
 # keyboard and mouse after use_devices(), or a bot, so the rules never know who presses
 # (DEC-0004). How the frames become the input of a tick is the InputSampler's job (DEC-0026 §1).
 # A replay takes the place of all of them through play_rows() (TASK-10.3): each tick's box is then
@@ -16,6 +17,7 @@ var pitch := 0.0
 var jump := false
 var dash := false
 var grapple := false
+var light_attack := false
 
 var _sampler := InputSampler.new()
 # The camera of whoever plays this fighter on this PC; null when nobody here does.
@@ -103,6 +105,11 @@ func press_grapple() -> void:
 	_sampler.press_grapple()
 
 
+# One press of the light attack, a one-touch command like the jump (DEC-0026 §1; TASK-12.1).
+func press_light_attack() -> void:
+	_sampler.press_light_attack()
+
+
 # The input of the tick being simulated, as the core reads it.
 func to_tick_input() -> TickInput:
 	var tick_input := TickInput.new()
@@ -112,6 +119,7 @@ func to_tick_input() -> TickInput:
 	tick_input.jump = jump
 	tick_input.dash = dash
 	tick_input.grapple = grapple
+	tick_input.light_attack = light_attack
 	return tick_input
 
 
@@ -141,6 +149,10 @@ func _unhandled_input(event: InputEvent) -> void:
 	# "Tecla"; F-140), or the player's key or mouse button (OptionsStore).
 	if event.is_action_pressed(&"grapple"):
 		press_grapple()
+	# The left mouse button by default (project.godot, [input]; F-175 §2), or the player's key or
+	# mouse button (OptionsStore).
+	if event.is_action_pressed(&"light_attack"):
+		press_light_attack()
 
 
 # netfox calls this once per tick loop, before its ticks, on the owner's peer (BaseNetInput). A
@@ -154,7 +166,7 @@ func _gather() -> void:
 
 
 # netfox records the box of tick right after this (NetworkTime._loop), so what is set here is the
-# input of tick: the sampler's jump, dash and grapple, or the whole row of a replay.
+# input of tick: the sampler's jump, dash, grapple and light attack, or the whole row of a replay.
 func _on_after_tick(_delta: float, tick: int) -> void:
 	if not is_multiplayer_authority():
 		return
@@ -162,6 +174,7 @@ func _on_after_tick(_delta: float, tick: int) -> void:
 		jump = _sampler.take_jump()
 		dash = _sampler.take_dash()
 		grapple = _sampler.take_grapple()
+		light_attack = _sampler.take_light_attack()
 		return
 	var row := _rows.input_at(tick)
 	if row == null:

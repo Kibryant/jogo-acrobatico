@@ -9,3 +9,6 @@ const JUMP := &"jump"
 const DASH := &"dash"
 # The grapple (movimento.md, "Gancho"; TASK-10.6).
 const GRAPPLE := &"grapple"
+# The light attack (combate.md, "O leve no tick"): only Combat.step writes it into the slot, and
+# the move's ID in the CombatConfig and in the state (DEC-0051 §4).
+const LIGHT_ATTACK := &"light_attack"

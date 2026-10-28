@@ -3,8 +3,9 @@
 # side mouse button, the sensitivity from 0.02 to 0.20 degrees per pixel and the scale from 0.8 to
 # 1.5 come back on the next load; each bad entry falls back to its default, named in a warning, and
 # an unreadable file falls back whole; a key another action has is refused with that action's
-# name. Every test writes a temporary file of its own and never touches user://options.cfg, which
-# tools/run_tests.sh checks after the run.
+# name. TASK-12.1 adds the light attack, on the left mouse button, which no other action takes
+# (F-175 §2). Every test writes a temporary file of its own and never touches
+# user://options.cfg, which tools/run_tests.sh checks after the run.
 extends GdUnitTestSuite
 
 const CameraRigScene := preload("res://fighter/camera_rig.tscn")
@@ -62,10 +63,14 @@ func _assert_defaults(store: OptionsStore) -> void:
 		&"dash": KEY_SHIFT,
 		&"grapple": KEY_Q,
 	}
-	for action: StringName in OptionsStore.ACTIONS:
+	for action: StringName in expected:
 		var event := store.binding(action)
 		assert_bool(event is InputEventKey).override_failure_message(action).is_true()
 		assert_int(_code(event)).override_failure_message(action).is_equal(expected[action])
+	# The light attack is the left mouse button (F-175 §2).
+	var light := store.binding(&"light_attack")
+	assert_bool(light is InputEventMouseButton).override_failure_message("light_attack").is_true()
+	assert_int(_code(light)).is_equal(MOUSE_BUTTON_LEFT)
 	# The dash is the left Shift, not either (TASK-10.4, choice 2).
 	assert_int(_location(store.binding(&"dash"))).is_equal(KEY_LOCATION_LEFT)
 	assert_float(store.sensitivity).is_equal_approx(0.06, HAIR)
@@ -80,9 +85,18 @@ func _assert_warned_about(store: OptionsStore, entry: String) -> void:
 	assert_bool(found).override_failure_message(failure).is_true()
 
 
-func test_the_seven_actions_are_the_ones_of_project_godot_in_the_screens_order() -> void:
+func test_the_eight_actions_are_the_ones_of_project_godot_in_the_screens_order() -> void:
 	assert_array(OptionsStore.ACTIONS).is_equal(
-		[&"move_forward", &"move_back", &"move_left", &"move_right", &"jump", &"dash", &"grapple"],
+		[
+			&"move_forward",
+			&"move_back",
+			&"move_left",
+			&"move_right",
+			&"jump",
+			&"dash",
+			&"grapple",
+			&"light_attack",
+		],
 	)
 	for action: StringName in OptionsStore.ACTIONS:
 		assert_bool(InputMap.has_action(action)).override_failure_message(action).is_true()
@@ -178,8 +192,9 @@ func test_an_invalid_key_falls_back_to_its_default_alone_and_is_named() -> void:
 	assert_int(_code(store.binding(&"grapple"))).is_equal(KEY_Q)
 
 
-# Criterion 5 and F-161: the left and the right buttons stay for the combat, and the wheel is no
-# button to hold; the middle and the side ones are taken.
+# Criterion 5 and F-161: the left button is the light attack's alone (F-175 §2), the right one
+# stays for the guard of TASK-12.2, and the wheel is no button to hold; the middle and the side
+# ones are taken.
 func test_the_left_and_right_mouse_buttons_and_the_wheel_are_refused() -> void:
 	_write(
 		"\n".join(
@@ -207,6 +222,37 @@ func test_the_left_and_right_mouse_buttons_and_the_wheel_are_refused() -> void:
 	assert_bool(OptionsStore.accepts(OptionsStore.mouse_event(MOUSE_BUTTON_XBUTTON1))).is_true()
 	assert_bool(OptionsStore.accepts(OptionsStore.key_event(KEY_ESCAPE))).is_false()
 	assert_bool(OptionsStore.accepts(InputEventMouseMotion.new())).is_false()
+
+
+# TASK-12.1: the left button is the light attack's, for no other action; the right one for none,
+# the light attack's included; the light attack takes a key or the middle or a side button too.
+func test_the_left_mouse_button_is_the_light_attacks_alone() -> void:
+	var left := OptionsStore.mouse_event(MOUSE_BUTTON_LEFT)
+	var right := OptionsStore.mouse_event(MOUSE_BUTTON_RIGHT)
+	for action: StringName in OptionsStore.ACTIONS:
+		var light := action == &"light_attack"
+		assert_bool(OptionsStore.accepts(left, action)).override_failure_message(action) \
+				.is_equal(light)
+		assert_bool(OptionsStore.accepts(right, action)).override_failure_message(action).is_false()
+	var store := OptionsStore.new(_path)
+	assert_str(String(store.bind(&"light_attack", OptionsStore.key_event(KEY_F)))).is_empty()
+	assert_int(_code(store.binding(&"light_attack"))).is_equal(KEY_F)
+	assert_str(String(store.bind(&"light_attack", left))).is_empty()
+	assert_int(_code(store.binding(&"light_attack"))).is_equal(MOUSE_BUTTON_LEFT)
+	# Saved and loaded back, the left button stays the light attack's.
+	store.bind(&"light_attack", OptionsStore.mouse_event(MOUSE_BUTTON_XBUTTON1))
+	assert_int(store.save_file()).is_equal(OK)
+	var loaded := _loaded()
+	assert_array(loaded.warnings).is_empty()
+	assert_int(_code(loaded.binding(&"light_attack"))).is_equal(MOUSE_BUTTON_XBUTTON1)
+	_write("[keys]\nlight_attack=\"mouse:%d\"\n" % MOUSE_BUTTON_LEFT)
+	loaded = _loaded()
+	assert_array(loaded.warnings).is_empty()
+	assert_int(_code(loaded.binding(&"light_attack"))).is_equal(MOUSE_BUTTON_LEFT)
+	_write("[keys]\nlight_attack=\"mouse:%d\"\n" % MOUSE_BUTTON_RIGHT)
+	loaded = _loaded()
+	_assert_warned_about(loaded, "light_attack")
+	assert_int(_code(loaded.binding(&"light_attack"))).is_equal(MOUSE_BUTTON_LEFT)
 
 
 # Criterion 5: a scale or a sensitivity outside its range, or no number at all, falls back to its

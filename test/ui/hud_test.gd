@@ -4,7 +4,9 @@
 # the cost of the double jump the number gains an underline, a shape and not a colour; its look
 # comes from the one Theme and its words from translation keys (DEC-0031 §8); and a PC without a
 # screen never makes one. TASK-10.6 adds the grapple's cooldown row and the reticle with its dot
-# (visual-e-audio.md, "O gancho na tela"). The tests run headless, as the gate does, so they drive
+# (visual-e-audio.md, "O gancho na tela"). TASK-12.1 adds the two health bars at the top, the
+# followed fighter's on the left and the other's on the right (visual-e-audio.md, "O leve na
+# tela"). The tests run headless, as the gate does, so they drive
 # the HUD by hand with the tick they choose, the call its _process makes with netfox's tick on
 # every frame.
 extends GdUnitTestSuite
@@ -298,6 +300,61 @@ func test_the_grapple_cooldown_shows_above_the_dash_with_its_ring_and_the_tenths
 	# Back to a tick of the cooldown, as a rollback would show it.
 	hud.show_at(SPENT_AT + 6)
 	assert_bool(hud.shows_grapple_cooldown()).is_true()
+
+
+# TASK-12.1 (visual-e-audio.md, "O leve na tela"): at the top, the followed fighter's health on the
+# left and the first other fighter's on the right, each a bar and its number, read from the
+# displayed state on every frame: a hit of 12 shows 88 and a bar 88 % full, and the refill to 100
+# shows full again. Before show_health(), and with no other fighter, the bars that have nothing to
+# show stay hidden.
+func test_the_two_health_bars_show_each_fighters_health_at_the_top() -> void:
+	var hud := _hud()
+	hud.show_at(SPENT_AT)
+	assert_bool(hud.shows_own_health()).override_failure_message("before show_health").is_false()
+	assert_bool(hud.shows_other_health()).is_false()
+	hud.show_health(_match.combat, _match.fighters)
+	hud.show_at(SPENT_AT)
+	assert_bool(hud.shows_own_health()).is_true()
+	assert_bool(hud.shows_other_health()).override_failure_message("alone in the match").is_false()
+	assert_str(hud.shown_own_health()).is_equal("100")
+	assert_float(hud.own_health_width()).is_equal_approx(Hud.HEALTH_BAR_SIZE.x, HAIR)
+
+	# The dummy spawns after the HUD: the match's own list brings it in.
+	var dummy := _match.spawn_fighter(Match.DUMMY_SLOT, multiplayer.get_unique_id())
+	assert_object(hud.rival()).is_same(dummy)
+	hud.show_at(SPENT_AT)
+	assert_bool(hud.shows_other_health()).is_true()
+	assert_str(hud.shown_other_health()).is_equal("100")
+
+	# A hit of 12 on the dummy: 88 on the right, the left untouched.
+	dummy.state.health = 88
+	hud.show_at(SPENT_AT)
+	assert_str(hud.shown_other_health()).is_equal("88")
+	assert_float(hud.other_health_width()).is_equal_approx(Hud.HEALTH_BAR_SIZE.x * 0.88, HAIR)
+	assert_str(hud.shown_own_health()).is_equal("100")
+
+	# The floor of 0 and the refill, as the state says them.
+	dummy.state.health = 0
+	hud.show_at(SPENT_AT)
+	assert_str(hud.shown_other_health()).is_equal("0")
+	assert_float(hud.other_health_width()).is_equal_approx(0.0, HAIR)
+	dummy.state.health = 100
+	_fighter.state.health = 76
+	hud.show_at(SPENT_AT)
+	assert_str(hud.shown_other_health()).is_equal("100")
+	assert_str(hud.shown_own_health()).is_equal("76")
+
+	# Both bars sit in the top half of the screen, the own one left of the other, once the
+	# containers have laid them out.
+	await get_tree().process_frame
+	var own := hud.get_node(^"HealthFrame/HealthRow/OwnHealth")
+	var other := hud.get_node(^"HealthFrame/HealthRow/OtherHealth")
+	assert(own is Control and other is Control, "the health bars are Controls")
+	var own_rect := (own as Control).get_global_rect()
+	var other_rect := (other as Control).get_global_rect()
+	var screen := hud.get_viewport().get_visible_rect()
+	assert_float(own_rect.position.x).is_less(other_rect.position.x)
+	assert_float(own_rect.end.y).is_less(screen.size.y / 2.0)
 
 
 # The target of the reticle: a wall of the test's own in the arena's empty south-east, 16 m wide

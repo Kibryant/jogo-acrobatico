@@ -7,8 +7,9 @@
 # - yaw is the last sample: a mean of angles breaks where they wrap at 180 degrees, and the last
 #   sample is where the camera looks now (TASK-9, choice 1); pitch is the last sample too, for the
 #   same reasons (rede.md §3; TASK-10.6);
-# - jump, dash and grapple are one-touch commands kept between frames and taken once, so a press
-#   counts for at most one tick even when a frame runs two (netfox's one-off-input.gd).
+# - jump, dash, grapple and the light attack are one-touch commands kept between frames and taken
+#   once, so a press counts for at most one tick even when a frame runs two (netfox's
+#   one-off-input.gd).
 # No node and no engine input here: FighterInput feeds it, from the devices or from a bot.
 class_name InputSampler
 extends RefCounted
@@ -20,6 +21,7 @@ var _pitch := 0.0
 var _jump_pressed := false
 var _dash_pressed := false
 var _grapple_pressed := false
+var _light_attack_pressed := false
 
 
 # start_yaw is the yaw before any sample: where the fighter looks at its spawn point.
@@ -50,6 +52,11 @@ func press_dash() -> void:
 # One press of the grapple, kept until take_grapple().
 func press_grapple() -> void:
 	_grapple_pressed = true
+
+
+# One press of the light attack, kept until take_light_attack() (TASK-12.1).
+func press_light_attack() -> void:
+	_light_attack_pressed = true
 
 
 # The mean of the move samples since the last call, which starts a new tick's samples. Zero when
@@ -91,4 +98,11 @@ func take_dash() -> bool:
 func take_grapple() -> bool:
 	var pressed := _grapple_pressed
 	_grapple_pressed = false
+	return pressed
+
+
+# True once per press, like take_jump().
+func take_light_attack() -> bool:
+	var pressed := _light_attack_pressed
+	_light_attack_pressed = false
 	return pressed

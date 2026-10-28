@@ -1,6 +1,6 @@
 ---
 revisado_em: 2026-10-27
-fontes: [F-001, F-028, F-032, F-053, F-061, F-062, F-063, F-166, F-172, F-173, F-174]
+fontes: [F-001, F-028, F-032, F-053, F-061, F-062, F-063, F-166, F-172, F-173, F-174, F-175, F-176]
 ---
 
 # Combate
@@ -21,14 +21,14 @@ Cada perna do triângulo é uma regra concreta, não uma intenção (F-173 §1, 
 
 | Perna | A regra que a sustenta | De onde vem |
 |---|---|---|
-| Carregado vence leve | **Armadura:** durante toda a preparação do carregado, um leve que acerta tira o dano e não interrompe. Sem ela, um leve começado junto pega aos 24 ticks e o carregado só aos 42, e o triângulo se inverte | O Naraka dá armadura durante toda a carga (F-173 §1 C17). No For Honor e no Chivalry, sem armadura, o leve interrompe o pesado (F-173 §1 C11 e C15) |
+| Carregado vence leve | **Armadura:** durante toda a preparação do carregado, um leve que acerta tira o dano e não interrompe. Sem ela, um leve começado junto pega aos 15 ticks e o carregado só aos 42, e o triângulo se inverte | O Naraka dá armadura durante toda a carga (F-173 §1 C17). No For Honor e no Chivalry, sem armadura, o leve interrompe o pesado (F-173 §1 C11 e C15) |
 | Parry vence carregado | **A janela de 200 ms** nos últimos 200 ms da preparação fixa do carregado, e um carregado inteiro garantido para quem apara | A janela do For Honor (de 300 a 100 ms antes do contato) e a do Sekiro (12 frames) são de 200 ms (F-173 §1 C01 e C19) |
 | Leve vence parry | **O leve não se apara:** a postura do parry não para o leve, que pega e dá o tranco. Um parry no vazio custa 450 ms de recuperação | No Naraka, os básicos não se aparam (F-173 §1 C18) |
 
 ## Princípios v0 (F-001)
 
 - Tempo de animação fixo: o jogador não deforma a animação (lição do Mordhau; DEC-0014).
-- Antecipação proporcional ao dano: o leve de 12 prepara em 400 ms, o carregado de 30 em 700.
+- Antecipação proporcional ao dano: o leve de 12 prepara em 250 ms (DEC-0052), o carregado de 30 em 700.
 - Indicador visual no mundo e som: os três canais por estado (DEC-0031).
 - Feint custa stamina (DEC-0016).
 - Arma de longe paga antes do tiro.
@@ -57,7 +57,7 @@ Os tempos seguem o formato preparação / ativo / recuperação. No código, tud
 
 | Ação | Tempos (ms) | Em ticks | Stamina | Dano | O que mudou e por quê |
 |---|---|---|---|---|---|
-| Golpe leve | 400 / 100 / 250 | 24 / 6 / 15 | 8, no início | 12 | A preparação era 300: ninguém reage a 300 ms com os 100 do bloqueio, e o Arthur sentiu "não tinha nem como reagir" (F-053 §2.4; F-062 §1). Os 400 são o leve mais rápido do For Honor, que tem 500 em 77 de 79 golpes (F-173 §1 C04). O dano era "sem número" (F-083 §5): 12 é ≈ 1/8 da vida, a proporção do leve do For Honor (F-173 §2). **Não se apara** |
+| Golpe leve | 250 / 100 / 200 | 15 / 6 / 12 | 8, no início | 12 | **O leve rápido, decidido pelo Arthur jogando (F-180 §2; DEC-0052):** o leve que se defende segurando a guarda antes, e não reagindo. Com 400 / 100 / 250, o Arthur jogou e disse "parece que é um golpe pesado. Porque ele demora, você não pode se mexer muito"; o replay mostrou 42 cliques na preparação, uns 250 ms depois do anterior (F-178). Os 400 tinham nascido do "não tinha nem como reagir" da sonda, que foi com ping de 100 ms (F-062 §1), e do leve mais rápido do For Honor, 500 ms em 77 de 79 golpes (F-173 §1 C04); mas a regra dos tokens já dizia que ninguém reage ao leve (`visual-e-audio.md`, "O HUD do duelo"). O jogo de reação fica no carregado e na quebra. O dano era "sem número" (F-083 §5): 12 é ≈ 1/8 da vida, a proporção do leve do For Honor (F-173 §2). **Não se apara** |
 | Golpe carregado | 700 / 120 / 450, preparação fixa | 42 / 7 / 27 | 25, pagos na soltura; precisa de 25 para começar | 30 | A carga sorteada entre 500 e 900 deu 0 parries em 21 ao Arthur, porque ninguém sabia quando a lâmina descia (F-063 §3; Q-21). Com a preparação fixa, o parry vira tempo, como os 3 parries dele no leve de preparação fixa (F-063 §2). O For Honor tem os pesados fixos em 800 ou 900 ms (F-173 §1 C04). **Armadura contra leves** durante a preparação |
 | Quebra de guarda | 350 / 100 / 400 | 21 / 6 / 24 | 15, no início | 0 | A preparação fica rápida de propósito: a defesa não é escolher durante ela, e sim **o tech**, 333 ms depois do contato ("A quebra de guarda e o tech"; Q-25). Sem tech, 1.000 ms de tranco e um carregado garantido |
 | Bloqueio | sobe em 100; vale enquanto segurar | 6 | 5 por leve bloqueado, 15 por carregado bloqueado | — | Era "10 por golpe" (F-001). Se bloquear custasse mais que o leve (8), quem só bloqueia perderia a guerra de stamina para o spam de leve; o carregado pesa na guarda, e é ele e a quebra que a abrem. Com a guarda alta, anda-se a 3 m/s ("A guarda andando") |
@@ -74,8 +74,8 @@ O **tranco** é o tempo em que quem levou (hitstun) ou bloqueou (blockstun) um g
 
 | Troca | Tranco | Quem bateu ainda ocupado | Vantagem | O que garante |
 |---|---|---|---|---|
-| Leve acerta | 400 ms, 24 ticks | 350 ms, 21 ticks | quem bateu +3 | Nada: o leve seguinte pegaria no tick 45 e a guarda do outro já sobe no 30. Iniciativa, não combo |
-| Leve bloqueado | 250 ms, 15 ticks | 350 ms, 21 ticks | quem bloqueou +6 | Nada: o leve é seguro. Quem bloqueou ganha a vez |
+| Leve acerta | 400 ms, 24 ticks | 300 ms, 18 ticks | quem bateu +6 | Nada: o leve seguinte pegaria no tick 33 e a guarda do outro já sobe no 30. Iniciativa, não combo (DEC-0052) |
+| Leve bloqueado | 250 ms, 15 ticks | 300 ms, 18 ticks | quem bloqueou +3 | Nada: o leve é seguro. Quem bloqueou ganha a vez, por pouco: quem apertar primeiro depois do bloqueio pega primeiro (DEC-0052) |
 | Carregado acerta | 700 ms, 42 ticks | 570 ms, 34 ticks | quem bateu +8 | Nada garantido; os 30 já saíram |
 | Carregado bloqueado | 417 ms, 25 ticks | 570 ms, 34 ticks | quem bloqueou +9 | Nada: o bloqueio dá a vez, e o parry dá o castigo (F-173 §1, P4) |
 | Carregado aparado | quem foi aparado: 900 ms, 54 ticks, mais 9 ticks de hitstop sozinho | quem aparou recupera em 200 ms, 12 ticks | quem aparou +42 | **Um carregado garantido:** começa no tick 12, pega no 54; a guarda do outro só subiria no 60 |
@@ -85,7 +85,7 @@ O **tranco** é o tempo em que quem levou (hitstun) ou bloqueou (blockstun) um g
 | Leve contra leve, começados juntos | os dois: 24 ticks | — | neutra | Troca: os dois levam 12 |
 | Carregado contra carregado | os dois: 42 ticks | — | neutra | Troca: os dois levam 30. Como o "clash" do Naraka (F-173 §1) |
 
-**Por que "seguro" aqui é diferente do jogo de luta.** No Street Fighter e no Tekken, bloquear é instantâneo; aqui, a guarda leva 6 ticks para subir. Um golpe bloqueado só vira castigo quando a desvantagem de quem bateu passa de 18 ticks: os 24 do leve menos os 6 da guarda (F-173 §1, P2). Nenhum golpe v0 chega lá no bloqueio; só o parry e a quebra sem tech passam, e por isso só eles garantem dano.
+**Por que "seguro" aqui é diferente do jogo de luta.** No Street Fighter e no Tekken, bloquear é instantâneo; aqui, a guarda leva 6 ticks para subir. Um golpe bloqueado só vira castigo quando a desvantagem de quem bateu passa de 9 ticks: os 15 da preparação do leve menos os 6 da guarda (F-173 §1, P2; DEC-0052); com o leve de 400 ms eram 18. Nenhum golpe v0 passa disso no bloqueio: o carregado bloqueado dá 9, exatamente no limite; só o parry e a quebra sem tech passam, e por isso só eles garantem dano.
 
 **Hitstun maior que blockstun**, sempre, como no Tekken (F-173 §1 C22): levar um golpe custa mais tempo do que bloqueá-lo.
 
@@ -150,9 +150,25 @@ A conta do golpe é do núcleo, com formas simples: a lâmina é um segmento com
 | Parede no meio | não bloqueia no v0 | — | DEC-0026 §4 |
 | Dois golpes no mesmo tick | os dois pegam: troca | — | Sem prioridade entre eles |
 
+### O leve no tick (TASK-12.1; DEC-0051)
+
+Como as regras acima viram ticks. O que não estava no papel é leitura v0 do Claude (DEC-0017), salvo a tecla, escolha do Arthur (F-175 §2), e o leve rápido que não freia o corpo, decidido por ele jogando (F-180; DEC-0052).
+
+- **Quando o leve sai:** em pé no chão (o modo `GROUND`, fora da cabeça de outro lutador; `movimento.md`, "O corpo"), sem golpe em curso e com 8 de stamina, pagos no primeiro tick da preparação. Fora disso, o aperto espera na vaga do buffer pelos 150 ms (`movimento.md`, "Perdão" e "Stamina"). Num dash, o leve guardado sai no tick seguinte ao da saída do dash, e não nele: o combate decide antes do movimento, e é o movimento que termina o dash (DEC-0051 §2). A tecla é o botão esquerdo do mouse, remapeável (F-175 §2; DEC-0031 §8).
+- **A vaga dividida:** uma vaga só para todo comando (DEC-0039). No mesmo tick, o pulo vence o dash, que vence o gancho, que vence o leve: qualquer tecla de movimento apertada junto com o leve leva a vaga.
+- **As fases:** a preparação de 15 ticks, o ativo de 6 e a recuperação de 12 (DEC-0052; eram 24, 6 e 15), um depois do outro, contados do tick em que cada fase começou. Nenhum input corta a sequência (DEC-0016).
+- **O corpo durante o golpe** (DEC-0052): o leve não freia o corpo. Em pé, valem as regras do chão: o corpo corre a até 7 m/s, acelera e para como sempre, e a preparação de 250 ms soma até 1,75 m de alcance. O andar devagar de 3 m/s fica para a guarda e para o carregado. Com o leve de 400 ms, o golpe andava a 3 m/s (F-175 §2). Nenhum comando sai da vaga durante o golpe: um pulo, um dash ou um gancho apertados nele esperam e saem no primeiro tick depois da recuperação, se ainda estiverem nos 150 ms. Saindo de uma beirada no meio do golpe, valem as regras do ar, e o golpe continua.
+- **A direção:** em cada tick da preparação, a direção do golpe é a da câmera, e o corpo olha para ela. Do primeiro tick ativo ao fim da recuperação, ela fica, e o corpo olha para ela, por mais que a câmera gire.
+- **O arco do leve:** da direita, o lado da mão, para a esquerda: de −60° a +60° da direção do golpe, com o ângulo positivo girando para a esquerda, como o yaw. A fatia do tick k do ativo, de 1 a 6, vai de −60° + 20°·(k − 1) a −60° + 20°·k: a coroa de círculo entre 0,6 m e 2,0 m do eixo de quem bate, na altura da mão, 1,3 m acima dos pés dele.
+- **O toque:** a fatia toca o alvo quando a menor distância entre ela e o eixo da cápsula do alvo, o segmento de 0,35 m a 1,45 m acima dos pés dele, é de até 0,43 m, os 0,35 do corpo mais os 0,08 da lâmina. A conta é exata, sem amostrar ângulos: um alvo entre a lâmina do fim de um tick e a do fim do seguinte é acertado.
+- **O contato:** no tick do toque, o estado de quem bateu carimba o tick, o nome do alvo e o golpe (DEC-0026 §3). Um golpe faz um contato só: depois dele, a lâmina não testa mais até o golpe acabar (Q-26). Os alvos são testados em ordem de nome.
+- **Quem levou** aplica o contato no tick seguinte ao toque, o primeiro em que a foto do tick o mostra (DEC-0051): perde o dano do golpe, e a vida nunca desce de 0. O dano e, na TASK-12.2, o tranco contam do tick do contato. Dois leves que tocam no mesmo tick tiram 12 dos dois no tick seguinte, em qualquer ordem dos lutadores.
+- **A vida no treino:** sem partida, até a TASK-12.7, a vida volta a 100 dois segundos, 120 ticks, depois do último golpe levado (`partida.md`, "Os modos da Main").
+- **Na TASK-12.1, o golpe levado não interrompe o seu:** o tranco entra na TASK-12.2.
+
 ## O hitstop e o tremor
 
-O **hitstop** é a pausa curta dos dois lutadores no instante do acerto, que faz o golpe parecer ter encostado em algo. No v0 ele é **simulado**, curto e simétrico: os dois congelam o mesmo tempo, o relógio do golpe dos dois para junto, e por isso a vantagem não muda (F-173 §2, princípio 7); o relógio do round e os outros lutadores não param. Ser estado do núcleo faz a animação nunca descolar da simulação e o rollback refazê-lo igual; o custo é uma correção do tamanho do hitstop quando um acerto chega atrasado pela rede, e por isso ele é curto. A definição anterior do glossário, "só apresentação", muda com este desenho (`mudancas.md`). O jogo de luta 2D usa 9 a 13 frames; o Celeste, 3 (F-173 §2); aqui o leve inteiro dura 24, então 4 a 7.
+O **hitstop** é a pausa curta dos dois lutadores no instante do acerto, que faz o golpe parecer ter encostado em algo. No v0 ele é **simulado**, curto e simétrico: os dois congelam o mesmo tempo, o relógio do golpe dos dois para junto, e por isso a vantagem não muda (F-173 §2, princípio 7); o relógio do round e os outros lutadores não param. Ser estado do núcleo faz a animação nunca descolar da simulação e o rollback refazê-lo igual; o custo é uma correção do tamanho do hitstop quando um acerto chega atrasado pela rede, e por isso ele é curto. A definição anterior do glossário, "só apresentação", muda com este desenho (`mudancas.md`). O jogo de luta 2D usa 9 a 13 frames; o Celeste, 3 (F-173 §2); aqui o leve inteiro dura 33 ticks (DEC-0052), então 4 a 7.
 
 | Evento | Quem congela | ms | Ticks | Tremor da câmera (apresentação) |
 |---|---|---|---|---|
@@ -166,7 +182,7 @@ O **hitstop** é a pausa curta dos dois lutadores no instante do acerto, que faz
 
 O precedente do parry é o perfect shield do Smash: só o atacante congela (F-173 §2). O tremor é só apresentação, toca uma vez por evento pela chave (DEC-0031 §6), tem opção para desligar na tela de opções, e as amplitudes são pequenas porque a câmera também é a mira (DEC-0014). Com mais lutadores na arena (4v4), o hitstop encolhe, como o Smash faz com 8 jogadores (F-173 §2); número da fase 4.
 
-## A matriz de posição (Q-14; DEC-0050)
+## A matriz de posição (Q-14; DEC-0050; DEC-0053)
 
 Cada lugar tem uma força e uma fraqueza (pilar 2), e a troca tem de ser legível de fora (pilar 1). Escolha do Arthur na rodada 2 (F-174 §2; DEC-0050):
 
@@ -174,14 +190,16 @@ Cada lugar tem uma força e uma fraqueza (pilar 2), e a troca tem de ser legíve
 |---|---|---|---|---|
 | Chão (parado, correndo, guarda andando) | leve, carregado, quebra, finta | bloqueio, parry, esquiva | tranco normal | nenhum: é a base |
 | Dash | nada: comprometido | invulnerável nos ticks 3 a 10 | nos ticks 1, 2, 11 e 12: tranco normal, e o dash acaba | sai 4 m do alcance; recarga de 400 ms |
-| Ar (pulo, pulo duplo, queda) | só o leve, que desce em 45°: o golpe de quem está no alto (F-012 §1) | nada: "no ar ninguém se defende" (F-001) | tranco, e continua caindo | sem defesa; o pulo duplo é a única carta |
-| Parede (corrida) | nada: as mãos estão na parede | nada | cai da parede, com tranco | a altura e o ângulo em troca de até 2,5 s exposto |
-| Gancho (puxada) | nada: uma mão no cabo (a regra das mãos) | nada | solta o gancho, com tranco | atravessa 25 m em 1,4 s sem poder responder |
+| Ar (pulo, pulo duplo, queda) | só o leve, que desce em 45°: o golpe de quem está no alto (F-012 §1); um por pulo (DEC-0053) | nada: "no ar ninguém se defende" (F-001) | tranco, e continua caindo | sem defesa; o pulo duplo é a única carta |
+| Parede (corrida) | nada: as mãos estão na parede; o golpe da parede é o pulo da parede seguido do leve no ar (DEC-0053) | nada | cai da parede, com tranco | a altura e o ângulo em troca de até 2,5 s exposto |
+| Gancho (puxada) | nada: uma mão no cabo (a regra das mãos); depois da soltura, o leve no ar vale (DEC-0053) | nada | solta o gancho, com tranco | atravessa 25 m em 1,4 s sem poder responder |
 | Tranco e preso no agarrão | nada | nada (só o tech) | um acerto por janela ativa; a quebra não agarra quem está no ar | — |
 
 - **A regra das mãos** (proposta na Q-14): uma manobra que ocupa uma mão só deixa usar arma de uma mão. Na fase 2, com a espada longa, a puxada do gancho não ataca; mais tarde, a pistola cabe na puxada e a espada não.
 - **A quebra** só agarra quem está no chão: agarrar no ar não se lê.
 - **O leve no ar** é comprometido como qualquer golpe: pousar durante o ativo ou a recuperação não o corta.
+- **Um golpe no ar por pulo** (DEC-0053; F-181): o leve no ar sai uma vez por pulo. Cada um destes dá um: o pulo do chão ou a queda de uma beirada, o pulo duplo, o pulo da parede e a soltura do gancho. Depois do golpe, o aperto espera na vaga até o próximo deles. Na física de hoje, um pulo dura 630 ms e o leve inteiro 550, então a regra é mais clareza do que freio: os "20 golpes no ar" que o Arthur temia não cabem num voo (F-180 §2).
+- **O golpe próprio do gancho**, à moda do Naraka, fica para os estilos de luta (Q-52; DEC-0053).
 - **O gancho não prende em gente** no v0 (a crítica ao Naraka, F-001; `movimento.md`, "Gancho").
 - As alternativas recusadas na rodada 2: o leve sai da parede também (uma lâmina correndo de lado numa parede é difícil de ler); ou tudo vale em todo lugar, sem matriz.
 
@@ -229,4 +247,4 @@ Com ping, o golpe do outro chega atrasado na tela de quem defende. No relógio d
 
 - **Q-07:** qual a técnica própria do jogo, o equivalente ao K-style do GunZ? O duelo é o próximo lugar onde ela pode aparecer (F-166).
 - **Q-34 e Q-44:** o dash no ar e a escalada voltam com o primeiro oponente, na filha do bot (F-166 §4 e §6).
-- **O que o duelo jogável mede,** na ordem em que o Arthur vai sentir: se o leve de 400 ms se lê e se defende; se o carregado de 700 se apara contando; se a quebra se responde com o tech; se o bloqueio a 5 e 15 de stamina sustenta; se o hitstop de 4 e 7 ticks pesa sem grudar; se a recuperação do leve para a esquiva (DEC-0016) faz falta. Cada um é um número no Resource, trocado sem tocar no código (DEC-0004, regra 3).
+- **O que o duelo jogável mede,** na ordem em que o Arthur vai sentir: se o leve de 250 ms se lê e se bloqueia segurando a guarda (DEC-0052); se o carregado de 700 se apara contando; se a quebra se responde com o tech; se o bloqueio a 5 e 15 de stamina sustenta; se o hitstop de 4 e 7 ticks pesa sem grudar; se a recuperação do leve para a esquiva (DEC-0016) faz falta. Cada um é um número no Resource, trocado sem tocar no código (DEC-0004, regra 3).

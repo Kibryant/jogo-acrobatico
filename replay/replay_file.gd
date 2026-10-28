@@ -5,7 +5,9 @@
 # - The header says which game recorded it (F-044 §2): format, version and commit (BuildStamp),
 #   the rules' fingerprint, engine, platform, ticks per second, netfox's physics and clock
 #   settings, the arena and its fingerprint, the seed, the whole movement configuration, one typed
-#   field per line, the fighters, the first tick and the declared columns, by name and type.
+#   field per line, the whole combat configuration the same way, the light attack's numbers
+#   included as light_attack.<field> (TASK-12.1), the fighters, the first tick and the declared
+#   columns, by name and type.
 # - A row holds netfox's absolute tick, the size of the tick loop that ran it, the fighter, the
 #   input Sozinho applied on that tick and the check, 8 hex digits of the fingerprint of the state
 #   the live game computed after it (StateTrace).
@@ -18,7 +20,8 @@
 # format, tickrate, arena, physics or clock settings, a column this build does not know, a broken
 # line or a malformed cell. A refusal makes it playable only with --force: another version,
 # commit, engine, rules or arena fingerprint, or an input column or a configuration field this
-# build has and the file lacks. A warning only informs: another platform, a cut last line.
+# build has and the file lacks, the combat's included: a file recorded before TASK-12.1 has none.
+# A warning only informs: another platform, a cut last line.
 class_name ReplayFile
 extends RefCounted
 
@@ -29,6 +32,12 @@ const READABLE_FORMAT := "1-readable"
 const SEPARATOR := "---"
 const CELL_SEPARATOR := ","
 const CONFIG_PREFIX := "config."
+const COMBAT_PREFIX := "combat."
+## The header key of the combat numbers (TASK-12.1): optional, since a file recorded before it has
+## none, and its absence is a refusal, not an error.
+const COMBAT := "combat"
+## The prefix of the light attack's fields among the combat's.
+const LIGHT_ATTACK_PREFIX := "light_attack."
 ## netfox's pin (DEC-0023), part of the rules' fingerprint: updating netfox changes the rules.
 const NETFOX_PIN := "cf5189d"
 ## The folders whose scripts and scenes move the body, every file below them (the plan of
@@ -76,6 +85,7 @@ const KEYS: Array[String] = [
 	"arena_sha256",
 	"seed",
 	"config",
+	COMBAT,
 	"fighters",
 	"first_tick",
 	"columns",
@@ -112,6 +122,9 @@ static var _rules_computed := false
 var header: Dictionary[String, String] = { }
 ## The movement configuration of the header, typed, by MovementData field.
 var config: Dictionary[String, Variant] = { }
+## The combat configuration of the header, typed, by CombatData field; a field of the light attack
+## as light_attack.<field> (combat_types).
+var combat: Dictionary[String, Variant] = { }
 ## The columns of the rows, in the order of the file.
 var columns: Array[Column] = []
 ## Every row, in the order of the file: by tick, and within a tick by fighter.
@@ -197,7 +210,13 @@ static func open(path: String) -> ReplayFile:
 # and the first tick. The columns are this build's: the fixed ones, the input's and the check.
 static func for_match(game_match: Match, fighter_count: int, first_tick: int) -> ReplayFile:
 	var replay := ReplayFile.new()
-	replay.describe_build(game_match.arena, game_match.movement_data, fighter_count, first_tick)
+	replay.describe_build(
+		game_match.arena,
+		game_match.movement_data,
+		game_match.combat_data,
+		fighter_count,
+		first_tick,
+	)
 	return replay
 
 
@@ -207,7 +226,7 @@ static func this_build() -> ReplayFile:
 	var replay := ReplayFile.new()
 	var resource: Resource = load(Match.MOVEMENT_DATA_PATH)
 	assert(resource is MovementData, "%s must load as a MovementData" % Match.MOVEMENT_DATA_PATH)
-	replay.describe_build(node, resource as MovementData, 1, 0)
+	replay.describe_build(node, resource as MovementData, _game_combat_data(), 1, 0)
 	node.free()
 	return replay
 
@@ -314,6 +333,23 @@ func movement_data() -> MovementData:
 	return data
 
 
+# The combat numbers of the header, so a replay plays with the numbers it was recorded with, the
+# light attack's included. A field the file lacks, which only --force plays, comes from the game's
+# own combat_v0.tres, the whole of it for a file recorded before TASK-12.1.
+func combat_data() -> CombatData:
+	var fallback := _game_combat_data()
+	var data := CombatData.new()
+	var attack := AttackData.new()
+	data.light_attack = attack
+	for field: String in combat_types():
+		var value: Variant = combat[field] if combat.has(field) else _combat_value(fallback, field)
+		if field.begins_with(LIGHT_ATTACK_PREFIX):
+			attack.set(field.trim_prefix(LIGHT_ATTACK_PREFIX), value)
+		else:
+			data.set(field, value)
+	return data
+
+
 # The header and the "---" line, each line ended by "\n": what a recorder writes before any row.
 func header_text(readable := false) -> String:
 	var lines := PackedStringArray()
@@ -332,6 +368,16 @@ func header_text(readable := false) -> String:
 					else write_cell(config[field], type)
 				)
 				lines.append("%s%s:%s=%s" % [CONFIG_PREFIX, field, type, cell])
+		if key == COMBAT:
+			var kinds := combat_types()
+			for field: String in combat:
+				var type: String = kinds[field]
+				var cell := (
+					readable_cell(combat[field], type)
+					if readable
+					else write_cell(combat[field], type)
+				)
+				lines.append("%s%s:%s=%s" % [COMBAT_PREFIX, field, type, cell])
 	lines.append(SEPARATOR)
 	return "\n".join(lines) + "\n"
 
@@ -437,6 +483,44 @@ static func movement_types() -> Dictionary[String, String]:
 		assert(not type.is_empty(), "MovementData.%s has a type no header field takes yet" % field)
 		types[field] = type
 	return types
+
+
+# The stored fields of CombatData with their cell types, in their order; the light attack, an
+# AttackData, as light_attack.<field> for each of its own (TASK-12.1).
+static func combat_types() -> Dictionary[String, String]:
+	var types: Dictionary[String, String] = { }
+	for property: Dictionary in CombatData.new().get_property_list():
+		if not _stored(property):
+			continue
+		var field: String = property["name"]
+		var kind: int = property["type"]
+		if kind == TYPE_OBJECT:
+			assert(
+				field == "light_attack",
+				"CombatData.%s is a resource no header field takes" % field,
+			)
+			for inner: Dictionary in AttackData.new().get_property_list():
+				if not _stored(inner):
+					continue
+				var inner_field: String = inner["name"]
+				var inner_kind: int = inner["type"]
+				var inner_type := cell_type(inner_kind)
+				assert(
+					not inner_type.is_empty(),
+					"AttackData.%s has no cell type yet" % inner_field,
+				)
+				types[LIGHT_ATTACK_PREFIX + inner_field] = inner_type
+			continue
+		var type := cell_type(kind)
+		assert(not type.is_empty(), "CombatData.%s has a type no header field takes yet" % field)
+		types[field] = type
+	return types
+
+
+# A script variable a resource saves: an exported field.
+static func _stored(property: Dictionary) -> bool:
+	var usage: int = property["usage"]
+	return usage & PROPERTY_USAGE_STORAGE and usage & PROPERTY_USAGE_SCRIPT_VARIABLE
 
 
 # The cell type of a Variant type; empty when none takes it.
@@ -639,7 +723,13 @@ static func _shown(value: String) -> String:
 
 # Fills the header with this build, arena and movement numbers, the fighters and the first tick,
 # and the columns with this build's.
-func describe_build(arena: Node, movement: MovementData, fighter_count: int, first: int) -> void:
+func describe_build(
+	arena: Node,
+	movement: MovementData,
+	combat_numbers: CombatData,
+	fighter_count: int,
+	first: int,
+) -> void:
 	var build := BuildStamp.current()
 	var engine: Dictionary = Engine.get_version_info()
 	header["format"] = str(FORMAT)
@@ -658,6 +748,7 @@ func describe_build(arena: Node, movement: MovementData, fighter_count: int, fir
 	# Nothing draws lots yet; the seed will be the first random number's (F-044 §2).
 	header["seed"] = "0"
 	header["config"] = movement.resource_path
+	header[COMBAT] = combat_numbers.resource_path
 	header["fighters"] = str(fighter_count)
 	header["first_tick"] = str(first)
 	columns = default_columns()
@@ -667,6 +758,8 @@ func describe_build(arena: Node, movement: MovementData, fighter_count: int, fir
 	header["columns"] = CELL_SEPARATOR.join(declared)
 	for field: String in movement_types():
 		config[field] = movement.get(field)
+	for field: String in combat_types():
+		combat[field] = _combat_value(combat_numbers, field)
 
 
 func _read(text: String) -> void:
@@ -702,6 +795,8 @@ func _read_header(lines: PackedStringArray) -> bool:
 		var key := parts[0]
 		if key.begins_with(CONFIG_PREFIX):
 			_read_config_line(key, parts[1])
+		elif key.begins_with(COMBAT_PREFIX):
+			_read_combat_line(key, parts[1])
 		elif not KEYS.has(key):
 			errors.append("header field %s is unknown to format %d" % [key, FORMAT])
 		elif header.has(key):
@@ -716,7 +811,7 @@ func _read_header(lines: PackedStringArray) -> bool:
 		errors.append("format is %s: this player reads format %d" % [found, FORMAT])
 		return false
 	for key: String in KEYS:
-		if not header.has(key):
+		if not header.has(key) and key != COMBAT:
 			errors.append("header field %s is missing" % key)
 	if not errors.is_empty():
 		return false
@@ -728,11 +823,37 @@ func _read_header(lines: PackedStringArray) -> bool:
 				"config field %s is missing from the file: --force takes it from %s"
 				% [field, Match.MOVEMENT_DATA_PATH],
 			)
+	_check_combat_fields()
 	if errors.is_empty() and refusals.is_empty():
 		var invalid := movement_data().validate()
 		if not invalid.is_empty():
 			errors.append("config: %s" % "; ".join(invalid))
+		var invalid_combat := combat_data().validate()
+		if not invalid_combat.is_empty():
+			errors.append("combat: %s" % "; ".join(invalid_combat))
 	return errors.is_empty()
+
+
+# A file without the combat numbers, recorded before TASK-12.1, is refused naming what it lacks:
+# the whole combat in one line, or each missing field; --force plays them from combat_v0.tres.
+func _check_combat_fields() -> void:
+	if not header.has(COMBAT) and combat.is_empty():
+		refusals.append(
+			"the combat numbers are missing from the file (header field combat and every %s line):"
+			% COMBAT_PREFIX
+			+ " recorded before TASK-12.1, --force takes them from %s" % Match.COMBAT_DATA_PATH,
+		)
+		header[COMBAT] = ""
+		return
+	if not header.has(COMBAT):
+		refusals.append("header field combat is missing from the file: --force plays without it")
+		header[COMBAT] = ""
+	for field: String in combat_types():
+		if not combat.has(field):
+			refusals.append(
+				"combat field %s is missing from the file: --force takes it from %s"
+				% [field, Match.COMBAT_DATA_PATH],
+			)
 
 
 func _check_header_values() -> void:
@@ -781,6 +902,46 @@ func _read_config_line(key: String, cell: String) -> void:
 			errors.append("config field %s: %s is not a %s cell" % [field, cell, type])
 		else:
 			config[field] = value
+
+
+func _read_combat_line(key: String, cell: String) -> void:
+	var declared := key.trim_prefix(COMBAT_PREFIX).split(":")
+	if declared.size() != 2:
+		errors.append("header field %s is no %s<field>:<type>" % [key, COMBAT_PREFIX])
+		return
+	var field := declared[0]
+	var type := declared[1]
+	var types := combat_types()
+	if combat.has(field):
+		errors.append("combat field %s is given twice" % field)
+	elif not types.has(field):
+		refusals.append(
+			"combat field %s is unknown to this build's CombatData: --force plays without it"
+			% field,
+		)
+	elif types[field] != type:
+		errors.append(
+			"combat field %s is %s in the file and %s in this build" % [field, type, types[field]],
+		)
+	else:
+		var value: Variant = read_cell(cell, type)
+		if value == null:
+			errors.append("combat field %s: %s is not a %s cell" % [field, cell, type])
+		else:
+			combat[field] = value
+
+
+# The value of a combat field of data, a light attack's field read from its AttackData.
+static func _combat_value(data: CombatData, field: String) -> Variant:
+	if field.begins_with(LIGHT_ATTACK_PREFIX):
+		return data.light_attack.get(field.trim_prefix(LIGHT_ATTACK_PREFIX))
+	return data.get(field)
+
+
+static func _game_combat_data() -> CombatData:
+	var resource: Resource = load(Match.COMBAT_DATA_PATH)
+	assert(resource is CombatData, "%s must load as a CombatData" % Match.COMBAT_DATA_PATH)
+	return resource as CombatData
 
 
 func _read_columns(declared: String) -> void:

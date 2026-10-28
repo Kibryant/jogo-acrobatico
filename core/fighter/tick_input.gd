@@ -17,3 +17,5 @@ var jump := false
 var dash := false
 # A one-tick touch too: the grapple (TASK-10.6).
 var grapple := false
+# A one-tick touch too: the light attack (combate.md, "O leve no tick"; TASK-12.1).
+var light_attack := false

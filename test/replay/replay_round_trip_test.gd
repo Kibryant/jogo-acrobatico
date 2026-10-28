@@ -134,6 +134,9 @@ static func _as_task_10_3(text: String) -> String:
 			var field := line.trim_prefix(ReplayFile.CONFIG_PREFIX).get_slice(":", 0)
 			if not TASK_10_3_CONFIG.has(field):
 				continue
+		elif index < separator and line.begins_with(ReplayFile.COMBAT):
+			# The combat's numbers came with TASK-12.1.
+			continue
 		elif index > separator and not line.is_empty():
 			var cells := line.split(ReplayFile.CELL_SEPARATOR)
 			var old_cells := PackedStringArray()
@@ -389,6 +392,8 @@ func test_a_file_of_task_10_3_plays_only_with_force_the_new_columns_at_their_def
 		"config field aim_height_m",
 		"config field dash_ms",
 		"config field wall_run_max_ms",
+		"column light_attack",
+		"combat numbers",
 	]
 	for words: String in lacking:
 		var unnamed := "no refusal names %s: %s" % [words, message]

@@ -25,6 +25,9 @@ const CHECKED_TICKRATES: Array[int] = [30, 60]
 @export var accel_time_ms: int
 ## From full speed to rest without input (movimento.md, "Chão").
 @export var stop_time_ms: int
+## The walk with the guard up or during a swing, standing (movimento.md, "Chão": "Andar
+## devagar"; F-175 §2): the target speed instead of the run's, by the same acceleration.
+@export var slow_walk_speed_mps: float
 
 @export_group("Jump and air")
 ## movimento.md, "Pulo e ar".
@@ -162,6 +165,11 @@ func validate() -> PackedStringArray:
 		_positive_error("jump_height_m", jump_height_m, "the gravities derive from it"),
 		_positive_error("max_fall_speed_mps", max_fall_speed_mps, "nothing could fall"),
 		_not_negative_error("run_speed_mps", run_speed_mps, "a speed cannot be negative"),
+		_not_negative_error(
+			"slow_walk_speed_mps",
+			slow_walk_speed_mps,
+			"a speed cannot be negative",
+		),
 		_not_negative_error("air_control_pct", air_control_pct, "air control cannot be negative"),
 		# The double jump's exit speed derives from its height, so zero is no jump; a bar
 		# without points pays nothing (movimento.md, "Pulo e ar" and "Stamina").

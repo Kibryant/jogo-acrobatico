@@ -10,6 +10,7 @@ max_slope_deg = 45.0
 run_speed_mps = 7.0
 accel_time_ms = 150
 stop_time_ms = 100
+slow_walk_speed_mps = 3.0
 jump_height_m = 1.2
 jump_rise_ms = 350
 jump_fall_ms = 280

@@ -381,7 +381,7 @@ O modelo bate com o que o Arthur fez a 60 ticks: 72 % sem lag e 13 % com ping 10
 
 ### O que nasce quando
 
-- **Fase 2, o duelo local:** as regras do contato e da defesa no núcleo, com `view_lag` zero. Os nomes dos campos saem do desenho da fase 2.
+- **Fase 2, o duelo local:** as regras do contato e da defesa no núcleo, com `view_lag` zero. Os campos nasceram na TASK-12.1: `contact_tick`, `contact_target` e `contact_move` no estado de quem ataca, `health` e `hurt_tick` no de quem leva, e a foto do tick, tirada pelo `Match` no `after_prepare_tick` (DEC-0051). Sem lag, quem leva aplica o contato no tick seguinte ao carimbo, o primeiro em que a foto o mostra.
 - **Fase 3, o 1v1 online:**
   - o `view_lag` no input e o histórico de poses no servidor;
   - os testes com rede;

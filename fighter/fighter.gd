@@ -1,8 +1,9 @@
 # The fighter node (visao-geral.md, "As cenas"; DEC-0022): a thin adapter between netfox, the
-# engine and the pure core. In _rollback_tick it only calls Movement and mirrors the result: the
-# core decides, move_and_slide() moves and collides, the core confers with the facts the engine
-# gives back, the floor, the wall, another fighter's head under the feet and, when the core asks,
-# what the aim finds (the tick sandwich; DEC-0042; DEC-0044; TASK-10.7). The two rollback contours
+# engine and the pure core. In _rollback_tick it only calls Combat and Movement and mirrors the
+# result: the combat fights against the photo of the tick (DEC-0051), the core decides,
+# move_and_slide() moves and collides, the core confers with the facts the engine gives back, the
+# floor, the wall, another fighter's head under the feet and, when the core asks, what the aim
+# finds (the tick sandwich; DEC-0042; DEC-0044; TASK-10.7). The two rollback contours
 # of DEC-0025 live here because they touch the engine, never the core. The same code runs in
 # Sozinho, on the server and on the clients (DEC-0026 §5).
 class_name Fighter
@@ -40,7 +41,7 @@ const HEAD_PROBE_DISTANCE := 0.05
 const FLOOR_ANGLE_THRESHOLD := 0.01
 
 ## The input box, recorded by netfox as Input:move, Input:yaw, Input:pitch, Input:jump,
-## Input:dash and Input:grapple.
+## Input:dash, Input:grapple and Input:light_attack.
 @export var input: FighterInput
 ## netfox's node that records the boxes on every tick and sends them over the network.
 @export var synchronizer: RollbackSynchronizer
@@ -57,12 +58,27 @@ var config: MovementConfig
 ## is ParedeLonga on the server, on a client and in a replay alike. Left null, the fighter's parent
 ## stands in, as in the tests that build a world of their own.
 var arena: Node
+## The combat numbers of the match, in ticks; the Match passes them by hand with arm(), like the
+## movement's (DEC-0051 §6). Left null, as in the tests that build a world of their own, the
+## fighter skips the combat's step and has no sword.
+var combat: CombatConfig
+## The photo of the tick the Match takes on netfox's after_prepare_tick (DEC-0051 §1), shared by
+## every fighter of the match. Left null, the fighter reads an empty photo.
+var photo: TickPhoto
 ## The rules box, recorded by netfox field by field (":state:mode" and the others; DEC-0022).
 var state := FighterState.new()
 ## The neutral tone the body is painted in, OWN_TONE or OTHER_TONE; its maneuver cues take it too
 ## (ManeuverCues), so no cue wears a colour of the combat tokens (DEC-0031).
 var tone := OTHER_TONE
 
+# The block sword, a function of the displayed state and tick; null until arm() (Sword).
+var sword: Sword
+
+# An empty photo, for a fighter without a Match: it reads nobody (DEC-0051 §1).
+var _no_photo := TickPhoto.new()
+# The white flash of a hit taken, in seconds left on screen (ManeuverCues; visual-e-audio.md, "O
+# leve na tela"). Only the screen reads it, like the lean.
+var _flash_left_s := 0.0
 # Contour D waits for the first tick of each rollback loop (DEC-0025 §2).
 var _engine_floor_pending := false
 # The lean on screen during a wall run (lean): how far it has come in, from 0 to 1, and the flat
@@ -137,6 +153,19 @@ func setup(
 	_paint(tone)
 
 
+## The combat of the match (DEC-0051): its numbers, the photo of the tick every fighter reads, a
+## full health at the spawn (partida.md, "A vida sem partida") and the block sword. The Match calls
+## it after setup(), before the fighter enters the tree, so netfox records the full health as the
+## first state.
+func arm(combat_config: CombatConfig, tick_photo: TickPhoto) -> void:
+	combat = combat_config
+	photo = tick_photo
+	state.health = combat.max_health
+	if sword == null:
+		sword = Sword.new(combat)
+		add_child(sword)
+
+
 ## Paints the body, and the cues it plays from now on, in tone (OWN_TONE or OTHER_TONE). setup()
 ## picks it by who drives the fighter; Sozinho's dummy, driven by this PC but not the player's,
 ## wears the other's (Match.solo_tone).
@@ -165,6 +194,33 @@ func _exit_tree() -> void:
 
 func _process(delta: float) -> void:
 	lean(delta)
+	_fade_flash(delta)
+	if sword != null:
+		# The state on screen is the one of the tick before netfox's clock.
+		sword.show_pose(state, NetworkTime.tick - 1)
+
+
+## Paints the body white for seconds, on screen only: the flash of a hit taken (visual-e-audio.md,
+## "Os três canais por estado": "Reação"). ManeuverCues calls it once per hit, by its key.
+func flash(seconds: float) -> void:
+	_flash_left_s = seconds
+	var white := StandardMaterial3D.new()
+	white.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	white.albedo_color = Color.WHITE
+	body_mesh.material_override = white
+
+
+## True while the white flash of a hit shows.
+func flashing() -> bool:
+	return _flash_left_s > 0.0
+
+
+func _fade_flash(delta: float) -> void:
+	if _flash_left_s <= 0.0:
+		return
+	_flash_left_s -= delta
+	if _flash_left_s <= 0.0:
+		_paint(tone)
 
 
 # What the screen shows of the state, once per displayed frame: the body looks where the state
@@ -202,6 +258,10 @@ func lean_angle() -> float:
 # input of this tick, and the contours have run.
 func _rollback_tick(_delta: float, tick: int, _is_fresh: bool) -> void:
 	var tick_input := input.to_tick_input()
+	if combat != null:
+		var seen := photo if photo != null else _no_photo
+		var me := StringName(name)
+		state = Combat.step(state, me, global_position, seen, tick_input, combat, config, tick)
 	var plan := Movement.before_move(state, global_position, velocity, tick_input, config, tick)
 	# move_and_slide() moves by velocity times the frame's delta, and a tick is not a frame:
 	# physics_factor turns the move into exactly one tick (netfox's rollback-caveats.md). The

@@ -1,0 +1,24 @@
+[gd_resource type="Resource" script_class="CombatData" format=3]
+
+[ext_resource type="Script" path="res://data/combat_data.gd" id="1_cmbt0"]
+[ext_resource type="Script" path="res://data/attack_data.gd" id="2_atck0"]
+
+[sub_resource type="Resource" id="Resource_light"]
+script = ExtResource("2_atck0")
+windup_ms = 250
+active_ms = 100
+recovery_ms = 200
+stamina_cost = 8.0
+damage = 12
+arc_from_deg = -60.0
+arc_to_deg = 60.0
+
+[resource]
+script = ExtResource("1_cmbt0")
+light_attack = SubResource("Resource_light")
+hand_offset_m = 0.6
+hand_height_m = 1.3
+blade_length_m = 1.4
+blade_radius_m = 0.08
+max_health = 100
+health_refill_ms = 2000

@@ -3,10 +3,11 @@
 # fighter gets neutral frames and the mouse is the screen's; a key clicked takes the next key or
 # the middle or a side mouse button, applied to the InputMap and saved at once, unless another
 # action has it; the labels are the active keyboard's; the scale reaches content_scale_factor and
-# the sensitivity the camera. The tests run headless, as the gate does, where the Match creates no
-# screen (Match.has_screen), so they make the screen themselves and give it the fighter, the camera
-# and a store on a temporary file, never user://options.cfg. The events go through the viewport,
-# the way the window delivers them.
+# the sensitivity the camera. TASK-12.1 adds the row "Golpe leve", on the left mouse button, the
+# one action that button takes (F-175 §2). The tests run headless, as the gate does, where the
+# Match creates no screen (Match.has_screen), so they make the screen themselves and give it the
+# fighter, the camera and a store on a temporary file, never user://options.cfg. The events go
+# through the viewport, the way the window delivers them.
 extends GdUnitTestSuite
 
 const NetfoxTicks := preload("res://test/support/netfox_ticks.gd")
@@ -232,6 +233,44 @@ func test_a_side_mouse_button_takes_an_action_and_the_left_one_does_not() -> voi
 	_key_button(screen, &"jump").pressed.emit()
 	get_viewport().push_input(_mouse(MOUSE_BUTTON_MIDDLE))
 	assert_str(screen.shown_key(&"jump")).is_equal("Mouse 3")
+
+
+# TASK-12.1 (F-175 §2; visual-e-audio.md, "A tela de opções"): the row "Golpe leve" shows the left
+# mouse button as "Mouse esquerdo", "Left mouse" in English; it takes a key, and the left button
+# back, and the right button never; no other row takes the left button.
+func test_the_light_attack_row_takes_a_key_and_the_left_button_back() -> void:
+	await _watched()
+	var screen := _screen()
+	screen.open()
+	var name_node := screen.get_node(NodePath(KEYS_PATH + "LightAttackName"))
+	assert(name_node is Label, "each action has a label for its name")
+	assert_str((name_node as Label).text).is_equal(String(GameText.OPTIONS_ACTION_LIGHT_ATTACK))
+	assert_str(GameText.text(GameText.OPTIONS_ACTION_LIGHT_ATTACK)).is_equal("Golpe leve")
+	assert_str(screen.shown_key(&"light_attack")).is_equal("Mouse esquerdo")
+	TranslationServer.set_locale("en")
+	assert_str(screen.binding_label(_store.binding(&"light_attack"))).is_equal("Left mouse")
+	assert_str(GameText.text(GameText.OPTIONS_ACTION_LIGHT_ATTACK)).is_equal("Light attack")
+	TranslationServer.set_locale("pt_BR")
+	_key_button(screen, &"light_attack").pressed.emit()
+	get_viewport().push_input(_mouse(MOUSE_BUTTON_RIGHT))
+	assert_str(String(screen.waiting_for())).is_equal("light_attack")
+	_tap(KEY_F)
+	assert_str(String(screen.waiting_for())).is_empty()
+	_assert_physical(&"light_attack", KEY_F)
+	assert_str(str(_saved("keys", "light_attack"))).is_equal("key:%d" % KEY_F)
+	_key_button(screen, &"light_attack").pressed.emit()
+	get_viewport().push_input(_mouse(MOUSE_BUTTON_LEFT))
+	assert_str(String(screen.waiting_for())).is_empty()
+	var event := _first_event(&"light_attack")
+	assert_bool(event is InputEventMouseButton).is_true()
+	assert_int((event as InputEventMouseButton).button_index).is_equal(MOUSE_BUTTON_LEFT)
+	assert_str(screen.shown_key(&"light_attack")).is_equal("Mouse esquerdo")
+	assert_str(str(_saved("keys", "light_attack"))).is_equal("mouse:%d" % MOUSE_BUTTON_LEFT)
+	# Another row waits on through a left click.
+	_key_button(screen, &"jump").pressed.emit()
+	get_viewport().push_input(_mouse(MOUSE_BUTTON_LEFT))
+	assert_str(String(screen.waiting_for())).is_equal("jump")
+	_assert_physical(&"jump", KEY_SPACE)
 
 
 # The Esc while a key waits cancels the wait and leaves the screen open.

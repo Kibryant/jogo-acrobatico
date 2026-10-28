@@ -44,21 +44,12 @@ static func before_move(
 	tick: int,
 ) -> MovePlan:
 	var next := state.copy()
-	# The body looks where the camera looks (movimento.md, "Princípios").
+	# The body looks where the camera looks (movimento.md, "Princípios"), and from a swing's first
+	# active tick to its end, where the swing goes (combate.md, "O leve no tick": "A direção").
 	next.facing_yaw = input.yaw
-	# One slot for every command: a new press takes it and the older one is gone (movimento.md,
-	# "Perdão": "Um buffer só, para todo comando"; DEC-0039). The grapple is written first and the
-	# jump last, so a tie on one tick leaves the jump, then the dash, then the grapple ("No mesmo
-	# tick, o pulo vence o dash, que vence o gancho"; DEC-0039 §4).
-	if input.grapple:
-		_take_slot(next, FighterCommand.GRAPPLE, tick)
-	if input.dash:
-		_take_slot(next, FighterCommand.DASH, tick)
-	if input.jump:
-		_take_slot(next, FighterCommand.JUMP, tick)
-	if not _within(next.buffered_tick, tick, config.buffer_ticks):
-		# A press whose window closed never fires, so it leaves the slot (DEC-0039).
-		_clear_slot(next)
+	if next.action == FighterState.Action.ACTIVE or next.action == FighterState.Action.RECOVERY:
+		next.facing_yaw = next.action_yaw
+	take_presses(next, input, tick, config)
 	if next.grapple_fired_tick != FighterState.NEVER:
 		var pull_from := next.grapple_fired_tick + config.grapple_attach_ticks
 		if tick >= pull_from:
@@ -105,7 +96,9 @@ static func before_move(
 		horizontal = _horizontal(current, input, state, config)
 	if next.slide_off_dir != Vector3.ZERO:
 		horizontal = _slide(horizontal, next.slide_off_dir, config)
-	if next.buffered_command == FighterCommand.JUMP:
+	# A swing holds every command in the slot until its end (DEC-0051 §5).
+	var free := not swinging(next)
+	if free and next.buffered_command == FighterCommand.JUMP:
 		if _can_jump(next, tick, config):
 			# Always a full jump, from the floor or off a ledge: it replaces the vertical speed.
 			vertical = config.jump_speed
@@ -122,7 +115,7 @@ static func before_move(
 		# Otherwise the press waits in the slot while its window lives: the double jump spent or
 		# the bar short, it becomes the jump of the landing (movimento.md, "Pulo e ar" and
 		# "Perdão").
-	elif next.buffered_command == FighterCommand.DASH:
+	elif free and next.buffered_command == FighterCommand.DASH:
 		if _can_dash(next, tick, config):
 			# The command changes the mode (DEC-0041 §1), and the press tick already moves at the
 			# dash speed: it replaces the run speed, never adds to it. On the floor, so vertical 0.
@@ -137,6 +130,37 @@ static func before_move(
 		# cooldown or with the bar short, it dashes on the first tick it can (movimento.md, "Dash"
 		# and "Perdão").
 	return _asking(_plan(next, horizontal, vertical), config, tick)
+
+
+# Puts the presses of the movement in the slot. One slot for every command: a new press takes it
+# and the older one is gone (movimento.md, "Perdão": "Um buffer só, para todo comando"; DEC-0039).
+# The grapple is written first and the jump last, so a tie on one tick leaves the jump, then the
+# dash, then the grapple ("No mesmo tick, o pulo vence o dash, que vence o gancho"; DEC-0039 §4).
+# Combat.step writes the light before calling it, so any of the three beats the light on one tick
+# (DEC-0051 §4); before_move calls it again, which writes the same presses on the same tick. It
+# writes the state it receives: call it on the copy a rule is building.
+static func take_presses(
+	next: FighterState,
+	input: TickInput,
+	tick: int,
+	config: MovementConfig,
+) -> void:
+	if input.grapple:
+		_take_slot(next, FighterCommand.GRAPPLE, tick)
+	if input.dash:
+		_take_slot(next, FighterCommand.DASH, tick)
+	if input.jump:
+		_take_slot(next, FighterCommand.JUMP, tick)
+	if not _within(next.buffered_tick, tick, config.buffer_ticks):
+		# A press whose window closed never fires, so it leaves the slot (DEC-0039).
+		_clear_slot(next)
+
+
+# Whether a swing is in progress (FighterState.action): then no command leaves the slot, and the
+# grapple asks for no aim; the presses wait for the swing's end (combate.md, "O leve no tick": "O
+# corpo durante o golpe"; DEC-0051 §5).
+static func swinging(state: FighterState) -> bool:
+	return state.action != FighterState.Action.NONE
 
 
 # Reads the engine's verdict: the floor renews the jump and the double jump, clears the last wall
@@ -291,6 +315,7 @@ static func can_grapple(state: FighterState, tick: int, config: MovementConfig) 
 # "Gancho": "O erro": the aim is cast again on every tick, with that tick's direction).
 static func _asking(plan: MovePlan, config: MovementConfig, tick: int) -> MovePlan:
 	var waiting := plan.state.buffered_command == FighterCommand.GRAPPLE
+	waiting = waiting and not swinging(plan.state)
 	plan.aim_request = waiting and can_grapple(plan.state, tick, config)
 	return plan
 
@@ -307,6 +332,8 @@ static func _hooks(
 	tick: int,
 ) -> bool:
 	if state.buffered_command != FighterCommand.GRAPPLE or not facts.aim_hit:
+		return false
+	if swinging(state):
 		return false
 	if not can_grapple(state, tick, config):
 		return false
@@ -350,7 +377,7 @@ static func _releases(
 	tick: int,
 ) -> bool:
 	var pull_from := next.grapple_fired_tick + config.grapple_attach_ticks
-	var jumped := next.buffered_command == FighterCommand.JUMP
+	var jumped := next.buffered_command == FighterCommand.JUMP and not swinging(next)
 	if jumped and next.buffered_tick >= pull_from:
 		_clear_slot(next)
 		return true
@@ -431,6 +458,8 @@ static func _horizontal(
 			return current.move_toward(Vector3.ZERO, config.stop_decel_per_tick)
 		return current
 	if standing:
+		# The light does not slow the body: it runs at the run speed (DEC-0052; combate.md, "O leve
+		# no tick"). The slow walk comes back with the guard and the charged attack.
 		return current.move_toward(
 			_world(move, input.yaw) * config.run_speed,
 			config.ground_accel_per_tick,
@@ -464,7 +493,7 @@ static func _wall_run(
 	var vertical := 0.0
 	if age >= config.wall_hold_ticks:
 		vertical = -(age - config.wall_hold_ticks + 1) * config.wall_slide_gravity_per_tick
-	if next.buffered_command == FighterCommand.JUMP:
+	if next.buffered_command == FighterCommand.JUMP and not swinging(next):
 		vertical = config.wall_jump_speed
 		if _points_back(input, along):
 			horizontal = -horizontal

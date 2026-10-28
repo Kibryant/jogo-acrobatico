@@ -7,7 +7,10 @@
 # (test/support/netfox_ticks.gd; DEC-0027 §3); the SyncTest checks the same count under the
 # forced rollback of every tick (fighter_sync_test.gd, the dash, pulo duplo, parede and gancho
 # scenarios). TASK-10.7 adds the same short trail on a slide off another fighter's head
-# (visual-e-audio.md, "A cabeça do outro na tela"; the SyncTest's cabeca scenario).
+# (visual-e-audio.md, "A cabeça do outro na tela"; the SyncTest's cabeca scenario). TASK-12.1 adds
+# the light's two cues, the arc's trail once per swing and the white flash once per hit, the hit
+# first showing on the tick after its contact (visual-e-audio.md, "O leve na tela"; the
+# SyncTest of test/fighter/light_attack_sync_test.gd).
 extends GdUnitTestSuite
 
 const NetfoxTicks := preload("res://test/support/netfox_ticks.gd")
@@ -558,6 +561,60 @@ func _tone_of(cue: Node) -> String:
 	var material := (mesh as PrimitiveMesh).material
 	assert(material is StandardMaterial3D, "a cue's material is a StandardMaterial3D")
 	return str((material as StandardMaterial3D).albedo_color)
+
+
+# TASK-12.1: a light that lands draws the arc's trail in vermilion once, keyed by the tick its
+# active began, and flashes the target white for 100 ms once, keyed by the contact's tick, though
+# the hit first shows in the target's state on the next tick; the counts of the match's own cues,
+# which draw nothing headless, agree: one swing and one hit, two events, two cues.
+func test_with_a_screen_a_light_draws_its_trail_and_flashes_the_target_once() -> void:
+	await _start()
+	var target := _match.spawn_fighter(Match.DUMMY_SLOT, multiplayer.get_unique_id())
+	# 2,0 m dead ahead of the fighter, which looks down -Z: under the blade's tip.
+	target.position = _fighter.position + Vector3(0.0, 0.0, -2.0)
+	await get_tree().process_frame
+	await get_tree().physics_frame
+	var cues := ManeuverCues.new(_match.config, true)
+	_match.add_child(cues)
+	cues.watch(_fighter)
+	cues.watch(target)
+	_stand(STAND_TICKS)
+	_fighter.input.press_light_attack()
+	var light: AttackConfig = _match.combat.attacks[&"light_attack"]
+	var swing := light.windup_ticks + light.active_ticks + light.recovery_ticks
+	var flashed := 0
+	for _tick: int in swing:
+		_fighter.input.sample_frame(Vector2.ZERO, _fighter.state.facing_yaw)
+		target.input.sample_frame(Vector2.ZERO, target.state.facing_yaw)
+		NetfoxTicks.run_loop()
+		flashed += 1 if target.flashing() else 0
+	assert_int(target.state.health).is_equal(_match.combat.max_health - light.damage)
+	assert_int(flashed).override_failure_message("the target never flashed").is_greater(0)
+	var trails := cues.find_children("SwingTrail*", "MeshInstance3D", false, false)
+	assert_int(trails.size()).is_equal(1)
+	assert(trails[0] is MeshInstance3D, "a cue is a MeshInstance3D")
+	var trail_material := (trails[0] as MeshInstance3D).material_override
+	assert(trail_material is StandardMaterial3D, "the trail wears a StandardMaterial3D")
+	assert_str(str((trail_material as StandardMaterial3D).albedo_color)).is_equal(
+		str(Color(ManeuverCues.SWING_COLOUR, ManeuverCues.OPACITY))
+	)
+	assert_int(cues.presented).is_equal(2)
+	assert_int(_match.cues.presented).is_equal(2)
+	assert_int(_match.cues.events).is_equal(2)
+	# The hit's event: the contact's stamp, first shown one tick later.
+	var hits := ManeuverCues.shown_events(target).filter(
+		func(event: ManeuverCues.Event) -> bool:
+			return event.kind == ManeuverCues.Kind.HIT,
+	)
+	assert_int(hits.size()).is_equal(1)
+	var hit: ManeuverCues.Event = hits[0]
+	assert_int(hit.stamp).is_equal(target.state.hurt_tick)
+	assert_int(hit.shows).is_equal(target.state.hurt_tick + 1)
+	# The flash lasts 100 ms on screen, and the trail fades: both go away by themselves.
+	await get_tree().create_timer(0.4).timeout
+	assert_bool(target.flashing()).is_false()
+	assert_int(cues.get_child_count()).is_equal(0)
+	cues.free()
 
 
 # Counts the times netfox simulates the tick a wall run began: the fresh one and every

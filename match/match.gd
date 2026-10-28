@@ -1,7 +1,8 @@
-# The match (visao-geral.md, "As cenas"): it loads the design data, makes the movement
-# configuration once for netfox's tickrate (visao-geral.md, "A configuração nasce na carga"),
-# builds the arena and creates the fighters and the camera, passing the configuration to each by
-# hand, like props in React: no autoload of ours (DEC-0022).
+# The match (visao-geral.md, "As cenas"): it loads the design data, makes the movement and the
+# combat configurations once for netfox's tickrate (visao-geral.md, "A configuração nasce na
+# carga"), builds the arena and creates the fighters and the camera, passing the configurations to
+# each by hand, like props in React: no autoload of ours (DEC-0022). It also takes the photo of
+# every tick, which each fighter reads the others in (DEC-0051 §1).
 class_name Match
 extends Node3D
 
@@ -10,6 +11,7 @@ const FIGHTER_SCENE := preload("res://fighter/fighter.tscn")
 const CAMERA_RIG_SCENE := preload("res://fighter/camera_rig.tscn")
 const OPTIONS_SCREEN_SCENE := preload("res://ui/options/options_screen.tscn")
 const MOVEMENT_DATA_PATH := "res://data/movement_v0.tres"
+const COMBAT_DATA_PATH := "res://data/combat_v0.tres"
 const CAMERA_DATA_PATH := "res://data/camera_v0.tres"
 ## spawn_fighter() without a first tick: netfox picks it.
 const NO_TICK := -1
@@ -25,6 +27,15 @@ const DUMMY_SLOT := 1
 var movement_data: MovementData
 ## The movement numbers in ticks, shared by every fighter of the match.
 var config: MovementConfig
+## The combat numbers in the units of the paper. Set before the match enters the tree, they replace
+## combat_v0.tres, as movement_data replaces movement_v0.tres: a replay plays the numbers of its
+## header this way (TASK-12.1). Left null, the match loads combat_v0.tres.
+var combat_data: CombatData
+## The combat numbers in ticks, shared by every fighter of the match (DEC-0051 §6).
+var combat: CombatConfig
+## The photo of the tick: every fighter's name, feet and state as netfox restored them, retaken on
+## every tick of every loop, before any fighter simulates it (DEC-0051 §1).
+var photo := TickPhoto.new()
 var camera_data: CameraData
 var arena: Arena
 var fighters: Array[Fighter] = []
@@ -65,6 +76,13 @@ func _ready() -> void:
 		"%s: %s" % [movement_data.resource_path, movement_data.validate()],
 	)
 	config = MovementConfig.create(movement_data, NetworkTime.tickrate)
+	if combat_data == null:
+		combat_data = _load_combat_data()
+	assert(
+		combat_data.validate().is_empty(),
+		"%s: %s" % [combat_data.resource_path, combat_data.validate()],
+	)
+	combat = CombatConfig.create(combat_data, NetworkTime.tickrate)
 	camera_data = _load_camera_data()
 	if options == null:
 		options = OptionsStore.new()
@@ -79,11 +97,13 @@ func _ready() -> void:
 func _enter_tree() -> void:
 	NetworkTime.before_tick_loop.connect(_on_tick_loop_start)
 	NetworkRollback.before_loop.connect(_simulate_every_tick_of_the_loop)
+	NetworkRollback.after_prepare_tick.connect(_take_photo)
 
 
 func _exit_tree() -> void:
 	NetworkTime.before_tick_loop.disconnect(_on_tick_loop_start)
 	NetworkRollback.before_loop.disconnect(_simulate_every_tick_of_the_loop)
+	NetworkRollback.after_prepare_tick.disconnect(_take_photo)
 
 
 # A fighter at the spawn point of slot, driven by the input of the peer input_owner. The body is
@@ -116,6 +136,7 @@ func spawn_fighter(
 	# The match is never turned, so the spawn point's yaw in the world is its yaw in the match.
 	fighter.setup(config, to_local(point.global_position), point.global_rotation.y, own)
 	fighter.arena = arena
+	fighter.arm(combat, photo)
 	fighter.input.set_multiplayer_authority(input_owner)
 	fighter.synchronizer.spawn_tick = NetworkTime.tick if first_tick == NO_TICK else first_tick
 	add_child(fighter)
@@ -218,6 +239,7 @@ func _show_hud(fighter: Fighter) -> void:
 		add_child(hud)
 	if hud != null:
 		hud.follow(fighter, config, camera_rig)
+		hud.show_health(combat, fighters)
 
 
 func _show_options(fighter: Fighter) -> void:
@@ -253,6 +275,22 @@ static func _load_movement_data() -> MovementData:
 	var resource: Resource = load(MOVEMENT_DATA_PATH)
 	assert(resource is MovementData, "%s must load as a MovementData" % MOVEMENT_DATA_PATH)
 	return resource as MovementData
+
+
+# The photo of the tick (DEC-0051 §1), on netfox's after_prepare_tick: netfox has restored every
+# fighter's state and body for tick, and none has simulated it yet. The fighters still in the match,
+# by their node's name, netfox's route, unique in the match.
+func _take_photo(_tick: int) -> void:
+	photo.clear()
+	for fighter: Fighter in fighters:
+		if is_instance_valid(fighter):
+			photo.add(StringName(fighter.name), fighter.global_position, fighter.state)
+
+
+static func _load_combat_data() -> CombatData:
+	var resource: Resource = load(COMBAT_DATA_PATH)
+	assert(resource is CombatData, "%s must load as a CombatData" % COMBAT_DATA_PATH)
+	return resource as CombatData
 
 
 static func _load_camera_data() -> CameraData:

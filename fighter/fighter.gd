@@ -41,7 +41,8 @@ const HEAD_PROBE_DISTANCE := 0.05
 const FLOOR_ANGLE_THRESHOLD := 0.01
 
 ## The input box, recorded by netfox as Input:move, Input:yaw, Input:pitch, Input:jump,
-## Input:dash, Input:grapple, Input:light_attack and Input:guard.
+## Input:dash, Input:grapple, Input:light_attack, Input:guard, Input:charged_attack, Input:parry
+## and Input:guard_press.
 @export var input: FighterInput
 ## netfox's node that records the boxes on every tick and sends them over the network.
 @export var synchronizer: RollbackSynchronizer

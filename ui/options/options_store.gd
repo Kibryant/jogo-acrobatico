@@ -1,5 +1,5 @@
 # The player's options (DEC-0031 §8; F-161; visual-e-audio.md, "A tela de opções"): the key of
-# each of the nine actions, by physical position, the mouse's sensitivity, the interface's scale
+# each of the eleven actions, by physical position, the mouse's sensitivity, the interface's scale
 # and the camera's shake on the impact (TASK-12.2), kept in user://options.cfg, a ConfigFile, like
 # a settings.json in a home folder. The defaults are the InputMap as project.godot loads it,
 # camera_v0.tres's sensitivity, the scale 1.0 and the shake on. Reading checks every entry on its
@@ -24,6 +24,8 @@ const ACTIONS: Array[StringName] = [
 	&"grapple",
 	&"light_attack",
 	&"guard",
+	&"charged_attack",
+	&"parry",
 ]
 ## The action the left mouse button may take: the light attack, its default (F-175 §2; TASK-12.1).
 const LIGHT_ATTACK := &"light_attack"

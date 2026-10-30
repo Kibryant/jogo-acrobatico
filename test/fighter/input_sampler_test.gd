@@ -207,3 +207,30 @@ func test_the_guard_is_held_until_it_is_let_go() -> void:
 	assert_bool(sampler.guard_held()).is_true()
 	sampler.hold_guard(false)
 	assert_bool(sampler.guard_held()).is_false()
+
+
+# TASK-12.3 (DEC-0056 §1): the charged attack, the parry and the guard's press are one-touch
+# commands like the light: presses before one take are one, and each is taken apart from the
+# others; the guard's press leaves the held guard where it is.
+func test_the_charged_the_parry_and_the_guard_press_are_taken_once_and_apart() -> void:
+	var sampler := InputSampler.new()
+	assert_bool(sampler.take_charged_attack()).is_false()
+	assert_bool(sampler.take_parry()).is_false()
+	assert_bool(sampler.take_guard_press()).is_false()
+	sampler.press_charged_attack()
+	sampler.press_charged_attack()
+	sampler.press_parry()
+	sampler.press_guard()
+	assert_bool(sampler.take_charged_attack()).is_true()
+	assert_bool(sampler.take_charged_attack()).is_false()
+	assert_bool(sampler.take_light_attack()).is_false()
+	assert_bool(sampler.take_parry()).is_true()
+	assert_bool(sampler.take_parry()).is_false()
+	assert_bool(sampler.guard_held()).override_failure_message("a press is no hold").is_false()
+	assert_bool(sampler.take_guard_press()).is_true()
+	assert_bool(sampler.take_guard_press()).is_false()
+	sampler.hold_guard(true)
+	assert_bool(sampler.take_guard_press()) \
+			.override_failure_message("a hold is no press") \
+			.is_false()
+	assert_bool(sampler.guard_held()).is_true()

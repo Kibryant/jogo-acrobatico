@@ -680,8 +680,8 @@ func test_the_parrier_acts_at_contact_plus_12_and_its_charged_lands_before_the_g
 	assert_int(duel.contact_tick_of(1)).is_equal(contact)
 	_assert_parried(duel, contact)
 	_assert_attacker_parried(duel, contact, tickrate)
-	# The parrier acts again on contact + 12 and the charged fires right there.
-	assert_int(_acts_again(duel, 0, contact + 1)).is_equal(punish_press)
+	# The parrier acts again on contact + 12 and the charged fires right there, so that tick shows
+	# WINDUP and never NONE (released by Arthur, F-195).
 	var punish := duel.row_at(punish_press).fought[0]
 	_assert_action(punish, FighterState.Action.WINDUP, punish_press)
 	assert_str(String(punish.action_move)).is_equal(String(CHARGED))

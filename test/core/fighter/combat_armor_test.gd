@@ -275,8 +275,15 @@ func test_a_light_on_the_charged_windup_takes_12_without_a_stun_and_the_windup_g
 		String(CHARGER)
 	)
 	_assert_armored(duel, light_contact, MAX_HEALTH)
-	_assert_phases_untouched(duel, charged_press, charged_press + _swing_ticks(tickrate), tickrate)
-	_assert_never_frozen(duel, 0)
+	# The armor never freezes the charger nor moves its phases; only its own cut landing does, from
+	# the tick the photo shows the hit (DEC-0055 §4; released by Arthur, F-195).
+	_assert_phases_untouched(duel, charged_press, cut_contact + 1, tickrate)
+	_assert_frozen_between(
+		duel,
+		0,
+		cut_contact + 2,
+		cut_contact + 1 + CHARGED_HITSTOP_TICKS[tickrate],
+	)
 	var released := duel.row_at(active_from).fought[0]
 	assert_int(released.stamina_spent_tick).override_failure_message(_action_line(released)) \
 			.is_equal(active_from)
@@ -343,8 +350,15 @@ func test_a_light_touching_on_the_last_windup_tick_still_meets_the_armor(
 	)
 	assert_int(released.action_since).is_equal(active_from)
 	assert_int(released.stamina_spent_tick).is_equal(active_from)
-	_assert_phases_untouched(duel, charged_press, charged_press + _swing_ticks(tickrate), tickrate)
-	_assert_never_frozen(duel, 0)
+	# The armor never freezes the charger nor moves its phases; only its own cut landing does, from
+	# the tick the photo shows the hit (DEC-0055 §4; released by Arthur, F-195).
+	_assert_phases_untouched(duel, charged_press, cut_contact + 1, tickrate)
+	_assert_frozen_between(
+		duel,
+		0,
+		cut_contact + 2,
+		cut_contact + 1 + CHARGED_HITSTOP_TICKS[tickrate],
+	)
 	assert_int(duel.contact_tick_of(0)).is_equal(cut_contact)
 	var cut := duel.row_at(cut_contact + 1).fought[1]
 	assert_int(cut.health).override_failure_message(_action_line(cut)).is_equal(

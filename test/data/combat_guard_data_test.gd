@@ -62,6 +62,10 @@ const ROUNDINGS: Array[Array] = [
 # plan).
 const VERMILION := Color("#D55E00")
 const WHITE := Color.WHITE
+# TASK-12.3, the same table: "Carregado, preparação: Azul celeste #56B4E9"; "Parry, janela: Amarelo
+# #F0E442"; "Finta: Nenhuma".
+const SKY_BLUE := Color("#56B4E9")
+const YELLOW := Color("#F0E442")
 
 # One impossible value per new number of the light (TASK-12.2 plan, AttackData): a negative time,
 # a negative cost, a negative shake.
@@ -226,10 +230,12 @@ func test_the_half_angle_becomes_radians_and_the_block_cost_is_copied(
 	assert_float(_light_of(combat).block_stamina_cost).is_equal_approx(BLOCK_STAMINA_COST, HAIR)
 
 
-# visual-e-audio.md, "Os três canais por estado": the four tokens the duel reads so far, from a
+# visual-e-audio.md, "Os três canais por estado": the tokens the duel reads so far, from a
 # Resource in data/ (DEC-0031 §5; TASK-12.2 plan): the light's windup and the guard have no colour,
-# the active is vermilion and the reaction is a white flash.
-func test_tokens_v0_holds_the_colours_of_the_four_states() -> void:
+# the active is vermilion and the reaction is a white flash. TASK-12.3 adds four (visual-e-audio.md,
+# "O carregado, o parry e a finta na tela"): the charged's windup in sky blue, the parry's window
+# in yellow, the feint and the parried one without colour.
+func test_tokens_v0_holds_the_colours_of_the_eight_states() -> void:
 	var tokens := _load_tokens()
 	assert_object(tokens.light_windup).override_failure_message("no light_windup").is_not_null()
 	assert_object(tokens.active).override_failure_message("no active").is_not_null()
@@ -239,10 +245,19 @@ func test_tokens_v0_holds_the_colours_of_the_four_states() -> void:
 	_assert_colour(tokens.active, VERMILION, "active")
 	_assert_no_colour(tokens.guard, "guard")
 	_assert_colour(tokens.reaction, WHITE, "reaction")
+	assert_object(tokens.charged_windup).override_failure_message("no charged_windup").is_not_null()
+	assert_object(tokens.parry).override_failure_message("no parry").is_not_null()
+	assert_object(tokens.feint).override_failure_message("no feint").is_not_null()
+	assert_object(tokens.parried).override_failure_message("no parried").is_not_null()
+	_assert_colour(tokens.charged_windup, SKY_BLUE, "charged_windup")
+	_assert_colour(tokens.parry, YELLOW, "parry")
+	_assert_no_colour(tokens.feint, "feint")
+	_assert_no_colour(tokens.parried, "parried")
 
 
-# Every state has a pose, and the four poses differ: the windup takes the blade back, the active
-# is the arc, the guard holds the blade upright in front, the reaction makes the body recoil; and
+# Every state has a pose, and the poses differ: the windup takes the blade back, the active is the
+# arc, the guard holds the blade upright in front, the reaction makes the body recoil, the charged
+# holds it overhead, the parry crosses it, the feint snaps it back, the parried one reflects it; and
 # every state has a shape for the HUD, which repeats the token with shape and colour, never by
 # colour alone (visual-e-audio.md, "Os três canais por estado" and "Onde o sinal mora"; F-053).
 func test_every_token_has_a_pose_and_a_hud_shape_and_the_poses_differ() -> void:
@@ -252,8 +267,13 @@ func test_every_token_has_a_pose_and_a_hud_shape_and_the_poses_differ() -> void:
 		"active": tokens.active,
 		"guard": tokens.guard,
 		"reaction": tokens.reaction,
+		"charged_windup": tokens.charged_windup,
+		"parry": tokens.parry,
+		"feint": tokens.feint,
+		"parried": tokens.parried,
 	}
 	var poses: Array[StringName] = []
+	var shapes: Array[StringName] = []
 	for which: String in named:
 		var token := named[which]
 		assert_str(String(token.pose)).override_failure_message("%s has no pose" % which) \
@@ -263,6 +283,10 @@ func test_every_token_has_a_pose_and_a_hud_shape_and_the_poses_differ() -> void:
 		var repeated := "%s repeats the pose %s" % [which, token.pose]
 		assert_array(poses).override_failure_message(repeated).not_contains([token.pose])
 		poses.append(token.pose)
+		var shared := "%s repeats the HUD shape %s" % [which, token.hud_shape]
+		assert_array(shapes).override_failure_message(shared).not_contains([token.hud_shape])
+		shapes.append(token.hud_shape)
+	assert_int(poses.size()).is_equal(8)
 
 
 # Failure: an impossible number of the light's new fields is rejected, and a message names its

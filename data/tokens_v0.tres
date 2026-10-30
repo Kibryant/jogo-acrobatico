@@ -27,9 +27,37 @@ color = Color(1, 1, 1, 1)
 pose = &"recoil"
 hud_shape = &"circle"
 
+[sub_resource type="Resource" id="Resource_charged_windup"]
+script = ExtResource("2_tokn0")
+color = Color(0.3372549, 0.7058824, 0.9137255, 1)
+pose = &"overhead"
+hud_shape = &"hexagon"
+
+[sub_resource type="Resource" id="Resource_parry"]
+script = ExtResource("2_tokn0")
+color = Color(0.9411765, 0.89411765, 0.25882354, 1)
+pose = &"crossed"
+hud_shape = &"cross"
+
+[sub_resource type="Resource" id="Resource_feint"]
+script = ExtResource("2_tokn0")
+color = Color(0, 0, 0, 0)
+pose = &"snap"
+hud_shape = &"ring"
+
+[sub_resource type="Resource" id="Resource_parried"]
+script = ExtResource("2_tokn0")
+color = Color(0, 0, 0, 0)
+pose = &"reflect"
+hud_shape = &"star"
+
 [resource]
 script = ExtResource("1_tkns0")
 light_windup = SubResource("Resource_windup")
 active = SubResource("Resource_active")
 guard = SubResource("Resource_guard")
 reaction = SubResource("Resource_reaction")
+charged_windup = SubResource("Resource_charged_windup")
+parry = SubResource("Resource_parry")
+feint = SubResource("Resource_feint")
+parried = SubResource("Resource_parried")

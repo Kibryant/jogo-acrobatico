@@ -13,7 +13,8 @@ const GAME_THEME := "res://ui/theme/game_theme.tres"
 # DEC-0031 §8: the movement keys by physical position, so WASD sits in the same place on ABNT2,
 # AZERTY and Dvorak (TASK-9, criterion 7). The dash is the left Shift (TASK-10.4, choice 2, F-121;
 # movimento.md, "Dash": "Tecla"), and the grapple the Q, Arthur's choice (TASK-10.6, choice 1;
-# F-140 §1; movimento.md, "Gancho": "Tecla"): on AZERTY that key reads A.
+# F-140 §1; movimento.md, "Gancho": "Tecla"): on AZERTY that key reads A. The charged attack is
+# the E and the parry the F, Arthur's choice (TASK-12.3; F-191 §2; combate.md, "As teclas").
 const PHYSICAL_KEYS: Dictionary[StringName, Key] = {
 	&"move_forward": KEY_W,
 	&"move_back": KEY_S,
@@ -22,6 +23,8 @@ const PHYSICAL_KEYS: Dictionary[StringName, Key] = {
 	&"jump": KEY_SPACE,
 	&"dash": KEY_SHIFT,
 	&"grapple": KEY_Q,
+	&"charged_attack": KEY_E,
+	&"parry": KEY_F,
 }
 
 const UNSAFE_ACCESS_WARNINGS: Array[String] = [

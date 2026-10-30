@@ -203,7 +203,7 @@ func test_sozinho_opened_before_a_physics_step_records_from_its_first_tick() -> 
 func test_the_main_applies_the_options_file_before_the_match() -> void:
 	var file := ConfigFile.new()
 	file.set_value("keys", "dash", "mouse:%d" % MOUSE_BUTTON_XBUTTON2)
-	file.set_value("keys", "grapple", "key:%d" % KEY_E)
+	file.set_value("keys", "grapple", "key:%d" % KEY_G)
 	file.set_value("mouse", "sensitivity", 0.1)
 	file.set_value("interface", "scale", 1.2)
 	assert_int(file.save(_options_path)).is_equal(OK)
@@ -221,7 +221,7 @@ func test_the_main_applies_the_options_file_before_the_match() -> void:
 	var grapple := InputMap.action_get_events(&"grapple")
 	assert_bool(grapple[0] is InputEventKey).is_true()
 	var key := grapple[0] as InputEventKey
-	assert_int(key.physical_keycode).is_equal(KEY_E)
+	assert_int(key.physical_keycode).is_equal(KEY_G)
 	assert_float(get_tree().root.content_scale_factor).is_equal_approx(1.2, 1e-6)
 	assert_float(main.current_match.camera_rig.sensitivity_deg_per_px).is_equal_approx(0.1, 1e-6)
 	# Reading the file wrote nothing into it.

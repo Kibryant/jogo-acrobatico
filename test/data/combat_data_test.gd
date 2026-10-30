@@ -281,9 +281,10 @@ func test_the_metres_the_cost_and_the_damage_are_copied(
 
 # The attacks are keyed by the move's ID, the same StringName the slot holds (FighterCommand) and
 # the state carries in action_move (DEC-0051 §6; F-007 §5: the move by ID, never the Resource).
+# Two since TASK-12.3: the light and the charged (test/data/combat_charged_data_test.gd).
 func test_the_attacks_are_keyed_by_the_moves_id() -> void:
 	var combat := CombatConfig.create(_load_v0(), 60)
-	assert_int(combat.attacks.size()).is_equal(1)
+	assert_int(combat.attacks.size()).is_equal(2)
 	assert_bool(combat.attacks.has(LIGHT)).is_true()
 	assert_str(String(FighterCommand.LIGHT_ATTACK)).is_equal(String(LIGHT))
 

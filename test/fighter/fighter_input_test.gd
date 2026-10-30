@@ -4,7 +4,8 @@
 # TASK-10.4 adds the dash on the left Shift; TASK-10.6, criterion 2, the camera's pitch, the last
 # sample like the yaw, and the grapple on the Q, a one-touch command like the others; TASK-12.1,
 # the light attack on the left mouse button, one more (F-175 §2); TASK-12.2, the guard on the right
-# mouse button, held rather than touched (F-182 §2; DEC-0054 §1).
+# mouse button, held rather than touched (F-182 §2; DEC-0054 §1); TASK-12.3, the charged attack on
+# the E, the parry on the F and the guard button's press beside its hold (F-191 §2; DEC-0056 §1).
 extends GdUnitTestSuite
 
 const NetfoxTicks := preload("res://test/support/netfox_ticks.gd")
@@ -379,3 +380,121 @@ func test_at_the_keyboard_the_guard_action_held_is_in_the_box() -> void:
 	assert_bool(_boxes[held].guard).override_failure_message("the held guard was not read") \
 			.is_true()
 	assert_bool(_boxes[released].guard).override_failure_message("the guard stayed up").is_false()
+
+
+# TASK-12.3: pressed once, the charged attack, the parry and the guard's press are in the box of
+# the first tick of a frame that runs two, and only there; none presses another.
+func test_the_charged_the_parry_and_the_guard_press_count_for_one_tick() -> void:
+	var fighter := await _fighter_in_a_match()
+	NetfoxTicks.run_loops(3)
+	_watch_boxes(fighter)
+	var press_tick := NetworkTime.tick
+	fighter.input.press_charged_attack()
+	fighter.input.press_parry()
+	fighter.input.press_guard()
+	NetfoxTicks.run_loop(2)
+	var pressed := _boxes[press_tick]
+	assert_bool(pressed.charged_attack).is_true()
+	assert_bool(pressed.parry).is_true()
+	assert_bool(pressed.guard_press).is_true()
+	assert_bool(pressed.guard).override_failure_message("a press is no hold").is_false()
+	assert_bool(pressed.light_attack).is_false()
+	assert_bool(pressed.jump).is_false()
+	var after := _boxes[press_tick + 1]
+	assert_bool(after.charged_attack).is_false()
+	assert_bool(after.parry).is_false()
+	assert_bool(after.guard_press).is_false()
+	var now := fighter.input.to_tick_input()
+	assert_bool(now.charged_attack or now.parry or now.guard_press).is_false()
+
+
+# A key as the operating system reports it, by its physical position.
+static func _key(physical: Key, pressed: bool, echo := false) -> InputEventKey:
+	var event := InputEventKey.new()
+	event.physical_keycode = physical
+	event.pressed = pressed
+	event.echo = echo
+	return event
+
+
+# The right mouse button, the guard's (project.godot, [input]; F-182 §2).
+static func _right_click(pressed: bool) -> InputEventMouseButton:
+	var event := InputEventMouseButton.new()
+	event.button_index = MOUSE_BUTTON_RIGHT
+	event.pressed = pressed
+	return event
+
+
+# TASK-12.3 (F-191 §2; combate.md, "As teclas"): at the keyboard, the E presses the charged attack
+# and the F the parry, once each on their tick, by physical position; the key repeat of a held key
+# is no second press.
+func test_the_e_and_the_f_press_the_charged_and_the_parry_once() -> void:
+	var fighter := await _fighter_at_the_keyboard()
+	_game_match.camera_rig.free_mouse()
+	NetfoxTicks.run_loops(3)
+	_watch_boxes(fighter)
+	var charged_tick := NetworkTime.tick
+	get_viewport().push_input(_key(KEY_E, true))
+	NetfoxTicks.run_loop()
+	get_viewport().push_input(_key(KEY_E, true, true))
+	NetfoxTicks.run_loop()
+	get_viewport().push_input(_key(KEY_E, false))
+	var parry_tick := NetworkTime.tick
+	get_viewport().push_input(_key(KEY_F, true))
+	NetfoxTicks.run_loop()
+	get_viewport().push_input(_key(KEY_F, true, true))
+	NetfoxTicks.run_loop()
+	get_viewport().push_input(_key(KEY_F, false))
+	for tick: int in range(charged_tick, NetworkTime.tick):
+		var box := _boxes[tick]
+		var where := "tick %d" % tick
+		assert_bool(box.charged_attack).override_failure_message(where).is_equal(
+			tick == charged_tick
+		)
+		assert_bool(box.parry).override_failure_message(where).is_equal(tick == parry_tick)
+		assert_bool(box.light_attack).override_failure_message(where).is_false()
+
+
+# TASK-12.3 (DEC-0056 §5): the right button going down presses the guard once, on its tick, beside
+# the hold, which stays in every box while the button is down; holding it is one press.
+func test_the_right_click_presses_the_guard_once_beside_its_hold() -> void:
+	var fighter := await _fighter_at_the_keyboard()
+	_game_match.camera_rig.free_mouse()
+	NetfoxTicks.run_loops(3)
+	_watch_boxes(fighter)
+	var press_tick := NetworkTime.tick
+	get_viewport().push_input(_right_click(true))
+	Input.action_press(&"guard")
+	await get_tree().physics_frame
+	NetfoxTicks.run_loop()
+	NetfoxTicks.run_loops(3)
+	assert_bool(_boxes[press_tick].guard_press) \
+			.override_failure_message("the right click did not press the guard") \
+			.is_true()
+	for tick: int in range(press_tick + 1, NetworkTime.tick):
+		assert_bool(_boxes[tick].guard_press) \
+				.override_failure_message("a held button pressed again on tick %d" % tick) \
+				.is_false()
+		assert_bool(_boxes[tick].guard).override_failure_message("tick %d" % tick).is_true()
+
+
+# TASK-12.3: muted, as with the options open, the E, the F and the right button press nothing.
+func test_muted_the_e_the_f_and_the_right_click_press_nothing() -> void:
+	var fighter := await _fighter_at_the_keyboard()
+	_game_match.camera_rig.free_mouse()
+	fighter.input.mute_devices(true)
+	NetfoxTicks.run_loops(3)
+	_watch_boxes(fighter)
+	var from := NetworkTime.tick
+	get_viewport().push_input(_key(KEY_E, true))
+	get_viewport().push_input(_key(KEY_F, true))
+	get_viewport().push_input(_right_click(true))
+	NetfoxTicks.run_loops(2)
+	get_viewport().push_input(_key(KEY_E, false))
+	get_viewport().push_input(_key(KEY_F, false))
+	for tick: int in range(from, NetworkTime.tick):
+		var box := _boxes[tick]
+		var where := "tick %d" % tick
+		assert_bool(box.charged_attack).override_failure_message(where).is_false()
+		assert_bool(box.parry).override_failure_message(where).is_false()
+		assert_bool(box.guard_press).override_failure_message(where).is_false()

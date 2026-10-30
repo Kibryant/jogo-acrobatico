@@ -218,7 +218,7 @@ Como o carregado, a armadura, o parry e a finta viram ticks, pelo mesmo caminho 
   - Quem aparou volta a agir no contato + 12. Um carregado que ele começa ali pega no contato + 54, e a guarda de quem foi aparado só estaria alta no contato + 69.
 - **O parry no vazio:** sem um carregado aparado na janela, a postura dura mais 27 ticks depois dela e acaba em P + 39.
 - **Depois da postura,** com o botão da guarda segurado, a guarda sobe em 6 ticks, como depois de um golpe ("A guarda andando").
-- **A finta:** na preparação do carregado, do primeiro tick, o 0, ao tick 27 (disparado em F, de F a F + 27), um `guard_press` com 15 de stamina na barra corta a preparação.
+- **A finta:** na preparação do carregado, do tick seguinte ao disparo até o tick 27 (disparado em F, de F + 1 a F + 27), um `guard_press` com 15 de stamina na barra corta a preparação. No próprio tick F, a finta é lida antes de o carregado sair da vaga: o aperto da guarda junto com o E não finta.
   - A ação vira `FEINT` desde esse tick, por 12 ticks, e os 15 saem nele. Os 25 do carregado nunca saem.
   - Depois do tick 27, sem os 15, ou fora da preparação do carregado, o aperto da guarda não faz nada além do que a guarda já faz.
   - Só o aperto conta: a guarda segurada desde antes do carregado não finta.

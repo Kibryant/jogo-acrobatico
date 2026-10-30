@@ -5,8 +5,9 @@
 # - The header says which game recorded it (F-044 §2): format, version and commit (BuildStamp),
 #   the rules' fingerprint, engine, platform, ticks per second, netfox's physics and clock
 #   settings, the arena and its fingerprint, the seed, the whole movement configuration, one typed
-#   field per line, the whole combat configuration the same way, the light attack's numbers
-#   included as light_attack.<field> (TASK-12.1), the fighters, the first tick and the declared
+#   field per line, the whole combat configuration the same way, each move's numbers included
+#   as <move>.<field>, the light attack's (TASK-12.1) and the charged attack's (TASK-12.3), the
+#   fighters, the first tick and the declared
 #   columns, by name and type.
 # - A row holds netfox's absolute tick, the size of the tick loop that ran it, the fighter, the
 #   input Sozinho applied on that tick and the check, 8 hex digits of the fingerprint of the state
@@ -36,8 +37,10 @@ const COMBAT_PREFIX := "combat."
 ## The header key of the combat numbers (TASK-12.1): optional, since a file recorded before it has
 ## none, and its absence is a refusal, not an error.
 const COMBAT := "combat"
-## The prefix of the light attack's fields among the combat's.
-const LIGHT_ATTACK_PREFIX := "light_attack."
+## The moves of the combat, its AttackData fields, in the order CombatData declares them, each
+## named as its ID (CombatData.attack): each move's fields go among the combat's as <move>.<field>
+## (TASK-12.1; TASK-12.3).
+const MOVES: Array[String] = ["light_attack", "charged_attack"]
 ## netfox's pin (DEC-0023), part of the rules' fingerprint: updating netfox changes the rules.
 const NETFOX_PIN := "cf5189d"
 ## The folders whose scripts and scenes move the body, every file below them (the plan of
@@ -122,8 +125,8 @@ static var _rules_computed := false
 var header: Dictionary[String, String] = { }
 ## The movement configuration of the header, typed, by MovementData field.
 var config: Dictionary[String, Variant] = { }
-## The combat configuration of the header, typed, by CombatData field; a field of the light attack
-## as light_attack.<field> (combat_types).
+## The combat configuration of the header, typed, by CombatData field; a field of a move as
+## <move>.<field> (combat_types).
 var combat: Dictionary[String, Variant] = { }
 ## The columns of the rows, in the order of the file.
 var columns: Array[Column] = []
@@ -333,20 +336,22 @@ func movement_data() -> MovementData:
 	return data
 
 
-# The combat numbers of the header, so a replay plays with the numbers it was recorded with, the
-# light attack's included. A field the file lacks, which only --force plays, comes from the game's
-# own combat_v0.tres, the whole of it for a file recorded before TASK-12.1.
+# The combat numbers of the header, so a replay plays with the numbers it was recorded with, every
+# move's included. A field the file lacks, which only --force plays, comes from the game's own
+# combat_v0.tres: the whole of it for a file recorded before TASK-12.1, the charged attack's for one
+# recorded before TASK-12.3.
 func combat_data() -> CombatData:
 	var fallback := _game_combat_data()
 	var data := CombatData.new()
-	var attack := AttackData.new()
-	data.light_attack = attack
+	for move: String in MOVES:
+		data.set(move, AttackData.new())
 	for field: String in combat_types():
 		var value: Variant = combat[field] if combat.has(field) else _combat_value(fallback, field)
-		if field.begins_with(LIGHT_ATTACK_PREFIX):
-			attack.set(field.trim_prefix(LIGHT_ATTACK_PREFIX), value)
-		else:
+		var move := _move_of(field)
+		if move.is_empty():
 			data.set(field, value)
+			continue
+		data.attack(StringName(move)).set(field.trim_prefix(move + "."), value)
 	return data
 
 
@@ -485,8 +490,8 @@ static func movement_types() -> Dictionary[String, String]:
 	return types
 
 
-# The stored fields of CombatData with their cell types, in their order; the light attack, an
-# AttackData, as light_attack.<field> for each of its own (TASK-12.1).
+# The stored fields of CombatData with their cell types, in their order; each move, an AttackData,
+# as <move>.<field> for each of its own (TASK-12.1; TASK-12.3).
 static func combat_types() -> Dictionary[String, String]:
 	var types: Dictionary[String, String] = { }
 	for property: Dictionary in CombatData.new().get_property_list():
@@ -495,10 +500,7 @@ static func combat_types() -> Dictionary[String, String]:
 		var field: String = property["name"]
 		var kind: int = property["type"]
 		if kind == TYPE_OBJECT:
-			assert(
-				field == "light_attack",
-				"CombatData.%s is a resource no header field takes" % field,
-			)
+			assert(MOVES.has(field), "CombatData.%s is a resource no header field takes" % field)
 			for inner: Dictionary in AttackData.new().get_property_list():
 				if not _stored(inner):
 					continue
@@ -509,7 +511,7 @@ static func combat_types() -> Dictionary[String, String]:
 					not inner_type.is_empty(),
 					"AttackData.%s has no cell type yet" % inner_field,
 				)
-				types[LIGHT_ATTACK_PREFIX + inner_field] = inner_type
+				types[field + "." + inner_field] = inner_type
 			continue
 		var type := cell_type(kind)
 		assert(not type.is_empty(), "CombatData.%s has a type no header field takes yet" % field)
@@ -931,11 +933,20 @@ func _read_combat_line(key: String, cell: String) -> void:
 			combat[field] = value
 
 
-# The value of a combat field of data, a light attack's field read from its AttackData.
+# The value of a combat field of data, a move's field read from its AttackData.
 static func _combat_value(data: CombatData, field: String) -> Variant:
-	if field.begins_with(LIGHT_ATTACK_PREFIX):
-		return data.light_attack.get(field.trim_prefix(LIGHT_ATTACK_PREFIX))
-	return data.get(field)
+	var move := _move_of(field)
+	if move.is_empty():
+		return data.get(field)
+	return data.attack(StringName(move)).get(field.trim_prefix(move + "."))
+
+
+# The move a combat field belongs to, by its prefix; empty for a field of the combat itself.
+static func _move_of(field: String) -> String:
+	for move: String in MOVES:
+		if field.begins_with(move + "."):
+			return move
+	return ""
 
 
 static func _game_combat_data() -> CombatData:

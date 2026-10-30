@@ -1,6 +1,6 @@
 ---
-revisado_em: 2026-10-28
-fontes: [F-001, F-012, F-027, F-028, F-032, F-053, F-061, F-062, F-063, F-073, F-083, F-166, F-172, F-173, F-174, F-175, F-176, F-178, F-180, F-181, F-182]
+revisado_em: 2026-10-30
+fontes: [F-001, F-012, F-027, F-028, F-032, F-053, F-061, F-062, F-063, F-073, F-083, F-166, F-172, F-173, F-174, F-175, F-176, F-178, F-180, F-181, F-182, F-188, F-190, F-191]
 ---
 
 # Combate
@@ -68,6 +68,8 @@ Os tempos seguem o formato preparação / ativo / recuperação. No código, tud
 
 **A stamina no combate.** O leve, a quebra, o parry, a finta e o dash pagam no início; o carregado paga os 25 na soltura, mas só começa com 25 na barra. Sem stamina para pagar, a ação não sai e o aperto espera na vaga do buffer (`movimento.md`, "Stamina"). O bloqueio paga no contato: com menos de 5 (ou 15 contra o carregado) na barra, a guarda cai e o golpe pega, com o tranco. A barra, a espera de 800 ms e a recuperação de 30 por segundo são as do `movimento.md`. No v0 não existe estado "cansado" além disso: o For Honor deixa quem está sem stamina lento e fácil de aparar, e o Chivalry desarma (F-173 §1 C12 e C14); se o duelo pedir, é número novo.
 
+**As teclas** (F-175 §2; F-182 §2; F-191 §2): o leve no aperto do botão esquerdo do mouse, a guarda no direito segurado, o carregado no E e o parry no F, os dois num aperto só; a finta é o aperto do botão direito durante a preparação do carregado ("A finta"). Todas por posição física e remapeáveis (DEC-0031 §8). O carregado não é o clique segurado: com o leve no aperto do clique, o leve teria de esperar a soltura, ou todo leve poderia virar azul no meio (F-175 §1; F-191 §1).
+
 ## O tranco e a vantagem (Q-10)
 
 O **tranco** é o tempo em que quem levou (hitstun) ou bloqueou (blockstun) um golpe não age. A **vantagem** é quem volta a agir primeiro, e com quantos ticks de folga: `tranco de quem leva − o que falta a quem bateu`, onde o que falta é o resto do ativo mais a recuperação, contando do contato no primeiro tick ativo (F-173 §1, P1). Como o cooldown no LoL: quem tem a skill de volta antes "ganha a próxima".
@@ -99,11 +101,13 @@ Durante toda a preparação do carregado (os 42 ticks), um leve que acerta tira 
 
 ## O parry (Q-21)
 
-- **O que apara:** só o carregado. O leve pega na postura do parry e dá o tranco; a quebra agarra quem está na postura.
+- **O que apara:** só o carregado. O leve pega na postura do parry e dá o tranco; a quebra agarra quem está na postura. No refino da TASK-12.3, o Arthur manteve o leve sem parry, contra a ideia de refletir também o leve: com o leve de 250 ms, aparar seria palpite, e o parry viraria spam (F-190; F-191 §2).
+- **A tecla:** o F, num aperto só, como na sonda (F-063; F-191 §2).
 - **A janela:** 200 ms (12 ticks) a partir do aperto. Como a preparação do carregado é fixa, a janela útil são os últimos 200 ms dela: quem vê o azul no tick 0 aperta entre 500 e 700 ms. É acerto de tempo guiado pela preparação que se vê, não reação ao início (F-053 §2.4; F-063 §3): a pessoa conta até o fim.
 - **O acerto:** o "clang", o flash e as faíscas nos dois (DEC-0031); quem foi aparado congela 9 ticks sozinho e fica 900 ms sem agir; quem aparou recupera em 200 ms e tem um carregado garantido.
 - **O erro:** 450 ms de recuperação, de pé, lendo o que vem. Um parry apertado por medo aos 300 ms fecha a janela aos 500, antes do contato, e os 450 ms pegam a pessoa parada: é o 0 em 21 da sonda, agora com uma causa visível (F-063 §3).
-- **Contra spam:** a recuperação do erro e "o leve não se apara" bastam no v0. O Sekiro encolhe a janela a cada aperto (F-173 §1 C19); fica como ajuste se o duelo pedir.
+- **Contra spam:** a recuperação do erro e "o leve não se apara" bastam no v0. O Sekiro encolhe a janela a cada aperto (F-173 §1 C19); fica como ajuste se o duelo pedir. É o "não existe parry infinito" do Arthur (F-188 §2): cada aperto ocupa 39 ticks e só cobre 12, e a barra de 100 paga seis seguidos.
+- **O combo depois do parry:** o Arthur imaginou "dois golpes e um golpe forte" (F-188 §2). No v0, o parry garante um golpe só, o carregado ou o leve, até ele jogar e julgar; o combo fica na Q-55 (F-191 §2).
 - **Na rede:** o parry é defesa por tempo, julgada na tela de quem defende (DEC-0026 §3). A fase 2 escreve a regra com `view_lag` zero.
 
 ## A quebra de guarda e o tech (Q-25)
@@ -125,6 +129,8 @@ Escolha do Arthur na rodada 2 (F-174 §2; DEC-0050): a esquiva **é** o dash. O 
 ## A finta
 
 Só o carregado finta, até 450 ms (27 ticks) da preparação, antes de a janela do parry abrir aos 500. A finta corta a preparação, custa 15 e recupera em 200 ms; o carregado fintado não paga os 25. O que ela faz: quem viu o azul e apertou o parry cedo paga os 450 ms, e o leve que a finta já deixou na vaga pega antes de ele voltar. Ela cumpre as quatro condições da DEC-0016: está na lista, tem preço, tem aviso (a pose volta num estalo, com o estalo seco) e tem janela larga.
+
+A tecla é a da guarda, o botão direito: apertá-lo durante a preparação do carregado finta, como a "finta para a guarda" do Mordhau (F-191 §2). Só o aperto conta: quem já segurava a guarda quando o carregado começou não finta sem querer. Depois dos 200 ms da finta, com o botão ainda segurado, a guarda sobe sozinha, como depois de um golpe ("A guarda andando").
 
 ## O bloqueio, a guarda andando e a stamina
 
@@ -170,6 +176,55 @@ Como as regras acima viram ticks. O que não estava no papel é leitura v0 do Cl
 - **Quem levou** aplica o contato no tick seguinte ao toque, o primeiro em que a foto do tick o mostra (DEC-0051): perde o dano do golpe, e a vida nunca desce de 0. O dano e, na TASK-12.2, o tranco contam do tick do contato. Dois leves que tocam no mesmo tick tiram 12 dos dois no tick seguinte, em qualquer ordem dos lutadores.
 - **A vida no treino:** sem partida, até a TASK-12.7, a vida volta a 100 dois segundos, 120 ticks, depois do último golpe levado (`partida.md`, "Os modos da Main").
 - **Na TASK-12.1, o golpe levado não interrompe o seu:** o tranco entra na TASK-12.2.
+
+### O carregado, o parry e a finta no tick (TASK-12.3; DEC-0056)
+
+Como o carregado, a armadura, o parry e a finta viram ticks, pelo mesmo caminho do leve e da guarda (DEC-0051; DEC-0055). O que não estava no papel é leitura v0 do Claude (DEC-0017), aprovada no plano (F-192). As teclas são escolha do Arthur (F-191 §2; "As teclas").
+
+- **Os nomes no código:**
+  - o carregado é o golpe `charged_attack` (`FighterCommand.CHARGED_ATTACK`), com o toque `TickInput.charged_attack`;
+  - o parry é o comando `parry` (`FighterCommand.PARRY`), com o toque `TickInput.parry`;
+  - o aperto da guarda é o toque `TickInput.guard_press`, verdadeiro só no tick em que o botão da guarda desce, ao lado do `guard`, segurado;
+  - a ação ganha `PARRY` (a postura do parry), `FEINT` (a recuperação da finta) e `PARRIED` (o tranco de quem foi aparado), no fim do enum;
+  - o estado ganha os carimbos `parry_tick` e `parried_tick`.
+- **Quando o carregado sai:** como o leve ("O leve no tick"), em pé no chão, sem golpe, sem tranco, sem postura do parry e sem finta. Sai da guarda também, que cai. Precisa de 25 ou mais de stamina na barra, mas não paga no começo: os 25 saem no primeiro tick ativo. Fora disso, o aperto espera na vaga pelos 150 ms.
+- **As fases do carregado:** a preparação de 42 ticks, o ativo de 7 e a recuperação de 27, pelo mesmo relógio do leve. Disparado em F, ele está em preparação desde F, ativo desde F + 42, em recuperação desde F + 49, e livre desde F + 76; a 30 ticks, são 21, 4 e 14. Nenhum input corta a sequência, só a finta.
+- **A direção e o corpo:** a direção segue a câmera em cada tick da preparação e fica fixa do primeiro tick ativo ao fim, como no leve. Em pé, nas três fases, o corpo anda a até 3 m/s, o andar devagar da guarda (DEC-0052).
+- **O corte do carregado:** de cima para baixo, no plano vertical que contém a direção do golpe.
+  - A fatia do tick k do ativo, de 1 a 7, é o setor do anel entre 0,6 m e 2,0 m do eixo de quem bate, com centro no eixo a 1,3 m acima dos pés dele, a altura da mão.
+  - O setor vai da elevação φ(k − 1) à φ(k), em passos iguais de φ₀ = asen((2,2 − 1,3) / 2,0) ≈ +26,74° a φ₇ = asen((0,6 − 1,3) / 2,0) ≈ −20,49°. Elevação positiva aponta para cima, e a ponta desce de 2,2 m a 0,6 m de altura.
+  - O dado guarda as duas alturas da ponta, e o código tira os ângulos na carga.
+- **O toque do carregado:** como no leve, a fatia toca o alvo quando a menor distância entre ela e o eixo da cápsula do alvo é de até 0,43 m. O eixo é o segmento de 0,35 m a 1,45 m acima dos pés do alvo.
+  - A conta é exata, sem amostrar ângulos. O eixo é vertical e paralelo ao plano do corte, então a distância junta duas partes: a de lado, perpendicular ao plano, e a de dentro do plano, entre o setor e o segmento.
+  - Com os dois no mesmo chão, um alvo de frente a 1,5 m é tocado no primeiro tick ativo, um a 2,3 m no terceiro, e um a 2,5 m nunca.
+- **O acerto e o bloqueio do carregado:** pelo caminho do leve ("O tranco no tick"; DEC-0055).
+  - Acertou: 30 de dano, 42 ticks de hitstun e 7 de paradinha.
+  - Bloqueado: 15 de stamina, 25 ticks de blockstun e 4 de paradinha, e quem bateu fica 9 ticks atrás.
+  - Dois carregados que tocam no mesmo tick trocam: os dois levam 30.
+- **A armadura** ("A armadura do carregado"): quem resolve o contato de um leve na preparação do carregado perde os 12 e carimba o `hurt_tick`, no passo 1 do tick seguinte ao toque.
+  - Não entra em tranco nem congela: a preparação segue, e o carregado desce no tick de sempre.
+  - Quem deu o leve lê o `hurt_tick` na foto e congela os 4 ticks de um acerto.
+  - Um leve que toca no último tick da preparação ainda bate na armadura. Um que toca no primeiro tick ativo, ou na recuperação, pega como sempre: o tranco, e o golpe acaba.
+  - Contra o carregado, a armadura não vale.
+- **Quando o parry sai:** o aperto do parry vai para a vaga, como o leve. Sai em pé no chão, sem golpe, sem tranco, sem postura e sem finta, e da guarda também, que cai. Custa 15 de stamina, pagos no tick em que sai. No ar não há parry.
+- **A postura do parry:** a ação `PARRY`, desde o tick P em que sai. A janela são os 12 primeiros ticks, de P a P + 11.
+- **O parry certo:** quem defende resolve o contato de um carregado no passo 1 do tick seguinte ao toque, pelo próprio estado do começo do tick, o do fim do tick do contato (DEC-0055 §3).
+  - Ele apara quando estava na postura, com o tick do contato na janela, e quem bate está na metade da frente, a até 90° de onde o corpo olha, medido como na guarda (DEC-0054 §2).
+  - Aparou: carimba o `parry_tick` com o tick do contato. Não perde vida, não entra em tranco, não congela, e a postura acaba 12 ticks depois do contato.
+  - O leve não se apara. Na postura, ele pega como sem defesa, e o tranco acaba a postura. O carregado que toca fora da janela, ou pelas costas, também pega.
+- **Quem foi aparado:** dois ticks depois do contato, a foto mostra o `parry_tick` do alvo igual ao tick do contato dele, como mostraria o `block_tick` (DEC-0055 §4).
+  - Nesse tick, o golpe dele acaba, a ação vira `PARRIED`, e o `parried_tick` recebe o tick do contato.
+  - Ele congela 9 ticks, desse tick até o + 8. O tranco vai até o contato + 54 + 9, quando ele volta a agir.
+  - Quem aparou volta a agir no contato + 12. Um carregado que ele começa ali pega no contato + 54, e a guarda de quem foi aparado só estaria alta no contato + 69.
+- **O parry no vazio:** sem um carregado aparado na janela, a postura dura mais 27 ticks depois dela e acaba em P + 39.
+- **Depois da postura,** com o botão da guarda segurado, a guarda sobe em 6 ticks, como depois de um golpe ("A guarda andando").
+- **A finta:** na preparação do carregado, do tick seguinte ao disparo até o tick 27 (disparado em F, de F + 1 a F + 27), um `guard_press` com 15 de stamina na barra corta a preparação. No próprio tick F, a finta é lida antes de o carregado sair da vaga: o aperto da guarda junto com o E não finta.
+  - A ação vira `FEINT` desde esse tick, por 12 ticks, e os 15 saem nele. Os 25 do carregado nunca saem.
+  - Depois do tick 27, sem os 15, ou fora da preparação do carregado, o aperto da guarda não faz nada além do que a guarda já faz.
+  - Só o aperto conta: a guarda segurada desde antes do carregado não finta.
+  - Na `FEINT`, os apertos esperam na vaga. Com o botão ainda segurado, a guarda sobe depois dos 12 ticks.
+- **A vaga:** no mesmo tick, o parry vence o carregado, que vence o leve, e qualquer tecla de movimento vence os três (DEC-0039; DEC-0051 §4).
+- **O corpo na postura, na finta e em quem foi aparado:** na postura e na finta, os comandos esperam na vaga, o corpo anda devagar, como na guarda, e a direção segue a câmera. Em quem foi aparado, vale o tranco ("O tranco e o corpo").
 
 ## O hitstop e o tremor
 

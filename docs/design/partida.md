@@ -96,7 +96,9 @@ A `Main` abre hoje em três papéis (DEC-0026 §6): servidor dedicado, cliente e
 
 **A vida sem partida** (TASK-12.1; leitura v0 do Claude, DEC-0017): até a partida da TASK-12.7, todo lutador tem vida 100, que nunca desce de 0, e ela volta a 100 dois segundos, 120 ticks, depois do último golpe que ele levou. É o treino contra o boneco: a barra mostra cada acerto e se refaz sozinha. Na partida, os rounds tomam o lugar dessa regra (`combate.md`, "O leve no tick").
 
-**O boneco que ataca** (TASK-12.2; leitura v0 do Claude, F-182, contexto): até o bot que luta da TASK-12.8, o boneco do Sozinho dá um leve a cada 3 s, 180 ticks, virado para quem joga, para treinar a guarda e sentir a vez. Ele não anda, não defende e não reage.
+**O boneco que ataca** (TASK-12.2; leitura v0 do Claude, F-182, contexto): até o bot que luta da TASK-12.8, o boneco do Sozinho começa um golpe a cada 3 s, 180 ticks, virado para quem joga, para treinar a guarda e sentir a vez. Ele não anda, não segura a guarda e não reage.
+
+**A mistura do boneco** (TASK-12.3; leitura v0 do Claude, aprovada no plano, F-192): o golpe de número k sai de uma conta fixa sobre o k, um hash de inteiros, sem sorteio e sem semente. De cada 5, 2 são leves, 2 são carregados e 1 é finta, na média; a ordem não se repete de um jeito que dê para decorar, e os quatro primeiros já trazem os três. A finta é um carregado cortado pelo aperto da guarda 24 ticks depois do começo, dentro dos 27 da finta (`combate.md`, "A finta"), e um leve apertado 4 ticks depois, que espera na vaga até os 12 ticks da finta acabarem e sai no fim deles. Como não há semente, o replay refaz a mesma mistura. É o que o critério 8 da TASK-12.3 pede: o Arthur apara contando o azul, morde fintas e anota a taxa de parry, como na F-063.
 
 ## O relatório de crash pelo log (DEC-0034)
 

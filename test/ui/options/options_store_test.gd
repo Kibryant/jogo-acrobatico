@@ -62,6 +62,8 @@ func _assert_defaults(store: OptionsStore) -> void:
 		&"jump": KEY_SPACE,
 		&"dash": KEY_SHIFT,
 		&"grapple": KEY_Q,
+		&"charged_attack": KEY_E,
+		&"parry": KEY_F,
 	}
 	for action: StringName in expected:
 		var event := store.binding(action)
@@ -89,8 +91,9 @@ func _assert_warned_about(store: OptionsStore, entry: String) -> void:
 	assert_bool(found).override_failure_message(failure).is_true()
 
 
-# TASK-12.2 adds the guard after the light attack (visual-e-audio.md, "A tela de opções").
-func test_the_nine_actions_are_the_ones_of_project_godot_in_the_screens_order() -> void:
+# TASK-12.2 adds the guard after the light attack, and TASK-12.3 the charged attack and the parry
+# after the guard (visual-e-audio.md, "A tela de opções"; F-191 §2).
+func test_the_eleven_actions_are_the_ones_of_project_godot_in_the_screens_order() -> void:
 	assert_array(OptionsStore.ACTIONS).is_equal(
 		[
 			&"move_forward",
@@ -102,6 +105,8 @@ func test_the_nine_actions_are_the_ones_of_project_godot_in_the_screens_order() 
 			&"grapple",
 			&"light_attack",
 			&"guard",
+			&"charged_attack",
+			&"parry",
 		],
 	)
 	for action: StringName in OptionsStore.ACTIONS:
@@ -134,7 +139,7 @@ func test_saved_options_come_back_on_the_next_load() -> void:
 	var store := OptionsStore.new(_path)
 	assert_str(String(store.bind(&"dash", OptionsStore.mouse_event(MOUSE_BUTTON_XBUTTON1)))) \
 			.is_empty()
-	assert_str(String(store.bind(&"grapple", OptionsStore.key_event(KEY_E)))).is_empty()
+	assert_str(String(store.bind(&"grapple", OptionsStore.key_event(KEY_G)))).is_empty()
 	assert_str(String(store.bind(&"jump", OptionsStore.key_event(KEY_CTRL, KEY_LOCATION_RIGHT)))) \
 			.is_empty()
 	store.sensitivity = 0.1
@@ -145,7 +150,7 @@ func test_saved_options_come_back_on_the_next_load() -> void:
 	assert_array(again.warnings).is_empty()
 	assert_bool(again.binding(&"dash") is InputEventMouseButton).is_true()
 	assert_int(_code(again.binding(&"dash"))).is_equal(MOUSE_BUTTON_XBUTTON1)
-	assert_int(_code(again.binding(&"grapple"))).is_equal(KEY_E)
+	assert_int(_code(again.binding(&"grapple"))).is_equal(KEY_G)
 	assert_int(_location(again.binding(&"grapple"))).is_equal(KEY_LOCATION_UNSPECIFIED)
 	assert_int(_code(again.binding(&"jump"))).is_equal(KEY_CTRL)
 	assert_int(_location(again.binding(&"jump"))).is_equal(KEY_LOCATION_RIGHT)
@@ -176,7 +181,7 @@ func test_an_invalid_key_falls_back_to_its_default_alone_and_is_named() -> void:
 			[
 				"[keys]",
 				"move_forward=42",
-				"move_back=\"key:69\"",
+				"move_back=\"key:%d\"" % KEY_G,
 				"move_left=\"key:99999\"",
 				"move_right=\"key:abc\"",
 				"jump=\"key:%d\"" % KEY_ESCAPE,
@@ -186,7 +191,7 @@ func test_an_invalid_key_falls_back_to_its_default_alone_and_is_named() -> void:
 		),
 	)
 	var store := _loaded()
-	assert_int(_code(store.binding(&"move_back"))).is_equal(KEY_E)
+	assert_int(_code(store.binding(&"move_back"))).is_equal(KEY_G)
 	assert_int(store.warnings.size()).is_equal(6)
 	for action: String in ["move_forward", "move_left", "move_right", "jump", "dash", "grapple"]:
 		_assert_warned_about(store, action)
@@ -243,8 +248,8 @@ func test_the_left_mouse_button_is_the_light_attacks_alone() -> void:
 		assert_bool(OptionsStore.accepts(right, action)).override_failure_message(action) \
 				.is_equal(action == &"guard")
 	var store := OptionsStore.new(_path)
-	assert_str(String(store.bind(&"light_attack", OptionsStore.key_event(KEY_F)))).is_empty()
-	assert_int(_code(store.binding(&"light_attack"))).is_equal(KEY_F)
+	assert_str(String(store.bind(&"light_attack", OptionsStore.key_event(KEY_T)))).is_empty()
+	assert_int(_code(store.binding(&"light_attack"))).is_equal(KEY_T)
 	assert_str(String(store.bind(&"light_attack", left))).is_empty()
 	assert_int(_code(store.binding(&"light_attack"))).is_equal(MOUSE_BUTTON_LEFT)
 	# Saved and loaded back, the left button stays the light attack's.
@@ -326,7 +331,7 @@ func test_two_actions_of_the_file_on_one_key_put_the_later_back_to_its_default()
 func test_restore_defaults_puts_every_option_back() -> void:
 	var store := OptionsStore.new(_path)
 	store.bind(&"dash", OptionsStore.mouse_event(MOUSE_BUTTON_XBUTTON2))
-	store.bind(&"grapple", OptionsStore.key_event(KEY_E))
+	store.bind(&"grapple", OptionsStore.key_event(KEY_G))
 	store.sensitivity = 0.15
 	store.scale = 0.8
 	store.restore_defaults()
@@ -338,16 +343,16 @@ func test_restore_defaults_puts_every_option_back() -> void:
 func test_applied_keys_drive_the_actions_at_once() -> void:
 	var store := OptionsStore.new(_path)
 	store.bind(&"dash", OptionsStore.mouse_event(MOUSE_BUTTON_XBUTTON1))
-	store.bind(&"grapple", OptionsStore.key_event(KEY_E))
+	store.bind(&"grapple", OptionsStore.key_event(KEY_G))
 	store.apply_keys()
 	var side := InputEventMouseButton.new()
 	side.button_index = MOUSE_BUTTON_XBUTTON1
 	side.pressed = true
 	assert_bool(side.is_action_pressed(&"dash")).is_true()
-	var e_key := InputEventKey.new()
-	e_key.physical_keycode = KEY_E
-	e_key.pressed = true
-	assert_bool(e_key.is_action_pressed(&"grapple")).is_true()
+	var g_key := InputEventKey.new()
+	g_key.physical_keycode = KEY_G
+	g_key.pressed = true
+	assert_bool(g_key.is_action_pressed(&"grapple")).is_true()
 	var q_key := InputEventKey.new()
 	q_key.physical_keycode = KEY_Q
 	q_key.pressed = true

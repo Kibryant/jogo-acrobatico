@@ -1,6 +1,6 @@
 ---
-revisado_em: 2026-10-28
-fontes: [F-001, F-012, F-027, F-028, F-032, F-053, F-061, F-062, F-063, F-073, F-083, F-166, F-172, F-173, F-174, F-175, F-176, F-178, F-180, F-181, F-182]
+revisado_em: 2026-10-30
+fontes: [F-001, F-012, F-027, F-028, F-032, F-053, F-061, F-062, F-063, F-073, F-083, F-166, F-172, F-173, F-174, F-175, F-176, F-178, F-180, F-181, F-182, F-188, F-190, F-191]
 ---
 
 # Combate
@@ -68,6 +68,8 @@ Os tempos seguem o formato preparação / ativo / recuperação. No código, tud
 
 **A stamina no combate.** O leve, a quebra, o parry, a finta e o dash pagam no início; o carregado paga os 25 na soltura, mas só começa com 25 na barra. Sem stamina para pagar, a ação não sai e o aperto espera na vaga do buffer (`movimento.md`, "Stamina"). O bloqueio paga no contato: com menos de 5 (ou 15 contra o carregado) na barra, a guarda cai e o golpe pega, com o tranco. A barra, a espera de 800 ms e a recuperação de 30 por segundo são as do `movimento.md`. No v0 não existe estado "cansado" além disso: o For Honor deixa quem está sem stamina lento e fácil de aparar, e o Chivalry desarma (F-173 §1 C12 e C14); se o duelo pedir, é número novo.
 
+**As teclas** (F-175 §2; F-182 §2; F-191 §2): o leve no aperto do botão esquerdo do mouse, a guarda no direito segurado, o carregado no E e o parry no F, os dois num aperto só; a finta é o aperto do botão direito durante a preparação do carregado ("A finta"). Todas por posição física e remapeáveis (DEC-0031 §8). O carregado não é o clique segurado: com o leve no aperto do clique, o leve teria de esperar a soltura, ou todo leve poderia virar azul no meio (F-175 §1; F-191 §1).
+
 ## O tranco e a vantagem (Q-10)
 
 O **tranco** é o tempo em que quem levou (hitstun) ou bloqueou (blockstun) um golpe não age. A **vantagem** é quem volta a agir primeiro, e com quantos ticks de folga: `tranco de quem leva − o que falta a quem bateu`, onde o que falta é o resto do ativo mais a recuperação, contando do contato no primeiro tick ativo (F-173 §1, P1). Como o cooldown no LoL: quem tem a skill de volta antes "ganha a próxima".
@@ -99,11 +101,13 @@ Durante toda a preparação do carregado (os 42 ticks), um leve que acerta tira 
 
 ## O parry (Q-21)
 
-- **O que apara:** só o carregado. O leve pega na postura do parry e dá o tranco; a quebra agarra quem está na postura.
+- **O que apara:** só o carregado. O leve pega na postura do parry e dá o tranco; a quebra agarra quem está na postura. No refino da TASK-12.3, o Arthur manteve o leve sem parry, contra a ideia de refletir também o leve: com o leve de 250 ms, aparar seria palpite, e o parry viraria spam (F-190; F-191 §2).
+- **A tecla:** o F, num aperto só, como na sonda (F-063; F-191 §2).
 - **A janela:** 200 ms (12 ticks) a partir do aperto. Como a preparação do carregado é fixa, a janela útil são os últimos 200 ms dela: quem vê o azul no tick 0 aperta entre 500 e 700 ms. É acerto de tempo guiado pela preparação que se vê, não reação ao início (F-053 §2.4; F-063 §3): a pessoa conta até o fim.
 - **O acerto:** o "clang", o flash e as faíscas nos dois (DEC-0031); quem foi aparado congela 9 ticks sozinho e fica 900 ms sem agir; quem aparou recupera em 200 ms e tem um carregado garantido.
 - **O erro:** 450 ms de recuperação, de pé, lendo o que vem. Um parry apertado por medo aos 300 ms fecha a janela aos 500, antes do contato, e os 450 ms pegam a pessoa parada: é o 0 em 21 da sonda, agora com uma causa visível (F-063 §3).
-- **Contra spam:** a recuperação do erro e "o leve não se apara" bastam no v0. O Sekiro encolhe a janela a cada aperto (F-173 §1 C19); fica como ajuste se o duelo pedir.
+- **Contra spam:** a recuperação do erro e "o leve não se apara" bastam no v0. O Sekiro encolhe a janela a cada aperto (F-173 §1 C19); fica como ajuste se o duelo pedir. É o "não existe parry infinito" do Arthur (F-188 §2): cada aperto ocupa 39 ticks e só cobre 12, e a barra de 100 paga seis seguidos.
+- **O combo depois do parry:** o Arthur imaginou "dois golpes e um golpe forte" (F-188 §2). No v0, o parry garante um golpe só, o carregado ou o leve, até ele jogar e julgar; o combo fica na Q-55 (F-191 §2).
 - **Na rede:** o parry é defesa por tempo, julgada na tela de quem defende (DEC-0026 §3). A fase 2 escreve a regra com `view_lag` zero.
 
 ## A quebra de guarda e o tech (Q-25)
@@ -125,6 +129,8 @@ Escolha do Arthur na rodada 2 (F-174 §2; DEC-0050): a esquiva **é** o dash. O 
 ## A finta
 
 Só o carregado finta, até 450 ms (27 ticks) da preparação, antes de a janela do parry abrir aos 500. A finta corta a preparação, custa 15 e recupera em 200 ms; o carregado fintado não paga os 25. O que ela faz: quem viu o azul e apertou o parry cedo paga os 450 ms, e o leve que a finta já deixou na vaga pega antes de ele voltar. Ela cumpre as quatro condições da DEC-0016: está na lista, tem preço, tem aviso (a pose volta num estalo, com o estalo seco) e tem janela larga.
+
+A tecla é a da guarda, o botão direito: apertá-lo durante a preparação do carregado finta, como a "finta para a guarda" do Mordhau (F-191 §2). Só o aperto conta: quem já segurava a guarda quando o carregado começou não finta sem querer. Depois dos 200 ms da finta, com o botão ainda segurado, a guarda sobe sozinha, como depois de um golpe ("A guarda andando").
 
 ## O bloqueio, a guarda andando e a stamina
 

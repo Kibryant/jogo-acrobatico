@@ -193,3 +193,5 @@ O que chegou ao projeto e como chegou. Uma fonte não muda: só mudam `status`, 
 | [F-187](F-187-arthur-libera-o-contador-da-task-12-2.md) | 2026-10-28 | O Arthur libera a correção do contador de golpes de um teste travado da TASK-12.2: contar a entrada no ativo |
 | [F-188](F-188-arthur-joga-a-guarda.md) | 2026-10-28 | O Arthur joga a guarda, o tranco e a paradinha e gosta; pensa no parry que reflete e abre combo, num jogo sério e sangrento com finalizações, e em refletir bala com a espada |
 | [F-189](F-189-arthur-fecha-a-task-12-2.md) | 2026-10-28 | O Arthur fecha a TASK-12.2 com a nota no critério 9: sem golpe pelas costas nem troca da tecla na sessão |
+| [F-190](F-190-arthur-acerta-a-conferencia-do-parry-no-leve.md) | 2026-10-30 | O Arthur acerta a conferência do parry no leve: o leve não dá para reagir, aparar seria palpite, e o parry viraria spam com prêmio grande |
+| [F-191](F-191-arthur-fecha-o-refino-da-task-12-3.md) | 2026-10-30 | O Arthur fecha o refino da TASK-12.3: o leve continua sem parry, o castigo fica o do desenho até ele jogar, e o carregado no E, o parry no F e a finta no botão direito |

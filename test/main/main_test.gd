@@ -98,7 +98,7 @@ func test_with_no_argument_the_main_plays_sozinho() -> void:
 
 # TASK-10.7, criterion 5: the dummy stands at the second spawn point, driven by this PC, in the
 # other fighter's tone, with no camera and no bot, and does not walk while the clock runs; TASK-12.2
-# gives it the node that swings a light every 3 s, turned toward the player.
+# gives it the node that attacks every 3 s, turned toward the player (TASK-12.3 mixes the moves).
 func test_sozinho_has_a_dummy_that_does_not_walk_at_the_second_spawn_point() -> void:
 	var main := _main(["--no-replay"])
 	await get_tree().process_frame

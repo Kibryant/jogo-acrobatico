@@ -3,10 +3,10 @@ id: TASK-12.3
 title: >-
   O carregado, o parry e a finta: a armadura, a janela de 200 ms e o castigo
   garantido
-status: Ready
+status: In Progress
 assignee: []
 created_date: '2026-10-27 22:02'
-updated_date: '2026-10-30 12:02'
+updated_date: '2026-10-30 12:03'
 labels:
   - jogo
 milestone: m-2

@@ -63,7 +63,8 @@
 | [DEC-0052](DEC-0052-o-leve-rapido.md) | 2026-10-28 | O leve rápido: 250 / 100 / 200 ms, defendido segurando a guarda antes, e o leve que não freia o corpo; o andar devagar fica para a guarda e o carregado | aceita (F-180; F-179) |
 | [DEC-0053](DEC-0053-um-golpe-no-ar-por-pulo.md) | 2026-10-28 | Um golpe no ar por pulo: o pulo do chão ou a queda de uma beirada, o pulo duplo, o pulo da parede e a soltura do gancho dão um leve no ar cada; nada correndo na parede nem na puxada do gancho, e o golpe próprio do gancho espera os estilos | aceita (F-181); completa a DEC-0050 |
 | [DEC-0054](DEC-0054-a-guarda-pela-frente.md) | 2026-10-28 | A guarda pela frente: o botão direito do mouse, segurado, levanta uma guarda que cobre a metade da frente, 90° para cada lado de onde o corpo olha; pelas costas, o golpe pega | aceita (F-182) |
-| [DEC-0055](DEC-0055-a-guarda-o-tranco-e-a-paradinha-no-tick.md) | 2026-10-28 | A guarda, o tranco e a paradinha no tick: a ação ganha a guarda e o tranco, quem defende resolve o contato pelo próprio estado, cada um congela quando sabe o resultado, e um tick congelado pula o motor | aceita (F-183; F-182); completa a DEC-0051 |
+| [DEC-0055](DEC-0055-a-guarda-o-tranco-e-a-paradinha-no-tick.md) | 2026-10-28 | A guarda, o tranco e a paradinha no tick: a ação ganha a guarda e o tranco, quem defende resolve o contato pelo próprio estado, cada um congela quando sabe o resultado, e um tick congelado pula o motor | aceita (F-183; F-182); completa a DEC-0051; completada pela DEC-0056 (o carregado, o parry e a finta) |
+| [DEC-0056](DEC-0056-o-carregado-o-parry-e-a-finta-no-tick.md) | 2026-10-30 | O carregado, o parry e a finta no tick: o carregado paga na soltura e a armadura não congela quem carrega; o parry é uma postura que quem defende resolve na metade da frente e quem bateu lê na foto; a finta é o aperto da guarda na preparação | aceita (F-192; F-191); completa a DEC-0051 e a DEC-0055 |
 
 ## Propostas — ainda não são regra
 

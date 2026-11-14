@@ -1,10 +1,10 @@
 ---
 id: TASK-12.14
 title: 'A mira dos golpes: o golpe vai para onde a mira aponta, como o gancho'
-status: In Progress
+status: Done
 assignee: []
 created_date: '2026-10-30 14:43'
-updated_date: '2026-11-14 17:21'
+updated_date: '2026-11-14 22:51'
 labels:
   - jogo
 milestone: m-2
@@ -47,19 +47,25 @@ Ele mandou começar antes de a conferência da convergência bater (F-199 §2); 
 
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
-- [ ] #1 Quando o jogador põe a mira no eixo do boneco parado no mesmo chão, de 1,2 m a 2,3 m de centro a centro, e dá o carregado, o corte pega sem compensar a mira; com o boneco a 1,0 m ou a 2,5 m, ele erra (combate.md, "A espada na mira").
-- [ ] #2 Quando o jogador dá o leve com a mira no eixo do boneco, de 1,0 m a 2,3 m, o arco pega, e a direção do leve é a mesma do carregado: o yaw da câmera menos asen(ombro / convergência), 23,58° para a direita com o v0.
-- [ ] #3 Quando um golpe está na preparação, o corpo olha para a direção do golpe, e não para a câmera; do primeiro tick ativo ao fim, a direção e o corpo ficam onde estavam, por mais que a câmera gire.
-- [ ] #4 Quando o boneco dá o carregado contra quem está parado à frente dele, de 1,2 m a 2,3 m, o corte pega, porque o boneco mira como gente: a linha da mira dele, saindo do ponto O dele, passa pelo eixo de quem joga.
-- [ ] #5 Quando a convergência muda no combat_v0.tres, a direção do golpe muda sem tocar no código; um dado com a convergência zero ou negativa é recusado pela validação, que diz por quê; e um teste prova que a convergência do v0 é maior que o ombro do movement_v0.tres.
-- [ ] #6 Quando a cena roda na SyncTest com o rollback de 7 ticks, nenhum campo diverge.
-- [ ] #7 Quando o Arthur joga, os carregados que erram não erram mais de um lado só, e o replay mede o lado, como na F-196 §1.
+- [x] #1 Quando o jogador põe a mira no eixo do boneco parado no mesmo chão, de 1,2 m a 2,3 m de centro a centro, e dá o carregado, o corte pega sem compensar a mira; com o boneco a 1,0 m ou a 2,5 m, ele erra (combate.md, "A espada na mira").
+- [x] #2 Quando o jogador dá o leve com a mira no eixo do boneco, de 1,0 m a 2,3 m, o arco pega, e a direção do leve é a mesma do carregado: o yaw da câmera menos asen(ombro / convergência), 23,58° para a direita com o v0.
+- [x] #3 Quando um golpe está na preparação, o corpo olha para a direção do golpe, e não para a câmera; do primeiro tick ativo ao fim, a direção e o corpo ficam onde estavam, por mais que a câmera gire.
+- [x] #4 Quando o boneco dá o carregado contra quem está parado à frente dele, de 1,2 m a 2,3 m, o corte pega, porque o boneco mira como gente: a linha da mira dele, saindo do ponto O dele, passa pelo eixo de quem joga.
+- [x] #5 Quando a convergência muda no combat_v0.tres, a direção do golpe muda sem tocar no código; um dado com a convergência zero ou negativa é recusado pela validação, que diz por quê; e um teste prova que a convergência do v0 é maior que o ombro do movement_v0.tres.
+- [x] #6 Quando a cena roda na SyncTest com o rollback de 7 ticks, nenhum campo diverge.
+- [x] #7 Quando o Arthur joga, os carregados que erram não erram mais de um lado só, e o replay mede o lado, como na F-196 §1.
 <!-- AC:END -->
 
 ## Definition of Done
 <!-- DOD:BEGIN -->
-- [ ] #1 Critérios de aceite verificados
-- [ ] #2 Teste automatizado para toda regra do núcleo (core/)
+- [x] #1 Critérios de aceite verificados
+- [x] #2 Teste automatizado para toda regra do núcleo (core/)
 - [ ] #3 Diário da sessão escrito e glossário atualizado
-- [ ] #4 Mudanças registradas em docs/mudancas.md
+- [x] #4 Mudanças registradas em docs/mudancas.md
 <!-- DOD:END -->
+
+## Implementation Notes
+
+<!-- SECTION:NOTES:BEGIN -->
+Fechada em 14/11/2026 (F-203). Gate verde: 2172 casos, 0 erros, 0 falhas, 586 s; o reviewer aprovou os critérios 1 a 6. Critério 7, no replay sozinho-20261114-164750 (1 min 55 s): 28 de 34 carregados até 2,6 m pegaram (em 30/10, 10 de 21); dos 6 erros, o boneco ficou à direita do corte em 1 e à esquerda em 5: dois a 2,4 m, fora do alcance, e quatro com a mira de 0,55 a 0,86 m fora do boneco; com a mira no boneco, de 1,3 a 2,2 m, nenhum errou (vitrine "A espada na mira"). O Arthur estranhou o golpe com a câmera de lado (F-202), que fica na Q-57; a conferência da convergência segue aberta, porque o carregado começado a 1,05 m saiu a 1,89 m. O DoD 3 se fecha com o diário da sessão.
+<!-- SECTION:NOTES:END -->

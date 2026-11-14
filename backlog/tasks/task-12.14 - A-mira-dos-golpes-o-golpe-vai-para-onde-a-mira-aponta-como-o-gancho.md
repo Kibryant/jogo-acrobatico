@@ -4,7 +4,7 @@ title: 'A mira dos golpes: o golpe vai para onde a mira aponta, como o gancho'
 status: Done
 assignee: []
 created_date: '2026-10-30 14:43'
-updated_date: '2026-11-14 22:51'
+updated_date: '2026-11-14 23:03'
 labels:
   - jogo
 milestone: m-2
@@ -60,7 +60,7 @@ Ele mandou começar antes de a conferência da convergência bater (F-199 §2); 
 <!-- DOD:BEGIN -->
 - [x] #1 Critérios de aceite verificados
 - [x] #2 Teste automatizado para toda regra do núcleo (core/)
-- [ ] #3 Diário da sessão escrito e glossário atualizado
+- [x] #3 Diário da sessão escrito e glossário atualizado
 - [x] #4 Mudanças registradas em docs/mudancas.md
 <!-- DOD:END -->
 

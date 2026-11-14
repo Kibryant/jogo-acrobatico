@@ -14,6 +14,9 @@ var hand_offset: float
 var hand_height: float
 var blade_length: float
 var blade_radius: float
+# m from the attacker's axis on the floor's plane: the point of the aim line the swing points at,
+# the convergence (combate.md, "A espada na mira"; DEC-0057 §1). Aim.swing_yaw reads it.
+var aim_convergence: float
 var max_health: int
 # The health returns to max_health this many ticks after the last hit's contact; 0 turns the
 # refill off (partida.md, "A vida sem partida").
@@ -53,6 +56,8 @@ static func create(data: CombatData, tickrate: int) -> CombatConfig:
 	config.hand_height = data.hand_height_m
 	config.blade_length = data.blade_length_m
 	config.blade_radius = data.blade_radius_m
+	# A metre, not a time: copied as it is.
+	config.aim_convergence = data.aim_convergence_m
 	config.max_health = data.max_health
 	config.health_refill_ticks = Ticks.from_ms(data.health_refill_ms, tickrate)
 	config.guard_raise_ticks = Ticks.from_ms(data.guard_raise_ms, tickrate)

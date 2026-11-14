@@ -29,7 +29,10 @@
 #    in the slot fires standing on the floor, from rest or from the guard, which drops, with the bar
 #    able to pay: the light pays on its fire, the charged needs its cost and pays nothing yet, the
 #    parry pays on its fire;
-# 8. the swing's direction follows the camera on every tick of the windup;
+# 8. the swing's direction follows the camera on every tick of the windup, through the convergence:
+#    from the body's axis to the point of the aim line aim_convergence from it, the camera's yaw
+#    turned by Aim.swing_yaw, 23,58° to the right with the v0 (combate.md, "A espada na mira";
+#    DEC-0057 §2);
 # 9. on an active tick, the slice of that tick, flat or vertical, against every other fighter of the
 #    photo, in name order, until the swing has its one contact (Q-26).
 class_name Combat
@@ -60,7 +63,7 @@ static func step(
 	_guard(next, input, tick)
 	_take_press(next, input, combat, config, tick)
 	if next.action == FighterState.Action.WINDUP:
-		next.action_yaw = input.yaw
+		next.action_yaw = Aim.swing_yaw(input.yaw, config.aim_side, combat.aim_convergence)
 	_touch(next, me, feet, photo, combat, config, tick)
 	return next
 

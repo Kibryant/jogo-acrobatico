@@ -248,6 +248,14 @@ func _landing_tick_of_a_jump(tickrate: int) -> int:
 	return _idle_until_landed(fighter)
 
 
+# The camera's yaw that sends the swing along `swing` (combate.md, "A espada na mira"; DEC-0057):
+# the swing turns asin(shoulder / convergence) to the right of the camera, so the camera looks that
+# far to the left of it. The geometry by hand above is worked along the swing.
+func _camera_for_swing(swing: float, tickrate: int, combat: CombatConfig) -> float:
+	var shoulder := MovementRig.load_config(tickrate).aim_side
+	return swing + asin(shoulder / combat.aim_convergence)
+
+
 # A script that presses the charged on the given ticks, the camera on yaw.
 func _charger(presses: PackedInt32Array, yaw: float) -> Callable:
 	return func(tick: int) -> TickInput:
@@ -264,8 +272,8 @@ func _idler(yaw: float, guard_from: int = FighterState.NEVER) -> Callable:
 		return input
 
 
-# The target at target_feet with its own script, index 0, and the attacker at the origin looking
-# down -Z pressing the charged at `press`, index 1.
+# The target at target_feet with its own script, index 0, and the attacker at the origin swinging
+# down -Z, its camera turned so (DEC-0057), pressing the charged at `press`, index 1.
 func _duel(
 	tickrate: int,
 	target_feet: Vector3,
@@ -279,7 +287,7 @@ func _duel(
 	duel.add(_named(TARGET, tickrate, target_feet, target_yaw, config), target_script)
 	duel.add(
 		_named(ATTACKER, tickrate, Vector3.ZERO, 0.0, config),
-		_charger(PackedInt32Array([press]), 0.0),
+		_charger(PackedInt32Array([press]), _camera_for_swing(0.0, tickrate, config)),
 	)
 	return duel
 
@@ -795,9 +803,10 @@ func test_a_run_slows_to_3_mps_through_the_charged(
 	assert_float(_horizontal(free.velocity).length()).is_greater(SLOW_WALK_MPS)
 
 
-# Criterion 1 (combate.md, "A direção e o corpo": "a direção segue a câmera em cada tick da
-# preparação e fica fixa do primeiro tick ativo ao fim, como no leve"): the cut's direction and
-# the body follow the camera through the windup, stay as the camera was on the last windup tick
+# Criterion 1 (combate.md, "A direção e o corpo": "a direção segue a câmera pela convergência em
+# cada tick da preparação e fica fixa do primeiro tick ativo ao fim, como no leve"): the cut's
+# direction and the body follow the camera through the windup, asin(shoulder / convergence) to the
+# right of it ("A espada na mira"; DEC-0057), stay as the camera made them on the last windup tick
 # from the first active tick to the end of the recovery, and the body follows the camera again on
 # the end tick.
 func test_the_cut_direction_is_the_cameras_on_the_last_windup_tick_and_then_fixed(
@@ -808,7 +817,8 @@ func test_the_cut_direction_is_the_cameras_on_the_last_windup_tick_and_then_fixe
 	var first := fighter.tick()
 	var windup := WINDUP_TICKS[tickrate]
 	var swing := _swing_ticks(tickrate)
-	var fixed := FIRST_YAW + YAW_STEP * (windup - 1)
+	var turn := asin(fighter.config().aim_side / fighter.combat.aim_convergence)
+	var fixed := FIRST_YAW + YAW_STEP * (windup - 1) - turn
 	var violations: Array[String] = []
 	for offset: int in swing + 2:
 		var yaw := FIRST_YAW + YAW_STEP * offset
@@ -820,10 +830,11 @@ func test_the_cut_direction_is_the_cameras_on_the_last_windup_tick_and_then_fixe
 		var plan := _step_checking_phase(fighter, input, first, violations)
 		var state := plan.state
 		if offset < windup:
-			if absf(state.action_yaw - yaw) > HAIR or absf(state.facing_yaw - yaw) > HAIR:
+			var along := yaw - turn
+			if absf(state.action_yaw - along) > HAIR or absf(state.facing_yaw - along) > HAIR:
 				violations.append(
-					"windup tick %d: cut %.3f, facing %.3f, camera %.3f"
-					% [offset, state.action_yaw, state.facing_yaw, yaw]
+					"windup tick %d: cut %.3f, facing %.3f, expected %.3f (camera %.3f)"
+					% [offset, state.action_yaw, state.facing_yaw, along, yaw]
 				)
 		elif offset < swing:
 			if absf(state.action_yaw - fixed) > HAIR or absf(state.facing_yaw - fixed) > HAIR:
@@ -1240,13 +1251,17 @@ func test_two_charged_that_touch_on_the_same_tick_trade() -> void:
 	var contact := press + WINDUP_TICKS[tickrate]
 	var combat := ChargedRig.load_combat(tickrate)
 	var duel := Duel.new()
+	# Each camera turned so that each cut goes at the other (DEC-0057).
 	duel.add(
 		_named(TARGET, tickrate, CLOSE, FACING_THE_ATTACKER, combat),
-		_charger(PackedInt32Array([press]), FACING_THE_ATTACKER),
+		_charger(
+			PackedInt32Array([press]),
+			_camera_for_swing(FACING_THE_ATTACKER, tickrate, combat),
+		),
 	)
 	duel.add(
 		_named(ATTACKER, tickrate, Vector3.ZERO, 0.0, combat),
-		_charger(PackedInt32Array([press]), 0.0),
+		_charger(PackedInt32Array([press]), _camera_for_swing(0.0, tickrate, combat)),
 	)
 	duel.run_through(contact + HITSTOP_HIT_TICKS[tickrate] + SPARE_TICKS)
 	assert_int(duel.contact_tick_of(0)).is_equal(contact)

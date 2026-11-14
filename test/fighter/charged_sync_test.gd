@@ -22,8 +22,10 @@ const MATCH_SCENE := preload("res://match/match.tscn")
 const DEPTH := 7
 
 # Carregado: the two fighters on the flat floor west of the platform (fighter_sync_test.gd), 2,0 m
-# apart along Z: the one at z = 6 looks down -Z (yaw 0) at the one at z = 4, which looks back
-# (yaw pi); each is dead ahead of the other, in the front half (DEC-0054 §2; DEC-0056).
+# apart along Z: the one at z = 6 swings down -Z (yaw 0) at the one at z = 4, which swings back
+# (yaw pi); each is dead ahead of the other, in the front half (DEC-0054 §2; DEC-0056). The yaws
+# are the swings'; each camera looks asin(shoulder / convergence) to the left of its swing
+# (DEC-0057), so each body, out of a swing, looks 23,58° off the other, still in the front half.
 const STARTS: Array[Vector3] = [Vector3(-6, 0, 6), Vector3(-6, 0, 4)]
 const YAWS: Array[float] = [0.0, PI]
 const APART_M := 2.0
@@ -193,7 +195,9 @@ func _carregado(loops: int, hidden := "") -> SyncObserver:
 		for loop: int in scripted:
 			var actions: String = scripted[loop]
 			script[loop] = actions
-		bots.append(ChargedBot.new(fighters[slot], YAWS[slot], script))
+		bots.append(
+			ChargedBot.new(fighters[slot], _camera_for_swing(YAWS[slot], game_match), script)
+		)
 		exchanges.append(Exchanges.new(fighters[slot]))
 		assert_int(fighters[slot].state.health).override_failure_message("spawned without health") \
 				.is_equal(MAX_HEALTH)
@@ -219,6 +223,13 @@ func _carregado(loops: int, hidden := "") -> SyncObserver:
 	observer.paths["cues_presented"] = game_match.cues.presented
 	observer.paths["cue_events"] = game_match.cues.events
 	return _finish(observer, game_match)
+
+
+# The camera's yaw that sends a fighter's swing along `swing` (combate.md, "A espada na mira";
+# DEC-0057): the swing turns asin(shoulder / convergence) to the right of the camera, so the camera
+# looks that far to the left of it.
+static func _camera_for_swing(swing: float, game_match: Match) -> float:
+	return swing + asin(game_match.config.aim_side / game_match.combat.aim_convergence)
 
 
 # A Match in the tree with a fighter of each slot standing at its start, placed before netfox
@@ -302,11 +313,11 @@ func _owed_resimulations(present: int) -> int:
 	return owed
 
 
-# A scripted player standing still, the camera held on the other fighter, who presses the charged,
-# the parry and the light through the calls the keys use too (FighterInput.press_charged_attack,
-# press_parry, press_light_attack), and works the guard button as the right mouse button does: the
-# press (FighterInput.press_guard) together with the hold (hold_guard) when it goes down, the hold
-# released when it goes up (TASK-12.3 plan; DEC-0056 §1).
+# A scripted player standing still, the camera held so its swing goes at the other fighter
+# (DEC-0057), who presses the charged, the parry and the light through the calls the keys use too
+# (FighterInput.press_charged_attack, press_parry, press_light_attack), and works the guard button
+# as the right mouse button does: the press (FighterInput.press_guard) together with the hold
+# (hold_guard) when it goes down, the hold released when it goes up (TASK-12.3 plan; DEC-0056 §1).
 class ChargedBot:
 	var fighter: Fighter
 	var yaw: float

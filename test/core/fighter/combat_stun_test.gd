@@ -93,8 +93,16 @@ func _idler(yaw: float, guard_from: int = FighterState.NEVER) -> Callable:
 		return input
 
 
-# The target, index 0, and the attacker at the origin looking down -Z, index 1, pressing at
-# `press`.
+# The camera's yaw that sends the swing along `swing` (combate.md, "A espada na mira"; DEC-0057):
+# the swing turns asin(shoulder / convergence) to the right of the camera, so the camera looks that
+# far to the left of it. The geometry by hand above is worked along the swing.
+func _camera_for_swing(swing: float, tickrate: int, combat: CombatConfig) -> float:
+	var shoulder := MovementRig.load_config(tickrate).aim_side
+	return swing + asin(shoulder / combat.aim_convergence)
+
+
+# The target, index 0, and the attacker at the origin swinging down -Z, its camera turned so
+# (DEC-0057), index 1, pressing at `press`.
 func _duel(
 	tickrate: int,
 	target_feet: Vector3,
@@ -108,7 +116,7 @@ func _duel(
 	duel.add(_fighter(TARGET, tickrate, target_feet, target_yaw, config), target_script)
 	duel.add(
 		_fighter(ATTACKER, tickrate, Vector3.ZERO, 0.0, config),
-		_presser(PackedInt32Array([press]), 0.0),
+		_presser(PackedInt32Array([press]), _camera_for_swing(0.0, tickrate, config)),
 	)
 	return duel
 
@@ -451,7 +459,7 @@ func test_a_new_hit_during_the_hitstun_restarts_it_from_the_new_contact(
 	)
 	duel.add(
 		_fighter(SECOND, tickrate, SECOND_FEET, 0.0, combat),
-		_presser(PackedInt32Array([second_press]), 0.0),
+		_presser(PackedInt32Array([second_press]), _camera_for_swing(0.0, tickrate, combat)),
 	)
 	duel.run_through(second_ends + SPARE_TICKS)
 	_assert_hit(duel, first_contact, tickrate, MAX_HEALTH)

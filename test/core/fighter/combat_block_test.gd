@@ -86,6 +86,14 @@ func _fighter(
 	return GuardRig.new(name, MovementRig.load_config(tickrate), combat, FIRST_TICK, feet, yaw)
 
 
+# The camera's yaw that sends the swing along `swing` (combate.md, "A espada na mira"; DEC-0057):
+# the swing turns asin(shoulder / convergence) to the right of the camera, so the camera looks that
+# far to the left of it. The geometry by hand above is worked along the swing.
+func _camera_for_swing(swing: float, tickrate: int, combat: CombatConfig) -> float:
+	var shoulder := MovementRig.load_config(tickrate).aim_side
+	return swing + asin(shoulder / combat.aim_convergence)
+
+
 # A script that presses the light on the given ticks, the camera on yaw.
 func _presser(presses: PackedInt32Array, yaw: float) -> Callable:
 	return func(tick: int) -> TickInput:
@@ -102,8 +110,8 @@ func _guarder(from: int, to: int, yaw: float) -> Callable:
 		return input
 
 
-# The target at target_feet with its own script, index 0, and the attacker at the origin looking
-# down -Z pressing the light on `presses`, index 1.
+# The target at target_feet with its own script, index 0, and the attacker at the origin swinging
+# down -Z, its camera turned so (DEC-0057), pressing the light on `presses`, index 1.
 func _duel(
 	tickrate: int,
 	target_feet: Vector3,
@@ -115,7 +123,10 @@ func _duel(
 	var config := combat if combat != null else GuardRig.load_combat(tickrate)
 	var duel := Duel.new()
 	duel.add(_fighter(TARGET, tickrate, target_feet, target_yaw, config), target_script)
-	duel.add(_fighter(ATTACKER, tickrate, Vector3.ZERO, 0.0, config), _presser(presses, 0.0))
+	duel.add(
+		_fighter(ATTACKER, tickrate, Vector3.ZERO, 0.0, config),
+		_presser(presses, _camera_for_swing(0.0, tickrate, config)),
+	)
 	return duel
 
 
@@ -538,7 +549,7 @@ func test_after_the_blockstun_with_the_button_held_the_guard_is_already_up(
 	)
 	duel.add(
 		_fighter(SECOND, tickrate, SECOND_FEET, 0.0, combat),
-		_presser(PackedInt32Array([second_press]), 0.0),
+		_presser(PackedInt32Array([second_press]), _camera_for_swing(0.0, tickrate, combat)),
 	)
 	duel.run_through(last)
 	_assert_blocked(duel, first_contact, tickrate, STAMINA_MAX)
@@ -572,7 +583,7 @@ func test_a_light_blocked_during_the_blockstun_restarts_it_from_the_new_contact(
 	)
 	duel.add(
 		_fighter(SECOND, tickrate, SECOND_FEET, 0.0, combat),
-		_presser(PackedInt32Array([second_press]), 0.0),
+		_presser(PackedInt32Array([second_press]), _camera_for_swing(0.0, tickrate, combat)),
 	)
 	duel.run_through(last)
 	_assert_blocked(duel, first_contact, tickrate, STAMINA_MAX)

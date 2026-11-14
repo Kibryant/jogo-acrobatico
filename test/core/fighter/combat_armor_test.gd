@@ -94,8 +94,17 @@ func _light_presser(presses: PackedInt32Array, yaw: float) -> Callable:
 		return ChargedRig.idle(yaw)
 
 
-# The charger at the origin, index 0, pressing the charged at `charged_press` with the camera on
-# charger_yaw; the other at other_feet looking back, index 1, pressing the light at `light_press`.
+# The camera's yaw that sends the swing along `swing` (combate.md, "A espada na mira"; DEC-0057):
+# the swing turns asin(shoulder / convergence) to the right of the camera, so the camera looks that
+# far to the left of it. The geometry by hand above is worked along the swing.
+func _camera_for_swing(swing: float, tickrate: int, combat: CombatConfig) -> float:
+	var shoulder := MovementRig.load_config(tickrate).aim_side
+	return swing + asin(shoulder / combat.aim_convergence)
+
+
+# The charger at the origin, index 0, pressing the charged at `charged_press`, its swing along
+# charger_yaw; the other at other_feet looking back, index 1, pressing the light at `light_press`,
+# its swing back at the charger. Each camera is turned so (DEC-0057).
 func _duel(
 	tickrate: int,
 	charged_press: int,
@@ -107,11 +116,17 @@ func _duel(
 	var duel := Duel.new()
 	duel.add(
 		_fighter(CHARGER, tickrate, Vector3.ZERO, charger_yaw, combat),
-		_charger(PackedInt32Array([charged_press]), charger_yaw),
+		_charger(
+			PackedInt32Array([charged_press]),
+			_camera_for_swing(charger_yaw, tickrate, combat),
+		),
 	)
 	duel.add(
 		_fighter(OTHER, tickrate, other_feet, FACING_THE_OTHER, combat),
-		_light_presser(PackedInt32Array([light_press]), FACING_THE_OTHER),
+		_light_presser(
+			PackedInt32Array([light_press]),
+			_camera_for_swing(FACING_THE_OTHER, tickrate, combat),
+		),
 	)
 	return duel
 
@@ -468,13 +483,17 @@ func test_the_armor_is_worth_nothing_against_a_charged(
 	assert_int(contact).is_less(second_press + WINDUP_TICKS[tickrate])
 	var combat := ChargedRig.load_combat(tickrate)
 	var duel := Duel.new()
+	# Each camera turned so that each cut goes at the other (DEC-0057).
 	duel.add(
 		_fighter(CHARGER, tickrate, Vector3.ZERO, 0.0, combat),
-		_charger(PackedInt32Array([first_press]), 0.0),
+		_charger(PackedInt32Array([first_press]), _camera_for_swing(0.0, tickrate, combat)),
 	)
 	duel.add(
 		_fighter(OTHER, tickrate, CLOSE, FACING_THE_OTHER, combat),
-		_charger(PackedInt32Array([second_press]), FACING_THE_OTHER),
+		_charger(
+			PackedInt32Array([second_press]),
+			_camera_for_swing(FACING_THE_OTHER, tickrate, combat),
+		),
 	)
 	duel.run_through(maxi(stun_ends, second_press + _swing_ticks(tickrate)) + SPARE_TICKS)
 	assert_int(duel.contact_tick_of(0)).is_equal(contact)

@@ -75,11 +75,15 @@ func test_it_mixes_its_actions_toward_the_player_without_walking() -> void:
 	var dummy := game_match.fighter_at(Match.DUMMY_SLOT)
 	var attacking := game_match.attacking_dummy
 	var spawn := dummy.position
-	var toward := AttackingDummy.yaw_toward(
+	# The dummy aims like a person and its swing converges like a player's (DEC-0057 §4): the swing
+	# points along the aim yaw turned by the convergence.
+	var aim := AttackingDummy.aim_yaw(
 		dummy.global_position,
 		player.global_position,
+		dummy.config.aim_side,
 		dummy.state.facing_yaw,
 	)
+	var swing := Aim.swing_yaw(aim, dummy.config.aim_side, game_match.combat.aim_convergence)
 	var expected: Array[String] = []
 	for k: int in range(1, 5):
 		var at := k * PERIOD_TICKS
@@ -103,7 +107,7 @@ func test_it_mixes_its_actions_toward_the_player_without_walking() -> void:
 		var began := state.action != before.action or state.action_since != before.action_since
 		if began and state.action == FighterState.Action.WINDUP:
 			seen.append("%d windup %s" % [since, state.action_move])
-			assert_float(angle_difference(state.action_yaw, toward)).is_equal_approx(0.0, HAIR)
+			assert_float(angle_difference(state.action_yaw, swing)).is_equal_approx(0.0, HAIR)
 		elif began and state.action == FighterState.Action.FEINT:
 			seen.append("%d feint" % since)
 		before = state.copy()

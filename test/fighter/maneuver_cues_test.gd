@@ -62,6 +62,13 @@ func _stand(ticks: int) -> void:
 		NetfoxTicks.run_loop()
 
 
+# The camera's yaw that sends a swing of the match's fighters along `swing` (combate.md, "A espada
+# na mira"; DEC-0057): the swing turns asin(shoulder / convergence) to the right of the camera, so
+# the camera looks that far to the left of it.
+func _camera_for_swing(swing: float) -> float:
+	return swing + asin(_match.config.aim_side / _match.combat.aim_convergence)
+
+
 func _force_rollback() -> void:
 	NetworkRollback.notify_resimulation_start(maxi(NetworkTime.tick - DEPTH, _first_tick))
 
@@ -585,12 +592,14 @@ func test_with_a_screen_a_light_draws_its_trail_and_flashes_the_target_once() ->
 	cues.watch(_fighter)
 	cues.watch(target)
 	_stand(STAND_TICKS)
+	# The camera held so that the light goes where the body looked before the press (DEC-0057).
+	var camera_yaw := _camera_for_swing(_fighter.state.facing_yaw)
 	_fighter.input.press_light_attack()
 	var light: AttackConfig = _match.combat.attacks[&"light_attack"]
 	var swing := light.windup_ticks + light.active_ticks + light.recovery_ticks
 	var flashed := 0
 	for _tick: int in swing:
-		_fighter.input.sample_frame(Vector2.ZERO, _fighter.state.facing_yaw)
+		_fighter.input.sample_frame(Vector2.ZERO, camera_yaw)
 		target.input.sample_frame(Vector2.ZERO, target.state.facing_yaw)
 		NetfoxTicks.run_loop()
 		flashed += 1 if target.flashing() else 0
@@ -772,8 +781,10 @@ func _charged_exchange(parries: bool, watch_attacker: bool) -> Array[float]:
 		else _match.combat_data.charged_attack.hit_shake_ms / 1000.0
 	)
 	var shakes: Array[float] = []
+	# The fighter's cut goes down -Z, its camera turned so (DEC-0057).
+	var camera_yaw := _camera_for_swing(0.0)
 	for loop: int in 120:
-		_fighter.input.sample_frame(Vector2.ZERO, 0.0)
+		_fighter.input.sample_frame(Vector2.ZERO, camera_yaw)
 		target.input.sample_frame(Vector2.ZERO, PI)
 		if loop == press:
 			_fighter.input.press_charged_attack()
@@ -871,9 +882,13 @@ func test_with_a_screen_the_charged_draws_its_trail_in_the_vertical_plane() -> v
 	_match.add_child(cues)
 	cues.watch(_fighter)
 	_stand(STAND_TICKS)
+	# The camera held so that the cut goes where the body looked before the press (DEC-0057).
+	var camera_yaw := _camera_for_swing(_fighter.state.facing_yaw)
 	_fighter.input.press_charged_attack()
 	var charged: AttackConfig = _match.combat.attacks[&"charged_attack"]
-	_stand(charged.windup_ticks + charged.active_ticks)
+	for _tick: int in charged.windup_ticks + charged.active_ticks:
+		_fighter.input.sample_frame(Vector2.ZERO, camera_yaw)
+		NetfoxTicks.run_loop()
 	var trails := cues.find_children("SwingTrail*", "MeshInstance3D", false, false)
 	assert_int(trails.size()).is_equal(1)
 	assert(trails[0] is MeshInstance3D, "a cue is a MeshInstance3D")

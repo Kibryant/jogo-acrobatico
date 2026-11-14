@@ -149,6 +149,14 @@ func _simulate(
 	return rows
 
 
+# The camera's yaw that sends a fighter's swing along `swing` (combate.md, "A espada na mira";
+# DEC-0057): the swing turns asin(shoulder / convergence) to the right of the camera, so the camera
+# looks that far to the left of it. The geometry by hand above is worked along the swing.
+static func _camera_for_swing(swing: float, fighter: CombatRig) -> float:
+	return swing + asin(fighter.config().aim_side / fighter.combat.aim_convergence)
+
+
+# Each of the pair swings at the other: the attacker down -Z, the target back up +Z.
 func _pair_run(
 	pair: Array[CombatRig],
 	attacker_presses: PackedInt32Array,
@@ -156,7 +164,11 @@ func _pair_run(
 	ticks: int,
 	order: Array[int] = [],
 ) -> Array[Row]:
-	return _simulate(pair, [0.0, TARGET_YAW], [attacker_presses, target_presses], ticks, order)
+	var yaws: Array[float] = [
+		_camera_for_swing(0.0, pair[0]),
+		_camera_for_swing(TARGET_YAW, pair[1]),
+	]
+	return _simulate(pair, yaws, [attacker_presses, target_presses], ticks, order)
 
 
 func _expect(condition: bool, message: String, violations: Array[String]) -> void:
@@ -591,7 +603,7 @@ func test_targets_touched_on_the_same_tick_are_taken_in_name_order() -> void:
 	var contact := FIRST_TICK + CONTACT_OFFSET[tickrate]
 	var rows := _simulate(
 		fighters,
-		[TARGET_YAW, 0.0, TARGET_YAW],
+		[TARGET_YAW, _camera_for_swing(0.0, fighters[1]), TARGET_YAW],
 		[PackedInt32Array(), PackedInt32Array([FIRST_TICK]), PackedInt32Array()],
 		_swing_ticks(tickrate) + SPARE_TICKS,
 	)

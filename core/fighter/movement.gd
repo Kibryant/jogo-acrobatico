@@ -53,10 +53,12 @@ static func before_move(
 	# In the stun the stick is ignored: the floor stops the body and the air keeps its path
 	# (combate.md, "O tranco e o corpo").
 	var input := _stilled(tick_input) if Combat.stunned(state) else tick_input
-	# The body looks where the camera looks (movimento.md, "Princípios"), and from a swing's first
-	# active tick to its end, where the swing goes (combate.md, "O leve no tick": "A direção").
+	# The body looks where the camera looks (movimento.md, "Princípios"), and through a whole swing,
+	# from the windup to the end of the recovery, where the swing goes: in the windup the combat
+	# wrote this tick's direction just before, 23,58° to the right of the camera with the v0
+	# (combate.md, "A espada na mira": "O corpo"; DEC-0057 §3).
 	next.facing_yaw = input.yaw
-	if next.action == FighterState.Action.ACTIVE or next.action == FighterState.Action.RECOVERY:
+	if Combat.swinging(next):
 		next.facing_yaw = next.action_yaw
 	take_presses(next, input, tick, config)
 	if next.grapple_fired_tick != FighterState.NEVER:

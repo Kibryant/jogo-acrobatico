@@ -1,7 +1,11 @@
 # The dummy that attacks (partida.md, "O boneco que ataca"; TASK-12.2): until the fighting bot of
 # TASK-12.8, Sozinho's dummy starts an action every 3 s, turned toward whoever plays, so the player
 # can block it from the front, take it in the back and feel whose turn it is (combate.md, "O
-# tranco e a vantagem"). TASK-12.3 mixes its actions (partida.md, "O boneco que ataca": the mix):
+# tranco e a vantagem"). Since TASK-12.14 it turns as a person aims (combate.md, "A espada na mira":
+# "O boneco e o bot miram como gente"; DEC-0057 §4): the yaw it sends puts its own aim line, which
+# leaves its point O on its shoulder's side (DEC-0045 §2), on the player's axis, so its swing
+# converges like a player's and lands on whoever stands still in front of it (aim_yaw).
+# TASK-12.3 mixes its actions (partida.md, "O boneco que ataca": the mix):
 # the k-th is a light, a charged or a feint, chosen by a fixed integer hash of k, 2 in 5 lights,
 # 2 in 5 charged and 1 in 5 feints, so the player cannot learn the order and the replay plays it
 # again with no seed. The feint is a charged cut by the guard button's press 24 ticks into its
@@ -42,7 +46,7 @@ const SLOTS := 5
 
 ## The input box it fills: the dummy's.
 var input: FighterInput
-## The dummy it plays and the fighter it turns toward.
+## The dummy it plays and the fighter it aims at, as a person does (DEC-0057).
 var dummy: Fighter
 var target: Fighter
 ## The tick its clock counts from: the first action comes one period after it.
@@ -89,6 +93,22 @@ static func yaw_toward(from: Vector3, to: Vector3, otherwise: float) -> float:
 	return atan2(-toward.x, -toward.z)
 
 
+## The yaw of a person aiming at the target (combate.md, "A espada na mira": "O boneco e o bot miram
+## como gente"; DEC-0057 §4): the one whose aim line, side metres to the right of the dummy's axis
+## along the yaw (Aim.origin), passes through the target's axis. It is the feet-to-feet yaw plus
+## asin(side / d), d the distance on the floor's plane, turned left of the target so the right
+## shoulder's line falls on it. When d is not greater than the shoulder no aim line can pass over
+## the target, and it is the feet-to-feet yaw alone; on one axis, otherwise, as in yaw_toward.
+static func aim_yaw(from: Vector3, to: Vector3, side: float, otherwise: float) -> float:
+	var toward := yaw_toward(from, to, otherwise)
+	var across := to.x - from.x
+	var along := to.z - from.z
+	var distance := sqrt(across * across + along * along)
+	if distance <= absf(side):
+		return toward
+	return toward + asin(side / distance)
+
+
 ## The kind of the k-th action, k from 1: a pure function of k, the same on every PC and in every
 ## replay, with no randomness and no seed.
 static func kind_of(k: int) -> Kind:
@@ -132,11 +152,17 @@ func presses(tick: int) -> Array[StringName]:
 
 
 # netfox gathers the input once per tick loop, before its ticks (rede.md §2): right after a loop the
-# dummy turns toward where the target stands now, standing still, for the next loop.
+# dummy aims at where the target stands now, standing still, for the next loop, with its own
+# fighter's shoulder.
 func _turn_for_the_next_loop() -> void:
 	if not is_instance_valid(dummy) or not is_instance_valid(target):
 		return
-	var yaw := yaw_toward(dummy.global_position, target.global_position, dummy.state.facing_yaw)
+	var yaw := aim_yaw(
+		dummy.global_position,
+		target.global_position,
+		dummy.config.aim_side,
+		dummy.state.facing_yaw,
+	)
 	input.sample_frame(Vector2.ZERO, yaw)
 
 

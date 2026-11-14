@@ -21,6 +21,10 @@ extends Resource
 @export var blade_length_m: float
 ## The thickness of the contact (combate.md, "A lâmina e o contato": "Raio da lâmina").
 @export var blade_radius_m: float
+## The point of the aim line the swing points at, this far from the body's axis on the floor's
+## plane: where the blade crosses the aim line, at its tip (combate.md, "A lâmina e o contato":
+## "Convergência"; "A espada na mira"; DEC-0057 §1). Positive, and greater than the shoulder.
+@export var aim_convergence_m: float
 
 @export_group("Guard")
 ## The guard rises this long after the button goes down, and blocks from then on (combate.md, "O
@@ -94,6 +98,11 @@ func validate() -> PackedStringArray:
 		_positive_error("hand_height_m", hand_height_m, "the hand sits above the feet"),
 		_positive_error("blade_length_m", blade_length_m, "a blade needs a length"),
 		_not_negative_error("blade_radius_m", blade_radius_m, "a radius cannot be negative"),
+		_positive_error(
+			"aim_convergence_m",
+			aim_convergence_m,
+			"the blade crosses the aim line ahead of the body",
+		),
 		_positive_error("max_health", max_health, "a fighter needs some health"),
 		_not_negative_refill_error(),
 		_guard_raise_error(),

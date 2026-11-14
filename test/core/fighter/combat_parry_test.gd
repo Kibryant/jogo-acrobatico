@@ -118,8 +118,17 @@ func _scripted(
 		return input
 
 
-# The defender at CLOSE, index 0, with its script; the attacker at the origin looking down -Z,
-# index 1, pressing the charged at `press`, the guard held from `attacker_guard_from` when given.
+# The camera's yaw that sends the swing along `swing` (combate.md, "A espada na mira"; DEC-0057):
+# the swing turns asin(shoulder / convergence) to the right of the camera, so the camera looks that
+# far to the left of it. The geometry by hand above is worked along the swing.
+func _camera_for_swing(swing: float, tickrate: int, combat: CombatConfig) -> float:
+	var shoulder := MovementRig.load_config(tickrate).aim_side
+	return swing + asin(shoulder / combat.aim_convergence)
+
+
+# The defender at CLOSE, index 0, with its script; the attacker at the origin swinging down -Z,
+# its camera turned so (DEC-0057), index 1, pressing the charged at `press`, the guard held from
+# `attacker_guard_from` when given.
 func _duel(
 	tickrate: int,
 	defender_yaw: float,
@@ -128,14 +137,15 @@ func _duel(
 	attacker_guard_from := FighterState.NEVER,
 ) -> Duel:
 	var combat := ChargedRig.load_combat(tickrate)
+	var camera := _camera_for_swing(0.0, tickrate, combat)
 	var duel := Duel.new()
 	duel.add(_fighter(DEFENDER, tickrate, CLOSE, defender_yaw, combat), defender_script)
 	var attacker_presses: Dictionary[int, TickInput] = {
-		press: ChargedRig.press_charged(Vector2.ZERO, 0.0),
+		press: ChargedRig.press_charged(Vector2.ZERO, camera),
 	}
 	duel.add(
 		_fighter(ATTACKER, tickrate, Vector3.ZERO, 0.0, combat),
-		_scripted(attacker_presses, 0.0, attacker_guard_from),
+		_scripted(attacker_presses, camera, attacker_guard_from),
 	)
 	return duel
 
@@ -585,10 +595,14 @@ func test_a_light_touching_the_parry_stance_hits_as_without_a_defense(
 		_fighter(DEFENDER, tickrate, CLOSE, FACING_THE_ATTACKER, combat),
 		_scripted(defender_presses, FACING_THE_ATTACKER),
 	)
-	var attacker_presses: Dictionary[int, TickInput] = { press: ChargedRig.press_light() }
+	# The light swings down -Z, its camera turned so (DEC-0057).
+	var camera := _camera_for_swing(0.0, tickrate, combat)
+	var attacker_presses: Dictionary[int, TickInput] = {
+		press: ChargedRig.press_light(Vector2.ZERO, camera),
+	}
 	duel.add(
 		_fighter(ATTACKER, tickrate, Vector3.ZERO, 0.0, combat),
-		_scripted(attacker_presses, 0.0),
+		_scripted(attacker_presses, camera),
 	)
 	duel.run_through(stun_ends + SPARE_TICKS)
 	assert_int(duel.contact_tick_of(1)).is_equal(contact)
@@ -665,17 +679,14 @@ func test_the_parrier_acts_at_contact_plus_12_and_its_charged_lands_before_the_g
 	var attacker_free := contact + PARRIED_STUN_TICKS[tickrate] + PARRIED_HITSTOP_TICKS[tickrate]
 	assert_int(punish_contact).override_failure_message("the numbers do not guarantee the punish") \
 			.is_less(attacker_free)
+	# The punish swings back up +Z, the parrier's camera turned so (DEC-0057); the attacker stays in
+	# the front half of where it looks, 23,58° off its middle.
+	var camera := _camera_for_swing(FACING_THE_ATTACKER, tickrate, ChargedRig.load_combat(tickrate))
 	var presses: Dictionary[int, TickInput] = {
-		parry_press: ChargedRig.press_parry(Vector2.ZERO, FACING_THE_ATTACKER),
-		punish_press: ChargedRig.press_charged(Vector2.ZERO, FACING_THE_ATTACKER),
+		parry_press: ChargedRig.press_parry(Vector2.ZERO, camera),
+		punish_press: ChargedRig.press_charged(Vector2.ZERO, camera),
 	}
-	var duel := _duel(
-		tickrate,
-		FACING_THE_ATTACKER,
-		_scripted(presses, FACING_THE_ATTACKER),
-		press,
-		FIRST_TICK,
-	)
+	var duel := _duel(tickrate, FACING_THE_ATTACKER, _scripted(presses, camera), press, FIRST_TICK)
 	duel.run_through(punish_contact + HITSTOP_HIT_TICKS[tickrate] + SPARE_TICKS)
 	assert_int(duel.contact_tick_of(1)).is_equal(contact)
 	_assert_parried(duel, contact)

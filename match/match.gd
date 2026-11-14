@@ -247,8 +247,9 @@ func let_bot_play(fighter: Fighter) -> BotPlayer:
 	return bot
 
 
-# Sozinho's dummy presses a light every 3 s, turned toward target (partida.md, "O boneco que
-# ataca"), its clock starting on the dummy's first tick. It only fills the dummy's input box.
+# Sozinho's dummy starts an action every 3 s, aiming at target as a person does (partida.md, "O
+# boneco que ataca"; combate.md, "A espada na mira"), its clock starting on the dummy's first
+# tick. It only fills the dummy's input box.
 func let_dummy_attack(dummy: Fighter, target: Fighter) -> AttackingDummy:
 	var first_tick: int = dummy.synchronizer.spawn_tick
 	attacking_dummy = AttackingDummy.new(dummy, target, first_tick, config.tickrate)

@@ -44,6 +44,13 @@ func _script(presses: Dictionary[int, TickInput], yaw: float) -> Callable:
 		return presses[tick] if presses.has(tick) else ChargedRig.idle(yaw)
 
 
+# The camera's yaw that sends the swing along `swing` (combate.md, "A espada na mira"; DEC-0057):
+# the swing turns asin(shoulder / convergence) to the right of the camera, so the camera looks that
+# far to the left of it. The geometry by hand above is worked along the swing.
+func _camera_for_swing(swing: float, combat: CombatConfig) -> float:
+	return swing + asin(MovementRig.load_config(TICKRATE).aim_side / combat.aim_convergence)
+
+
 func test_on_one_tick_only_the_charged_is_parried_and_the_light_learns_its_hit() -> void:
 	var contact := FIRST_TICK + 60
 	var charged_press := contact - CHARGED_WINDUP_TICKS
@@ -58,14 +65,20 @@ func test_on_one_tick_only_the_charged_is_parried_and_the_light_learns_its_hit()
 		_fighter(PARRIER, PARRIER_FEET, FACING_PLUS_Z, combat),
 		_script(parries, FACING_PLUS_Z),
 	)
+	# Each attacker's camera turned so that its swing goes at the parrier (DEC-0057).
+	var charger_camera := _camera_for_swing(0.0, combat)
 	var charges: Dictionary[int, TickInput] = {
-		charged_press: ChargedRig.press_charged(Vector2.ZERO, 0.0),
+		charged_press: ChargedRig.press_charged(Vector2.ZERO, charger_camera),
 	}
-	duel.add(_fighter(CHARGER, Vector3.ZERO, 0.0, combat), _script(charges, 0.0))
+	duel.add(_fighter(CHARGER, Vector3.ZERO, 0.0, combat), _script(charges, charger_camera))
+	var lighter_camera := _camera_for_swing(FACING_PLUS_Z, combat)
 	var lights: Dictionary[int, TickInput] = {
-		light_press: ChargedRig.press_light(Vector2.ZERO, FACING_PLUS_Z),
+		light_press: ChargedRig.press_light(Vector2.ZERO, lighter_camera),
 	}
-	duel.add(_fighter(LIGHTER, LIGHTER_FEET, FACING_PLUS_Z, combat), _script(lights, FACING_PLUS_Z))
+	duel.add(
+		_fighter(LIGHTER, LIGHTER_FEET, FACING_PLUS_Z, combat),
+		_script(lights, lighter_camera),
+	)
 	duel.run_through(contact + SPARE_TICKS)
 	assert_int(duel.contact_tick_of(1)).override_failure_message("the charged missed").is_equal(
 		contact

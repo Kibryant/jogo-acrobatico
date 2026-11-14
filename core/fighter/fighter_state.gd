@@ -63,7 +63,8 @@ var buffered_tick := NEVER
 # so does a run on another wall. A run back on the same wall keeps it, so a 2 there stays a 2
 # through the next wall jump: spent stays spent (DEC-0047 §2).
 var jumps_used := 0
-# Where the body looks, in rad: the camera's yaw (movimento.md, "Princípios").
+# Where the body looks, in rad: the camera's yaw (movimento.md, "Princípios"), and through a swing,
+# from the windup to the end, the swing's direction, action_yaw (DEC-0057 §3).
 var facing_yaw := 0.0
 # The stamina as a value and a stamp (movimento.md, "Stamina": "Como se guarda"): the bar right
 # after the last spend and the tick of that spend. Stamina.at computes the bar from the tick;
@@ -114,8 +115,9 @@ var head_landing_tick := NEVER
 var action: Action = Action.NONE
 var action_since := NEVER
 var action_move: StringName = &""
-# Where the swing goes, in rad: the camera's yaw on every tick of the windup, fixed from the first
-# active tick to the end ("A direção").
+# Where the swing goes, in rad: on every tick of the windup, the camera's yaw turned toward the
+# point of the aim line at the convergence (Aim.swing_yaw; combate.md, "A espada na mira";
+# DEC-0057 §2), fixed from the first active tick to the end ("A direção").
 var action_yaw := 0.0
 # The contact (DEC-0026 §3): stamped on the attacker's own state on the tick its slice touched,
 # with the target's name, the photo's key, and the move. It stays after the swing; a swing whose

@@ -816,10 +816,12 @@ func test_on_one_tick_a_movement_key_beats_the_light(
 		_assert_none(fighter.fought)
 
 
-# Criterion 7: during the windup the swing's direction follows the camera on every tick, and the
-# body looks there; from the first active tick to the end of the recovery it stays as the camera
-# was on the last tick of the windup, and the body looks there however the camera turns; on the
-# end tick the body follows the camera again (combate.md, "O leve no tick": "A direção").
+# Criterion 7: during the windup the swing's direction follows the camera on every tick, through
+# the convergence, asin(shoulder / convergence) to the right of it, and the body looks there
+# (combate.md, "A espada na mira"; DEC-0057); from the first active tick to the end of the recovery
+# it stays as the camera made it on the last tick of the windup, and the body looks there however
+# the camera turns; on the end tick the body follows the camera again (combate.md, "O leve no
+# tick": "A direção").
 func test_the_arc_direction_is_the_cameras_on_the_last_windup_tick_and_then_fixed(
 	tickrate: int,
 	_test_parameters := [[30], [60]],
@@ -828,7 +830,8 @@ func test_the_arc_direction_is_the_cameras_on_the_last_windup_tick_and_then_fixe
 	var first := fighter.tick()
 	var windup := WINDUP_TICKS[tickrate]
 	var swing := _swing_ticks(tickrate)
-	var fixed := FIRST_YAW + YAW_STEP * (windup - 1)
+	var turn := asin(fighter.config().aim_side / fighter.combat.aim_convergence)
+	var fixed := FIRST_YAW + YAW_STEP * (windup - 1) - turn
 	var violations: Array[String] = []
 	for offset: int in swing + 2:
 		var yaw := FIRST_YAW + YAW_STEP * offset
@@ -842,10 +845,11 @@ func test_the_arc_direction_is_the_cameras_on_the_last_windup_tick_and_then_fixe
 		var arc := state.action_yaw
 		var facing := state.facing_yaw
 		if offset < windup:
-			if absf(arc - yaw) > HAIR or absf(facing - yaw) > HAIR:
+			var along := yaw - turn
+			if absf(arc - along) > HAIR or absf(facing - along) > HAIR:
 				violations.append(
-					"windup tick %d: arc %.3f, facing %.3f, camera %.3f"
-					% [offset, arc, facing, yaw]
+					"windup tick %d: arc %.3f, facing %.3f, expected %.3f (camera %.3f)"
+					% [offset, arc, facing, along, yaw]
 				)
 		elif offset < swing:
 			if absf(arc - fixed) > HAIR or absf(facing - fixed) > HAIR:

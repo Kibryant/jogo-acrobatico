@@ -22,3 +22,10 @@ var light_attack := false
 # Held, not touched: true on every tick the guard button is down (combate.md, "O bloqueio, a guarda
 # andando e a stamina"; DEC-0054 §1; TASK-12.2).
 var guard := false
+# One-tick touches too (combate.md, "O carregado, o parry e a finta no tick": "Os nomes no código";
+# TASK-12.3): the charged attack and the parry.
+var charged_attack := false
+var parry := false
+# A one-tick touch beside the held guard: true only on the tick the guard button goes down. In the
+# charged's windup it is the feint (combate.md, "A finta"; DEC-0056 §5).
+var guard_press := false

@@ -10,7 +10,10 @@
 # (visual-e-audio.md, "A cabeça do outro na tela"; the SyncTest's cabeca scenario). TASK-12.1 adds
 # the light's two cues, the arc's trail once per swing and the white flash once per hit, the hit
 # first showing on the tick after its contact (visual-e-audio.md, "O leve na tela"; the
-# SyncTest of test/fighter/light_attack_sync_test.gd).
+# SyncTest of test/fighter/light_attack_sync_test.gd). TASK-12.3 adds the parry's flash and sparks
+# on both sides, its shake on either, the charged's shake on its attacker at its share, and the
+# charged's trail in the vertical plane (visual-e-audio.md, "O carregado, o parry e a finta na
+# tela"; the SyncTest of test/fighter/charged_sync_test.gd).
 extends GdUnitTestSuite
 
 const NetfoxTicks := preload("res://test/support/netfox_ticks.gd")
@@ -734,4 +737,151 @@ func test_with_the_option_off_a_hit_shakes_nothing() -> void:
 		assert_bool(camera.shaking()).override_failure_message("loop %d" % loop).is_false()
 		flashed = flashed or target.flashing()
 	assert_bool(flashed).override_failure_message("the hit did not flash").is_true()
+	cues.free()
+
+
+# TASK-12.3 (visual-e-audio.md, "O carregado, o parry e a finta na tela"; combate.md, "O hitstop e
+# o tremor"): two fighters 2,0 m apart, facing each other, under the rollback of 7 ticks on every
+# loop. The fighter charges; the target either presses the parry so that the cut lands in its
+# window, or stands. Returns the shakes of the watched one's camera, in degrees, one entry per
+# shake, each checked for its length; the parry's and the hit's events are read on the way.
+func _charged_exchange(parries: bool, watch_attacker: bool) -> Array[float]:
+	await _start()
+	var target := _match.spawn_fighter(Match.DUMMY_SLOT, multiplayer.get_unique_id())
+	target.position = _fighter.position + Vector3(0.0, 0.0, -2.0)
+	await get_tree().process_frame
+	await get_tree().physics_frame
+	var camera: CameraRig = auto_free(CAMERA_RIG_SCENE.instantiate())
+	var cues := ManeuverCues.new(_match.config, true)
+	cues.camera = camera
+	cues.watched = _fighter if watch_attacker else target
+	cues.combat_data = _match.combat_data
+	cues.tokens = _match.tokens
+	_match.add_child(cues)
+	cues.watch(_fighter)
+	cues.watch(target)
+	NetworkRollback.before_loop.connect(_force_rollback)
+	var charged: AttackConfig = _match.combat.attacks[&"charged_attack"]
+	var press := STAND_TICKS
+	# The cut touches 2,0 m ahead on an early active tick: the parry pressed 6 ticks before the
+	# windup ends holds it in its window of 12.
+	var parry_press := press + charged.windup_ticks - 6
+	var expected_seconds := (
+		_match.combat_data.parry_shake_ms / 1000.0
+		if parries
+		else _match.combat_data.charged_attack.hit_shake_ms / 1000.0
+	)
+	var shakes: Array[float] = []
+	for loop: int in 120:
+		_fighter.input.sample_frame(Vector2.ZERO, 0.0)
+		target.input.sample_frame(Vector2.ZERO, PI)
+		if loop == press:
+			_fighter.input.press_charged_attack()
+		if parries and loop == parry_press:
+			target.input.press_parry()
+		NetfoxTicks.run_loop()
+		if camera.shaking():
+			shakes.append(camera.shake_degrees())
+			assert_float(camera.shake_seconds()).is_equal_approx(expected_seconds, HAIR)
+			camera.advance_shake(1.0)
+	NetworkRollback.before_loop.disconnect(_force_rollback)
+	if parries:
+		assert_int(target.state.parry_tick).override_failure_message("never parried").is_not_equal(
+			FighterState.NEVER
+		)
+		assert_int(_fighter.state.parried_tick).is_equal(target.state.parry_tick)
+		var sparks := cues.get_children().filter(
+			func(child: Node) -> bool:
+				return child is ManeuverCues.Sparks,
+		)
+		assert_int(sparks.size()).override_failure_message("sparks on both sides").is_equal(2)
+		# A swing, the parry and the parried: three events, each played once.
+		assert_int(cues.presented).is_equal(3)
+		assert_int(_match.cues.presented).is_equal(3)
+		assert_int(_match.cues.events).is_equal(3)
+	else:
+		assert_int(target.state.hurt_tick).override_failure_message("never hit").is_not_equal(
+			FighterState.NEVER
+		)
+		assert_int(cues.presented).is_equal(2)
+		assert_int(_match.cues.events).is_equal(2)
+	cues.free()
+	return shakes
+
+
+# A parry shakes the watched fighter's camera once, 150 ms at 1,0°, whoever it is: whoever parried
+# by its parry stamp, whoever was parried by its own (combate.md, "Parry: 150 ms, 1,0°, nos dois");
+# the rollback never shakes it again, and each side flashes and throws its sparks once.
+func test_a_parry_shakes_the_watched_camera_once_on_either_side(
+	watch_attacker: bool,
+	_test_parameters := [[false], [true]],
+) -> void:
+	var shakes := await _charged_exchange(true, watch_attacker)
+	assert_int(shakes.size()).override_failure_message("shakes: %s" % [shakes]).is_equal(1)
+	assert_float(shakes[0]).is_equal_approx(_match.combat_data.parry_shake_deg, HAIR)
+
+
+# A charged that lands shakes the target's camera 200 ms at 1,5°, and the attacker's at half of
+# it, its share (combate.md, "Carregado acerta: 200 ms, 1,5°; metade em quem bateu"), once.
+func test_a_landed_charged_shakes_the_target_and_half_of_it_on_its_attacker(
+	watch_attacker: bool,
+	_test_parameters := [[false], [true]],
+) -> void:
+	var shakes := await _charged_exchange(false, watch_attacker)
+	var charged: AttackData = _match.combat_data.charged_attack
+	var expected := charged.hit_shake_deg
+	if watch_attacker:
+		expected *= charged.hit_shake_attacker_share
+	assert_int(shakes.size()).override_failure_message("shakes: %s" % [shakes]).is_equal(1)
+	assert_float(shakes[0]).is_equal_approx(expected, HAIR)
+
+
+# A light that lands shakes nothing on its attacker: the light has no share (combate.md, "Leve
+# acerta: 100 ms, 0,5°, em quem levou").
+func test_a_landed_light_shakes_nothing_on_its_attacker() -> void:
+	await _start()
+	var target := _match.spawn_fighter(Match.DUMMY_SLOT, multiplayer.get_unique_id())
+	target.position = _fighter.position + Vector3(0.0, 0.0, -2.0)
+	await get_tree().process_frame
+	await get_tree().physics_frame
+	var camera: CameraRig = auto_free(CAMERA_RIG_SCENE.instantiate())
+	var cues := ManeuverCues.new(_match.config, false)
+	cues.camera = camera
+	cues.watched = _fighter
+	cues.combat_data = _match.combat_data
+	_match.add_child(cues)
+	cues.watch(_fighter)
+	cues.watch(target)
+	for loop: int in 40:
+		_fighter.input.sample_frame(Vector2.ZERO, 0.0)
+		target.input.sample_frame(Vector2.ZERO, PI)
+		if loop == STAND_TICKS:
+			_fighter.input.press_light_attack()
+		NetfoxTicks.run_loop()
+		assert_bool(camera.shaking()).override_failure_message("loop %d" % loop).is_false()
+	assert_int(target.state.hurt_tick).is_not_equal(FighterState.NEVER)
+	cues.free()
+
+
+# The charged's trail stands in the plane of its cut, the vertical one of its direction, unlike the
+# light's flat ring at the hand's height.
+func test_with_a_screen_the_charged_draws_its_trail_in_the_vertical_plane() -> void:
+	await _start()
+	var cues := ManeuverCues.new(_match.config, true)
+	_match.add_child(cues)
+	cues.watch(_fighter)
+	_stand(STAND_TICKS)
+	_fighter.input.press_charged_attack()
+	var charged: AttackConfig = _match.combat.attacks[&"charged_attack"]
+	_stand(charged.windup_ticks + charged.active_ticks)
+	var trails := cues.find_children("SwingTrail*", "MeshInstance3D", false, false)
+	assert_int(trails.size()).is_equal(1)
+	assert(trails[0] is MeshInstance3D, "a cue is a MeshInstance3D")
+	var mesh := (trails[0] as MeshInstance3D).mesh
+	var box := mesh.get_aabb()
+	# The fighter looks down -Z: the cut's plane is x = 0, and its first slice alone, the one drawn
+	# when the trail is made, already spans half a metre of height.
+	assert_float(box.size.x).override_failure_message("%s" % box).is_less(1e-3)
+	assert_float(box.size.y).override_failure_message("%s" % box).is_greater(0.5)
+	assert_float(box.end.y).override_failure_message("%s" % box).is_greater(2.0)
 	cues.free()

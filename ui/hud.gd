@@ -18,7 +18,11 @@
 # Beside the other fighter's health, the token of its state on screen, with shape and colour,
 # never by colour alone (TASK-12.2; visual-e-audio.md, "O HUD do duelo" and "A guarda e o tranco na
 # tela"): the shape and the colour of tokens_v0.tres, a token without a colour drawn in the HUD's
-# neutral white, and nothing at rest or in a recovery.
+# neutral white, and nothing at rest or in a recovery. TASK-12.3 adds four, each with a shape of
+# its own (visual-e-audio.md, "O carregado, o parry e a finta na tela"): the charged's windup, a
+# hexagon in sky blue; the parry's window, a cross in yellow, gone once the window closes; the
+# feint, a ring; and whoever was parried, a star. The token is the state's at the displayed tick
+# (TokensData.for_state).
 # Only a PC with a screen has one: the Match creates it in watch().
 class_name Hud
 extends CanvasLayer
@@ -243,7 +247,7 @@ func show_at(tick: int) -> void:
 	_show_cooldown(tick)
 	_show_grapple_cooldown(tick)
 	_show_reticle(tick)
-	_show_health()
+	_show_health(tick)
 
 
 # The health bars from now on: the followed fighter's and the first other one of fighters, the
@@ -267,7 +271,7 @@ func rival() -> Fighter:
 	return null
 
 
-func _show_health() -> void:
+func _show_health(tick: int) -> void:
 	if _combat == null:
 		return
 	_own_health.visible = true
@@ -278,7 +282,8 @@ func _show_health() -> void:
 	if other != null:
 		_other_health.show_state(other.state, _combat.max_health)
 	if _token_mark.visible:
-		_token_mark.show_token(_tokens.for_action(other.state.action))
+		var token := _tokens.for_state(other.state, tick, _combat.parry_window_ticks)
+		_token_mark.show_token(token)
 
 
 # The ticks until the next dash may start, counted from the stamp of the last one: its ticks and
@@ -600,8 +605,55 @@ class TokenMark:
 			&"square":
 				var side := radius * 0.8
 				draw_rect(Rect2(centre - Vector2(side, side), Vector2(side, side) * 2.0), fill)
+			&"hexagon":
+				draw_colored_polygon(_regular(centre, radius, 6, 0.0), fill)
+			&"star":
+				draw_colored_polygon(_star(centre, radius), fill)
+			&"cross":
+				# Two bars across each other, like the crossed blade.
+				var arm := radius * 0.3
+				for turn: float in [PI / 4.0, -PI / 4.0]:
+					var along := Vector2.from_angle(turn) * radius
+					var across := Vector2.from_angle(turn + PI / 2.0) * arm
+					draw_colored_polygon(
+						PackedVector2Array(
+							[
+								centre - along - across,
+								centre + along - across,
+								centre + along + across,
+								centre - along + across,
+							]
+						),
+						fill,
+					)
+			&"ring":
+				draw_arc(centre, radius * 0.75, 0.0, TAU, 32, fill, radius * 0.5)
 			_:
 				draw_circle(centre, radius, fill)
+
+
+	# The corners of a regular polygon of sides around centre, the first at angle from the top.
+	static func _regular(
+		centre: Vector2,
+		radius: float,
+		sides: int,
+		angle: float,
+	) -> PackedVector2Array:
+		var corners := PackedVector2Array()
+		for corner: int in sides:
+			var turn := angle + TAU * corner / sides - PI / 2.0
+			corners.append(centre + Vector2.from_angle(turn) * radius)
+		return corners
+
+
+	# A five-pointed star, its inner corners at 45 % of the radius, a point at the top.
+	static func _star(centre: Vector2, radius: float) -> PackedVector2Array:
+		var corners := PackedVector2Array()
+		for corner: int in 10:
+			var reach := radius if corner % 2 == 0 else radius * 0.45
+			var turn := TAU * corner / 10.0 - PI / 2.0
+			corners.append(centre + Vector2.from_angle(turn) * reach)
+		return corners
 
 
 # One health bar with its number (TASK-12.1): the bar's back, its fill over the share of the max,

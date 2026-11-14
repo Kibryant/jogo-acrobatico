@@ -4,11 +4,13 @@ title: 'A quebra de guarda e o tech, e a esquiva como dash'
 status: To Refine
 assignee: []
 created_date: '2026-10-27 22:02'
+updated_date: '2026-10-30 14:43'
 labels:
   - jogo
 milestone: m-2
 dependencies:
   - TASK-12.3
+  - TASK-12.14
 parent_task_id: TASK-12
 ordinal: 31000
 ---

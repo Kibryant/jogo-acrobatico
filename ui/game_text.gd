@@ -25,7 +25,7 @@ const HUD_GRAPPLE_COOLDOWN := &"HUD_GRAPPLE_COOLDOWN"
 # Every row of a replay played in the window has played (--watch; TASK-10.3).
 const REPLAY_ENDED := &"REPLAY_ENDED"
 # The options screen (TASK-10.9; visual-e-audio.md, "A tela de opções"): its title, its three
-# groups, the nine actions, the two sliders, the shake's toggle and the two buttons.
+# groups, the eleven actions, the two sliders, the shake's toggle and the two buttons.
 const OPTIONS_TITLE := &"OPTIONS_TITLE"
 const OPTIONS_GROUP_KEYS := &"OPTIONS_GROUP_KEYS"
 const OPTIONS_GROUP_MOUSE := &"OPTIONS_GROUP_MOUSE"
@@ -41,6 +41,9 @@ const OPTIONS_ACTION_GRAPPLE := &"OPTIONS_ACTION_GRAPPLE"
 const OPTIONS_ACTION_LIGHT_ATTACK := &"OPTIONS_ACTION_LIGHT_ATTACK"
 # The guard, remappable since TASK-12.2 (F-182 §2; DEC-0054 §1).
 const OPTIONS_ACTION_GUARD := &"OPTIONS_ACTION_GUARD"
+# The charged attack and the parry, remappable since TASK-12.3 (F-191 §2; combate.md, "As teclas").
+const OPTIONS_ACTION_CHARGED_ATTACK := &"OPTIONS_ACTION_CHARGED_ATTACK"
+const OPTIONS_ACTION_PARRY := &"OPTIONS_ACTION_PARRY"
 const OPTIONS_SENSITIVITY := &"OPTIONS_SENSITIVITY"
 # Beside the sensitivity: the mouse's travel for a full turn at 800 DPI, {cm} whole centimetres.
 const OPTIONS_SENSITIVITY_TURN := &"OPTIONS_SENSITIVITY_TURN"
@@ -90,6 +93,8 @@ const KEYS: Array[StringName] = [
 	OPTIONS_ACTION_GRAPPLE,
 	OPTIONS_ACTION_LIGHT_ATTACK,
 	OPTIONS_ACTION_GUARD,
+	OPTIONS_ACTION_CHARGED_ATTACK,
+	OPTIONS_ACTION_PARRY,
 	OPTIONS_SENSITIVITY,
 	OPTIONS_SENSITIVITY_TURN,
 	OPTIONS_SCALE,
@@ -109,6 +114,7 @@ const SAME_IN_BOTH: Array[StringName] = [
 	OPTIONS_GROUP_MOUSE,
 	OPTIONS_GROUP_INTERFACE,
 	OPTIONS_ACTION_DASH,
+	OPTIONS_ACTION_PARRY,
 	OPTIONS_MOUSE_BUTTON,
 ]
 ## The messages of each language, by locale.

@@ -1,9 +1,9 @@
 # The input box of a fighter (visao-geral.md, "O estado em quatro caixas"): move, yaw, pitch,
-# jump, dash, grapple, light_attack and guard, which netfox records for every tick through
-# "Input:move", "Input:yaw", "Input:pitch", "Input:jump", "Input:dash", "Input:grapple",
-# "Input:light_attack" and "Input:guard". Whoever owns the fighter fills them through the same
-# calls, sample_frame(), press_jump(), press_dash(), press_grapple(), press_light_attack() and
-# hold_guard(): this PC's
+# jump, dash, grapple, light_attack, guard, charged_attack, parry and guard_press, which netfox
+# records for every tick through "Input:<field>", named as TickInput's. Whoever owns the fighter
+# fills them through the same calls, sample_frame(), press_jump(), press_dash(), press_grapple(),
+# press_light_attack(), hold_guard(), press_charged_attack(), press_parry() and press_guard():
+# this PC's
 # keyboard and mouse after use_devices(), or a bot, so the rules never know who presses
 # (DEC-0004). How the frames become the input of a tick is the InputSampler's job (DEC-0026 §1).
 # A replay takes the place of all of them through play_rows() (TASK-10.3): each tick's box is then
@@ -20,6 +20,9 @@ var dash := false
 var grapple := false
 var light_attack := false
 var guard := false
+var charged_attack := false
+var parry := false
+var guard_press := false
 
 var _sampler := InputSampler.new()
 # The camera of whoever plays this fighter on this PC; null when nobody here does.
@@ -112,6 +115,23 @@ func press_light_attack() -> void:
 	_sampler.press_light_attack()
 
 
+# One press of the charged attack, a one-touch command like the light (TASK-12.3; DEC-0056 §1).
+func press_charged_attack() -> void:
+	_sampler.press_charged_attack()
+
+
+# One press of the parry, a one-touch command like the light (TASK-12.3; DEC-0056 §1).
+func press_parry() -> void:
+	_sampler.press_parry()
+
+
+# The guard button going down, a one-touch command beside the hold (TASK-12.3; DEC-0056 §5): in
+# the charged's windup it feints. A device or a bot that presses the button calls this and
+# hold_guard(true); a hold alone never feints.
+func press_guard() -> void:
+	_sampler.press_guard()
+
+
 # The guard button held (true) or let go (false) from now on, from the devices or a bot: a hold,
 # not a touch, so every tick reads it until it changes (TASK-12.2; DEC-0054 §1).
 func hold_guard(held: bool) -> void:
@@ -129,6 +149,9 @@ func to_tick_input() -> TickInput:
 	tick_input.grapple = grapple
 	tick_input.light_attack = light_attack
 	tick_input.guard = guard
+	tick_input.charged_attack = charged_attack
+	tick_input.parry = parry
+	tick_input.guard_press = guard_press
 	return tick_input
 
 
@@ -166,6 +189,16 @@ func _unhandled_input(event: InputEvent) -> void:
 	# mouse button (OptionsStore).
 	if event.is_action_pressed(&"light_attack"):
 		press_light_attack()
+	# The E and the F by default, by physical position (project.godot, [input]; combate.md, "As
+	# teclas"; F-191 §2), or the player's key or mouse button (OptionsStore).
+	if event.is_action_pressed(&"charged_attack"):
+		press_charged_attack()
+	if event.is_action_pressed(&"parry"):
+		press_parry()
+	# The guard button going down: the press, read here as an event, beside the hold the physics
+	# step reads (DEC-0056 §5).
+	if event.is_action_pressed(&"guard"):
+		press_guard()
 
 
 # netfox calls this once per tick loop, before its ticks, on the owner's peer (BaseNetInput). A
@@ -180,7 +213,7 @@ func _gather() -> void:
 
 
 # netfox records the box of tick right after this (NetworkTime._loop), so what is set here is the
-# input of tick: the sampler's jump, dash, grapple and light attack, or the whole row of a replay.
+# input of tick: the sampler's one-touch commands, or the whole row of a replay.
 func _on_after_tick(_delta: float, tick: int) -> void:
 	if not is_multiplayer_authority():
 		return
@@ -189,6 +222,9 @@ func _on_after_tick(_delta: float, tick: int) -> void:
 		dash = _sampler.take_dash()
 		grapple = _sampler.take_grapple()
 		light_attack = _sampler.take_light_attack()
+		charged_attack = _sampler.take_charged_attack()
+		parry = _sampler.take_parry()
+		guard_press = _sampler.take_guard_press()
 		return
 	var row := _rows.input_at(tick)
 	if row == null:

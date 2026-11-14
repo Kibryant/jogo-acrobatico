@@ -115,6 +115,14 @@ msgstr "Golpe leve"
 msgid "OPTIONS_ACTION_GUARD"
 msgstr "Guarda"
 
+# The action charged attack (TASK-12.3).
+msgid "OPTIONS_ACTION_CHARGED_ATTACK"
+msgstr "Golpe carregado"
+
+# The action parry (TASK-12.3): the same word in both languages.
+msgid "OPTIONS_ACTION_PARRY"
+msgstr "Parry"
+
 # The mouse's sensitivity, from 0.02 to 0.20 degrees per pixel (F-161).
 msgid "OPTIONS_SENSITIVITY"
 msgstr "Sensibilidade"

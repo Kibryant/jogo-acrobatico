@@ -7,9 +7,9 @@
 # - yaw is the last sample: a mean of angles breaks where they wrap at 180 degrees, and the last
 #   sample is where the camera looks now (TASK-9, choice 1); pitch is the last sample too, for the
 #   same reasons (rede.md §3; TASK-10.6);
-# - jump, dash, grapple and the light attack are one-touch commands kept between frames and taken
-#   once, so a press counts for at most one tick even when a frame runs two (netfox's
-#   one-off-input.gd);
+# - jump, dash, grapple, the light attack, the charged attack, the parry and the guard's press are
+#   one-touch commands kept between frames and taken once, so a press counts for at most one tick
+#   even when a frame runs two (netfox's one-off-input.gd; TASK-12.3);
 # - the guard is held, not touched (TASK-12.2): the state the devices or a bot last set, kept until
 #   they set another, and read by every tick.
 # No node and no engine input here: FighterInput feeds it, from the devices or from a bot.
@@ -24,6 +24,9 @@ var _jump_pressed := false
 var _dash_pressed := false
 var _grapple_pressed := false
 var _light_attack_pressed := false
+var _charged_attack_pressed := false
+var _parry_pressed := false
+var _guard_pressed := false
 var _guard_held := false
 
 
@@ -60,6 +63,22 @@ func press_grapple() -> void:
 # One press of the light attack, kept until take_light_attack() (TASK-12.1).
 func press_light_attack() -> void:
 	_light_attack_pressed = true
+
+
+# One press of the charged attack, kept until take_charged_attack() (TASK-12.3).
+func press_charged_attack() -> void:
+	_charged_attack_pressed = true
+
+
+# One press of the parry, kept until take_parry() (TASK-12.3).
+func press_parry() -> void:
+	_parry_pressed = true
+
+
+# The guard button going down once, kept until take_guard_press() (TASK-12.3; DEC-0056 §5): the
+# touch beside the hold, which hold_guard() sets apart.
+func press_guard() -> void:
+	_guard_pressed = true
 
 
 # The guard button down or up from now on (TASK-12.2; DEC-0054 §1), until the next call.
@@ -118,4 +137,25 @@ func take_grapple() -> bool:
 func take_light_attack() -> bool:
 	var pressed := _light_attack_pressed
 	_light_attack_pressed = false
+	return pressed
+
+
+# True once per press, like take_jump().
+func take_charged_attack() -> bool:
+	var pressed := _charged_attack_pressed
+	_charged_attack_pressed = false
+	return pressed
+
+
+# True once per press, like take_jump().
+func take_parry() -> bool:
+	var pressed := _parry_pressed
+	_parry_pressed = false
+	return pressed
+
+
+# True once per press of the guard button, like take_jump().
+func take_guard_press() -> bool:
+	var pressed := _guard_pressed
+	_guard_pressed = false
 	return pressed

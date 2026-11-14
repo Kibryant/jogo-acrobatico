@@ -167,12 +167,14 @@ static func take_presses(
 		_clear_slot(next)
 
 
-# Whether a swing or a stun is in progress (FighterState.action): then no command leaves the slot,
-# and the grapple asks for no aim; the presses wait for its end (combate.md, "O leve no tick": "O
-# corpo durante o golpe" and "O tranco e o corpo"; DEC-0051 §5). The guard holds nothing: a
-# command fires from it and drops it (DEC-0055 §2).
+# Whether a swing, a stance or a stun is in progress (FighterState.action): then no command leaves
+# the slot, and the grapple asks for no aim; the presses wait for its end (combate.md, "O leve no
+# tick": "O corpo durante o golpe" and "O tranco e o corpo"; DEC-0051 §5). The parry's stance, the
+# feint and the parried one's stun hold them too (combate.md, "O corpo na postura, na finta e em
+# quem foi aparado"; DEC-0056). The guard holds nothing: a command fires from it and drops it
+# (DEC-0055 §2).
 static func holds_commands(state: FighterState) -> bool:
-	return Combat.swinging(state) or Combat.stunned(state)
+	return Combat.swinging(state) or Combat.stunned(state) or Combat.in_stance(state)
 
 
 # A frozen tick of the hitstop (DEC-0055 §5): the presses go into the slot, where they wait for
@@ -511,10 +513,11 @@ static func _horizontal(
 		return current
 	if standing:
 		# The light does not slow the body: it runs at the run speed (DEC-0052; combate.md, "O leve
-		# no tick"). With the guard the body walks slowly, in any direction, and an excess falls by
-		# the ground acceleration (combate.md, "A guarda andando"; movimento.md, "Chão").
+		# no tick"). With the guard, in the charged, the parry's stance or the feint, the body walks
+		# slowly, in any direction, and an excess falls by the ground acceleration (combate.md, "A
+		# guarda andando" and "A direção e o corpo"; movimento.md, "Chão").
 		var walk := config.run_speed
-		if state.action == FighterState.Action.BLOCK:
+		if Combat.walks_slowly(state):
 			walk = config.slow_walk_speed
 		return current.move_toward(_world(move, input.yaw) * walk, config.ground_accel_per_tick)
 	var speed := maxf(config.run_speed, current.length())

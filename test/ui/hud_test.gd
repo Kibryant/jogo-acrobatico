@@ -643,7 +643,9 @@ func test_at_every_scale_the_ring_stays_centred_and_the_rows_inside_the_screen(
 # other fighter's health, the token of its displayed state, with the shape and the colour of
 # tokens_v0.tres: the windup's triangle and the guard's square in the neutral white, the active's
 # diamond in vermilion, the reaction's circle in white; nothing at rest or in a recovery, and
-# nothing before show_tokens().
+# nothing before show_tokens(). TASK-12.3 (visual-e-audio.md, "O carregado, o parry e a finta na
+# tela"): the charged's windup, the parry's window, the feint and the parried one, each with a
+# shape of its own, eight in all; the stance shows its token only in the window, by the tick.
 func test_beside_the_others_health_the_hud_shows_its_token_by_shape_and_colour() -> void:
 	var hud := _hud()
 	hud.show_health(_match.combat, _match.fighters)
@@ -655,20 +657,30 @@ func test_beside_the_others_health_the_hud_shows_its_token_by_shape_and_colour()
 	hud.show_tokens(tokens)
 	hud.show_at(SPENT_AT)
 	assert_str(String(hud.shown_token_shape())).override_failure_message("at rest").is_empty()
-	var cases: Dictionary[FighterState.Action, TokenData] = {
-		FighterState.Action.WINDUP: tokens.light_windup,
-		FighterState.Action.ACTIVE: tokens.active,
-		FighterState.Action.BLOCK: tokens.guard,
-		FighterState.Action.BLOCKSTUN: tokens.guard,
-		FighterState.Action.HITSTUN: tokens.reaction,
-	}
+	# [action, move, the token]: the parry's stance began on the shown tick, inside its window.
+	var cases: Array[Array] = [
+		[FighterState.Action.WINDUP, FighterCommand.LIGHT_ATTACK, tokens.light_windup],
+		[FighterState.Action.ACTIVE, FighterCommand.LIGHT_ATTACK, tokens.active],
+		[FighterState.Action.BLOCK, &"", tokens.guard],
+		[FighterState.Action.BLOCKSTUN, &"", tokens.guard],
+		[FighterState.Action.HITSTUN, &"", tokens.reaction],
+		[FighterState.Action.WINDUP, FighterCommand.CHARGED_ATTACK, tokens.charged_windup],
+		[FighterState.Action.ACTIVE, FighterCommand.CHARGED_ATTACK, tokens.active],
+		[FighterState.Action.PARRY, &"", tokens.parry],
+		[FighterState.Action.FEINT, &"", tokens.feint],
+		[FighterState.Action.PARRIED, &"", tokens.parried],
+	]
 	var neutral := ThemeDB.get_project_theme().get_color(&"neutral_color", Hud.TOKEN_MARK_TYPE)
 	var shapes: Array[StringName] = []
-	for action: FighterState.Action in cases:
+	for case: Array in cases:
+		var action: FighterState.Action = case[0]
+		var move: StringName = case[1]
+		var token: TokenData = case[2]
 		dummy.state.action = action
+		dummy.state.action_move = move
+		dummy.state.action_since = SPENT_AT
 		hud.show_at(SPENT_AT)
-		var token := cases[action]
-		var which := str(FighterState.Action.find_key(action))
+		var which := "%s with %s" % [FighterState.Action.find_key(action), move]
 		assert_str(String(hud.shown_token_shape())).override_failure_message(which).is_equal(
 			String(token.hud_shape)
 		)
@@ -678,7 +690,19 @@ func test_beside_the_others_health_the_hud_shows_its_token_by_shape_and_colour()
 		assert_bool(colour.is_equal_approx(expected)).override_failure_message(wrong).is_true()
 		if not shapes.has(token.hud_shape):
 			shapes.append(token.hud_shape)
-	assert_int(shapes.size()).override_failure_message("two tokens share a shape").is_equal(4)
+	assert_int(shapes.size()).override_failure_message("two tokens share a shape").is_equal(8)
 	dummy.state.action = FighterState.Action.RECOVERY
 	hud.show_at(SPENT_AT)
 	assert_str(String(hud.shown_token_shape())).override_failure_message("recovery").is_empty()
+	# The stance once its window closed: no token, as in a recovery; on the window's last tick, the
+	# parry's.
+	dummy.state.action = FighterState.Action.PARRY
+	dummy.state.action_move = &""
+	dummy.state.action_since = SPENT_AT - _match.combat.parry_window_ticks
+	hud.show_at(SPENT_AT)
+	assert_str(String(hud.shown_token_shape())).override_failure_message("past the window") \
+			.is_empty()
+	dummy.state.action_since = SPENT_AT - _match.combat.parry_window_ticks + 1
+	hud.show_at(SPENT_AT)
+	assert_str(String(hud.shown_token_shape())).override_failure_message("the window's end") \
+			.is_equal(String(tokens.parry.hud_shape))

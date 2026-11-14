@@ -25,7 +25,11 @@ enum Mode {
 # goes WINDUP, ACTIVE and RECOVERY, each counted from the tick it began, and back to NONE; no input
 # cuts it (DEC-0016). TASK-12.2 adds the guard and the two stuns (DEC-0055 §1): BLOCK is the guard,
 # since the tick it began to rise, up once guard_raise_ticks have passed; HITSTUN and BLOCKSTUN
-# hold the fighter until stun_until_tick, after a hit taken or a hit blocked.
+# hold the fighter until stun_until_tick, after a hit taken or a hit blocked. TASK-12.3 appends
+# three (DEC-0056 §1): PARRY is the parry's stance, since the tick it fired, its window the first
+# parry_window_ticks; FEINT is the feint's recovery, since the tick the guard button cut the
+# charged's windup; PARRIED is the stun of whoever was parried, until stun_until_tick like the
+# other two.
 enum Action {
 	NONE,
 	WINDUP,
@@ -34,6 +38,9 @@ enum Action {
 	BLOCK,
 	HITSTUN,
 	BLOCKSTUN,
+	PARRY,
+	FEINT,
+	PARRIED,
 }
 
 # The stamp of "never": far enough in the past that no window reaches it, so a fresh state
@@ -130,6 +137,12 @@ var block_tick := NEVER
 # The hitstop (combate.md, "A paradinha no tick"; DEC-0055 §5): the last frozen tick. A tick at or
 # before it only fills the slot and takes new contacts, and the body does not move.
 var frozen_until_tick := NEVER
+# The parry (combate.md, "O carregado, o parry e a finta no tick"; DEC-0056 §1 and §4): on whoever
+# parried, the contact of the last charged parried, which ends the stance parry_recovery_ticks
+# later; on whoever was parried, the contact of the last swing parried, stamped two ticks after it,
+# when the photo first shows the parry. Both stay, like hurt_tick, and key the cues.
+var parry_tick := NEVER
+var parried_tick := NEVER
 
 
 # An equal and independent state: the rules change the copy, never the state they receive.
@@ -168,4 +181,6 @@ func copy() -> FighterState:
 	other.stun_until_tick = stun_until_tick
 	other.block_tick = block_tick
 	other.frozen_until_tick = frozen_until_tick
+	other.parry_tick = parry_tick
+	other.parried_tick = parried_tick
 	return other

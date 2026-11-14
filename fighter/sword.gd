@@ -12,6 +12,13 @@
 # The guard holds the blade upright in front, rising with the guard's ticks; the reaction throws it
 # down and out, the colour of the reaction being the body's flash (ManeuverCues), never the
 # blade's. On a frozen tick of the hitstop the pose holds the impact (Combat.posed_tick).
+# TASK-12.3 (visual-e-audio.md, "O carregado, o parry e a finta na tela"): the charged's windup
+# holds the sword above the head, sky blue, from its first tick, and trembles without recoiling when
+# a light meets its armor; its active follows the rule's vertical cut, slice by slice, in
+# vermilion; the parry's stance crosses the blade in front, yellow only in its window; the feint
+# snaps the pose back to rest; whoever was parried holds the blade thrown up and back through the
+# stun. The token is chosen by the action, the move and, in the stance, the tick
+# (TokensData.for_state).
 class_name Sword
 extends Node3D
 
@@ -46,14 +53,49 @@ const GUARD_HAND_HEIGHT := 0.9
 const RECOIL_HAND_DEG := -75.0
 const RECOIL_YAW_DEG := -70.0
 const RECOIL_PITCH_DEG := -70.0
+## The charged's windup (TASK-12.3): the hand above the head, a little right of the front, and the
+## blade raised past upright, its tip behind the head. Claude's v0 reading (DEC-0017;
+## visual-e-audio.md, "A espada acima da cabeça desde o tick 0").
+const OVERHEAD_HAND_DEG := -15.0
+const OVERHEAD_YAW_DEG := 0.0
+const OVERHEAD_PITCH_DEG := 115.0
+## m: the overhead hand's height above the feet, above the capsule's 1,8 m.
+const OVERHEAD_HAND_HEIGHT := 1.9
+## The parry's stance: the hand in front, a little right, and the blade across the body, pointing
+## left and a little up. Claude's v0 reading (DEC-0017; "A lâmina cruzada à frente").
+const CROSSED_HAND_DEG := -25.0
+const CROSSED_YAW_DEG := 80.0
+const CROSSED_PITCH_DEG := 20.0
+## m: the crossed hand's height above the feet, at the chest.
+const CROSSED_HAND_HEIGHT := 1.35
+## Whoever was parried: the blade thrown up and back over the right shoulder, held through the stun.
+## Claude's v0 reading (DEC-0017; F-188, the "reflexo" on the capsule).
+const REFLECT_HAND_DEG := -50.0
+const REFLECT_YAW_DEG := -160.0
+const REFLECT_PITCH_DEG := 55.0
+## m: the reflected hand's height above the feet, by the head.
+const REFLECT_HAND_HEIGHT := 1.7
+## The feint's snap: the overhead pose back to the rest in this many ticks, a jolt rather than a
+## swing. Claude's v0 reading (DEC-0017; "A pose volta num estalo").
+const SNAP_TICKS := 2
+## The armor's tremor: the sword shakes this far to each side, alternating every tick and dying
+## out over this many ticks, from the first tick the armored hit shows. Claude's v0 reading
+## (DEC-0017; "O corpo não recua: só um tremor").
+const TREMOR_M := 0.04
+const TREMOR_TICKS := 6
 ## The poses by name, the tokens' (TokenData.pose), and the recovery's own, which has no token.
 const POSE_BACK := &"blade_back"
 const POSE_ARC := &"arc"
 const POSE_UPRIGHT := &"blade_upright"
 const POSE_RECOIL := &"recoil"
+const POSE_OVERHEAD := &"overhead"
+const POSE_CROSSED := &"crossed"
+const POSE_SNAP := &"snap"
+const POSE_REFLECT := &"reflect"
 const POSE_RETURN := &"return"
 const POSE_REST := &"rest"
-## The pose of each action when no token names one: those of tokens_v0.tres, and the recovery's.
+## The pose of each action when no token names one: those of tokens_v0.tres, and the recovery's;
+## the stance keeps its crossed pose once its window closes and its token goes.
 const DEFAULT_POSES: Dictionary[int, StringName] = {
 	FighterState.Action.WINDUP: POSE_BACK,
 	FighterState.Action.ACTIVE: POSE_ARC,
@@ -61,6 +103,9 @@ const DEFAULT_POSES: Dictionary[int, StringName] = {
 	FighterState.Action.BLOCK: POSE_UPRIGHT,
 	FighterState.Action.BLOCKSTUN: POSE_UPRIGHT,
 	FighterState.Action.HITSTUN: POSE_RECOIL,
+	FighterState.Action.PARRY: POSE_CROSSED,
+	FighterState.Action.FEINT: POSE_SNAP,
+	FighterState.Action.PARRIED: POSE_REFLECT,
 }
 
 var _combat: CombatConfig
@@ -94,7 +139,7 @@ func _init(combat: CombatConfig, tokens: TokensData = null) -> void:
 # colour, or the steel when the token has none.
 func show_pose(state: FighterState, tick: int) -> void:
 	transform = pose(state, tick, _combat, _tokens)
-	var colour := blade_colour(state, _tokens)
+	var colour := blade_colour(state, _tokens, tick, _combat)
 	if colour.a <= 0.0:
 		_mesh.material_override = _steel
 		return
@@ -107,23 +152,50 @@ static func lit(state: FighterState) -> bool:
 	return state.action == FighterState.Action.ACTIVE
 
 
-## The blade's colour in a state: its token's, an alpha of 0 for none; the reaction's colour is the
-## body's flash, so the blade has none then. Without tokens, the active's vermilion alone.
-static func blade_colour(state: FighterState, tokens: TokensData = null) -> Color:
+## The token a state shows at tick (TokensData.for_state); null without tokens or with none. The
+## parry's window needs the combat's numbers: without them the stance shows no token.
+static func token_of(
+	state: FighterState,
+	tokens: TokensData,
+	tick: int,
+	combat: CombatConfig,
+) -> TokenData:
+	if tokens == null:
+		return null
+	var window := combat.parry_window_ticks if combat != null else 0
+	return tokens.for_state(state, tick, window)
+
+
+## The blade's colour in a state at tick: its token's, an alpha of 0 for none; the reaction's colour
+## is the body's flash, so the blade has none then. Without tokens, the active's vermilion alone.
+static func blade_colour(
+	state: FighterState,
+	tokens: TokensData = null,
+	tick := 0,
+	combat: CombatConfig = null,
+) -> Color:
 	if state.action == FighterState.Action.HITSTUN:
 		return Color(0, 0, 0, 0)
 	if tokens == null:
 		return ACTIVE_COLOUR if lit(state) else Color(0, 0, 0, 0)
-	var token := tokens.for_action(state.action)
+	var token := token_of(state, tokens, tick, combat)
 	return token.color if token != null else Color(0, 0, 0, 0)
 
 
-## The name of the pose a state shows: its token's, or the default of its action (DEFAULT_POSES).
-static func pose_name(state: FighterState, tokens: TokensData = null) -> StringName:
-	if tokens != null:
-		var token := tokens.for_action(state.action)
-		if token != null and not token.pose.is_empty():
-			return token.pose
+## The name of the pose a state shows at tick: its token's, or the default of its action
+## (DEFAULT_POSES), the charged's windup being overhead.
+static func pose_name(
+	state: FighterState,
+	tokens: TokensData = null,
+	tick := 0,
+	combat: CombatConfig = null,
+) -> StringName:
+	var token := token_of(state, tokens, tick, combat)
+	if token != null and not token.pose.is_empty():
+		return token.pose
+	var charged := state.action_move == FighterCommand.CHARGED_ATTACK
+	if state.action == FighterState.Action.WINDUP and charged:
+		return POSE_OVERHEAD
 	if DEFAULT_POSES.has(state.action):
 		return DEFAULT_POSES[state.action]
 	return POSE_REST
@@ -131,8 +203,9 @@ static func pose_name(state: FighterState, tokens: TokensData = null) -> StringN
 
 ## The sword's transform relative to the fighter's feet: the origin at the hand, the blade along its
 ## -Z. In the active the hand sits on the rule's circle, at the angle of the end of the tick's
-## slice, and the blade runs radially from it, as Blade.segment draws it. The guard rises from the
-## rest to upright over the guard's ticks, and the blockstun holds it up. A frozen tick of the
+## slice, and the blade runs radially from it, as Blade.segment draws it, or, for a vertical cut, at
+## the elevation of the end of the tick's slice, as Blade.cut_segment draws it. The guard rises from
+## the rest to upright over the guard's ticks, and the blockstun holds it up. A frozen tick of the
 ## hitstop shows the pose of the impact (Combat.posed_tick).
 static func pose(
 	state: FighterState,
@@ -140,46 +213,73 @@ static func pose(
 	combat: CombatConfig,
 	tokens: TokensData = null,
 ) -> Transform3D:
+	var shape := _rest(combat)
 	var base := state.facing_yaw
-	var hand := deg_to_rad(REST_HAND_DEG)
-	var yaw := deg_to_rad(REST_YAW_DEG)
-	var pitch := deg_to_rad(REST_PITCH_DEG)
-	var height := combat.hand_height
 	var into := Combat.posed_tick(state, tick) - state.action_since + 1
-	var named := pose_name(state, tokens)
+	var named := pose_name(state, tokens, tick, combat)
 	if Combat.swinging(state) and combat.attacks.has(state.action_move):
 		var attack: AttackConfig = combat.attacks[state.action_move]
 		base = state.action_yaw
 		match named:
 			POSE_BACK:
-				var share := _share(into, attack.windup_ticks)
-				hand = lerpf(hand, deg_to_rad(BACK_HAND_DEG), share)
-				yaw = lerpf(yaw, deg_to_rad(BACK_YAW_DEG), share)
-				pitch = lerpf(pitch, deg_to_rad(BACK_PITCH_DEG), share)
+				var back := _shape(
+					BACK_HAND_DEG,
+					BACK_YAW_DEG,
+					BACK_PITCH_DEG,
+					combat.hand_height,
+					combat,
+				)
+				shape = shape.toward(back, _share(into, attack.windup_ticks))
+			POSE_OVERHEAD:
+				shape = _overhead(combat)
+				_tremble(shape, state, tick, attack, base)
 			POSE_ARC:
 				var theta := Blade.slice_of(attack, clampi(into, 1, attack.active_ticks)).y
-				hand = theta
-				yaw = theta
-				pitch = 0.0
+				shape = _swung(attack, theta, combat)
 			_:
 				var share := _share(into, attack.recovery_ticks)
-				hand = lerpf(attack.arc_to, hand, share)
-				yaw = lerpf(attack.arc_to, yaw, share)
-				pitch = lerpf(0.0, pitch, share)
+				shape = _swung(attack, attack.arc_to, combat).toward(shape, share)
 	elif named == POSE_UPRIGHT:
 		var share := 1.0
 		if state.action == FighterState.Action.BLOCK:
 			share = _share(into, combat.guard_raise_ticks)
-		hand = lerpf(hand, deg_to_rad(GUARD_HAND_DEG), share)
-		yaw = lerpf(yaw, deg_to_rad(GUARD_YAW_DEG), share)
-		pitch = lerpf(pitch, deg_to_rad(GUARD_PITCH_DEG), share)
-		height = lerpf(height, GUARD_HAND_HEIGHT, share)
+		var upright := _shape(
+			GUARD_HAND_DEG,
+			GUARD_YAW_DEG,
+			GUARD_PITCH_DEG,
+			GUARD_HAND_HEIGHT,
+			combat,
+		)
+		shape = shape.toward(upright, share)
 	elif named == POSE_RECOIL:
-		hand = deg_to_rad(RECOIL_HAND_DEG)
-		yaw = deg_to_rad(RECOIL_YAW_DEG)
-		pitch = deg_to_rad(RECOIL_PITCH_DEG)
-	var at := Vector3.UP * height + Blade.direction(base + hand) * combat.hand_offset
-	var turn := Basis(Vector3.UP, base + yaw) * Basis(Vector3.RIGHT, pitch)
+		shape = _shape(
+			RECOIL_HAND_DEG,
+			RECOIL_YAW_DEG,
+			RECOIL_PITCH_DEG,
+			combat.hand_height,
+			combat,
+		)
+	elif named == POSE_CROSSED:
+		shape = _shape(
+			CROSSED_HAND_DEG,
+			CROSSED_YAW_DEG,
+			CROSSED_PITCH_DEG,
+			CROSSED_HAND_HEIGHT,
+			combat,
+		)
+	elif named == POSE_SNAP:
+		shape = _overhead(combat).toward(shape, _share(into, SNAP_TICKS))
+	elif named == POSE_REFLECT:
+		shape = _shape(
+			REFLECT_HAND_DEG,
+			REFLECT_YAW_DEG,
+			REFLECT_PITCH_DEG,
+			REFLECT_HAND_HEIGHT,
+			combat,
+		)
+	var at := Vector3.UP * shape.height + Blade.direction(base + shape.hand) * shape.out
+	at += shape.offset
+	var turn := Basis(Vector3.UP, base + shape.yaw) * Basis(Vector3.RIGHT, shape.pitch)
 	return Transform3D(turn, at)
 
 
@@ -192,3 +292,104 @@ static func _share(into: int, ticks: int) -> float:
 	if ticks <= 0:
 		return 1.0
 	return clampf(float(into) / ticks, 0.0, 1.0)
+
+
+# A pose from its angles in degrees and the hand's height, the hand at the combat's offset.
+static func _shape(
+	hand_deg: float,
+	yaw_deg: float,
+	pitch_deg: float,
+	height: float,
+	combat: CombatConfig,
+) -> PoseShape:
+	return PoseShape.new(
+		deg_to_rad(hand_deg),
+		deg_to_rad(yaw_deg),
+		deg_to_rad(pitch_deg),
+		height,
+		combat.hand_offset,
+	)
+
+
+static func _rest(combat: CombatConfig) -> PoseShape:
+	return _shape(REST_HAND_DEG, REST_YAW_DEG, REST_PITCH_DEG, combat.hand_height, combat)
+
+
+static func _overhead(combat: CombatConfig) -> PoseShape:
+	return _shape(
+		OVERHEAD_HAND_DEG,
+		OVERHEAD_YAW_DEG,
+		OVERHEAD_PITCH_DEG,
+		OVERHEAD_HAND_HEIGHT,
+		combat,
+	)
+
+
+# The blade where the rule measures it at the angle of a swing: flat at theta, or, for a vertical
+# cut, at the elevation theta, the hand straight ahead on the cut's circle.
+static func _swung(attack: AttackConfig, theta: float, combat: CombatConfig) -> PoseShape:
+	if not attack.vertical_cut:
+		return PoseShape.new(theta, theta, 0.0, combat.hand_height, combat.hand_offset)
+	return PoseShape.new(
+		0.0,
+		0.0,
+		theta,
+		combat.hand_height + combat.hand_offset * sin(theta),
+		combat.hand_offset * cos(theta),
+	)
+
+
+# The armor's tremor (visual-e-audio.md, "Armadura": "só um tremor"): from the first tick an armored
+# hit of this windup shows, the tick after its contact, the hand jolts to one side and the other,
+# dying out over TREMOR_TICKS. Keyed by hurt_tick, a stamp, so a resimulation shows the same.
+static func _tremble(
+	shape: PoseShape,
+	state: FighterState,
+	tick: int,
+	attack: AttackConfig,
+	base: float,
+) -> void:
+	if not attack.armor or state.hurt_tick < state.action_since:
+		return
+	var age := tick - state.hurt_tick - 1
+	if age < 0 or age >= TREMOR_TICKS:
+		return
+	var side := 1.0 if age % 2 == 0 else -1.0
+	var size := TREMOR_M * (1.0 - float(age) / TREMOR_TICKS)
+	shape.offset = Blade.direction(base - PI / 2.0) * side * size
+
+
+# The parameters of one pose: the hand's angle off the facing and its distance from the axis, the
+# blade's yaw and pitch, the hand's height, and a jolt of the whole sword.
+class PoseShape:
+	var hand: float
+	var yaw: float
+	var pitch: float
+	var height: float
+	var out: float
+	var offset := Vector3.ZERO
+
+
+	func _init(
+		hand_angle: float,
+		blade_yaw: float,
+		blade_pitch: float,
+		hand_height: float,
+		hand_out: float,
+	) -> void:
+		hand = hand_angle
+		yaw = blade_yaw
+		pitch = blade_pitch
+		height = hand_height
+		out = hand_out
+
+
+	# The pose share of the way from this one to other, in a straight line, each number apart.
+	func toward(other: PoseShape, share: float) -> PoseShape:
+		return PoseShape.new(
+			lerpf(hand, other.hand, share),
+			lerpf(yaw, other.yaw, share),
+			lerpf(pitch, other.pitch, share),
+			lerpf(height, other.height, share),
+			lerpf(out, other.out, share),
+		)

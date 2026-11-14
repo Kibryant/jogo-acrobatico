@@ -1,5 +1,5 @@
 # The options screen (TASK-10.9; visual-e-audio.md, "A tela de opções"; DEC-0031 §8): the Esc
-# opens it over the game and the HUD, and the Esc or "Fechar (Esc)" closes it. It lists the nine
+# opens it over the game and the HUD, and the Esc or "Fechar (Esc)" closes it. It lists the eleven
 # actions with the label of their key on the active keyboard, the mouse's sensitivity with the
 # centimetres of a full turn, the interface's scale, the camera's shake (TASK-12.2), and "Voltar
 # ao padrão". Every change applies
@@ -32,6 +32,8 @@ const ACTION_TEXTS: Dictionary[StringName, StringName] = {
 	&"grapple": GameText.OPTIONS_ACTION_GRAPPLE,
 	&"light_attack": GameText.OPTIONS_ACTION_LIGHT_ATTACK,
 	&"guard": GameText.OPTIONS_ACTION_GUARD,
+	&"charged_attack": GameText.OPTIONS_ACTION_CHARGED_ATTACK,
+	&"parry": GameText.OPTIONS_ACTION_PARRY,
 }
 ## The number each accepted mouse button shows: "Mouse 3", "Mouse 4" and "Mouse 5".
 const MOUSE_NUMBERS: Dictionary[MouseButton, int] = {
@@ -40,7 +42,7 @@ const MOUSE_NUMBERS: Dictionary[MouseButton, int] = {
 	MOUSE_BUTTON_XBUTTON2: 5,
 }
 
-## The grid of the nine actions: a name and the button of its key on each row.
+## The grid of the eleven actions: a name and the button of its key on each row.
 @export var keys: GridContainer
 ## The line below the keys: the wait for a new key, or the action that already has it.
 @export var prompt: Label

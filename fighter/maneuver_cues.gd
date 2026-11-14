@@ -28,6 +28,13 @@
 # the shake off; the flash's white comes from the reaction token (tokens_v0.tres). The swing's key
 # is the tick its active began before the hitstop moved its clock (Combat.active_began), so the
 # freeze of whoever hit never makes a second swing of one.
+# The charged attack, the parry and the feint add two (visual-e-audio.md, "O carregado, o parry e a
+# finta na tela"; TASK-12.3): the parry, on whoever parried, keyed by parry_tick and first shown on
+# the tick after the contact; and the parried, on whoever was parried, keyed by parried_tick and
+# first shown two ticks after it. Each flashes its body in the parry token's yellow and throws
+# sparks from the blade, and shakes the camera of the watched fighter, on either side, by the
+# parry's numbers. The charged's vertical cut draws its trail in its own plane; a hit of a move
+# with an attacker's share of the shake shakes the attacker's camera too, by that share.
 # It also counts, for the SyncTest, the events the simulation made on its fresh ticks: there,
 # with the rollback forced on every tick, the cues presented must equal the events (DEC-0031 §6;
 # rede.md §4).
@@ -46,6 +53,8 @@ enum Kind {
 	SWING,
 	HIT,
 	BLOCK,
+	PARRY,
+	PARRIED,
 }
 
 ## The cue's opacity when it appears; it fades to nothing. Claude's v0 reading (DEC-0017): seen
@@ -64,6 +73,12 @@ const FLASH_S := 0.1
 ## The active token's vermilion, on the arc's trail (visual-e-audio.md, "Os três canais por
 ## estado").
 const SWING_COLOUR := Sword.ACTIVE_COLOUR
+## s: the flash and the sparks of a parry, on both sides. Claude's v0 reading (DEC-0017), as long
+## as the parry's shake (combate.md, "O hitstop e o tremor": "Parry: 150 ms").
+const PARRY_FLASH_S := 0.15
+## The parry token's yellow when no tokens are given (visual-e-audio.md, "Os três canais por
+## estado": "Amarelo #F0E442").
+const PARRY_COLOUR := Color("#F0E442")
 
 ## The camera of whoever plays on this PC and the fighter it follows, which the hits and the blocks
 ## of shake (Match.watch and Match.view); null without them, and nothing shakes.
@@ -153,6 +168,12 @@ static func shown_events(fighter: Fighter) -> Array[Event]:
 	if state.block_tick != FighterState.NEVER:
 		# The block's contact, resolved on the next tick, like the hit's.
 		shown.append(Event.new(fighter, Kind.BLOCK, state.block_tick, state.block_tick + 1))
+	if state.parry_tick != FighterState.NEVER:
+		# The parried contact, resolved by whoever parried on the next tick, like a block.
+		shown.append(Event.new(fighter, Kind.PARRY, state.parry_tick, state.parry_tick + 1))
+	if state.parried_tick != FighterState.NEVER:
+		# The same contact, read by whoever was parried in the photo two ticks after it.
+		shown.append(Event.new(fighter, Kind.PARRIED, state.parried_tick, state.parried_tick + 2))
 	return shown
 
 
@@ -223,6 +244,11 @@ func _draw(fighter: Fighter, kind: Kind) -> void:
 			_shake(fighter, true)
 		Kind.BLOCK:
 			_shake(fighter, false)
+		Kind.PARRY, Kind.PARRIED:
+			fighter.flash(PARRY_FLASH_S, _parry_colour())
+			if fighter.combat != null:
+				add_child(Sparks.new(fighter, fighter.combat, _parry_colour()))
+			_shake_parry(fighter)
 		_:
 			add_child(Puff.new(fighter, _config, Vector3.ZERO))
 
@@ -234,32 +260,56 @@ func _flash_colour() -> Color:
 	return tokens.reaction.color
 
 
+# The parry token's yellow, from tokens_v0.tres; the plain yellow without tokens.
+func _parry_colour() -> Color:
+	if tokens == null or tokens.parry == null or tokens.parry.color.a <= 0.0:
+		return PARRY_COLOUR
+	return tokens.parry.color
+
+
 # The camera of the watched fighter shakes on its hit or its block (combate.md, "O hitstop e o
 # tremor": "em quem levou", "em quem bloqueou"), by the numbers of the attack that made it: the
 # attacker whose contact stamp is the event's, read from the displayed state like the event, and
-# the light when none shows it any more. The camera's option decides whether it plays.
+# the light when none shows it any more. On a hit of a move with an attacker's share, the charged's
+# half ("metade em quem bateu"), the watched attacker's camera shakes too, as long, by that share
+# of the amplitude. The camera's option decides whether it plays.
 func _shake(fighter: Fighter, hit: bool) -> void:
-	if camera == null or combat_data == null or fighter != watched:
+	if camera == null or combat_data == null:
 		return
 	var stamp := fighter.state.hurt_tick if hit else fighter.state.block_tick
-	var attack := combat_data.attack(_attack_of(fighter, stamp))
+	var attacker := _attacker_of(fighter, stamp)
+	var move := attacker.state.contact_move if attacker != null else FighterCommand.LIGHT_ATTACK
+	var attack := combat_data.attack(move)
 	if attack == null:
 		return
-	if hit:
-		camera.shake(attack.hit_shake_ms / 1000.0, attack.hit_shake_deg)
-	else:
-		camera.shake(attack.block_shake_ms / 1000.0, attack.block_shake_deg)
+	if fighter == watched:
+		if hit:
+			camera.shake(attack.hit_shake_ms / 1000.0, attack.hit_shake_deg)
+		else:
+			camera.shake(attack.block_shake_ms / 1000.0, attack.block_shake_deg)
+	elif hit and attacker != null and attacker == watched and attack.hit_shake_attacker_share > 0.0:
+		var degrees := attack.hit_shake_deg * attack.hit_shake_attacker_share
+		camera.shake(attack.hit_shake_ms / 1000.0, degrees)
 
 
-# The move whose contact against fighter is stamped on tick, by any fighter the cues watch.
-func _attack_of(fighter: Fighter, tick: int) -> StringName:
+# The parry shakes the watched fighter's camera on either side, whoever parried or was parried,
+# once per its own event (combate.md, "O hitstop e o tremor": "Parry: 150 ms, 1,0°, nos dois").
+func _shake_parry(fighter: Fighter) -> void:
+	if camera == null or combat_data == null or fighter != watched:
+		return
+	camera.shake(combat_data.parry_shake_ms / 1000.0, combat_data.parry_shake_deg)
+
+
+# The fighter, among those the cues watch, whose contact against fighter is stamped on tick; null
+# when none shows it any more.
+func _attacker_of(fighter: Fighter, tick: int) -> Fighter:
 	for other: Fighter in _fighters:
 		if not is_instance_valid(other) or other == fighter:
 			continue
 		var state := other.state
 		if state.contact_tick == tick and state.contact_target == StringName(fighter.name):
-			return state.contact_move
-	return FighterCommand.LIGHT_ATTACK
+			return other
+	return null
 
 
 # One event of a fighter, with its key: the fighter, the kind and the stamp; and the tick it first
@@ -539,7 +589,9 @@ class Puff:
 
 # The arc's trail of a swing (visual-e-audio.md, "O leve na tela"): the ring the blade swept, from
 # the hand's 0,6 m to the tip's 2,0 m off the attacker's axis at the hand's height, from the arc's
-# start to the end of the displayed tick's slice, in vermilion and seen through. It follows the
+# start to the end of the displayed tick's slice, in vermilion and seen through; for a vertical cut,
+# the charged's, the same ring stood up in the plane of the swing's direction, from the tip's first
+# elevation down (visual-e-audio.md, "O carregado, o parry e a finta na tela"). It follows the
 # body while that swing's active lasts, then fades over FADE_S. Claude's v0 reading of "o rastro
 # do arco" (DEC-0017): Godot's own triangles, no new asset (DEC-0029).
 class SwingTrail:
@@ -612,8 +664,8 @@ class SwingTrail:
 		_mesh.clear_surfaces()
 		_mesh.surface_begin(Mesh.PRIMITIVE_TRIANGLES, _material)
 		for step: int in steps:
-			var a := Blade.direction(_yaw + lerpf(from, to, float(step) / steps))
-			var b := Blade.direction(_yaw + lerpf(from, to, float(step + 1) / steps))
+			var a := _along(lerpf(from, to, float(step) / steps))
+			var b := _along(lerpf(from, to, float(step + 1) / steps))
 			for corner: Vector3 in [
 				a * inner,
 				a * outer,
@@ -623,4 +675,72 @@ class SwingTrail:
 				b * inner,
 			]:
 				_mesh.surface_add_vertex(up + corner)
+		_mesh.surface_end()
+
+
+	## The unit vector of the blade at angle: flat, turned from the swing's direction; for a
+	## vertical cut, raised from it by the elevation (Blade.cut_segment).
+	func _along(angle: float) -> Vector3:
+		if _attack.vertical_cut:
+			return Blade.direction(_yaw) * cos(angle) + Vector3.UP * sin(angle)
+		return Blade.direction(_yaw + angle)
+
+
+# The sparks of a parry (visual-e-audio.md, "Os três canais por estado": "flash e faíscas no
+# acerto"): short lines bursting from where the blades met, in front of the fighter at the hand's
+# height, growing out and fading over PARRY_FLASH_S. Their directions are a fixed fan, no
+# randomness, so every PC draws the same burst. Claude's v0 reading (DEC-0017): Godot's own lines,
+# no new asset (DEC-0029).
+class Sparks:
+	extends MeshInstance3D
+
+	## How many lines, and how far they reach at the end, in m.
+	const COUNT := 10
+	const REACH := 0.6
+
+	var _age_s := 0.0
+	var _material := StandardMaterial3D.new()
+	var _mesh := ImmediateMesh.new()
+	var _yaw: float
+
+
+	func _init(fighter: Fighter, combat: CombatConfig, colour: Color) -> void:
+		name = "ParrySparks"
+		_yaw = fighter.state.facing_yaw
+		_material.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+		_material.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+		_material.albedo_color = Color(colour, 1.0)
+		mesh = _mesh
+		material_override = _material
+		cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+		top_level = true
+		position = (
+			fighter.global_position + Vector3.UP * combat.hand_height
+			+ Blade.direction(_yaw) * (combat.hand_offset + combat.blade_length / 2.0)
+		)
+		_burst(0.2)
+
+
+	func _process(delta: float) -> void:
+		_age_s += delta
+		if _age_s >= PARRY_FLASH_S:
+			queue_free()
+			return
+		var share := _age_s / PARRY_FLASH_S
+		_burst(lerpf(0.2, 1.0, share))
+		_material.albedo_color.a = 1.0 - share
+
+
+	# The lines from the burst's inner third to grown times REACH, in a fan around the facing.
+	func _burst(grown: float) -> void:
+		_mesh.clear_surfaces()
+		_mesh.surface_begin(Mesh.PRIMITIVE_LINES, _material)
+		for line: int in COUNT:
+			var turn := TAU * line / COUNT
+			var out := (
+				Blade.direction(_yaw + PI / 2.0) * cos(turn)
+				+ Vector3.UP * sin(turn) + Blade.direction(_yaw) * 0.3
+			).normalized()
+			_mesh.surface_add_vertex(out * REACH * grown / 3.0)
+			_mesh.surface_add_vertex(out * REACH * grown)
 		_mesh.surface_end()

@@ -53,8 +53,8 @@ const SIMULATOR_FRAMES := 10
 const PROXY_DRAIN_MARGIN_MS := 100
 const USAGE := """Usage, with the game's arguments after "--":
   (no argument)            play Sozinho: this PC is its own server, with a dummy at the second
-                           spawn point to stand on and bump into, which swings a light at the
-                           player every 3 s without walking.
+                           spawn point to stand on and bump into, which attacks the player
+                           every 3 s without walking: lights, charged attacks and feints.
     --dummy=off            play Sozinho without the dummy.
   --server                 run the dedicated server; open Godot with --headless, it has no screen.
     --port=N               the server's port, 7777/udp when not given.
@@ -192,8 +192,8 @@ func start_solo() -> void:
 		current_match.let_dummy_attack(dummy, fighter)
 		recorded.append(dummy)
 		_log(
-			"sozinho: a dummy at the second spawn point swings a light at the player every 3 s"
-			+ " (--dummy=off leaves it out)"
+			"sozinho: a dummy at the second spawn point attacks the player every 3 s with lights,"
+			+ " charged attacks and feints (--dummy=off leaves it out)"
 		)
 	if options.records_replay():
 		_start_replay(recorded)

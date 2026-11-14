@@ -1,8 +1,8 @@
 # The numbers of one sword move in the units of the paper: ms, stamina points, health points and
 # degrees (combate.md, "Os golpes e as defesas" and "A lâmina e o contato"; DEC-0004, rule 3). A
-# CombatData holds one per move, the light attack first, so the charged attack and the guard break
-# come in the same way. CombatConfig.create turns it into an AttackConfig, in ticks and radians,
-# once at load. The defaults are zero on purpose: the numbers live in the .tres.
+# CombatData holds one per move, the light attack first and the charged attack second (TASK-12.3),
+# so the guard break comes in the same way. CombatConfig.create turns it into an AttackConfig, in
+# ticks and radians, once at load. The defaults are zero on purpose: the numbers live in the .tres.
 class_name AttackData
 extends Resource
 
@@ -14,7 +14,8 @@ extends Resource
 @export var active_ms: int
 ## From the last active tick to the end of the swing.
 @export var recovery_ms: int
-## Stamina points, paid on the first tick of the windup (combate.md, "A stamina no combate").
+## Stamina points, paid on the first tick of the windup (combate.md, "A stamina no combate"), or
+## on the first active tick when pays_on_release; the bar needs them to begin either way.
 @export var stamina_cost: float
 ## Health points the target loses on the contact.
 @export var damage: int
@@ -39,11 +40,37 @@ extends Resource
 @export var hit_shake_deg: float
 @export var block_shake_ms: int
 @export var block_shake_deg: float
+## The share of the hit's shake that the attacker's camera takes too, 0 to 1 (combate.md, "O
+## hitstop e o tremor": "Carregado acerta [...] metade em quem bateu"): 0 shakes only the target.
+@export var hit_shake_attacker_share: float
+
+## The move pays stamina_cost on its first active tick, the release, instead of its first windup
+## tick (combate.md, "Os golpes e as defesas": the charged's "25, pagos na soltura").
+@export var pays_on_release: bool
+## Its windup has armor: a contact of a move that does not break armor takes the damage with no
+## stun and no freeze (combate.md, "A armadura do carregado").
+@export var armor: bool
+## Its contact stuns a windup with armor as any other (combate.md, "A armadura": "Contra o
+## carregado, a armadura não vale").
+@export var breaks_armor: bool
+## A parry stance in its window parries it (combate.md, "O parry (Q-21)": "Só apara o carregado").
+@export var parryable: bool
+## The guard button going down early in its windup feints it (combate.md, "A finta").
+@export var feintable: bool
+## It cuts top to bottom in the vertical plane of its direction, from the tip's first height to
+## its last, instead of sweeping the horizontal arc (combate.md, "O corte do carregado").
+@export var vertical_cut: bool
+## m above the feet: where the tip of a vertical cut begins and ends; the code turns them into
+## elevations at load (combate.md, "O corte do carregado": "O dado guarda as duas alturas da
+## ponta"). A CombatData checks that the blade reaches them.
+@export var tip_from_height_m: float
+@export var tip_to_height_m: float
 
 
 # One message per impossible number, each naming its field after prefix ("light_attack." in a
 # CombatData), so the gate's print says which number to fix. The active window must be at least
-# one tick at every checked tickrate: the slice divides the arc by it. The arc may be anything.
+# one tick at every checked tickrate: the slice divides the arc by it. The arc may be anything;
+# the tip's heights need the blade, so the CombatData checks them.
 func validate(prefix := "") -> PackedStringArray:
 	var checks: Array[String] = [
 		_time_error(prefix + "windup_ms", windup_ms, false),
@@ -68,6 +95,7 @@ func validate(prefix := "") -> PackedStringArray:
 			block_shake_deg,
 			"a shake cannot be negative",
 		),
+		_share_error(prefix + "hit_shake_attacker_share", hit_shake_attacker_share),
 	]
 	var errors := PackedStringArray()
 	for message: String in checks:
@@ -98,4 +126,11 @@ static func _time_error(field: String, ms: int, divides: bool) -> String:
 static func _not_negative_error(field: String, value: float, why: String) -> String:
 	if value < 0.0:
 		return "%s is %s: %s" % [field, value, why]
+	return ""
+
+
+# A share goes from none, 0, to all, 1.
+static func _share_error(field: String, share: float) -> String:
+	if share < 0.0 or share > 1.0:
+		return "%s is %s: a share goes from 0 to 1" % [field, share]
 	return ""

@@ -21,6 +21,8 @@ Rules:
 - A helper that decides when an engine event happened (a contact, a landing, a clamp, a release) uses the rig's own predicate and tolerance, never a looser one such as a probe distance. Three locked tests had to be fixed for an assumption the rig did not share (F-102; F-130; F-143).
 - A rig that exposes a state between two slices of the tick (the combat's output before the movement, a plan before the move) shows only what the slices before it have done. Assert a field on the state after the slice that sets it: a fourth locked test read the dash's mode before the movement started it (F-177).
 - Count an event by the state entering it, against the previous tick, never by a stamp equal to the tick: the rules may move a stamp, as the hitstop moves `action_since`, and a fifth locked test counted one swing twice (F-187).
+- A command fired on the tick a state ends shows the new action on that tick, never an empty action in between: probe "acts again" by the last tick of the old state, not by a NONE that never shows (F-195).
+- An absence check (never frozen, phases untouched) ends before the subject's own next event that legitimately causes it, such as the hitstop of its own hit landing; past that tick, assert the event exactly. A seventh locked test spanned the charger's own hit (F-195).
 - Run `bash tools/run_tests.sh` and confirm the new tests fail for the right reason, because the implementation is missing.
 
 Return, in English:

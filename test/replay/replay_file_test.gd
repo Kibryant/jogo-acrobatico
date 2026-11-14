@@ -183,10 +183,12 @@ func test_the_header_says_which_game_recorded_it_with_the_whole_configuration() 
 	assert_str(fields["seed"]).is_equal("0")
 	assert_str(fields["config"]).is_equal(MOVEMENT_V0)
 	# TASK-10.6 added pitch and grapple, by reflection over TickInput (criterion 2), TASK-12.1
-	# the light attack, and TASK-12.2 the guard, held.
+	# the light attack, TASK-12.2 the guard, held, and TASK-12.3 the charged attack, the parry and
+	# the guard's press.
 	assert_str(fields["columns"]).is_equal(
 		"tick:int,loop:int,fighter:int,move.x:f64,move.y:f64,yaw:f64,pitch:f64,jump:bool,dash:bool,"
-		+ "grapple:bool,light_attack:bool,guard:bool,check:hex8",
+		+ "grapple:bool,light_attack:bool,guard:bool,charged_attack:bool,parry:bool,"
+		+ "guard_press:bool,check:hex8",
 	)
 	# One line per field of MovementData, typed, with the .tres's value in its cell.
 	var resource: Resource = load(MOVEMENT_V0)
@@ -226,13 +228,51 @@ func test_the_header_says_which_game_recorded_it_with_the_whole_configuration() 
 		assert_str(combat_types.get(field, "")).override_failure_message(field).is_equal(
 			guard_types[field]
 		)
+	# TASK-12.3: the charged attack's numbers as charged_attack.<field>, the light's new flags, and
+	# the parry's and the feint's numbers, by reflection like the others.
+	var charged_types: Dictionary[String, String] = {
+		"charged_attack.windup_ms": ReplayFile.INT,
+		"charged_attack.stamina_cost": ReplayFile.F64,
+		"charged_attack.hit_shake_attacker_share": ReplayFile.F64,
+		"charged_attack.pays_on_release": ReplayFile.BOOL,
+		"charged_attack.armor": ReplayFile.BOOL,
+		"charged_attack.breaks_armor": ReplayFile.BOOL,
+		"charged_attack.parryable": ReplayFile.BOOL,
+		"charged_attack.feintable": ReplayFile.BOOL,
+		"charged_attack.vertical_cut": ReplayFile.BOOL,
+		"charged_attack.tip_from_height_m": ReplayFile.F64,
+		"charged_attack.tip_to_height_m": ReplayFile.F64,
+		"light_attack.armor": ReplayFile.BOOL,
+		"parry_window_ms": ReplayFile.INT,
+		"parry_recovery_ms": ReplayFile.INT,
+		"parry_whiff_recovery_ms": ReplayFile.INT,
+		"parry_stamina_cost": ReplayFile.F64,
+		"parried_stun_ms": ReplayFile.INT,
+		"parried_hitstop_ms": ReplayFile.INT,
+		"parry_shake_ms": ReplayFile.INT,
+		"parry_shake_deg": ReplayFile.F64,
+		"feint_until_ms": ReplayFile.INT,
+		"feint_recovery_ms": ReplayFile.INT,
+		"feint_stamina_cost": ReplayFile.F64,
+	}
+	for field: String in charged_types:
+		assert_str(combat_types.get(field, "")).override_failure_message(field).is_equal(
+			charged_types[field]
+		)
 	for field: String in combat_types:
 		var key := "%s%s:%s" % [ReplayFile.COMBAT_PREFIX, field, combat_types[field]]
 		assert_bool(fields.has(key)).override_failure_message("no %s" % key).is_true()
 		var value: Variant = combat.get(field)
-		if field.begins_with("light_attack."):
-			value = combat.light_attack.get(field.trim_prefix("light_attack."))
+		for move: String in ["light_attack", "charged_attack"]:
+			if field.begins_with(move + "."):
+				value = combat.attack(StringName(move)).get(field.trim_prefix(move + "."))
 		assert_str(fields[key]).is_equal(ReplayFile.write_cell(value, combat_types[field]))
+	# The light's fields come first, right after "combat", and the charged's right after them.
+	var light_fields := 0
+	for field: String in combat_types:
+		light_fields += 1 if field.begins_with("light_attack.") else 0
+	var first_charged := "%scharged_attack.windup_ms:int" % ReplayFile.COMBAT_PREFIX
+	assert_int(keys.find(first_charged)).is_equal(keys.find("combat") + 1 + light_fields)
 	# The fields in the order of the format, the configuration after "config", the combat's after
 	# "combat".
 	var order := PackedStringArray()

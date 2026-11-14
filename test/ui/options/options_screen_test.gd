@@ -6,7 +6,8 @@
 # the sensitivity the camera. TASK-12.1 adds the row "Golpe leve", on the left mouse button, the
 # one action that button takes (F-175 §2). TASK-12.2 adds the row "Guarda", on the right mouse
 # button, the one action that button takes (F-182 §2), and the toggle "Tremor da câmera", on by
-# default (combate.md, "O hitstop e o tremor"). The tests run headless, as the gate does, where the
+# default (combate.md, "O hitstop e o tremor"). TASK-12.3 adds the rows "Golpe carregado", on the
+# E, and "Parry", on the F (F-191 §2). The tests run headless, as the gate does, where the
 # Match creates no screen (Match.has_screen), so they make the screen themselves and give it the
 # fighter, the camera and a store on a temporary file, never user://options.cfg. The events go
 # through the viewport, the way the window delivers them.
@@ -204,12 +205,12 @@ func test_a_remap_changes_the_input_map_and_is_saved_at_once() -> void:
 	_key_button(screen, &"dash").pressed.emit()
 	assert_str(String(screen.waiting_for())).is_equal("dash")
 	assert_str(_prompt(screen)).is_equal("Aperte a nova tecla para Dash. O Esc cancela.")
-	_tap(KEY_E)
+	_tap(KEY_G)
 	assert_str(String(screen.waiting_for())).is_empty()
 	assert_str(_prompt(screen)).is_empty()
-	_assert_physical(&"dash", KEY_E)
-	assert_str(screen.shown_key(&"dash")).is_equal("E")
-	assert_str(str(_saved("keys", "dash"))).is_equal("key:%d" % KEY_E)
+	_assert_physical(&"dash", KEY_G)
+	assert_str(screen.shown_key(&"dash")).is_equal("G")
+	assert_str(str(_saved("keys", "dash"))).is_equal("key:%d" % KEY_G)
 	assert_bool(screen.is_open()).is_true()
 
 
@@ -256,10 +257,10 @@ func test_the_light_attack_row_takes_a_key_and_the_left_button_back() -> void:
 	_key_button(screen, &"light_attack").pressed.emit()
 	get_viewport().push_input(_mouse(MOUSE_BUTTON_RIGHT))
 	assert_str(String(screen.waiting_for())).is_equal("light_attack")
-	_tap(KEY_F)
+	_tap(KEY_T)
 	assert_str(String(screen.waiting_for())).is_empty()
-	_assert_physical(&"light_attack", KEY_F)
-	assert_str(str(_saved("keys", "light_attack"))).is_equal("key:%d" % KEY_F)
+	_assert_physical(&"light_attack", KEY_T)
+	assert_str(str(_saved("keys", "light_attack"))).is_equal("key:%d" % KEY_T)
 	_key_button(screen, &"light_attack").pressed.emit()
 	get_viewport().push_input(_mouse(MOUSE_BUTTON_LEFT))
 	assert_str(String(screen.waiting_for())).is_empty()
@@ -510,3 +511,40 @@ func test_the_camera_shake_toggle_reaches_the_camera_and_is_saved() -> void:
 	assert_bool(screen.camera_shake_toggle.button_pressed).is_true()
 	assert_bool(camera.shake_enabled).is_true()
 	assert_bool(_saved("interface", "camera_shake")).is_true()
+
+
+# TASK-12.3 (F-191 §2; combate.md, "As teclas"; visual-e-audio.md, "A tela de opções"): the rows
+# "Golpe carregado", "Charged attack" in English, on the E, and "Parry", the same word in both, on
+# the F; each takes another key like the other rows, applied and saved at once, and a key of the
+# other is refused with its name. The feint has no row: it follows the guard's key.
+func test_the_charged_and_parry_rows_show_e_and_f_and_remap_like_the_others() -> void:
+	await _watched()
+	var screen := _screen()
+	screen.open()
+	for action: StringName in [&"charged_attack", &"parry"]:
+		var name_node := screen.get_node(NodePath(KEYS_PATH + "%sName" % action.to_pascal_case()))
+		assert(name_node is Label, "each action has a label for its name")
+		assert_str((name_node as Label).text).is_equal(String(OptionsScreen.ACTION_TEXTS[action]))
+	assert_str(GameText.text(GameText.OPTIONS_ACTION_CHARGED_ATTACK)).is_equal("Golpe carregado")
+	assert_str(GameText.text(GameText.OPTIONS_ACTION_PARRY)).is_equal("Parry")
+	TranslationServer.set_locale("en")
+	assert_str(GameText.text(GameText.OPTIONS_ACTION_CHARGED_ATTACK)).is_equal("Charged attack")
+	assert_str(GameText.text(GameText.OPTIONS_ACTION_PARRY)).is_equal("Parry")
+	TranslationServer.set_locale("pt_BR")
+	assert_str(screen.shown_key(&"charged_attack")).is_equal("E")
+	assert_str(screen.shown_key(&"parry")).is_equal("F")
+	_key_button(screen, &"charged_attack").pressed.emit()
+	_tap(KEY_F)
+	assert_str(String(screen.waiting_for())).is_equal("charged_attack")
+	assert_bool(_prompt(screen).contains("Parry")).override_failure_message(_prompt(screen)) \
+			.is_true()
+	_assert_physical(&"charged_attack", KEY_E)
+	_tap(KEY_G)
+	assert_str(String(screen.waiting_for())).is_empty()
+	_assert_physical(&"charged_attack", KEY_G)
+	assert_str(str(_saved("keys", "charged_attack"))).is_equal("key:%d" % KEY_G)
+	_key_button(screen, &"parry").pressed.emit()
+	_tap(KEY_E)
+	_assert_physical(&"parry", KEY_E)
+	assert_str(str(_saved("keys", "parry"))).is_equal("key:%d" % KEY_E)
+	assert_bool(screen.has_node(NodePath(KEYS_PATH + "FeintKey"))).is_false()

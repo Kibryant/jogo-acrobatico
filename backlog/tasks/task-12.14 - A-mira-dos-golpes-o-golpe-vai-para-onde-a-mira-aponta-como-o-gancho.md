@@ -1,10 +1,10 @@
 ---
 id: TASK-12.14
 title: 'A mira dos golpes: o golpe vai para onde a mira aponta, como o gancho'
-status: Ready
+status: In Progress
 assignee: []
 created_date: '2026-10-30 14:43'
-updated_date: '2026-11-14 17:16'
+updated_date: '2026-11-14 17:21'
 labels:
   - jogo
 milestone: m-2

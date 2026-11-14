@@ -6,10 +6,12 @@ status: aceita
 decidido_por: Arthur (F-176; F-175 §2)
 fontes: [F-007, F-073, F-173, F-175, F-176]
 substitui:
-substituida_por: DEC-0052, só a frase do §5 de que, em pé, o alvo da velocidade durante um golpe é o andar devagar, 3 m/s
+substituida_por: DEC-0052, só a frase do §5 de que, em pé, o alvo da velocidade durante um golpe é o andar devagar, 3 m/s; DEC-0057, só o item 5 do §2 (a direção do golpe segue a câmera na preparação) e a frase do §5 de que o corpo olha para a direção do golpe do primeiro tick ativo ao fim
 ---
 
 > ⚠️ Em parte substituída por DEC-0052 em 2026-10-28: o leve não freia o corpo; o andar devagar de 3 m/s fica para a guarda e o carregado. O resto desta DEC continua valendo.
+
+> ⚠️ Em parte substituída por DEC-0057 em 2026-11-14: na preparação, a direção do golpe aponta para o ponto da linha da mira a 2,0 m, a convergência, e não para o yaw da câmera; o corpo olha para ela desde a preparação. O resto desta DEC continua valendo.
 
 # DEC-0051 — O combate no tick
 

@@ -156,10 +156,28 @@ A conta do golpe é do núcleo, com formas simples: a lâmina é um segmento com
 | Carregado | corte de cima para baixo no plano da frente, de 2,2 m a 0,6 m de altura, nos 7 ticks | m | A ponta chega a 2,0 m à frente |
 | Quebra de guarda | a mão em linha reta até 1,2 m à frente, nos 6 ticks | m | Agarra um corpo cujo eixo está a até ≈ 1,55 m |
 | O leve no ar | o mesmo arco, inclinado 45° para baixo | ° | O golpe de quem está no alto ("A matriz de posição") |
-| Direção | para onde a câmera olha, fixada no último tick da preparação | — | Durante a preparação o corpo gira livre; no ativo e na recuperação, não. Sem travar a mira no oponente: o golpe sai para onde a câmera olha, como o gancho |
+| Direção | do eixo do corpo para o ponto da linha da mira a 2,0 m dele, a convergência, fixada no último tick da preparação | — | A câmera fica 0,8 m à direita do corpo (DEC-0045), e a lâmina sai da mão, então só cruza a linha da mira num ponto: o golpe gira ≈ 23,58° para a direita do yaw da câmera. Durante a preparação, a direção e o corpo acompanham a câmera; no ativo e na recuperação, não. Sem travar a mira no oponente: o ponto é fixo e não depende de onde o outro está ("A espada na mira"; DEC-0057) |
+| Convergência | 2,0 | m do eixo do corpo, na linha da mira | Onde a lâmina cruza a linha da mira: a ponta. Com a mira no eixo do alvo, o carregado pega de 1,11 a 2,40 m de centro a centro, e o leve de 0,80 a 2,42 m. Escolha do Arthur (F-198 §2; DEC-0057) |
 | Um acerto por janela ativa (Q-26) | cada golpe acerta cada alvo no máximo uma vez | — | O estado guarda quem o golpe já acertou. Na sonda, a lâmina parada no corpo recomeçava o tranco 4 vezes em 24 ticks (F-073 §4); é a regra do Tekken (F-173 §1 C23). Um teste do núcleo prova com a lâmina parada dentro do corpo por todo o ativo |
 | Parede no meio | não bloqueia no v0 | — | DEC-0026 §4 |
 | Dois golpes no mesmo tick | os dois pegam: troca | — | Sem prioridade entre eles |
+
+### A espada na mira (TASK-12.14; DEC-0057)
+
+Como o golpe vai para onde a mira aponta. A lâmina sai da mão, e a linha da mira corre 0,8 m à direita do corpo (DEC-0045), então a espada só cruza a linha da mira num ponto, a convergência. O raio do gancho não tem esse problema, porque sai do próprio ponto O. O Arthur escolheu o ponto fixo (F-198 §2), sobre a medição do replay de 30/10 (F-198, contexto) e a pesquisa da F-200. A regra vale para o leve e o carregado, e o boneco mira como gente (F-197 §1).
+
+- **Os nomes no código:**
+  - a convergência é `CombatData.aim_convergence_m`, 2,0 no `combat_v0.tres`, e `CombatConfig.aim_convergence`;
+  - a direção é `Aim.swing_yaw(yaw, side, convergence)`, uma função pura do núcleo;
+  - o ombro é o `MovementData.aim_side_m`, cópia do da câmera (DEC-0045 §2).
+- **A conta:** em cada tick da preparação, a direção do golpe é o yaw da câmera menos asen(ombro / convergência), 23,58° para a direita com o ombro de 0,8 m e a convergência de 2,0 m. O pitch não entra. A convergência é positiva e maior que o ombro; se não for, a razão fica presa em 1 e o giro para em 90°, sem NaN.
+- **O corpo** olha para a direção do golpe da preparação ao fim, e não para a câmera. A câmera e a mira não se mexem.
+- **Onde pega,** com a mira no eixo do alvo e os dois no mesmo chão:
+  - o carregado, de 1,11 a 2,40 m de centro a centro. Mais perto que 1,1 m, a lâmina ainda não chegou à linha da mira e passa ao lado dela; mais longe que 2,4 m, falta alcance;
+  - o leve, de 0,80 a 2,42 m;
+  - na sessão de 30/10, os 21 carregados ao alcance começaram entre 1,46 e 2,18 m, e os dois nunca ficaram a menos de 1,46 m (vitrine "A espada na mira").
+- **O boneco e o bot miram como gente:** o yaw que eles mandam põe a linha da mira deles, saindo do ponto O deles, no eixo do outro. A conta é o yaw dos pés deles aos pés do outro mais asen(ombro / distância), com a distância no plano do chão maior que o ombro; mais perto, só o yaw dos pés aos pés. Eles só produzem input (DEC-0022), e o golpe deles converge como o de quem joga.
+- **O que não muda:** a guarda e o parry medem a frente pelo corpo de quem defende, que olha para a câmera fora do golpe; o raio do gancho sai do ponto O.
 
 ### O leve no tick (TASK-12.1; DEC-0051)
 
@@ -169,7 +187,7 @@ Como as regras acima viram ticks. O que não estava no papel é leitura v0 do Cl
 - **A vaga dividida:** uma vaga só para todo comando (DEC-0039). No mesmo tick, o pulo vence o dash, que vence o gancho, que vence o leve: qualquer tecla de movimento apertada junto com o leve leva a vaga.
 - **As fases:** a preparação de 15 ticks, o ativo de 6 e a recuperação de 12 (DEC-0052; eram 24, 6 e 15), um depois do outro, contados do tick em que cada fase começou. Nenhum input corta a sequência (DEC-0016).
 - **O corpo durante o golpe** (DEC-0052): o leve não freia o corpo. Em pé, valem as regras do chão: o corpo corre a até 7 m/s, acelera e para como sempre, e a preparação de 250 ms soma até 1,75 m de alcance. O andar devagar de 3 m/s fica para a guarda e para o carregado. Com o leve de 400 ms, o golpe andava a 3 m/s (F-175 §2). Nenhum comando sai da vaga durante o golpe: um pulo, um dash ou um gancho apertados nele esperam e saem no primeiro tick depois da recuperação, se ainda estiverem nos 150 ms. Saindo de uma beirada no meio do golpe, valem as regras do ar, e o golpe continua.
-- **A direção:** em cada tick da preparação, a direção do golpe é a da câmera, e o corpo olha para ela. Do primeiro tick ativo ao fim da recuperação, ela fica, e o corpo olha para ela, por mais que a câmera gire.
+- **A direção:** em cada tick da preparação, a direção do golpe segue a câmera pela convergência, 23,58° à direita do yaw dela, e o corpo olha para ela ("A espada na mira"; DEC-0057). Até a TASK-12.14, ela era o próprio yaw da câmera. Do primeiro tick ativo ao fim da recuperação, ela fica, e o corpo olha para ela, por mais que a câmera gire.
 - **O arco do leve:** da direita, o lado da mão, para a esquerda: de −60° a +60° da direção do golpe, com o ângulo positivo girando para a esquerda, como o yaw. A fatia do tick k do ativo, de 1 a 6, vai de −60° + 20°·(k − 1) a −60° + 20°·k: a coroa de círculo entre 0,6 m e 2,0 m do eixo de quem bate, na altura da mão, 1,3 m acima dos pés dele.
 - **O toque:** a fatia toca o alvo quando a menor distância entre ela e o eixo da cápsula do alvo, o segmento de 0,35 m a 1,45 m acima dos pés dele, é de até 0,43 m, os 0,35 do corpo mais os 0,08 da lâmina. A conta é exata, sem amostrar ângulos: um alvo entre a lâmina do fim de um tick e a do fim do seguinte é acertado.
 - **O contato:** no tick do toque, o estado de quem bateu carimba o tick, o nome do alvo e o golpe (DEC-0026 §3). Um golpe faz um contato só: depois dele, a lâmina não testa mais até o golpe acabar (Q-26). Os alvos são testados em ordem de nome.
@@ -189,7 +207,7 @@ Como o carregado, a armadura, o parry e a finta viram ticks, pelo mesmo caminho 
   - o estado ganha os carimbos `parry_tick` e `parried_tick`.
 - **Quando o carregado sai:** como o leve ("O leve no tick"), em pé no chão, sem golpe, sem tranco, sem postura do parry e sem finta. Sai da guarda também, que cai. Precisa de 25 ou mais de stamina na barra, mas não paga no começo: os 25 saem no primeiro tick ativo. Fora disso, o aperto espera na vaga pelos 150 ms.
 - **As fases do carregado:** a preparação de 42 ticks, o ativo de 7 e a recuperação de 27, pelo mesmo relógio do leve. Disparado em F, ele está em preparação desde F, ativo desde F + 42, em recuperação desde F + 49, e livre desde F + 76; a 30 ticks, são 21, 4 e 14. Nenhum input corta a sequência, só a finta.
-- **A direção e o corpo:** a direção segue a câmera em cada tick da preparação e fica fixa do primeiro tick ativo ao fim, como no leve. Em pé, nas três fases, o corpo anda a até 3 m/s, o andar devagar da guarda (DEC-0052).
+- **A direção e o corpo:** a direção segue a câmera pela convergência em cada tick da preparação e fica fixa do primeiro tick ativo ao fim, como no leve ("A espada na mira"). Em pé, nas três fases, o corpo anda a até 3 m/s, o andar devagar da guarda (DEC-0052).
 - **O corte do carregado:** de cima para baixo, no plano vertical que contém a direção do golpe.
   - A fatia do tick k do ativo, de 1 a 7, é o setor do anel entre 0,6 m e 2,0 m do eixo de quem bate, com centro no eixo a 1,3 m acima dos pés dele, a altura da mão.
   - O setor vai da elevação φ(k − 1) à φ(k), em passos iguais de φ₀ = asen((2,2 − 1,3) / 2,0) ≈ +26,74° a φ₇ = asen((0,6 − 1,3) / 2,0) ≈ −20,49°. Elevação positiva aponta para cima, e a ponta desce de 2,2 m a 0,6 m de altura.
@@ -270,7 +288,7 @@ Cada lugar tem uma força e uma fraqueza (pilar 2), e a troca tem de ser legíve
 - **Anti-fuga:** a regra do tempo esgotado pela vida já pune a fuga (`partida.md`); o For Honor só precisou de um anti-fuga depois do jogo real (F-173 §2). Entra se o duelo pedir (Q-50).
 - **Dano que atravessa a guarda** (chip damage): o bloqueio custa stamina, não vida.
 - **Empurrão no acerto e no agarrão:** no v0, nenhum golpe move o outro; o recuo é pose.
-- **Travar a mira no oponente** (lock-on): não; o golpe sai para onde a câmera olha.
+- **Travar a mira no oponente** (lock-on): não; o golpe sai para onde a mira aponta, pelo ponto fixo da convergência, que não depende de onde o outro está ("A espada na mira"; DEC-0057).
 - **Cancelamentos além da lista** da DEC-0016: a finta, e a passagem da recuperação do leve para a esquiva, que fica como hipótese até o duelo jogável.
 - **O estado "sem stamina"** do For Honor e o desarme do Chivalry.
 

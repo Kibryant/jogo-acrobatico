@@ -216,7 +216,7 @@ Os tempos são os da rodada B depois dos consertos (F-049 §5). O total foi 31,3
   - cortado: acabou antes do ativo, pelo tranco de um golpe levado ou pela finta;
   - inacabado: o replay acaba no meio dele, sem contato.
 - **As distâncias** são de centro a centro, no plano (x e z), dos pés de quem bate até os pés do outro lutador mais perto, nas posições depois do tick:
-  - no primeiro tick ativo de todo golpe que chegou ao ativo: o resumo dá de quanto a quanto estavam os que pegaram e a menor de todas (F-204, contexto: "nenhum carregado saiu a menos de 1,5 m");
+  - no primeiro tick ativo de todo golpe que chegou ao ativo: o resumo dá de quanto a quanto estavam os que pegaram, os que tiveram contato (acerto, bloqueio ou aparo), e a menor de todas (F-204, contexto: "nenhum carregado saiu a menos de 1,5 m");
   - a mais curta do ativo inteiro: um erro está "ao alcance" quando ela não passa do alcance, e "longe" quando passa. O alcance sai do cabeçalho: a mão, a lâmina, o raio da lâmina e o raio da cápsula, uns 2,43 m na v0 (`combate.md`, "A lâmina e o contato").
 - **Nos erros ao alcance,** o resumo lista cada um com o tick e, no primeiro tick ativo, três números:
   - a distância;
@@ -229,7 +229,15 @@ Os tempos são os da rodada B depois dos consertos (F-049 §5). O total foi 31,3
 
 *O que fica de fora:* a guarda, o parry e a finta, até alguém medi-los à mão duas vezes (DEC-0009; F-205).
 
-*O custo:* o comando joga a partida inteira de novo. A sessão de 1 min 54 s de 15/11 levou 17 s para tocar neste PC; uma de 15 minutos leva uns 2 min e meio.
+*Os limites:*
+- Com três lutadores ou mais, dois contatos no mesmo tick em alvos diferentes podem ir para o alvo errado: o estado não guarda nomes para casar o contato com quem o levou, só o carimbo no tick seguinte.
+- Um contato no último tick do replay não tem tick seguinte para mostrar o alvo: o golpe sai inacabado.
+- Abaixo de 0,05 m, a altura sai como 0,0, e o tick desse ponto mais alto seria só o ruído do pé no chão; aí o resumo diz que o ponto mais alto não passou de 0,0 m, sem tick nem manobra.
+- A faixa "ao alcance" do resumo é a distância mais curta do ativo contra os 2,43 m; à mão, nas sessões 22 e 23, a faixa era 2,6 m no primeiro tick ativo. Por isso os dois erros a 2,40 e 2,43 m da sessão 22, que a F-202 chamou de fora do alcance, saem ao alcance aqui, na beira.
+
+*A validação* (TASK-14, 15/11/2026): nos replays das sessões 22 e 23, os registros da ferramenta deram todos os números medidos à mão na F-202 e na F-204 (contexto): os 38 carregados da sessão 22, 28 dos 34 até 2,6 m pegando, os seis erros com o lado e a mira; os 52 leves e 9 carregados da sessão 23, 43 de 46 e 8 de 9 até 2,6 m, os quatro erros com o lado, a mira em média 0,17 m à direita nos acertos e nenhum carregado a menos de 1,5 m (1,53 m).
+
+*O custo:* o comando joga a partida inteira de novo. Neste PC, com a CPU livre, a sessão de 1 min 54 s de 15/11 levou uns 27 s; a de 15 min 38 s de 26/10, com `--force`, 118 s: 96 s para tocar e 12 s para contar as 112 594 linhas do rastro, uns 0,11 ms por linha.
 
 **A medição do critério 5 (19/10/2026, neste PC).**
 - O arquivo é a corrida do teste do portão, gravada sem tela pelo `bash tools/replay.sh --sample=ARQUIVO`: 600 ticks.

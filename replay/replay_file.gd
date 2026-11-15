@@ -114,9 +114,14 @@ const HARD_KEYS: Array[String] = [
 # Another value of these is another build: refused, and played only with --force (F-042 §4).
 const SOFT_KEYS: Array[String] = ["version", "commit", "engine", "arena_sha256"]
 
-static var _f64_cell := RegEx.create_from_string("^[0-9a-f]{16}$")
+## The shape of a f64 cell and of a text cell, as RegEx patterns, unanchored: the state trace's
+## reader checks a whole line against them in one search (StateTrace.parse_line).
+const F64_PATTERN := "[0-9a-f]{16}"
+const STR_PATTERN := "(?:[0-9a-f]{2})*"
+
+static var _f64_cell := RegEx.create_from_string("^%s$" % F64_PATTERN)
 static var _hex8_cell := RegEx.create_from_string("^[0-9a-f]{8}$")
-static var _str_cell := RegEx.create_from_string("^([0-9a-f]{2})*$")
+static var _str_cell := RegEx.create_from_string("^%s$" % STR_PATTERN)
 static var _sha256 := RegEx.create_from_string("^[0-9a-f]{64}$")
 static var _rules_fingerprint := ""
 static var _rules_computed := false

@@ -207,3 +207,4 @@ O que chegou ao projeto e como chegou. Uma fonte não muda: só mudam `status`, 
 | [F-201](F-201-arthur-chega-perto-com-o-cabo-da-arma.md) | 2026-11-14 | O Arthur chega perto na terceira explicação da convergência, com o cabo da arma, e diz que não entendeu, cansado; a conferência fica para quando ele jogar |
 | [F-202](F-202-arthur-estranha-o-golpe-com-a-camera-de-lado.md) | 2026-11-14 | O Arthur joga a espada na mira e sente estranheza com a câmera de lado, "parece que o golpe tá errado", "fiquei meio entre lá e cá"; os passos do teste ficam ok |
 | [F-203](F-203-arthur-aprova-a-visao-geral-e-fecha-a-task.md) | 2026-11-14 | O Arthur aprova as frases da visao-geral.md alinhadas à DEC-0057, fecha a TASK-12.14 e pede o PR |
+| [F-204](F-204-arthur-sente-os-movimentos-nao-o-jogo.md) | 2026-11-15 | O Arthur joga o leve e a estranheza do golpe continua; acha que vem do boneco sem animação, "eu tô sentindo os movimentos, não o jogo", e quer julgar com as animações |

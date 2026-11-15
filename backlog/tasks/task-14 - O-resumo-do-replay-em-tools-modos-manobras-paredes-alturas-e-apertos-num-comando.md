@@ -3,7 +3,7 @@ id: TASK-14
 title: >-
   O resumo do replay em tools/: modos, manobras, paredes, alturas e apertos, num
   comando
-status: Ready
+status: In Progress
 assignee: []
 created_date: '2026-10-27 16:22'
 updated_date: '2026-11-15 16:19'

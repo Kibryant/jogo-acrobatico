@@ -166,7 +166,7 @@ Os tempos são os da rodada B depois dos consertos (F-049 §5). O total foi 31,3
 - Depois vem uma linha exata com os ticks, os ticks por segundo, a duração e quantos lutadores: "6.860 ticks a 60 por segundo, 1 min 54 s, 2 lutadores" ("1 lutador" quando é um só). Então, um bloco por lutador, aberto por uma linha exata: "== Lutador 0, você", "== Lutador 1, o outro (o boneco ou o bot)" e, do 2 em diante, "== Lutador 2, outro". O cabeçalho do arquivo não diz quem dirigia cada lutador; no Sozinho, o 1 é o boneco.
 - Os tempos saem dos ticks pelos ticks por segundo do cabeçalho, arredondados para o segundo inteiro mais perto: "1 min 54 s" a partir de 60 s, e "54 s" abaixo disso; os voos levam uma casa decimal, "7,6 s". Os números levam vírgula decimal e ponto de milhar.
 - Em cada tick de cada lutador, o resumo lê três coisas: o estado em que o tick começou, o input do tick e o estado depois dele. O estado em que o tick começou é a linha do tick anterior; no primeiro tick, é o do nascimento: um `FighterState` novo, no chão e sem carimbos, com a vida no máximo do combate. A distância e as voltas da vida ao máximo contam do segundo tick em diante.
-- Nenhum carimbo de manobra muda de valor depois de escrito; só o `action_since` anda, com a paradinha (DEC-0055 §5). Por isso uma manobra se conta pelo carimbo igual ao tick, e um golpe, pela entrada na preparação.
+- Nenhum carimbo de manobra muda de valor depois de escrito. A paradinha anda só o `action_since` e o `stun_until_tick` (DEC-0055 §5), que não são manobras. Por isso uma manobra se conta pelo carimbo igual ao tick, e um golpe, pela entrada na preparação.
 
 *O movimento* (critério 1; F-166 §7):
 - **O tempo por modo:** os ticks em que o estado depois do tick está em cada modo: chão, ar, parede, gancho e dash. "Parado" é o chão com a velocidade no plano exatamente zero.
@@ -233,11 +233,15 @@ Os tempos são os da rodada B depois dos consertos (F-049 §5). O total foi 31,3
 - Com três lutadores ou mais, dois contatos no mesmo tick em alvos diferentes podem ir para o alvo errado: o estado não guarda nomes para casar o contato com quem o levou, só o carimbo no tick seguinte.
 - Um contato no último tick do replay não tem tick seguinte para mostrar o alvo: o golpe sai inacabado.
 - Abaixo de 0,05 m, a altura sai como 0,0, e o tick desse ponto mais alto seria só o ruído do pé no chão; aí o resumo diz que o ponto mais alto não passou de 0,0 m, sem tick nem manobra.
-- A faixa "ao alcance" do resumo é a distância mais curta do ativo contra os 2,43 m; à mão, nas sessões 22 e 23, a faixa era 2,6 m no primeiro tick ativo. Por isso os dois erros a 2,40 e 2,43 m da sessão 22, que a F-202 chamou de fora do alcance, saem ao alcance aqui, na beira.
+- A faixa "ao alcance" do resumo é a distância mais curta do ativo contra os 2,43 m; à mão, nas sessões 22 e 23, a faixa era 2,6 m no primeiro tick ativo. A régua do resumo fica a do alcance porque, além dele, a lâmina não chega ao outro, e o lado do corte não explica o erro. As consequências:
+  - os dois erros a 2,40 e 2,43 m da sessão 22, que a F-202 chamou de fora do alcance, saem ao alcance, na beira;
+  - dos quatro erros da sessão 23 que a F-204 contou até 2,6 m, os dos ticks 997 e 6.159 passam de 2,43 m no ativo inteiro (2,57 e 2,54 m no ponto mais perto) e saem como longe, sem lado nem mira. O do tick 6.159 era o único com o boneco à direita do corte, então a frase "à direita em 1 e à esquerda em 3" da F-204 não se lê na saída do comando.
 
-*A validação* (TASK-14, 15/11/2026): nos replays das sessões 22 e 23, os registros da ferramenta deram todos os números medidos à mão na F-202 e na F-204 (contexto): os 38 carregados da sessão 22, 28 dos 34 até 2,6 m pegando, os seis erros com o lado e a mira; os 52 leves e 9 carregados da sessão 23, 43 de 46 e 8 de 9 até 2,6 m, os quatro erros com o lado, a mira em média 0,17 m à direita nos acertos e nenhum carregado a menos de 1,5 m (1,53 m).
+*A validação* (TASK-14, 15/11/2026): nos replays das sessões 22 e 23, a lista de golpes do resumo deu todos os números medidos à mão na F-202 e na F-204 (contexto). Quem conferiu foi uma sonda descartável do implementer e um script do reviewer sobre o rastro bruto.
+- A saída do comando mostra parte deles direto: na sessão 22, os 38 carregados, os 28 acertos e os seis erros ao alcance com o lado e a mira; na sessão 23, os 43 leves que pegaram, de 1,00 a 2,43 m, os 8 de 9 carregados e o carregado mais perto, a 1,53 m.
+- Os outros saem só da lista: os 52 leves da sessão 23 que chegaram ao ativo (os 43 acertos e os 9 erros da saída, sem os 3 cortados); os 46 até 2,6 m; os quatro erros até 2,6 m com o lado; e a média de 0,17 m da mira nos 51 acertos, que a saída dá por golpe, 0,18 m nos leves e 0,10 m nos carregados.
 
-*O custo:* o comando joga a partida inteira de novo. Neste PC, com a CPU livre, a sessão de 1 min 54 s de 15/11 levou uns 27 s; a de 15 min 38 s de 26/10, com `--force`, 118 s: 96 s para tocar e 12 s para contar as 112 594 linhas do rastro, uns 0,11 ms por linha.
+*O custo:* o comando joga a partida inteira de novo. Neste PC, com a CPU livre, a sessão de 1 min 54 s de 15/11 levou uns 27 s. A de 15 min 38 s de 26/10, com `--force`, levou 118 s com a CPU livre (96 s para tocar e 12 s para contar as 112 594 linhas do rastro, uns 0,11 ms por linha) e 3 min 52 s logo depois de um portão inteiro.
 
 **A medição do critério 5 (19/10/2026, neste PC).**
 - O arquivo é a corrida do teste do portão, gravada sem tela pelo `bash tools/replay.sh --sample=ARQUIVO`: 600 ticks.

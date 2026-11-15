@@ -163,8 +163,8 @@ Os tempos são os da rodada B depois dos consertos (F-049 §5). O total foi 31,3
 - Recusa o que o tocador recusa e sai com 1: uma linha em português diz que o arquivo não é um replay válido, ou que é de outra build e só toca com `--force`, e as linhas seguintes trazem as mensagens do leitor, como o tocador as diz. Um argumento errado sai com 2, e o resumo impresso sai com 0.
 - Conta com os números do cabeçalho, os mesmos com que o tocador tocou: a janela da vaga, a stamina, o andar devagar, o ombro da mira, o alcance da lâmina e as fases de cada golpe. Uma sessão gravada antes de um ajuste no `.tres` continua contada com os números dela.
 - Abre com o arquivo, os ticks e a duração, os lutadores, a versão e o commit, e se o estado se separou do jogo ao vivo. Com a coluna `check`, diz o primeiro tick em que se separou e avisa que o que vem depois dele não é a sessão; sem ela, diz que não dá para saber.
-- Depois, uma linha com os ticks, os ticks por segundo, a duração e quantos lutadores, e um bloco por lutador, aberto por uma linha exata: "== Lutador 0, você", "== Lutador 1, o outro (o boneco ou o bot)" e, do 2 em diante, "== Lutador 2, outro". O cabeçalho do arquivo não diz quem dirigia cada lutador; no Sozinho, o 1 é o boneco.
-- Os tempos saem dos ticks pelos ticks por segundo do cabeçalho, em minutos e segundos. Os números levam vírgula decimal e ponto de milhar.
+- Depois vem uma linha exata com os ticks, os ticks por segundo, a duração e quantos lutadores: "6.860 ticks a 60 por segundo, 1 min 54 s, 2 lutadores" ("1 lutador" quando é um só). Então, um bloco por lutador, aberto por uma linha exata: "== Lutador 0, você", "== Lutador 1, o outro (o boneco ou o bot)" e, do 2 em diante, "== Lutador 2, outro". O cabeçalho do arquivo não diz quem dirigia cada lutador; no Sozinho, o 1 é o boneco.
+- Os tempos saem dos ticks pelos ticks por segundo do cabeçalho, arredondados para o segundo inteiro mais perto: "1 min 54 s" a partir de 60 s, e "54 s" abaixo disso; os voos levam uma casa decimal, "7,6 s". Os números levam vírgula decimal e ponto de milhar.
 - Em cada tick de cada lutador, o resumo lê três coisas: o estado em que o tick começou, o input do tick e o estado depois dele. O estado em que o tick começou é a linha do tick anterior; no primeiro tick, é o do nascimento: um `FighterState` novo, no chão e sem carimbos, com a vida no máximo do combate. A distância e as voltas da vida ao máximo contam do segundo tick em diante.
 - Nenhum carimbo de manobra muda de valor depois de escrito; só o `action_since` anda, com a paradinha (DEC-0055 §5). Por isso uma manobra se conta pelo carimbo igual ao tick, e um golpe, pela entrada na preparação.
 
@@ -173,7 +173,7 @@ Os tempos são os da rodada B depois dos consertos (F-049 §5). O total foi 31,3
 - **As manobras,** cada uma no tick em que aparece no estado depois do tick:
   - o pulo: `jumps_used` vai de 0 para 1, sem pulo da parede no tick (o pulo do chão e o do coyote);
   - o pulo duplo: `double_jump_tick` igual ao tick;
-  - a corrida na parede: o modo vira parede. A emenda que troca o `wall_id` no meio da corrida não é corrida nova (F-129);
+  - a corrida na parede: o estado entra no modo parede, ou, já nele, recomeça com outro `mode_since`, como numa quina, onde a corrida sai e entra na outra face no mesmo tick. A emenda troca só o `wall_id`, sem recomeçar, e não é corrida nova (F-129);
   - o pulo da parede: `wall_jump_tick` igual ao tick;
   - o dash: `dash_tick` igual ao tick;
   - o gancho: `grapple_fired_tick` igual ao tick, o gancho que saiu e prendeu;
@@ -191,11 +191,11 @@ Os tempos são os da rodada B depois dos consertos (F-049 §5). O total foi 31,3
   - num tick com vários apertos, a vaga fica com o de maior prioridade: pulo, dash, gancho, parry, carregado e leve, nessa ordem (DEC-0039 §4; DEC-0051 §4; DEC-0056 §6). O parry entra só na prioridade: os apertos dele ficam fora do resumo;
   - os outros apertos do tick nunca entram na vaga: não saíram;
   - o aperto que entrou sai da vaga de um de três jeitos. Ele é **usado** quando a vaga esvazia até `buffer_ticks` depois dele: a manobra ou o golpe saiu, ou, no pulo durante a puxada, o gancho soltou. Ele é **trocado** quando um aperto mais novo, de qualquer tecla, toma a vaga. E ele **vence** quando a vaga esvazia mais de `buffer_ticks` depois dele (`Movement._within`: a janela vale até `buffer_ticks` inclusive);
-  - "saiu na hora" é o aperto usado no próprio tick; "esperou na vaga", o usado num tick depois; "não saiu", o trocado e o vencido.
+  - "saiu na hora" é o aperto usado no próprio tick; "esperou na vaga", o usado num tick depois; "não saiu", o trocado, o vencido e o que o fim do replay pega ainda na vaga.
 - Para o pulo, o dash e o gancho, o resumo separa os apertos pelo modo do estado em que o tick começou e diz, em cada modo, quantos saíram na hora, quantos esperaram e quantos não saíram. É a conta da F-166 §7: "dos 34 no ar, 27 não viraram dash e 7 saíram no pouso".
 
 *Os golpes* (critérios 4 e 5; F-178 §1; F-180 §1; F-202, contexto; F-204, contexto):
-- O leve e o carregado têm cada um as próprias linhas, abertas pelas fases do cabeçalho, no formato "Leve: preparação 15 ticks (250 ms), ativo 6 ticks (100 ms), recuperação 12 ticks (200 ms)", com "Carregado:" no carregado. Os ms saem dos ticks: ticks × 1000 ÷ ticks por segundo. Um golpe sem nenhum clique imprime só "Leve: nenhum clique" ou "Carregado: nenhum clique".
+- O leve e o carregado têm cada um as próprias linhas, abertas pelas fases do cabeçalho, no formato "Leve: preparação 15 ticks (250 ms), ativo 6 ticks (100 ms), recuperação 12 ticks (200 ms)", com "Carregado:" no carregado. Os ms saem dos ticks, ticks × 1000 ÷ ticks por segundo, arredondados para o ms inteiro mais perto: os 250 ms do leve dão 15 ticks a 60 e 8 ticks a 30, "8 ticks (267 ms)". Um golpe sem nenhum clique imprime só "Leve: nenhum clique" ou "Carregado: nenhum clique".
 - **Os cliques** são os apertos do golpe.
 - **Os golpes que saíram:** os ticks em que o estado entra na preparação desse golpe: o estado em que o tick começou não estava na preparação, e o estado depois dele está, com `action_move` o golpe. Uma preparação só acaba no ativo, no tranco ou na finta, então duas nunca vêm seguidas. Entre os golpes que saíram, o resumo conta os que esperaram na vaga.
 - **Os emendados:** os golpes que saíram no tick em que o golpe anterior do lutador acabou. O estado em que o tick começou estava na recuperação.

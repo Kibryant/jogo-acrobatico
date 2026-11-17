@@ -209,3 +209,4 @@ O que chegou ao projeto e como chegou. Uma fonte não muda: só mudam `status`, 
 | [F-203](F-203-arthur-aprova-a-visao-geral-e-fecha-a-task.md) | 2026-11-14 | O Arthur aprova as frases da visao-geral.md alinhadas à DEC-0057, fecha a TASK-12.14 e pede o PR |
 | [F-204](F-204-arthur-sente-os-movimentos-nao-o-jogo.md) | 2026-11-15 | O Arthur joga o leve e a estranheza do golpe continua; acha que vem do boneco sem animação, "eu tô sentindo os movimentos, não o jogo", e quer julgar com as animações |
 | [F-205](F-205-arthur-soma-o-criterio-5-ao-resumo-do-replay.md) | 2026-11-15 | O Arthur soma o critério 5 à TASK-14: o carregado com as linhas do leve e, nos dois golpes, a distância, o lado do corte e a mira; manda seguir |
+| [F-206](F-206-arthur-fecha-a-task-14-e-pede-a-proxima.md) | 2026-11-17 | O Arthur roda o resumo no replay da sessão 23, fecha a TASK-14, aprova o PR e pede a próxima task já |

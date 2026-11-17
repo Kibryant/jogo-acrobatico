@@ -9,8 +9,9 @@
 # on; from the first active tick to the end of the recovery both stay. With the crosshair on a
 # target's axis, the charged touches from 1,2 to 2,3 m centre to centre and misses at 1,0 and at
 # 2,5 m, and the light touches from 1,0 to 2,3 m. The turn follows the data: the convergence of
-# the CombatConfig and the shoulder of the MovementConfig. Every number comes from docs/design,
-# cited by section; ticks by hand from the ms, nearest tick with ties up.
+# each move's AttackConfig, the sword's since TASK-12.4 (DEC-0058 §2), and the shoulder of the
+# MovementConfig. Every number comes from docs/design, cited by section; ticks by hand from the ms,
+# nearest tick with ties up.
 extends GdUnitTestSuite
 
 const ChargedRig := preload("res://test/core/fighter/charged_rig.gd")
@@ -24,9 +25,11 @@ const LIGHT := &"light_attack"
 # The fighters by name, the photo's key (DEC-0051 §1); the target first by name.
 const TARGET := &"A"
 const ATTACKER := &"B"
-# The new numbers by the names agreed in combate.md, "A espada na mira": "Os nomes no código".
+# The new numbers by the names agreed in combate.md, "A espada na mira": "Os nomes no código", each
+# move's own since TASK-12.4 (DEC-0058 §2).
 const CONVERGENCE_DATA_FIELD := &"aim_convergence_m"
 const CONVERGENCE_CONFIG_FIELD := &"aim_convergence"
+const SWORD: Array[StringName] = [&"light_attack", &"charged_attack"]
 
 const SHOULDER_M := 0.8 # movimento.md, "Câmera": "Ombro", 0,8 m to the right
 const CONVERGENCE_M := 2.0 # combate.md, "A lâmina e o contato": "Convergência", 2,0 m
@@ -110,14 +113,17 @@ func _fighter(
 	)
 
 
-# combat_v0.tres with another convergence, in metres, as the configuration of one tickrate: the
-# number is set by its agreed name, and the test stops here when the data has no such number.
+# combat_v0.tres with another convergence for the sword, the light's and the charged's, in metres,
+# as the configuration of one tickrate: the number is set by its agreed name, and the test stops
+# here when the data has no such number.
 func _combat_with_convergence(convergence_m: float, tickrate: int) -> CombatConfig:
 	var data := ChargedRig.load_combat_data()
-	data.set(CONVERGENCE_DATA_FIELD, convergence_m)
-	assert_that(data.get(CONVERGENCE_DATA_FIELD)) \
-			.override_failure_message("CombatData has no %s" % CONVERGENCE_DATA_FIELD) \
-			.is_equal(convergence_m)
+	for move: StringName in SWORD:
+		var attack := data.attack(move)
+		attack.set(CONVERGENCE_DATA_FIELD, convergence_m)
+		assert_that(attack.get(CONVERGENCE_DATA_FIELD)) \
+				.override_failure_message("AttackData has no %s" % CONVERGENCE_DATA_FIELD) \
+				.is_equal(convergence_m)
 	return CombatConfig.create(data, tickrate)
 
 
@@ -542,17 +548,22 @@ func test_the_swing_lands_where_the_crosshair_was_on_the_last_windup_tick(
 	_assert_touched(duel, move, tickrate, "the crosshair on the target on the last windup tick")
 
 
-# Criterion 5: the configuration carries the convergence of the data, 2,0 m in the v0.
+# Criterion 5: the configuration carries the convergence of the data, 2,0 m in the v0, on each
+# sword move's AttackConfig.
 func test_the_config_copies_the_convergence_of_the_data(
 	tickrate: int,
 	_test_parameters := [[30], [60]],
 ) -> void:
 	var v0 := ChargedRig.load_combat(tickrate)
-	assert_float(_float_of(v0, CONVERGENCE_CONFIG_FIELD)) \
-			.override_failure_message("CombatConfig has no %s" % CONVERGENCE_CONFIG_FIELD) \
-			.is_equal_approx(CONVERGENCE_M, HAIR)
 	var other := _combat_with_convergence(1.6, tickrate)
-	assert_float(_float_of(other, CONVERGENCE_CONFIG_FIELD)).is_equal_approx(1.6, HAIR)
+	for move: StringName in SWORD:
+		assert_float(_float_of(v0.attacks[move], CONVERGENCE_CONFIG_FIELD)) \
+				.override_failure_message("AttackConfig has no %s" % CONVERGENCE_CONFIG_FIELD) \
+				.is_equal_approx(CONVERGENCE_M, HAIR)
+		assert_float(_float_of(other.attacks[move], CONVERGENCE_CONFIG_FIELD)).is_equal_approx(
+			1.6,
+			HAIR,
+		)
 
 
 # Criterion 5: the direction changes with the data alone. A convergence of 1,6 m with the shoulder

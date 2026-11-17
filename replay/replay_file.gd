@@ -6,9 +6,9 @@
 #   the rules' fingerprint, engine, platform, ticks per second, netfox's physics and clock
 #   settings, the arena and its fingerprint, the seed, the whole movement configuration, one typed
 #   field per line, the whole combat configuration the same way, each move's numbers included
-#   as <move>.<field>, the light attack's (TASK-12.1) and the charged attack's (TASK-12.3), the
-#   fighters, the first tick and the declared
-#   columns, by name and type.
+#   as <move>.<field>, the light attack's (TASK-12.1), the charged attack's (TASK-12.3) and the
+#   guard break's (TASK-12.4), the fighters, the first tick and the declared columns, by name and
+#   type.
 # - A row holds netfox's absolute tick, the size of the tick loop that ran it, the fighter, the
 #   input Sozinho applied on that tick and the check, 8 hex digits of the fingerprint of the state
 #   the live game computed after it (StateTrace).
@@ -39,8 +39,8 @@ const COMBAT_PREFIX := "combat."
 const COMBAT := "combat"
 ## The moves of the combat, its AttackData fields, in the order CombatData declares them, each
 ## named as its ID (CombatData.attack): each move's fields go among the combat's as <move>.<field>
-## (TASK-12.1; TASK-12.3).
-const MOVES: Array[String] = ["light_attack", "charged_attack"]
+## (TASK-12.1; TASK-12.3; TASK-12.4).
+const MOVES: Array[String] = ["light_attack", "charged_attack", "guard_break"]
 ## netfox's pin (DEC-0023), part of the rules' fingerprint: updating netfox changes the rules.
 const NETFOX_PIN := "cf5189d"
 ## The folders whose scripts and scenes move the body, every file below them (the plan of
@@ -344,7 +344,7 @@ func movement_data() -> MovementData:
 # The combat numbers of the header, so a replay plays with the numbers it was recorded with, every
 # move's included. A field the file lacks, which only --force plays, comes from the game's own
 # combat_v0.tres: the whole of it for a file recorded before TASK-12.1, the charged attack's for one
-# recorded before TASK-12.3.
+# recorded before TASK-12.3, the guard break's for one recorded before TASK-12.4.
 func combat_data() -> CombatData:
 	var fallback := _game_combat_data()
 	var data := CombatData.new()

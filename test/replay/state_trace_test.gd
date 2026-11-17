@@ -212,6 +212,8 @@ static func _unusual_state() -> FighterState:
 	state.frozen_until_tick = FIRST + 15
 	state.parry_tick = FIRST + 16
 	state.parried_tick = FIRST + 17
+	state.grabbed_tick = FIRST + 18
+	state.tech_tick = FIRST + 19
 	return state
 
 

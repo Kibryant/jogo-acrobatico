@@ -1,7 +1,8 @@
-# The numbers of one sword move for one match, made once at load (visao-geral.md, "A configuração
-# nasce na carga"): the times of its AttackData in integer ticks (DEC-0004, rule 3) and its arc in
-# radians. It never changes during a match, so it stays out of the rollback state; the state names
-# the move by its ID (FighterState.action_move) and the core finds it in CombatConfig.attacks.
+# The numbers of one move for one match, made once at load (visao-geral.md, "A configuração nasce
+# na carga"): the times of its AttackData in integer ticks (DEC-0004, rule 3), its arc in radians
+# and its metres as they are. It never changes during a match, so it stays out of the rollback
+# state; the state names the move by its ID (FighterState.action_move) and the core finds it in
+# CombatConfig.attacks.
 class_name AttackConfig
 extends RefCounted
 
@@ -34,6 +35,14 @@ var hitstop_hit_ticks: int
 var hitstop_block_ticks: int
 # Stamina points whoever blocks the move pays on the contact.
 var block_stamina_cost: float
+# m from the attacker's axis on the floor's plane: the point of the aim line the move points at,
+# its convergence (combate.md, "A espada na mira"; DEC-0057 §1; DEC-0058 §2). Aim.swing_yaw reads
+# it on every windup tick.
+var aim_convergence: float
+# The guard break's hand (DEC-0058 §2): the move grabs with a straight segment from the body's
+# axis, reaching hand_reach metres on its last active tick, instead of striking with the blade.
+var grab: bool
+var hand_reach: float
 
 
 # hand_height and reach, the hand's height above the feet and the tip's distance from the attacker's
@@ -69,6 +78,10 @@ static func create(
 	config.hitstop_hit_ticks = Ticks.from_ms(data.hitstop_hit_ms, tickrate)
 	config.hitstop_block_ticks = Ticks.from_ms(data.hitstop_block_ms, tickrate)
 	config.block_stamina_cost = data.block_stamina_cost
+	# Metres, not times: copied as they are.
+	config.aim_convergence = data.aim_convergence_m
+	config.grab = data.grab
+	config.hand_reach = data.hand_reach_m
 	return config
 
 

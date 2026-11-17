@@ -1,10 +1,10 @@
 # The input box of a fighter (visao-geral.md, "O estado em quatro caixas"): move, yaw, pitch,
-# jump, dash, grapple, light_attack, guard, charged_attack, parry and guard_press, which netfox
-# records for every tick through "Input:<field>", named as TickInput's. Whoever owns the fighter
-# fills them through the same calls, sample_frame(), press_jump(), press_dash(), press_grapple(),
-# press_light_attack(), hold_guard(), press_charged_attack(), press_parry() and press_guard():
-# this PC's
-# keyboard and mouse after use_devices(), or a bot, so the rules never know who presses
+# jump, dash, grapple, light_attack, guard, charged_attack, parry, guard_press and guard_break,
+# which netfox records for every tick through "Input:<field>", named as TickInput's. Whoever owns
+# the fighter fills them through the same calls, sample_frame(), press_jump(), press_dash(),
+# press_grapple(), press_light_attack(), hold_guard(), press_charged_attack(), press_parry(),
+# press_guard() and press_guard_break(): this PC's keyboard and mouse after use_devices(), or a
+# bot, so the rules never know who presses
 # (DEC-0004). How the frames become the input of a tick is the InputSampler's job (DEC-0026 §1).
 # A replay takes the place of all of them through play_rows() (TASK-10.3): each tick's box is then
 # the recorded row, and this script stays the only one that writes the box.
@@ -23,6 +23,7 @@ var guard := false
 var charged_attack := false
 var parry := false
 var guard_press := false
+var guard_break := false
 
 var _sampler := InputSampler.new()
 # The camera of whoever plays this fighter on this PC; null when nobody here does.
@@ -132,6 +133,12 @@ func press_guard() -> void:
 	_sampler.press_guard()
 
 
+# One press of the guard break, a one-touch command like the light (TASK-12.4; DEC-0058 §1): the
+# tech too, when the fighter is grabbed.
+func press_guard_break() -> void:
+	_sampler.press_guard_break()
+
+
 # The guard button held (true) or let go (false) from now on, from the devices or a bot: a hold,
 # not a touch, so every tick reads it until it changes (TASK-12.2; DEC-0054 §1).
 func hold_guard(held: bool) -> void:
@@ -152,6 +159,7 @@ func to_tick_input() -> TickInput:
 	tick_input.charged_attack = charged_attack
 	tick_input.parry = parry
 	tick_input.guard_press = guard_press
+	tick_input.guard_break = guard_break
 	return tick_input
 
 
@@ -199,6 +207,10 @@ func _unhandled_input(event: InputEvent) -> void:
 	# step reads (DEC-0056 §5).
 	if event.is_action_pressed(&"guard"):
 		press_guard()
+	# The middle mouse button by default (project.godot, [input]; combate.md, "As teclas"; F-207),
+	# or the player's key or mouse button (OptionsStore): the guard break, and the tech.
+	if event.is_action_pressed(&"guard_break"):
+		press_guard_break()
 
 
 # netfox calls this once per tick loop, before its ticks, on the owner's peer (BaseNetInput). A
@@ -225,6 +237,7 @@ func _on_after_tick(_delta: float, tick: int) -> void:
 		charged_attack = _sampler.take_charged_attack()
 		parry = _sampler.take_parry()
 		guard_press = _sampler.take_guard_press()
+		guard_break = _sampler.take_guard_break()
 		return
 	var row := _rows.input_at(tick)
 	if row == null:

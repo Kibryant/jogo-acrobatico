@@ -1,8 +1,9 @@
 # TASK-12.2 (partida.md, "O boneco que ataca"): Sozinho's dummy presses a light every 3 s, 180
 # ticks at 60, turned toward whoever plays, and only through its input box: it does not walk, and
 # its swings come out of the same core as anyone's. TASK-12.3 mixes the actions by a fixed hash of
-# their number, 2 in 5 lights, 2 in 5 charged and 1 in 5 feints, the feint a charged cut by the
-# guard button's press 24 ticks in and a light 4 ticks later (partida.md, "O boneco que ataca").
+# their number, the feint a charged cut by the guard button's press 24 ticks in and a light 4 ticks
+# later (partida.md, "O boneco que ataca"); since TASK-12.4 the cycle is of 6, 2 lights, 2 charged,
+# 1 feint and 1 guard break, with no tech (F-210 §1; DEC-0058).
 # The real Match runs in Sozinho with netfox's ticks advanced by hand (test/support/
 # netfox_ticks.gd; DEC-0027 §3).
 extends GdUnitTestSuite
@@ -67,8 +68,9 @@ func test_it_presses_once_every_period_from_its_first_tick() -> void:
 
 
 # Over four periods the dummy starts an action on each, turned toward the player, and never moves:
-# a light or a charged by the hash of its number, a feint as a charged that becomes FEINT 24 ticks
-# in and a light when the feint ends. It presses through its input box, and the core fires it.
+# a light, a charged or a guard break by the hash of its number, a feint as a charged that becomes
+# FEINT 24 ticks in and a light when the feint ends. It presses through its input box, and the core
+# fires it, each move pointing through its own convergence (DEC-0058 §2).
 func test_it_mixes_its_actions_toward_the_player_without_walking() -> void:
 	var game_match := await _match()
 	var player := game_match.fighter_at(Match.PLAYER_SLOT)
@@ -76,14 +78,13 @@ func test_it_mixes_its_actions_toward_the_player_without_walking() -> void:
 	var attacking := game_match.attacking_dummy
 	var spawn := dummy.position
 	# The dummy aims like a person and its swing converges like a player's (DEC-0057 §4): the swing
-	# points along the aim yaw turned by the convergence.
+	# points along the aim yaw turned by the move's convergence.
 	var aim := AttackingDummy.aim_yaw(
 		dummy.global_position,
 		player.global_position,
 		dummy.config.aim_side,
 		dummy.state.facing_yaw,
 	)
-	var swing := Aim.swing_yaw(aim, dummy.config.aim_side, game_match.combat.aim_convergence)
 	var expected: Array[String] = []
 	for k: int in range(1, 5):
 		var at := k * PERIOD_TICKS
@@ -92,6 +93,8 @@ func test_it_mixes_its_actions_toward_the_player_without_walking() -> void:
 				expected.append("%d windup light_attack" % at)
 			AttackingDummy.Kind.CHARGED:
 				expected.append("%d windup charged_attack" % at)
+			AttackingDummy.Kind.GUARD_BREAK:
+				expected.append("%d windup guard_break" % at)
 			AttackingDummy.Kind.FEINT:
 				expected.append("%d windup charged_attack" % at)
 				expected.append("%d feint" % (at + FEINT_PRESS_TICKS))
@@ -99,7 +102,8 @@ func test_it_mixes_its_actions_toward_the_player_without_walking() -> void:
 				expected.append("%d windup light_attack" % light_at)
 	var seen: Array[String] = []
 	var before := dummy.state.copy()
-	for _loop: int in 4 * PERIOD_TICKS + 2:
+	# Up to the light after a feint of the 4th action, the latest event the four can have.
+	for _loop: int in 4 * PERIOD_TICKS + FEINT_PRESS_TICKS + FEINT_TICKS + 2:
 		player.input.sample_frame(Vector2.ZERO, player.state.facing_yaw)
 		NetfoxTicks.run_loop()
 		var state := dummy.state
@@ -107,6 +111,8 @@ func test_it_mixes_its_actions_toward_the_player_without_walking() -> void:
 		var began := state.action != before.action or state.action_since != before.action_since
 		if began and state.action == FighterState.Action.WINDUP:
 			seen.append("%d windup %s" % [since, state.action_move])
+			var attack: AttackConfig = game_match.combat.attacks[state.action_move]
+			var swing := Aim.swing_yaw(aim, dummy.config.aim_side, attack.aim_convergence)
 			assert_float(angle_difference(state.action_yaw, swing)).is_equal_approx(0.0, HAIR)
 		elif began and state.action == FighterState.Action.FEINT:
 			seen.append("%d feint" % since)
@@ -115,14 +121,16 @@ func test_it_mixes_its_actions_toward_the_player_without_walking() -> void:
 	assert_vector(dummy.position).is_equal_approx(spawn, Vector3.ONE * HAIR)
 
 
-# The mix (partida.md, "O boneco que ataca"): the kind of the k-th action is a pure function of k,
-# 2 in 5 lights, 2 in 5 charged and 1 in 5 feints over many actions, within a tenth of each share,
-# and the first four already hold all three, so a session of a minute meets them all.
-func test_the_mix_is_two_lights_two_charged_and_one_feint_in_five_by_a_fixed_hash() -> void:
+# The mix (partida.md, "O boneco que ataca"; F-210 §1): the kind of the k-th action is a pure
+# function of k, 2 in 6 lights, 2 in 6 charged, 1 in 6 feints and 1 in 6 guard breaks over many
+# actions, within a tenth of each share, and the first four already hold all four, so a session of
+# a minute meets them all.
+func test_the_mix_is_two_lights_two_charged_one_feint_and_one_guard_break_in_six() -> void:
 	var counts: Dictionary[AttackingDummy.Kind, int] = {
 		AttackingDummy.Kind.LIGHT: 0,
 		AttackingDummy.Kind.CHARGED: 0,
 		AttackingDummy.Kind.FEINT: 0,
+		AttackingDummy.Kind.GUARD_BREAK: 0,
 	}
 	var actions := 1000
 	for k: int in range(1, actions + 1):
@@ -131,9 +139,10 @@ func test_the_mix_is_two_lights_two_charged_and_one_feint_in_five_by_a_fixed_has
 				.is_equal(kind)
 		counts[kind] += 1
 	var shares: Dictionary[AttackingDummy.Kind, float] = {
-		AttackingDummy.Kind.LIGHT: 0.4,
-		AttackingDummy.Kind.CHARGED: 0.4,
-		AttackingDummy.Kind.FEINT: 0.2,
+		AttackingDummy.Kind.LIGHT: 2.0 / 6.0,
+		AttackingDummy.Kind.CHARGED: 2.0 / 6.0,
+		AttackingDummy.Kind.FEINT: 1.0 / 6.0,
+		AttackingDummy.Kind.GUARD_BREAK: 1.0 / 6.0,
 	}
 	for kind: AttackingDummy.Kind in shares:
 		var expected := shares[kind] * actions
@@ -146,11 +155,12 @@ func test_the_mix_is_two_lights_two_charged_and_one_feint_in_five_by_a_fixed_has
 	for k: int in range(1, 5):
 		if not first.has(AttackingDummy.kind_of(k)):
 			first.append(AttackingDummy.kind_of(k))
-	assert_int(first.size()).override_failure_message("the first four lack a kind").is_equal(3)
+	assert_int(first.size()).override_failure_message("the first four lack a kind").is_equal(4)
 
 
-# What each kind presses over its period: the light or the charged on the period's tick; the feint
-# the charged there, the guard's press 24 ticks later and the light 4 after that; nothing else.
+# What each kind presses over its period: the light, the charged or the guard break on the period's
+# tick; the feint the charged there, the guard's press 24 ticks later and the light 4 after that;
+# nothing else, and never the tech.
 func test_each_kind_presses_its_commands_on_their_ticks() -> void:
 	var game_match := await _match()
 	var attacking := game_match.attacking_dummy
@@ -167,6 +177,8 @@ func test_each_kind_presses_its_commands_on_their_ticks() -> void:
 				expected[0] = [FighterCommand.LIGHT_ATTACK]
 			AttackingDummy.Kind.CHARGED:
 				expected[0] = [FighterCommand.CHARGED_ATTACK]
+			AttackingDummy.Kind.GUARD_BREAK:
+				expected[0] = [FighterCommand.GUARD_BREAK]
 			AttackingDummy.Kind.FEINT:
 				expected[0] = [FighterCommand.CHARGED_ATTACK]
 				expected[FEINT_PRESS_TICKS] = [&"guard"]
@@ -178,7 +190,7 @@ func test_each_kind_presses_its_commands_on_their_ticks() -> void:
 			var wanted: Array = expected[into] if expected.has(into) else []
 			var message := "action %d, tick %d into it: %s" % [k, into, pressed]
 			assert_array(pressed).override_failure_message(message).is_equal(wanted)
-	assert_int(found.size()).is_equal(3)
+	assert_int(found.size()).is_equal(4)
 	assert_array(attacking.presses(start)).is_empty()
 
 

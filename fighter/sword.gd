@@ -19,6 +19,11 @@
 # snaps the pose back to rest; whoever was parried holds the blade thrown up and back through the
 # stun. The token is chosen by the action, the move and, in the stance, the tick
 # (TokensData.for_state).
+# TASK-12.4 (visual-e-audio.md, "Quebra de guarda, preparação": "A espada baixa, a mão à frente"):
+# the guard break's windup holds the sword low with the hand forward, in vermilion, from its first
+# tick; in its active the hand goes where the rule's hand reaches (Blade.hand_slice), the blade
+# still low; the recovery brings it back to rest; whoever grabbed holds the low pose through the
+# hold, and whoever was grabbed rests.
 class_name Sword
 extends Node3D
 
@@ -75,6 +80,14 @@ const REFLECT_YAW_DEG := -160.0
 const REFLECT_PITCH_DEG := 55.0
 ## m: the reflected hand's height above the feet, by the head.
 const REFLECT_HAND_HEIGHT := 1.7
+## The guard break (TASK-12.4): the hand forward, a little right of the front, at the chest, and
+## the blade hanging low, down and a little to the right, before the body. Claude's v0 reading
+## (DEC-0017; visual-e-audio.md, "A espada baixa, a mão à frente").
+const LOW_HAND_DEG := -15.0
+const LOW_YAW_DEG := -10.0
+const LOW_PITCH_DEG := -60.0
+## m: the low pose's hand height above the feet, at the chest.
+const LOW_HAND_HEIGHT := 1.1
 ## The feint's snap: the overhead pose back to the rest in this many ticks, a jolt rather than a
 ## swing. Claude's v0 reading (DEC-0017; "A pose volta num estalo").
 const SNAP_TICKS := 2
@@ -92,6 +105,7 @@ const POSE_OVERHEAD := &"overhead"
 const POSE_CROSSED := &"crossed"
 const POSE_SNAP := &"snap"
 const POSE_REFLECT := &"reflect"
+const POSE_LOW := &"blade_low"
 const POSE_RETURN := &"return"
 const POSE_REST := &"rest"
 ## The pose of each action when no token names one: those of tokens_v0.tres, and the recovery's;
@@ -106,6 +120,7 @@ const DEFAULT_POSES: Dictionary[int, StringName] = {
 	FighterState.Action.PARRY: POSE_CROSSED,
 	FighterState.Action.FEINT: POSE_SNAP,
 	FighterState.Action.PARRIED: POSE_REFLECT,
+	FighterState.Action.GRABBING: POSE_LOW,
 }
 
 var _combat: CombatConfig
@@ -183,7 +198,7 @@ static func blade_colour(
 
 
 ## The name of the pose a state shows at tick: its token's, or the default of its action
-## (DEFAULT_POSES), the charged's windup being overhead.
+## (DEFAULT_POSES), the charged's windup being overhead and the guard break's low.
 static func pose_name(
 	state: FighterState,
 	tokens: TokensData = null,
@@ -196,6 +211,9 @@ static func pose_name(
 	var charged := state.action_move == FighterCommand.CHARGED_ATTACK
 	if state.action == FighterState.Action.WINDUP and charged:
 		return POSE_OVERHEAD
+	var breaking := state.action_move == FighterCommand.GUARD_BREAK
+	if state.action == FighterState.Action.WINDUP and breaking:
+		return POSE_LOW
 	if DEFAULT_POSES.has(state.action):
 		return DEFAULT_POSES[state.action]
 	return POSE_REST
@@ -204,9 +222,11 @@ static func pose_name(
 ## The sword's transform relative to the fighter's feet: the origin at the hand, the blade along its
 ## -Z. In the active the hand sits on the rule's circle, at the angle of the end of the tick's
 ## slice, and the blade runs radially from it, as Blade.segment draws it, or, for a vertical cut, at
-## the elevation of the end of the tick's slice, as Blade.cut_segment draws it. The guard rises from
-## the rest to upright over the guard's ticks, and the blockstun holds it up. A frozen tick of the
-## hitstop shows the pose of the impact (Combat.posed_tick).
+## the elevation of the end of the tick's slice, as Blade.cut_segment draws it. A move that grabs
+## keeps the blade low instead, its hand on the rule's hand at the end of the tick's slice
+## (Blade.hand_slice). The guard rises from the rest to upright over the guard's ticks, and the
+## blockstun holds it up. A frozen tick of the hitstop shows the pose of the impact
+## (Combat.posed_tick).
 static func pose(
 	state: FighterState,
 	tick: int,
@@ -220,25 +240,10 @@ static func pose(
 	if Combat.swinging(state) and combat.attacks.has(state.action_move):
 		var attack: AttackConfig = combat.attacks[state.action_move]
 		base = state.action_yaw
-		match named:
-			POSE_BACK:
-				var back := _shape(
-					BACK_HAND_DEG,
-					BACK_YAW_DEG,
-					BACK_PITCH_DEG,
-					combat.hand_height,
-					combat,
-				)
-				shape = shape.toward(back, _share(into, attack.windup_ticks))
-			POSE_OVERHEAD:
-				shape = _overhead(combat)
-				_tremble(shape, state, tick, attack, base)
-			POSE_ARC:
-				var theta := Blade.slice_of(attack, clampi(into, 1, attack.active_ticks)).y
-				shape = _swung(attack, theta, combat)
-			_:
-				var share := _share(into, attack.recovery_ticks)
-				shape = _swung(attack, attack.arc_to, combat).toward(shape, share)
+		if attack.grab:
+			shape = _grab_pose(state.action, attack, into, combat)
+		else:
+			shape = _sword_pose(named, state, tick, attack, into, combat)
 	elif named == POSE_UPRIGHT:
 		var share := 1.0
 		if state.action == FighterState.Action.BLOCK:
@@ -277,6 +282,8 @@ static func pose(
 			REFLECT_HAND_HEIGHT,
 			combat,
 		)
+	elif named == POSE_LOW:
+		shape = _low(combat)
 	var at := Vector3.UP * shape.height + Blade.direction(base + shape.hand) * shape.out
 	at += shape.offset
 	var turn := Basis(Vector3.UP, base + shape.yaw) * Basis(Vector3.RIGHT, shape.pitch)
@@ -313,6 +320,75 @@ static func _shape(
 
 static func _rest(combat: CombatConfig) -> PoseShape:
 	return _shape(REST_HAND_DEG, REST_YAW_DEG, REST_PITCH_DEG, combat.hand_height, combat)
+
+
+# A sword move, by its pose's name: the blade going back over the windup, overhead from the windup's
+# first tick, trembling on the armor, on the rule's blade in the active, and from the end of the
+# arc back to rest in the recovery.
+static func _sword_pose(
+	named: StringName,
+	state: FighterState,
+	tick: int,
+	attack: AttackConfig,
+	into: int,
+	combat: CombatConfig,
+) -> PoseShape:
+	var rest := _rest(combat)
+	match named:
+		POSE_BACK:
+			var back := _shape(
+				BACK_HAND_DEG,
+				BACK_YAW_DEG,
+				BACK_PITCH_DEG,
+				combat.hand_height,
+				combat,
+			)
+			return rest.toward(back, _share(into, attack.windup_ticks))
+		POSE_OVERHEAD:
+			var shape := _overhead(combat)
+			_tremble(shape, state, tick, attack, state.action_yaw)
+			return shape
+		POSE_ARC:
+			var theta := Blade.slice_of(attack, clampi(into, 1, attack.active_ticks)).y
+			return _swung(attack, theta, combat)
+	var share := _share(into, attack.recovery_ticks)
+	return _swung(attack, attack.arc_to, combat).toward(rest, share)
+
+
+static func _low(combat: CombatConfig) -> PoseShape:
+	return _shape(LOW_HAND_DEG, LOW_YAW_DEG, LOW_PITCH_DEG, LOW_HAND_HEIGHT, combat)
+
+
+# A move that grabs, by its phase (TASK-12.4): the low pose from the windup's first tick, held; in
+# the active the hand straight along the swing at the hand's height, out to the end of the tick's
+# slice of the rule's hand, the blade still low; the recovery from the full reach back to rest.
+static func _grab_pose(
+	action: FighterState.Action,
+	attack: AttackConfig,
+	into: int,
+	combat: CombatConfig,
+) -> PoseShape:
+	match action:
+		FighterState.Action.WINDUP:
+			return _low(combat)
+		FighterState.Action.ACTIVE:
+			var reach := Blade.hand_slice(attack, clampi(into, 1, attack.active_ticks)).y
+			return _reaching(reach, combat)
+	return _reaching(attack.hand_reach, combat).toward(
+		_rest(combat),
+		_share(into, attack.recovery_ticks),
+	)
+
+
+# The hand out metres along the swing at the hand's height, the blade low.
+static func _reaching(out: float, combat: CombatConfig) -> PoseShape:
+	return PoseShape.new(
+		0.0,
+		deg_to_rad(LOW_YAW_DEG),
+		deg_to_rad(LOW_PITCH_DEG),
+		combat.hand_height,
+		out,
+	)
 
 
 static func _overhead(combat: CombatConfig) -> PoseShape:

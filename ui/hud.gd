@@ -21,8 +21,9 @@
 # neutral white, and nothing at rest or in a recovery. TASK-12.3 adds four, each with a shape of
 # its own (visual-e-audio.md, "O carregado, o parry e a finta na tela"): the charged's windup, a
 # hexagon in sky blue; the parry's window, a cross in yellow, gone once the window closes; the
-# feint, a ring; and whoever was parried, a star. The token is the state's at the displayed tick
-# (TokensData.for_state).
+# feint, a ring; and whoever was parried, a star. TASK-12.4 adds the guard break's windup, an arrow
+# in vermilion (visual-e-audio.md, "Quebra de guarda, preparação"). The token is the state's at the
+# displayed tick (TokensData.for_state).
 # Only a PC with a screen has one: the Match creates it in watch().
 class_name Hud
 extends CanvasLayer
@@ -628,6 +629,8 @@ class TokenMark:
 					)
 			&"ring":
 				draw_arc(centre, radius * 0.75, 0.0, TAU, 32, fill, radius * 0.5)
+			&"arrow":
+				draw_colored_polygon(_arrow(centre, radius), fill)
 			_:
 				draw_circle(centre, radius, fill)
 
@@ -643,6 +646,23 @@ class TokenMark:
 		for corner: int in sides:
 			var turn := angle + TAU * corner / sides - PI / 2.0
 			corners.append(centre + Vector2.from_angle(turn) * radius)
+		return corners
+
+
+	# A block arrow pointing up, the hand going forward (TASK-12.4): its head across 85 % of the
+	# radius each way down to just above the middle, its shaft 35 % of the radius each way.
+	static func _arrow(centre: Vector2, radius: float) -> PackedVector2Array:
+		var corners := PackedVector2Array()
+		for corner: Vector2 in [
+			Vector2(0.0, -1.0),
+			Vector2(0.85, -0.05),
+			Vector2(0.35, -0.05),
+			Vector2(0.35, 1.0),
+			Vector2(-0.35, 1.0),
+			Vector2(-0.35, -0.05),
+			Vector2(-0.85, -0.05),
+		]:
+			corners.append(centre + corner * radius)
 		return corners
 
 

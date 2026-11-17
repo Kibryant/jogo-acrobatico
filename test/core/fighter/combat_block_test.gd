@@ -88,10 +88,11 @@ func _fighter(
 
 # The camera's yaw that sends the swing along `swing` (combate.md, "A espada na mira"; DEC-0057):
 # the swing turns asin(shoulder / convergence) to the right of the camera, so the camera looks that
-# far to the left of it. The geometry by hand above is worked along the swing.
+# far to the left of it. The geometry by hand above is worked along the swing. The convergence is
+# the sword's, the light's and the charged's alike (DEC-0058 §2).
 func _camera_for_swing(swing: float, tickrate: int, combat: CombatConfig) -> float:
 	var shoulder := MovementRig.load_config(tickrate).aim_side
-	return swing + asin(shoulder / combat.aim_convergence)
+	return swing + asin(shoulder / combat.attacks[FighterCommand.LIGHT_ATTACK].aim_convergence)
 
 
 # A script that presses the light on the given ticks, the camera on yaw.

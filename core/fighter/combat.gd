@@ -3,38 +3,47 @@
 # tick (TickPhoto), and returns a new state. A fighter writes only its own state and reads the
 # others only in the photo, so the order of the nodes never changes the result (DEC-0026 §3): the
 # attacker stamps the contact on its own state, and the target resolves it on the next tick, the
-# first whose photo shows it. The order inside the step (DEC-0051 §2; DEC-0055; DEC-0056):
+# first whose photo shows it. The order inside the step (DEC-0051 §2; DEC-0055; DEC-0056; DEC-0058):
 # 1. the contacts the photo shows against this fighter, stamped on the tick before, resolved on its
-#    own state as the contact tick left it, in this order: parried, a parryable move in the stance's
-#    window with the attacker in front, which stamps parry_tick and nothing else; blocked, with the
-#    guard up, the attacker in front and the stamina to pay; armored, a move that does not break
-#    armor against the windup of a move with armor, the damage and the hurt stamp with no stun and
-#    no freeze; or taken; a block or a hit is a stun and a hitstop from the contact (DEC-0055 §3).
-#    Then the attacker's side: the photo shows the result of its own contact of two ticks ago, a
-#    parry, a hit or a block, and it freezes from now for that result's hitstop: a hit or a block
-#    moves its swing's clock forward by as much (DEC-0055 §4); a parry ends the swing and makes it
-#    PARRIED, frozen alone (DEC-0056 §4);
+#    own state as the contact tick left it, in this order: grabbed, the contact of a move that grabs
+#    on a fighter standing on the floor or in the dash without striking, which holds it GRABBED
+#    and stamps grabbed_tick, and a grab of anyone else does nothing (DEC-0058 §3 and §4); parried,
+#    a parryable move in the stance's window with the attacker in front, which stamps parry_tick and
+#    nothing else; blocked, with the guard up, the attacker in front and the stamina to pay;
+#    armored, a move that does not break armor against the windup of a move with armor, the damage
+#    and the hurt stamp with no stun and no freeze; or taken; a block or a hit is a stun and a
+#    hitstop from the contact (DEC-0055 §3). Then the attacker's side: the photo shows the result of
+#    its own contact of two ticks ago, a grab, a parry, a hit or a block, and it freezes from now
+#    for that result's hitstop: a hit or a block moves its swing's clock forward by as much
+#    (DEC-0055 §4); a parry ends the swing and makes it PARRIED, frozen alone (DEC-0056 §4); a grab
+#    ends it and makes it GRABBING (DEC-0058 §4);
 # 2. the refill to the max, when the configuration turns it on, health_refill_ticks after
 #    hurt_tick (partida.md, "A vida sem partida");
 # 3. on a frozen tick, only the presses into the slot, and nothing else (DEC-0055 §5);
 # 4. the phase of the swing, advanced by the move's ticks, a move that pays on release paying on its
-#    first active tick; the end of the parry's stance and of the feint; and the end of a stun;
+#    first active tick; the end of the parry's stance and of the feint; the end of a stun or of
+#    the time whoever was grabbed cannot act; and the end of the hold of whoever grabbed, two ticks
+#    later when the photo shows the tech (DEC-0058 §5);
 # 5. the feint: the guard button going down in the windup of a move that can be feinted, from the
 #    tick after its fire to feint_until_ticks, with the bar to pay, cuts it into FEINT
 #    (DEC-0056 §5);
-# 6. the guard, held standing on the floor with no swing, stance or stun (DEC-0055 §2);
-# 7. the light's, the charged's and the parry's presses into the slot, in that order, then the
-#    movement's (Movement.take_presses), so the parry beats the charged, which beats the light, and
-#    any movement key beats the three on one tick (DEC-0051 §4; DEC-0056 §6); the move or the parry
-#    in the slot fires standing on the floor, from rest or from the guard, which drops, with the bar
-#    able to pay: the light pays on its fire, the charged needs its cost and pays nothing yet, the
-#    parry pays on its fire;
-# 8. the swing's direction follows the camera on every tick of the windup, through the convergence:
-#    from the body's axis to the point of the aim line aim_convergence from it, the camera's yaw
-#    turned by Aim.swing_yaw, 23,58° to the right with the v0 (combate.md, "A espada na mira";
-#    DEC-0057 §2);
-# 9. on an active tick, the slice of that tick, flat or vertical, against every other fighter of the
-#    photo, in name order, until the swing has its one contact (Q-26).
+# 6. the guard, held standing on the floor with no swing, stance, stun or hold (DEC-0055 §2);
+# 7. the light's, the charged's, the guard break's and the parry's presses into the slot, in that
+#    order, then the movement's (Movement.take_presses), so the parry beats the guard break, which
+#    beats the charged, which beats the light, and any movement key beats them all on one tick
+#    (DEC-0051 §4; DEC-0056 §6; DEC-0058 §7). A guard break in the slot of whoever is held GRABBED,
+#    pressed after the contact, is the tech, free, until the hold's last tick (DEC-0058 §5);
+#    otherwise the move or the parry in the slot fires standing on the floor, from rest or from the
+#    guard, which drops, with the bar able to pay: the light and the guard break pay on their fire,
+#    the charged needs its cost and pays nothing yet, the parry pays on its fire;
+# 8. the swing's direction follows the camera on every tick of the windup, through the move's
+#    convergence: from the body's axis to the point of the aim line that far from it, the camera's
+#    yaw turned by Aim.swing_yaw, 23,58° to the right for the sword and 41,81° for the guard break's
+#    hand with the v0 (combate.md, "A espada na mira"; DEC-0057 §2; DEC-0058 §2);
+# 9. on an active tick, the slice of that tick, flat, vertical or the hand's, against every other
+#    fighter of the photo, in name order, until the swing has its one contact (Q-26); a fighter the
+#    photo shows on an invulnerable tick of its dash is passed over, and the move stays live
+#    (DEC-0058 §6).
 class_name Combat
 extends RefCounted
 
@@ -59,11 +68,13 @@ static func step(
 	_advance(next, combat, config, tick)
 	_end_stance(next, combat, tick)
 	_end_stun(next, input, combat, tick)
+	_end_hold(next, photo, combat, tick)
 	_feint(next, input, combat, config, tick)
 	_guard(next, input, tick)
 	_take_press(next, input, combat, config, tick)
-	if next.action == FighterState.Action.WINDUP:
-		next.action_yaw = Aim.swing_yaw(input.yaw, config.aim_side, combat.aim_convergence)
+	if next.action == FighterState.Action.WINDUP and combat.attacks.has(next.action_move):
+		var attack: AttackConfig = combat.attacks[next.action_move]
+		next.action_yaw = Aim.swing_yaw(input.yaw, config.aim_side, attack.aim_convergence)
 	_touch(next, me, feet, photo, combat, config, tick)
 	return next
 
@@ -89,6 +100,31 @@ static func stunned(state: FighterState) -> bool:
 ## quem foi aparado").
 static func in_stance(state: FighterState) -> bool:
 	return state.action == FighterState.Action.PARRY or state.action == FighterState.Action.FEINT
+
+
+## Whether the fighter is held by a grab, whoever grabbed or whoever was grabbed, the latter until
+## it acts again (combate.md, "A quebra, o tech e a esquiva no tick": "O corpo preso"): no input of
+## movement nor of action, the presses wait in the slot but the tech, and gravity goes on, as in
+## the stun.
+static func held(state: FighterState) -> bool:
+	return (
+		state.action == FighterState.Action.GRABBING or state.action == FighterState.Action.GRABBED
+	)
+
+
+## Whether a fighter the photo shows in this state dodges a blade or a hand that would touch it on
+## tick (combate.md, "A quebra, o tech e a esquiva no tick": "A esquiva"; DEC-0058 §6): in the dash,
+## neither stunned nor held, on one of its invulnerable ticks, the tick it fired being its 1st. The
+## photo shows the state the tick before left, so a dash that fires on tick itself is no dodge yet:
+## its 1st tick is vulnerable anyway.
+static func dodges(state: FighterState, config: MovementConfig, tick: int) -> bool:
+	if state.mode != FighterState.Mode.DASH or stunned(state) or held(state):
+		return false
+	var dash_tick := tick - state.dash_tick + 1
+	return (
+		dash_tick >= config.dash_invulnerable_from_tick
+		and dash_tick <= config.dash_invulnerable_to_tick
+	)
 
 
 ## Whether a standing body walks slowly (movimento.md, "Chão": "Andar devagar"): with the guard, in
@@ -136,9 +172,11 @@ static func posed_tick(state: FighterState, tick: int) -> int:
 
 
 # Step 1, the defender's side: every contact stamped against me on the tick before, by any
-# fighter of the photo (combate.md, "O leve no tick": "Quem levou"), in name order, each parried,
-# blocked, armored or taken, in that order (DEC-0056 §3 and §4). Two attackers on the same tick
-# both count: a block leaves the guard up for the next, a hit leaves none.
+# fighter of the photo (combate.md, "O leve no tick": "Quem levou"), in name order. A move that
+# grabs holds me when I can be grabbed and does nothing otherwise, before any parry (DEC-0058 §4);
+# any other is parried, blocked, armored or taken, in that order (DEC-0056 §3 and §4). Two
+# attackers on the same tick both count: a block leaves the guard up for the next, a hit leaves
+# none, and a grab leaves me held, which no second grab takes and a hit replaces.
 static func _take_contacts(
 	next: FighterState,
 	me: StringName,
@@ -158,7 +196,10 @@ static func _take_contacts(
 			continue
 		var attack: AttackConfig = combat.attacks[other.contact_move]
 		var contact := other.contact_tick
-		if _parries(next, feet, entry.feet, attack, combat, contact):
+		if attack.grab:
+			if grabbable(next):
+				_grabbed(next, combat, contact)
+		elif _parries(next, feet, entry.feet, attack, combat, contact):
 			next.parry_tick = contact
 		elif _blocks(next, feet, entry.feet, attack, combat, config, contact):
 			_block(next, attack, config, contact)
@@ -166,6 +207,45 @@ static func _take_contacts(
 			_armor(next, attack, contact)
 		else:
 			_hit(next, attack, contact)
+
+
+## Whether a move that grabs takes a fighter in this state, the one its contact tick left
+## (combate.md, "A quebra, o tech e a esquiva no tick": "Quem a quebra agarra"; DEC-0058 §3): on the
+## floor, in the ground's mode or in the dash, without striking: at rest or walking, with the guard,
+## in the parry's stance, in the windup or the recovery of a move, in the blockstun or the feint.
+## Never in the active of a move, in the hitstun of a hit taken, parried, held already, nor in the
+## air, on a wall or on the grapple; the invulnerable ticks of the dash its attacker passed over.
+static func grabbable(state: FighterState) -> bool:
+	if state.mode != FighterState.Mode.GROUND and state.mode != FighterState.Mode.DASH:
+		return false
+	match state.action:
+		FighterState.Action.NONE, FighterState.Action.BLOCK, FighterState.Action.PARRY:
+			return true
+		FighterState.Action.WINDUP, FighterState.Action.RECOVERY:
+			return true
+		FighterState.Action.BLOCKSTUN, FighterState.Action.FEINT:
+			return true
+	return false
+
+
+# The grab taken (DEC-0058 §4): GRABBED from the contact, its stamp, frozen for the grab's hitstop
+# from the tick after it, and unable to act until the contact plus the stun of a grab without the
+# tech plus that hitstop, which the tech brings forward to the hold's end (_tech). Whatever I was
+# doing ends here; the slot keeps its press, as in a stun.
+static func _grabbed(next: FighterState, combat: CombatConfig, contact: int) -> void:
+	next.action = FighterState.Action.GRABBED
+	next.action_since = contact
+	next.action_move = &""
+	next.grabbed_tick = contact
+	next.stun_until_tick = contact + combat.grabbed_stun_ticks + combat.grab_hitstop_ticks
+	next.frozen_until_tick = contact + combat.grab_hitstop_ticks
+
+
+## The tick both are let go of a grab of this contact, before the tech moves either (combate.md,
+## "O agarrão": "se soltam em C + 24: os 20 ticks do agarrão mais os 4 da paradinha"); the tech
+## counts up to the tick before it.
+static func hold_end(contact: int, combat: CombatConfig) -> int:
+	return contact + combat.grab_hold_ticks + combat.grab_hitstop_ticks
 
 
 # The parry holds when the move can be parried, the stance was up on the contact tick with the
@@ -272,13 +352,15 @@ static func _hit(next: FighterState, attack: AttackConfig, contact: int) -> void
 
 
 # Step 1, the attacker's side (DEC-0055 §4): the target resolved my contact on the tick after it,
-# so this photo, two ticks after it, is the first to show the result. A parry ends my swing: I am
-# PARRIED from this tick, frozen alone for parried_hitstop_ticks, and act again at the contact plus
-# the parried stun plus that hitstop (DEC-0056 §4). A hit, the armor's included, or a block freezes
-# me from this tick for its hitstop, and moves my swing's clock forward as much, so my recovery
-# ends that much later and the advantage stays; a contact with no result freezes nobody. Only the
-# swing that made the contact freezes: a fighter whose swing a hit ended is frozen as a target
-# already.
+# so this photo, two ticks after it, is the first to show the result. A grab, the target's
+# grabbed_tick on my contact, ends my move: I am GRABBING from this tick, frozen for the grab's
+# hitstop, and let go when the hold ends (_end_hold; DEC-0058 §4); a move that grabs learns nothing
+# else, and with no grab it goes on to its recovery. A parry ends my swing: I am PARRIED from this
+# tick, frozen alone for parried_hitstop_ticks, and act again at the contact plus the parried stun
+# plus that hitstop (DEC-0056 §4). A hit, the armor's included, or a block freezes me from this
+# tick for its hitstop, and moves my swing's clock forward as much, so my recovery ends that much
+# later and the advantage stays; a contact with no result freezes nobody. Only the swing that made
+# the contact freezes: a fighter whose swing a hit ended is frozen as a target already.
 static func _learn_result(
 	next: FighterState,
 	photo: TickPhoto,
@@ -294,6 +376,13 @@ static func _learn_result(
 		return
 	var attack: AttackConfig = combat.attacks[next.contact_move]
 	var contact := next.contact_tick
+	if attack.grab:
+		if target.state.grabbed_tick == contact:
+			next.action = FighterState.Action.GRABBING
+			next.action_since = tick
+			next.action_move = &""
+			next.frozen_until_tick = tick + combat.grab_hitstop_ticks - 1
+		return
 	# Only a move that can be parried reads the stamp: a light that touched the same parrier on the
 	# same tick learns its own result, the hit (combate.md, "O leve não se apara").
 	if attack.parryable and target.state.parry_tick == contact:
@@ -325,8 +414,10 @@ static func _refill(next: FighterState, combat: CombatConfig, tick: int) -> void
 
 
 # Step 3: a frozen tick keeps the presses, which wait in the slot for their window like in a
-# swing, and changes nothing else (DEC-0055 §5). The light first, then the charged, then the parry,
-# then the movement's, each over the one before: on one tick the last written wins (DEC-0056 §6).
+# swing, and changes nothing else (DEC-0055 §5). The light first, then the charged, then the guard
+# break, then the parry, then the movement's, each over the one before: on one tick the last
+# written wins (DEC-0056 §6; DEC-0058 §7). The tech's press waits here too, and counts on the first
+# tick that is not frozen (_tech).
 static func _write_presses(
 	next: FighterState,
 	input: TickInput,
@@ -338,6 +429,9 @@ static func _write_presses(
 		next.buffered_tick = tick
 	if input.charged_attack:
 		next.buffered_command = FighterCommand.CHARGED_ATTACK
+		next.buffered_tick = tick
+	if input.guard_break:
+		next.buffered_command = FighterCommand.GUARD_BREAK
 		next.buffered_tick = tick
 	if input.parry:
 		next.buffered_command = FighterCommand.PARRY
@@ -417,16 +511,18 @@ static func _end_stance(next: FighterState, combat: CombatConfig, tick: int) -> 
 
 
 # Step 4, the stun's end: on stun_until_tick the fighter acts again (combate.md, "O tranco no
-# tick"). After a blockstun with the button still held, the guard is already up, as if it had
-# risen for its ticks; otherwise, after a hit or a parry, the action is NONE, and the guard, held,
-# rises from here.
+# tick"); so does whoever was grabbed, on the contact + 76 without the tech, or on the hold's end
+# with it (DEC-0058 §5). After a blockstun with the button still held, the guard is already up, as
+# if it had risen for its ticks; otherwise, after a hit, a parry or a grab, the action is NONE, and
+# the guard, held, rises from here.
 static func _end_stun(
 	next: FighterState,
 	input: TickInput,
 	combat: CombatConfig,
 	tick: int,
 ) -> void:
-	if not stunned(next) or tick < next.stun_until_tick:
+	var grabbed := next.action == FighterState.Action.GRABBED
+	if not (stunned(next) or grabbed) or tick < next.stun_until_tick:
 		return
 	var blocked := next.action == FighterState.Action.BLOCKSTUN
 	next.action = FighterState.Action.NONE
@@ -434,6 +530,29 @@ static func _end_stun(
 	if blocked and input.guard and _can_guard(next):
 		next.action = FighterState.Action.BLOCK
 		next.action_since = tick - combat.guard_raise_ticks
+
+
+# Step 4, the end of the hold of whoever grabbed (combate.md, "A quebra, o tech e a esquiva no
+# tick": "O agarrão" and "O tech"; DEC-0058 §5): let go on the hold's end, the contact + 24, or two
+# ticks later when the photo shows the target's tech after the contact, the contact + 26. The tech
+# counts by the hold's last tick, so the photo of the hold's end already shows it; with no target in
+# the photo there is no tech to read.
+static func _end_hold(
+	next: FighterState,
+	photo: TickPhoto,
+	combat: CombatConfig,
+	tick: int,
+) -> void:
+	if next.action != FighterState.Action.GRABBING:
+		return
+	var release := hold_end(next.contact_tick, combat)
+	var target := photo.find(next.contact_target)
+	if target != null and target.state.tech_tick > next.contact_tick:
+		release += combat.tech_advantage_ticks
+	if tick < release:
+		return
+	next.action = FighterState.Action.NONE
+	next.action_since = release
 
 
 # Step 5, the feint (combate.md, "A finta"; DEC-0056 §5): the guard button going down in the
@@ -486,10 +605,11 @@ static func _can_guard(next: FighterState) -> bool:
 	return next.grapple_fired_tick == FighterState.NEVER
 
 
-# Step 7: the slot of the buffer, shared with the movement (DEC-0039; DEC-0051 §4; DEC-0056 §6).
-# The light, the charged and the parry are written in that order, then the movement's presses over
-# them, and the slot's expiry; a move or the parry fires only from the slot, so a press refused now
-# waits there for its 150 ms.
+# Step 7: the slot of the buffer, shared with the movement (DEC-0039; DEC-0051 §4; DEC-0056 §6;
+# DEC-0058 §7). The light, the charged, the guard break and the parry are written in that order,
+# then the movement's presses over them, and the slot's expiry; a move or the parry fires only from
+# the slot, so a press refused now waits there for its 150 ms. The guard break of whoever is
+# grabbed is the tech instead (_tech).
 static func _take_press(
 	next: FighterState,
 	input: TickInput,
@@ -498,6 +618,8 @@ static func _take_press(
 	tick: int,
 ) -> void:
 	_write_presses(next, input, config, tick)
+	if _tech(next, combat, tick):
+		return
 	var command := next.buffered_command
 	if command == FighterCommand.PARRY:
 		if not _can_start(next, combat.parry_stamina_cost, config, tick):
@@ -506,9 +628,7 @@ static func _take_press(
 		next.action_since = tick
 		next.action_move = &""
 		Stamina.spend(next, config, tick, combat.parry_stamina_cost)
-	elif command == FighterCommand.LIGHT_ATTACK or command == FighterCommand.CHARGED_ATTACK:
-		if not combat.attacks.has(command):
-			return
+	elif combat.attacks.has(command):
 		var attack: AttackConfig = combat.attacks[command]
 		if not _can_start(next, attack.stamina_cost, config, tick):
 			return
@@ -523,10 +643,34 @@ static func _take_press(
 	next.buffered_tick = FighterState.NEVER
 
 
+# The tech (combate.md, "A quebra, o tech e a esquiva no tick": "O tech"; DEC-0058 §5): held
+# GRABBED, a guard break in the slot pressed after the contact, from the contact + 1, is the tech up
+# to the hold's last tick, counted on this tick, the first that is not frozen since the press: a
+# press of the hitstop counts on its end. It costs nothing, stamps tech_tick, and lets go on the
+# hold's end instead of the contact + 76; the press leaves the slot. A press of before the contact
+# is no tech, nor one past the hold, and the second press of a hold that already has its tech only
+# leaves the slot. Returns whether the slot held the tech's press.
+static func _tech(next: FighterState, combat: CombatConfig, tick: int) -> bool:
+	if next.action != FighterState.Action.GRABBED:
+		return false
+	if next.buffered_command != FighterCommand.GUARD_BREAK:
+		return false
+	var release := hold_end(next.grabbed_tick, combat)
+	if next.buffered_tick <= next.grabbed_tick or tick >= release:
+		return false
+	if next.tech_tick <= next.grabbed_tick:
+		next.tech_tick = tick
+		next.stun_until_tick = release
+	next.buffered_command = FighterCommand.NONE
+	next.buffered_tick = FighterState.NEVER
+	return true
+
+
 # Standing on a floor of its own (GROUND, off any head; Movement.stands), with no swing, stance nor
 # stun in progress, the guard being no obstacle, and the bar holding cost (combate.md, "O leve no
-# tick": "Quando o leve sai"; "Quando o carregado sai"; "Quando o parry sai"; DEC-0055 §2: "O leve
-# sai da guarda"). The charged needs its cost on the bar to begin, though it pays on release.
+# tick": "Quando o leve sai"; "Quando o carregado sai"; "Quando o parry sai"; "Quando a quebra
+# sai"; DEC-0055 §2: "O leve sai da guarda"). The charged needs its cost on the bar to begin, though
+# it pays on release.
 static func _can_start(next: FighterState, cost: float, config: MovementConfig, tick: int) -> bool:
 	if next.mode != FighterState.Mode.GROUND or not Movement.stands(next):
 		return false
@@ -538,7 +682,10 @@ static func _can_start(next: FighterState, cost: float, config: MovementConfig, 
 
 # Step 9: the slice of the k-th active tick, k from 1, against the others of the photo in name
 # order; the first it touches takes the swing's one contact, stamped on this state. A vertical cut
-# tests its slice in the plane of the swing's direction (Blade.cut_touches).
+# tests its slice in the plane of the swing's direction (Blade.cut_touches), and a move that grabs
+# its hand's part (Blade.hand_touches). A fighter the photo shows on an invulnerable tick of its
+# dash is not tested: the blade or the hand passes it without a stamp and stays live for the next
+# ticks of the active (dodges; DEC-0058 §6).
 static func _touch(
 	next: FighterState,
 	me: StringName,
@@ -553,12 +700,23 @@ static func _touch(
 	if _touched(next):
 		return
 	var attack: AttackConfig = combat.attacks[next.action_move]
-	var slice := Blade.slice_of(attack, tick - next.action_since + 1)
+	var k := tick - next.action_since + 1
+	var slice := Blade.hand_slice(attack, k) if attack.grab else Blade.slice_of(attack, k)
 	for entry: TickPhoto.Entry in photo.entries():
-		if entry.name == me:
+		if entry.name == me or dodges(entry.state, config, tick):
 			continue
 		var touched := false
-		if attack.vertical_cut:
+		if attack.grab:
+			touched = Blade.hand_touches(
+				feet,
+				next.action_yaw,
+				slice.x,
+				slice.y,
+				entry.feet,
+				combat,
+				config,
+			)
+		elif attack.vertical_cut:
 			touched = Blade.cut_touches(
 				feet,
 				next.action_yaw,

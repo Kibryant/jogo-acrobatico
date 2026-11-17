@@ -1,5 +1,5 @@
 # The player's options (DEC-0031 §8; F-161; visual-e-audio.md, "A tela de opções"): the key of
-# each of the eleven actions, by physical position, the mouse's sensitivity, the interface's scale
+# each of the twelve actions, by physical position, the mouse's sensitivity, the interface's scale
 # and the camera's shake on the impact (TASK-12.2), kept in user://options.cfg, a ConfigFile, like
 # a settings.json in a home folder. The defaults are the InputMap as project.godot loads it,
 # camera_v0.tres's sensitivity, the scale 1.0 and the shake on. Reading checks every entry on its
@@ -26,14 +26,15 @@ const ACTIONS: Array[StringName] = [
 	&"guard",
 	&"charged_attack",
 	&"parry",
+	&"guard_break",
 ]
 ## The action the left mouse button may take: the light attack, its default (F-175 §2; TASK-12.1).
 const LIGHT_ATTACK := &"light_attack"
 ## The action the right mouse button may take: the guard, its default (F-182 §2; DEC-0054 §1).
 const GUARD := &"guard"
-## The mouse buttons any action may take: the middle one and the two side ones. The left one is the
-## light attack's alone (LIGHT_ATTACK), and the right one the guard's (GUARD) (F-161;
-## visual-e-audio.md, "A tela de opções").
+## The mouse buttons any action may take: the middle one, the guard break's by default (F-207), and
+## the two side ones. The left one is the light attack's alone (LIGHT_ATTACK), and the right one the
+## guard's (GUARD) (F-161; visual-e-audio.md, "A tela de opções").
 const MOUSE_BUTTONS: Array[MouseButton] = [
 	MOUSE_BUTTON_MIDDLE,
 	MOUSE_BUTTON_XBUTTON1,

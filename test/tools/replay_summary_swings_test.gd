@@ -57,7 +57,8 @@ var aim: float
 
 func before_test() -> void:
 	played = PlayedMatch.new(Tape.movement_v0(), Tape.combat_v0())
-	aim = asin(played.tape.movement.aim_side / played.tape.combat.aim_convergence)
+	var convergence := played.tape.combat.attacks[FighterCommand.LIGHT_ATTACK].aim_convergence
+	aim = asin(played.tape.movement.aim_side / convergence)
 
 
 # A fresh match with the attacker, fighter 0, at the origin, its swing going down -Z.
@@ -118,7 +119,8 @@ func test_the_design_numbers_of_the_aim_and_the_reach_are_the_configs() -> void:
 	var movement := Tape.movement_v0()
 	var combat := Tape.combat_v0()
 	assert_float(movement.aim_side).is_equal_approx(AIM_SIDE_M, 1e-6)
-	assert_float(combat.aim_convergence).is_equal_approx(CONVERGENCE_M, 1e-6)
+	for move: StringName in [FighterCommand.LIGHT_ATTACK, FighterCommand.CHARGED_ATTACK]:
+		assert_float(combat.attacks[move].aim_convergence).is_equal_approx(CONVERGENCE_M, 1e-6)
 	var reach := (
 		combat.hand_offset + combat.blade_length + combat.blade_radius + movement.capsule_radius
 	)

@@ -7,7 +7,8 @@
 # one action that button takes (F-175 §2). TASK-12.2 adds the row "Guarda", on the right mouse
 # button, the one action that button takes (F-182 §2), and the toggle "Tremor da câmera", on by
 # default (combate.md, "O hitstop e o tremor"). TASK-12.3 adds the rows "Golpe carregado", on the
-# E, and "Parry", on the F (F-191 §2). The tests run headless, as the gate does, where the
+# E, and "Parry", on the F (F-191 §2), and TASK-12.4 the row "Quebra de guarda", on the middle mouse
+# button (F-207). The tests run headless, as the gate does, where the
 # Match creates no screen (Match.has_screen), so they make the screen themselves and give it the
 # fighter, the camera and a store on a temporary file, never user://options.cfg. The events go
 # through the viewport, the way the window delivers them.
@@ -215,7 +216,8 @@ func test_a_remap_changes_the_input_map_and_is_saved_at_once() -> void:
 
 
 # Criterion 1 (F-161): the middle and the side mouse buttons take an action; the left and the
-# right do not, and the screen goes on waiting.
+# right do not, and the screen goes on waiting. The middle one is the guard break's by default
+# since TASK-12.4 (F-207): another row takes it once the guard break gives it up.
 func test_a_side_mouse_button_takes_an_action_and_the_left_one_does_not() -> void:
 	await _watched()
 	var screen := _screen()
@@ -233,6 +235,8 @@ func test_a_side_mouse_button_takes_an_action_and_the_left_one_does_not() -> voi
 	assert_int(button.button_index).is_equal(MOUSE_BUTTON_XBUTTON2)
 	assert_str(screen.shown_key(&"grapple")).is_equal("Mouse 5")
 	assert_str(str(_saved("keys", "grapple"))).is_equal("mouse:%d" % MOUSE_BUTTON_XBUTTON2)
+	_key_button(screen, &"guard_break").pressed.emit()
+	_tap(KEY_V)
 	_key_button(screen, &"jump").pressed.emit()
 	get_viewport().push_input(_mouse(MOUSE_BUTTON_MIDDLE))
 	assert_str(screen.shown_key(&"jump")).is_equal("Mouse 3")
@@ -548,3 +552,39 @@ func test_the_charged_and_parry_rows_show_e_and_f_and_remap_like_the_others() ->
 	_assert_physical(&"parry", KEY_E)
 	assert_str(str(_saved("keys", "parry"))).is_equal("key:%d" % KEY_E)
 	assert_bool(screen.has_node(NodePath(KEYS_PATH + "FeintKey"))).is_false()
+
+
+# TASK-12.4 (F-207; combate.md, "As teclas"; visual-e-audio.md, "A tela de opções"): the row
+# "Quebra de guarda", "Guard break" in English, after the parry's, shows the middle mouse button as
+# "Mouse 3"; a key another action has is refused with that action's name, it takes another key,
+# applied and saved at once, and the middle button back. The tech has no row: it is the same key.
+func test_the_guard_break_row_shows_the_middle_button_and_remaps_like_the_others() -> void:
+	await _watched()
+	var screen := _screen()
+	screen.open()
+	var name_node := screen.get_node(NodePath(KEYS_PATH + "GuardBreakName"))
+	assert(name_node is Label, "each action has a label for its name")
+	assert_str((name_node as Label).text).is_equal(String(GameText.OPTIONS_ACTION_GUARD_BREAK))
+	assert_str(GameText.text(GameText.OPTIONS_ACTION_GUARD_BREAK)).is_equal("Quebra de guarda")
+	TranslationServer.set_locale("en")
+	assert_str(GameText.text(GameText.OPTIONS_ACTION_GUARD_BREAK)).is_equal("Guard break")
+	TranslationServer.set_locale("pt_BR")
+	assert_str(screen.shown_key(&"guard_break")).is_equal("Mouse 3")
+	_key_button(screen, &"guard_break").pressed.emit()
+	_tap(KEY_F)
+	assert_str(String(screen.waiting_for())).is_equal("guard_break")
+	assert_bool(_prompt(screen).contains("Parry")).override_failure_message(_prompt(screen)) \
+			.is_true()
+	_tap(KEY_V)
+	assert_str(String(screen.waiting_for())).is_empty()
+	_assert_physical(&"guard_break", KEY_V)
+	assert_str(screen.shown_key(&"guard_break")).is_equal("V")
+	assert_str(str(_saved("keys", "guard_break"))).is_equal("key:%d" % KEY_V)
+	_key_button(screen, &"guard_break").pressed.emit()
+	get_viewport().push_input(_mouse(MOUSE_BUTTON_MIDDLE))
+	assert_str(String(screen.waiting_for())).is_empty()
+	var event := _first_event(&"guard_break")
+	assert_bool(event is InputEventMouseButton).is_true()
+	assert_int((event as InputEventMouseButton).button_index).is_equal(MOUSE_BUTTON_MIDDLE)
+	assert_str(str(_saved("keys", "guard_break"))).is_equal("mouse:%d" % MOUSE_BUTTON_MIDDLE)
+	assert_bool(screen.has_node(NodePath(KEYS_PATH + "TechKey"))).is_false()

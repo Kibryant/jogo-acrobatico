@@ -34,6 +34,7 @@ const ACTION_TEXTS: Dictionary[StringName, StringName] = {
 	&"guard": GameText.OPTIONS_ACTION_GUARD,
 	&"charged_attack": GameText.OPTIONS_ACTION_CHARGED_ATTACK,
 	&"parry": GameText.OPTIONS_ACTION_PARRY,
+	&"guard_break": GameText.OPTIONS_ACTION_GUARD_BREAK,
 }
 ## The number each accepted mouse button shows: "Mouse 3", "Mouse 4" and "Mouse 5".
 const MOUSE_NUMBERS: Dictionary[MouseButton, int] = {

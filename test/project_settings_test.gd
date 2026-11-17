@@ -405,6 +405,29 @@ func test_the_guard_is_the_right_mouse_button() -> void:
 	assert_bool(click.is_action_pressed(&"guard")).is_true()
 
 
+# TASK-12.4 (F-207; combate.md, "As teclas": "a quebra e o tech no aperto do botão do meio"): the
+# guard break, and the tech, is the middle mouse button, Arthur's choice, and only it.
+func test_the_guard_break_is_the_middle_mouse_button() -> void:
+	var has_action := InputMap.has_action(&"guard_break")
+	assert_bool(has_action).override_failure_message("missing action guard_break").is_true()
+	if not has_action:
+		return
+	var buttons: Array[MouseButton] = []
+	for event: InputEvent in InputMap.action_get_events(&"guard_break"):
+		var other := "guard_break binds %s, not a mouse button (F-207)" % event
+		assert_bool(event is InputEventMouseButton).override_failure_message(other).is_true()
+		if event is InputEventMouseButton:
+			buttons.append((event as InputEventMouseButton).button_index)
+	var message := "guard_break must be the middle mouse button alone, found %s (F-207)" % [buttons]
+	assert_array(buttons).override_failure_message(message).is_equal([MOUSE_BUTTON_MIDDLE])
+	var click := InputEventMouseButton.new()
+	click.button_index = MOUSE_BUTTON_MIDDLE
+	click.pressed = true
+	assert_bool(click.is_action_pressed(&"guard_break")).is_true()
+	assert_bool(click.is_action_pressed(&"light_attack")).is_false()
+	assert_bool(click.is_action_pressed(&"guard")).is_false()
+
+
 # A key pressed as the operating system reports it: by physical position, with its location.
 func _key_event(physical: Key, location: KeyLocation) -> InputEventKey:
 	var event := InputEventKey.new()

@@ -58,6 +58,10 @@ var dash_speed: float
 var dash_exit_speed: float
 # Stamina points, paid on the press tick.
 var dash_cost: float
+# The dodge (DEC-0050; DEC-0058 §6): the dash's own ticks, counted from 1 on the tick it fires, on
+# which no blade nor hand touches it, from the first to the last, both included: 3 to 10 at 60.
+var dash_invulnerable_from_tick: int
+var dash_invulnerable_to_tick: int
 
 # The wall run (movimento.md, "Corrida na parede"). A face is a wall while |normal.y| is at most
 # wall_max_normal_y, the cosine of the least incline; the same collider is the same wall while its
@@ -182,6 +186,11 @@ static func create(data: MovementData, tickrate: int) -> MovementConfig:
 	config.dash_speed = data.dash_distance_m * tickrate / config.dash_ticks
 	config.dash_exit_speed = data.dash_exit_speed_mps
 	config.dash_cost = data.dash_cost
+	# The window of the dodge in the dash's own ticks, the nearest tick with ties up, like every
+	# time (movimento.md, "Dash": "dos 50 aos 167 ms", "dos ticks 3 a 10 dos 12"): 50 ms are the
+	# 3rd tick at 60 and 167 ms the 10th; at 30, 1,5 goes up to the 2nd and 5,01 is the 5th.
+	config.dash_invulnerable_from_tick = Ticks.from_ms(data.dash_invulnerable_from_ms, tickrate)
+	config.dash_invulnerable_to_tick = Ticks.from_ms(data.dash_invulnerable_to_ms, tickrate)
 
 	# The wall run (movimento.md, "Corrida na parede"): the two angles become the numbers a rule
 	# compares a normal with, and the two times become ticks like every other.

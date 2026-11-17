@@ -13,7 +13,13 @@
 # It counts with the numbers of the replay's header, the ones the player played with, so a
 # session recorded before a tuning of a .tres is still counted with its own numbers. It reads the
 # core through its public functions only (Movement.stands, Stamina.at, Combat.swinging,
-# Combat.stunned, Combat.in_stance).
+# Combat.stunned, Combat.held, Combat.in_stance).
+# TASK-12.4 adds the guard break (testes-e-entrega.md §4, "Os golpes", "O resultado" and "O
+# agarrão"; DEC-0058): its lines beside the sword's, its results (grabbed with or without the
+# tech, missed, cut), the clicks lost in the grab, and, for whoever was grabbed, the grabs, the
+# techs and the tech rate. The press of the guard break by whoever is GRABBED, after the contact
+# and up to the last held tick, is the tech: no click, it counts only in the line "Agarrado:". A
+# press of the guard break later in GRABBED, still unable to act, is a press like any other.
 # A tool, out of both exports (export_presets.cfg leaves tools/ out): no class_name, preloaded.
 extends RefCounted
 
@@ -55,38 +61,69 @@ const SHOWN_MANEUVERS: Array[StringName] = [
 const SAME_TICK := &"same_tick"
 const SWING := &"swing"
 const STUN := &"stun"
+## Held by a grab, GRABBING or GRABBED (TASK-12.4): "no agarrão".
+const IN_GRAB := &"in_grab"
 const STANCE := &"stance"
 const OFF_FLOOR := &"off_floor"
 const NO_STAMINA := &"no_stamina"
 const OTHER := &"other"
-const REASONS: Array[StringName] = [SAME_TICK, SWING, STUN, STANCE, OFF_FLOOR, NO_STAMINA, OTHER]
+const REASONS: Array[StringName] = [
+	SAME_TICK,
+	SWING,
+	STUN,
+	IN_GRAB,
+	STANCE,
+	OFF_FLOOR,
+	NO_STAMINA,
+	OTHER,
+]
 
-## What became of a swing ("Os golpes": "O resultado").
+## What became of a swing ("Os golpes": "O resultado"). A guard break that grabbed did so with the
+## tech of whoever it grabbed or without it (TASK-12.4); its miss and its cut are the others'.
 const HIT := &"hit"
 const BLOCKED := &"blocked"
 const PARRIED := &"parried"
+const GRABBED_TECH := &"grabbed_tech"
+const GRABBED_NO_TECH := &"grabbed_no_tech"
 const MISS := &"miss"
 const CUT := &"cut"
 const UNFINISHED := &"unfinished"
-const RESULTS: Array[StringName] = [HIT, BLOCKED, PARRIED, MISS, CUT, UNFINISHED]
+const RESULTS: Array[StringName] = [
+	HIT,
+	BLOCKED,
+	PARRIED,
+	GRABBED_TECH,
+	GRABBED_NO_TECH,
+	MISS,
+	CUT,
+	UNFINISHED,
+]
+## The result of a grab before the replay says whether the tech came: finish() turns it into one of
+## the two above.
+const GRABBED := &"grabbed"
 
 ## m: the two bands of the feet's height (F-166 §7: "a 3 m ou mais e a 10 m ou mais").
 const HEIGHT_BANDS: Array[float] = [3.0, 10.0]
 
-## The touches that take the slot, highest first (DEC-0039 §4; DEC-0051 §4; DEC-0056 §6): the
-## core writes them the other way round, each over the one before, so on one tick the first of
-## them here keeps the slot. Each is also the name of its touch in TickInput. The parry counts
-## only for the priority: its presses stay out of the summary.
+## The touches that take the slot, highest first (DEC-0039 §4; DEC-0051 §4; DEC-0056 §6;
+## DEC-0058 §7): the core writes them the other way round, each over the one before, so on one
+## tick the first of them here keeps the slot. Each is also the name of its touch in TickInput. The
+## parry counts only for the priority: its presses stay out of the summary.
 const PRIORITY: Array[StringName] = [
 	FighterCommand.JUMP,
 	FighterCommand.DASH,
 	FighterCommand.GRAPPLE,
 	FighterCommand.PARRY,
+	FighterCommand.GUARD_BREAK,
 	FighterCommand.CHARGED_ATTACK,
 	FighterCommand.LIGHT_ATTACK,
 ]
-## The sword's moves, in the order their lines print.
-const MOVES: Array[StringName] = [FighterCommand.LIGHT_ATTACK, FighterCommand.CHARGED_ATTACK]
+## The moves, in the order their lines print: the sword's, then the guard break (TASK-12.4).
+const MOVES: Array[StringName] = [
+	FighterCommand.LIGHT_ATTACK,
+	FighterCommand.CHARGED_ATTACK,
+	FighterCommand.GUARD_BREAK,
+]
 ## The presses of the movement, which the summary splits by the mode the tick started in.
 const MOVEMENT_PRESSES: Array[StringName] = [
 	FighterCommand.JUMP,
@@ -181,6 +218,8 @@ class FighterReport:
 	var swings: Array[Swing] = []
 	## The plane speed of every tick standing on the floor in a phase of a swing, by move.
 	var swing_speeds: Dictionary[StringName, PackedFloat64Array] = { }
+	## The times this fighter was grabbed, in order (TASK-12.4).
+	var grabs: Array[Grab] = []
 
 
 # One fighter's tick as the summary keeps it until every fighter of the tick has come: the
@@ -213,6 +252,8 @@ class Tracker:
 	var last_maneuver: StringName = &""
 	## The speeds of the swings, by move.
 	var speeds: Dictionary[StringName, Samples] = { }
+	## The grab this fighter is held by, GRABBED; null when it is not.
+	var grab: Grab
 
 
 # A list of numbers that grows in place.
@@ -229,6 +270,18 @@ class Contact:
 	var attacker: int
 	var tick: int
 	var swing: Swing
+
+
+# One time a fighter was grabbed ("O agarrão"): the contact, its grabbed_tick; the release, the
+# tick both are let go of the hold, the contact plus the hold plus the grab's hitstop, so the last
+# held tick is the one before it; whether its tech_tick took a tick after the contact; and the tick
+# of the first press of the guard break after the contact and before the release, the tech's press,
+# -1 when none came.
+class Grab:
+	var contact := -1
+	var release := -1
+	var teched := false
+	var press_tick := -1
 
 
 var _movement: MovementConfig
@@ -305,6 +358,8 @@ func finish() -> void:
 		for swing: Swing in report.swings:
 			if swing.result.is_empty():
 				swing.result = _end_result(swing, swing == tracker.swing)
+			elif swing.result == GRABBED:
+				swing.result = _grab_result(swing)
 		for move: StringName in MOVES:
 			report.swing_speeds[move] = PackedFloat64Array()
 		for move: StringName in tracker.speeds:
@@ -329,6 +384,15 @@ func reach() -> float:
 	)
 
 
+# m, centre to centre, the reach of one move: the sword's, or, for a move that grabs, the hand's
+# length and the capsule's radius, 1,55 m with the v0 (testes-e-entrega.md §4, "As distâncias").
+func reach_of(move: StringName) -> float:
+	if not _grabs(move):
+		return reach()
+	var attack: AttackConfig = _combat.attacks[move]
+	return attack.hand_reach + _movement.capsule_radius
+
+
 # The summary in Portuguese, the numbers with the decimal comma and the thousands dot: the line
 # of the ticks, then one block per fighter, opened by its exact header (testes-e-entrega.md §4).
 func lines() -> PackedStringArray:
@@ -345,6 +409,7 @@ func lines() -> PackedStringArray:
 		out.append_array(_press_lines(_reports[index]))
 		for move: StringName in MOVES:
 			out.append_array(_move_lines(_reports[index], move))
+		out.append("  %s" % _grabbed_text(_reports[index]))
 	return out
 
 
@@ -459,6 +524,7 @@ func _count(fed: Feed) -> void:
 	if not first:
 		report.distance += _plane_distance(tracker.position, fed.position)
 	tracker.position = fed.position
+	_follow_grab(report, tracker, end, start, _combat.grab_hold_ticks + _combat.grab_hitstop_ticks)
 	var fresh := _take_presses(report, tracker, fed, start)
 	var used := _empty_slot(tracker, fed)
 	_follow_swing(report, tracker, fed, start, used)
@@ -579,7 +645,9 @@ func _follow_health(
 # "Os apertos": every touch of the tick by priority. The first takes the slot and replaces the
 # press waiting there, whatever its key: the core writes every press of a tick before anything
 # fires from the slot. The others never enter it, and a click of a move among them was replaced
-# on its own tick. Returns the presses of the tick.
+# on its own tick. The guard break of a fighter GRABBED after the tick, after the contact and before
+# the release, is the tech: no press, only the first noted on the grab; one later in GRABBED is a
+# press like any other ("Os apertos"; TASK-12.4). Returns the presses of the tick.
 static func _take_presses(
 	report: FighterReport,
 	tracker: Tracker,
@@ -593,6 +661,10 @@ static func _take_presses(
 	var winner := fed.pressed[0]
 	for command: StringName in fed.pressed:
 		if command == FighterCommand.PARRY:
+			continue
+		if command == FighterCommand.GUARD_BREAK and _tech_press(tracker.grab, fed):
+			if tracker.grab.press_tick < 0:
+				tracker.grab.press_tick = fed.tick
 			continue
 		var press := Press.new()
 		press.command = command
@@ -689,9 +761,10 @@ func _follow_swing(
 
 # The contacts of the tick before (testes-e-entrega.md §4, "O resultado"): the target is the first
 # other fighter whose state on this tick shows the contact's stamp, read in the order the core's
-# attacker reads it (combat.gd, step 1, the attacker's side): parried, for a move that can be
-# parried; hit, with or without armor; blocked. A contact no fighter shows on the very next tick,
-# as after a jump of the recorded clock, keeps no target.
+# attacker reads it (combat.gd, step 1, the attacker's side): for a move that grabs, grabbed, the
+# grabbed_tick, and nothing else; parried, for a move that can be parried; hit, with or without
+# armor; blocked. A contact no fighter shows on the very next tick, as after a jump of the
+# recorded clock, keeps no target, and a guard break whose contact nobody shows grabbed missed.
 func _resolve_contacts() -> void:
 	for contact: Contact in _contacts:
 		if contact.tick + 1 != _batch_tick:
@@ -699,10 +772,11 @@ func _resolve_contacts() -> void:
 		var parryable := false
 		if _combat.attacks.has(contact.swing.move):
 			parryable = _combat.attacks[contact.swing.move].parryable
+		var grabs := _grabs(contact.swing.move)
 		for fed: Feed in _batch:
 			if fed.fighter == contact.attacker:
 				continue
-			var result := _contact_result(fed.state, contact.tick, parryable)
+			var result := _contact_result(fed.state, contact.tick, parryable, grabs)
 			if result.is_empty():
 				continue
 			contact.swing.target = fed.fighter
@@ -711,7 +785,14 @@ func _resolve_contacts() -> void:
 	_contacts.clear()
 
 
-static func _contact_result(state: FighterState, tick: int, parryable: bool) -> StringName:
+static func _contact_result(
+	state: FighterState,
+	tick: int,
+	parryable: bool,
+	grabs: bool,
+) -> StringName:
+	if grabs:
+		return GRABBED if state.grabbed_tick == tick else &""
 	if parryable and state.parry_tick == tick:
 		return PARRIED
 	if state.hurt_tick == tick:
@@ -719,6 +800,59 @@ static func _contact_result(state: FighterState, tick: int, parryable: bool) -> 
 	if state.block_tick == tick:
 		return BLOCKED
 	return &""
+
+
+# A grab with the tech when its target's grab of that contact had one, and without it otherwise
+# ("O resultado": "com tech quando o alvo mostra depois um tech_tick maior que o contato").
+func _grab_result(swing: Swing) -> StringName:
+	if swing.target < 0 or swing.target >= _reports.size():
+		return GRABBED_NO_TECH
+	for grab: Grab in _reports[swing.target].grabs:
+		if grab.contact == swing.contact_tick:
+			return GRABBED_TECH if grab.teched else GRABBED_NO_TECH
+	return GRABBED_NO_TECH
+
+
+# Whether a move grabs: the guard break's hand.
+func _grabs(move: StringName) -> bool:
+	if not _combat.attacks.has(move):
+		return false
+	var attack: AttackConfig = _combat.attacks[move]
+	return attack.grab
+
+
+# "O agarrão": the state entering GRABBED is one more grab of this fighter, its contact the
+# grabbed_tick and its release hold ticks later, the hold plus the grab's hitstop of the header;
+# while it holds, the tech_tick taking a tick after the contact is the tech, until the fighter acts
+# again.
+static func _follow_grab(
+	report: FighterReport,
+	tracker: Tracker,
+	end: FighterState,
+	start: FighterState,
+	hold: int,
+) -> void:
+	if end.action != FighterState.Action.GRABBED:
+		tracker.grab = null
+		return
+	if start.action != FighterState.Action.GRABBED:
+		var grab := Grab.new()
+		grab.contact = end.grabbed_tick
+		grab.release = grab.contact + hold
+		report.grabs.append(grab)
+		tracker.grab = grab
+	var held := tracker.grab
+	if held != null and end.tech_tick != start.tech_tick and end.tech_tick > held.contact:
+		held.teched = true
+
+
+# Whether a press of the guard break on this tick is the tech ("Os apertos"): its fighter GRABBED
+# after the tick, by a grab whose contact came before it and whose release has not come yet, the
+# window the core counts the tech in, up to the last held tick.
+static func _tech_press(grab: Grab, fed: Feed) -> bool:
+	if grab == null or fed.state.action != FighterState.Action.GRABBED:
+		return false
+	return fed.tick > grab.contact and fed.tick < grab.release
 
 
 # A swing with no contact resolved: unfinished when the replay ends in it, a miss when it reached
@@ -747,6 +881,8 @@ func _judge_clicks(tracker: Tracker, fed: Feed, start: FighterState, fresh: Arra
 				press.into_swing = fed.tick - tracker.swing.fire_tick
 		elif Combat.stunned(end):
 			press.reason = STUN
+		elif Combat.held(end):
+			press.reason = IN_GRAB
 		elif Combat.in_stance(end):
 			press.reason = STANCE
 		elif start.mode != FighterState.Mode.GROUND or not Movement.stands(start):
@@ -1010,11 +1146,11 @@ func _move_lines(report: FighterReport, move: StringName) -> PackedStringArray:
 	if swings.is_empty():
 		out.append("    Nenhum golpe saiu")
 		return out
-	out.append("    %s" % _results_text(swings))
-	var misses := _misses_text(swings)
+	out.append("    %s" % _results_text(swings, move))
+	var misses := _misses_text(swings, move)
 	if not misses.is_empty():
 		out.append("    %s" % misses)
-	out.append_array(_distance_lines(swings))
+	out.append_array(_distance_lines(swings, move))
 	var targets := _targets_text(swings)
 	if not targets.is_empty():
 		out.append("    %s" % targets)
@@ -1103,7 +1239,9 @@ func _in_swing_text(lost: Array[Press]) -> String:
 	return text
 
 
-func _results_text(swings: Array[Swing]) -> String:
+func _results_text(swings: Array[Swing], move: StringName) -> String:
+	if _grabs(move):
+		return _grab_results_text(swings)
 	var parts := PackedStringArray()
 	for result: StringName in RESULTS:
 		var count := 0
@@ -1115,10 +1253,41 @@ func _results_text(swings: Array[Swing]) -> String:
 	return "Resultado: %s" % _listed(parts)
 
 
-# The misses split by the shortest distance over the active against the reach of the header:
-# "longe" beyond it, "ao alcance" not beyond it, and alone with nobody to measure to. Empty when
-# no swing missed.
-func _misses_text(swings: Array[Swing]) -> String:
+# The guard break's result line ("O resultado"): "Resultado: 6 agarraram (4 com tech e 2 sem
+# tech), 3 erros e 1 cortada", each part only when it happened, the grabs first.
+static func _grab_results_text(swings: Array[Swing]) -> String:
+	var counts: Dictionary[StringName, int] = { }
+	for result: StringName in RESULTS:
+		counts[result] = 0
+	for swing: Swing in swings:
+		if counts.has(swing.result):
+			counts[swing.result] += 1
+	var parts := PackedStringArray()
+	var teched := counts[GRABBED_TECH]
+	var untouched := counts[GRABBED_NO_TECH]
+	if teched + untouched > 0:
+		parts.append(
+			"%s (%s com tech e %s sem tech)"
+			% [
+				_counted(teched + untouched, "agarrou", "agarraram"),
+				whole(teched),
+				whole(untouched),
+			]
+		)
+	if counts[MISS] > 0:
+		parts.append(_counted(counts[MISS], "erro", "erros"))
+	if counts[CUT] > 0:
+		parts.append(_counted(counts[CUT], "cortada", "cortadas"))
+	if counts[UNFINISHED] > 0:
+		parts.append(_counted(counts[UNFINISHED], "inacabada", "inacabadas"))
+	return "Resultado: %s" % _listed(parts)
+
+
+# The misses split by the shortest distance over the active against the move's reach of the
+# header: "longe" beyond it, "ao alcance" not beyond it, and alone with nobody to measure to. Empty
+# when no swing missed.
+func _misses_text(swings: Array[Swing], move: StringName) -> String:
+	var limit := reach_of(move)
 	var far := PackedFloat64Array()
 	var near := PackedFloat64Array()
 	var alone := 0
@@ -1127,7 +1296,7 @@ func _misses_text(swings: Array[Swing]) -> String:
 			continue
 		if swing.nearest_distance < 0.0:
 			alone += 1
-		elif swing.nearest_distance <= reach():
+		elif swing.nearest_distance <= limit:
 			near.append(swing.nearest_distance)
 		else:
 			far.append(swing.nearest_distance)
@@ -1142,7 +1311,7 @@ func _misses_text(swings: Array[Swing]) -> String:
 		parts.append("%s sem outro lutador" % whole(alone))
 	return (
 		"Os erros, pela distância mais curta no ativo, contra o alcance de %s m: %s"
-		% [decimal(reach(), 2), "; ".join(parts)]
+		% [decimal(limit, 2), "; ".join(parts)]
 	)
 
 
@@ -1160,9 +1329,12 @@ static func _span(metres: PackedFloat64Array) -> String:
 # The distances on the first active tick: from how near to how far the swings that landed were,
 # and the nearest of all; each miss within reach with its tick and its three numbers; and the
 # crosshair on average over the swings that landed. A swing landed ("pegou") when it had a
-# contact: a hit, a block or a parry ("O resultado": "houve contato").
-func _distance_lines(swings: Array[Swing]) -> PackedStringArray:
+# contact: a hit, a block or a parry ("O resultado": "houve contato"); a guard break, when it
+# grabbed ("na quebra, as que agarraram").
+func _distance_lines(swings: Array[Swing], move: StringName) -> PackedStringArray:
 	var out := PackedStringArray()
+	var grabs := _grabs(move)
+	var limit := reach_of(move)
 	var landed := PackedFloat64Array()
 	var crosshairs := PackedFloat64Array()
 	var nearest := -1.0
@@ -1175,16 +1347,17 @@ func _distance_lines(swings: Array[Swing]) -> PackedStringArray:
 		if swing.target >= 0:
 			landed.append(swing.first_active_distance)
 			crosshairs.append(swing.crosshair)
-		if swing.result == MISS and swing.nearest_distance <= reach():
+		if swing.result == MISS and swing.nearest_distance <= limit:
 			near_misses.append(swing)
 	if nearest < 0.0:
 		return out
-	var span := "nenhum pegou"
+	var span := "nenhuma agarrou" if grabs else "nenhum pegou"
 	if not landed.is_empty():
 		landed.sort()
+		var which := "as que agarraram" if grabs else "os que pegaram (acerto, bloqueio ou aparo)"
 		span = (
-			"os que pegaram (acerto, bloqueio ou aparo), de %s a %s m"
-			% [decimal(landed[0], 2), decimal(landed[landed.size() - 1], 2)]
+			"%s, de %s a %s m"
+			% [which, decimal(landed[0], 2), decimal(landed[landed.size() - 1], 2)]
 		)
 	out.append(
 		"    No primeiro tick ativo: %s; o mais perto de todos, %s m" % [span, decimal(nearest, 2)]
@@ -1207,8 +1380,42 @@ func _distance_lines(swings: Array[Swing]) -> PackedStringArray:
 		for value: float in crosshairs:
 			sum += value
 		var mean := sum / crosshairs.size()
-		out.append("    Nos que pegaram, em média, %s" % _crosshair_text(mean, "do alvo"))
+		var those := "Nas que agarraram" if grabs else "Nos que pegaram"
+		out.append("    %s, em média, %s" % [those, _crosshair_text(mean, "do alvo")])
 	return out
+
+
+# "O agarrão": "Agarrado: nenhuma vez"; "Agarrado: 1 vez; o tech em 0 (0 %)"; with a tech or more,
+# the median of the ticks from the contact to the tech's press, the first press of the guard break
+# after the contact and up to the last held tick, and its ms: "Agarrado: 6 vezes; o tech em 4
+# (67 %); o aperto do tech, em mediana, 15 ticks (250 ms) depois do contato". The rate rounds like
+# the share of the speed's ticks.
+func _grabbed_text(report: FighterReport) -> String:
+	var grabs := report.grabs.size()
+	if grabs == 0:
+		return "Agarrado: nenhuma vez"
+	var techs := 0
+	var presses := PackedFloat64Array()
+	for grab: Grab in report.grabs:
+		if not grab.teched:
+			continue
+		techs += 1
+		if grab.press_tick >= 0:
+			presses.append(grab.press_tick - grab.contact)
+	var text := (
+		"Agarrado: %s; o tech em %s (%d %%)"
+		% [_counted(grabs, "vez", "vezes"), whole(techs), roundi(100.0 * techs / grabs)]
+	)
+	if presses.is_empty():
+		return text
+	# ticks × 1000 ÷ ticks per second, to the nearest ms; a median between two ticks keeps its half.
+	var median := _median(presses)
+	var at := roundi(median * 1000.0 / _movement.tickrate)
+	var ticks := whole(roundi(median)) if median == roundf(median) else decimal(median, 1)
+	return (
+		"%s; o aperto do tech, em mediana, %s ticks (%s ms) depois do contato"
+		% [text, ticks, whole(at)]
+	)
 
 
 static func _side_text(side: float) -> String:
@@ -1366,6 +1573,8 @@ static func _move_name(move: StringName) -> String:
 			return "Leve"
 		FighterCommand.CHARGED_ATTACK:
 			return "Carregado"
+		FighterCommand.GUARD_BREAK:
+			return "Quebra"
 	return String(move)
 
 
@@ -1415,6 +1624,8 @@ static func _reason_count(reason: StringName, count: int) -> String:
 			return "%s durante um golpe" % whole(count)
 		STUN:
 			return "%s no tranco" % whole(count)
+		IN_GRAB:
+			return "%s no agarrão" % whole(count)
 		STANCE:
 			return "%s na postura" % whole(count)
 		OFF_FLOOR:
@@ -1432,6 +1643,10 @@ static func _result_count(result: StringName, count: int) -> String:
 			return _counted(count, "bloqueado", "bloqueados")
 		PARRIED:
 			return _counted(count, "aparado", "aparados")
+		GRABBED_TECH:
+			return "%s com tech" % _counted(count, "agarrou", "agarraram")
+		GRABBED_NO_TECH, GRABBED:
+			return "%s sem tech" % _counted(count, "agarrou", "agarraram")
 		MISS:
 			return _counted(count, "erro", "erros")
 		CUT:

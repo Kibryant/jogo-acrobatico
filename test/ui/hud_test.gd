@@ -646,6 +646,8 @@ func test_at_every_scale_the_ring_stays_centred_and_the_rows_inside_the_screen(
 # nothing before show_tokens(). TASK-12.3 (visual-e-audio.md, "O carregado, o parry e a finta na
 # tela"): the charged's windup, the parry's window, the feint and the parried one, each with a
 # shape of its own, eight in all; the stance shows its token only in the window, by the tick.
+# TASK-12.4 (visual-e-audio.md, "Quebra de guarda, preparação"): the guard break's windup, an arrow
+# in vermilion, nine in all; its active is the active's diamond, and the hold shows nothing.
 func test_beside_the_others_health_the_hud_shows_its_token_by_shape_and_colour() -> void:
 	var hud := _hud()
 	hud.show_health(_match.combat, _match.fighters)
@@ -669,6 +671,8 @@ func test_beside_the_others_health_the_hud_shows_its_token_by_shape_and_colour()
 		[FighterState.Action.PARRY, &"", tokens.parry],
 		[FighterState.Action.FEINT, &"", tokens.feint],
 		[FighterState.Action.PARRIED, &"", tokens.parried],
+		[FighterState.Action.WINDUP, FighterCommand.GUARD_BREAK, tokens.guard_break_windup],
+		[FighterState.Action.ACTIVE, FighterCommand.GUARD_BREAK, tokens.active],
 	]
 	var neutral := ThemeDB.get_project_theme().get_color(&"neutral_color", Hud.TOKEN_MARK_TYPE)
 	var shapes: Array[StringName] = []
@@ -690,10 +694,17 @@ func test_beside_the_others_health_the_hud_shows_its_token_by_shape_and_colour()
 		assert_bool(colour.is_equal_approx(expected)).override_failure_message(wrong).is_true()
 		if not shapes.has(token.hud_shape):
 			shapes.append(token.hud_shape)
-	assert_int(shapes.size()).override_failure_message("two tokens share a shape").is_equal(8)
+	assert_int(shapes.size()).override_failure_message("two tokens share a shape").is_equal(9)
 	dummy.state.action = FighterState.Action.RECOVERY
 	hud.show_at(SPENT_AT)
 	assert_str(String(hud.shown_token_shape())).override_failure_message("recovery").is_empty()
+	for held: FighterState.Action in [FighterState.Action.GRABBING, FighterState.Action.GRABBED]:
+		dummy.state.action = held
+		dummy.state.action_move = &""
+		hud.show_at(SPENT_AT)
+		assert_str(String(hud.shown_token_shape())) \
+				.override_failure_message("held: %s" % FighterState.Action.find_key(held)) \
+				.is_empty()
 	# The stance once its window closed: no token, as in a recovery; on the window's last tick, the
 	# parry's.
 	dummy.state.action = FighterState.Action.PARRY

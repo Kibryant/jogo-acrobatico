@@ -13,10 +13,11 @@
 # The grapple is the one rule that asks the scenery (DEC-0044): while a press that can fire waits
 # in the slot, before_move sets MovePlan.aim_request, the node casts the aim's ray after the move,
 # and after_move fires on the answer in MoveFacts.
-# The combat's action reaches the movement in three ways (DEC-0055): on a frozen tick of the
-# hitstop, before_move only fills the slot and plans nothing, and the node skips the engine and
-# after_move; in a stun, the stick reads as zero and no command fires; with the guard, the floor's
-# speed is the slow walk, and a command that fires drops the guard.
+# The combat's action reaches the movement in four ways (DEC-0055; DEC-0058): on a frozen tick of
+# the hitstop, before_move only fills the slot and plans nothing, and the node skips the engine and
+# after_move; in a stun or held by a grab, the stick reads as zero and no command fires; with the
+# guard, the floor's speed is the slow walk, and a command that fires drops the guard; and a hit or
+# a grab taken in the dash cuts it, which ends as it would on its own.
 # Another fighter's head is never floor for the rules (movimento.md, "O corpo": "A cabeça do
 # outro"; TASK-10.7): the engine's on_floor stays its verdict, which contour D aligns with
 # (DEC-0025 §2; DEC-0037), and every rule that asked it for a floor jump, a dash, a renewal or the
@@ -51,8 +52,9 @@ static func before_move(
 	if Combat.frozen(state, tick):
 		return _frozen(next, velocity, tick_input, config, tick)
 	# In the stun the stick is ignored: the floor stops the body and the air keeps its path
-	# (combate.md, "O tranco e o corpo").
-	var input := _stilled(tick_input) if Combat.stunned(state) else tick_input
+	# (combate.md, "O tranco e o corpo"); held by a grab, the same (combate.md, "O corpo preso").
+	var stilled := Combat.stunned(state) or Combat.held(state)
+	var input := _stilled(tick_input) if stilled else tick_input
 	# The body looks where the camera looks (movimento.md, "Princípios"), and through a whole swing,
 	# from the windup to the end of the recovery, where the swing goes: in the windup the combat
 	# wrote this tick's direction just before, 23,58° to the right of the camera with the v0
@@ -92,13 +94,16 @@ static func before_move(
 	var current := Vector3(velocity.x, 0.0, velocity.z)
 	var horizontal: Vector3
 	if next.mode == FighterState.Mode.DASH:
-		if tick - next.dash_tick < config.dash_ticks:
+		if tick - next.dash_tick < config.dash_ticks and not stilled:
 			# Committed (movimento.md, "Dash": "Comprometido"; DEC-0041): the fixed direction at
 			# the dash speed whatever the input, a wall or a ledge, with gravity once off the floor.
 			# A press keeps its place in the slot and waits for the end.
 			return _plan(next, next.dash_direction * config.dash_speed, vertical)
 		# The designed exit (DEC-0041 §2): the run speed in the dash's direction, and the mode of
-		# the contact the dash ends on; the slot may fire on this same tick.
+		# the contact the dash ends on; the slot may fire on this same tick. A hit or a grab taken
+		# on a vulnerable tick ends the dash here, on the first tick the movement runs after its
+		# contact, the same way, and the stun or the hold holds the rest (combate.md, "A quebra, o
+		# tech e a esquiva no tick": "O golpe corta o dash"; DEC-0058 §6).
 		current = next.dash_direction * config.dash_exit_speed
 		horizontal = current
 		next.mode = FighterState.Mode.GROUND if stands(state) else FighterState.Mode.AIR
@@ -173,10 +178,12 @@ static func take_presses(
 # the slot, and the grapple asks for no aim; the presses wait for its end (combate.md, "O leve no
 # tick": "O corpo durante o golpe" and "O tranco e o corpo"; DEC-0051 §5). The parry's stance, the
 # feint and the parried one's stun hold them too (combate.md, "O corpo na postura, na finta e em
-# quem foi aparado"; DEC-0056). The guard holds nothing: a command fires from it and drops it
-# (DEC-0055 §2).
+# quem foi aparado"; DEC-0056), and so does the hold of a grab, on both sides (combate.md, "O corpo
+# preso"; DEC-0058). The guard holds nothing: a command fires from it and drops it (DEC-0055 §2).
 static func holds_commands(state: FighterState) -> bool:
-	return Combat.swinging(state) or Combat.stunned(state) or Combat.in_stance(state)
+	if Combat.swinging(state) or Combat.stunned(state):
+		return true
+	return Combat.in_stance(state) or Combat.held(state)
 
 
 # A frozen tick of the hitstop (DEC-0055 §5): the presses go into the slot, where they wait for

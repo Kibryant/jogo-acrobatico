@@ -132,6 +132,13 @@ A sonda não tem rede, física, efeitos, interface nem arena; o jogo de verdade 
 
 Os tempos são do `combate.md`, com os números do desenho do duelo desde a TASK-12.1 (os 300, os 500 a 900 e os 80 ms eram os do estudo); as cores, da Okabe-Ito (F-053 §3.6); as poses e os sons, os da sonda (F-061 §1). As quatro linhas de baixo entraram no desenho do duelo (TASK-12; `combate.md`, "O tranco e a vantagem", "A quebra de guarda e o tech", "O hitstop e o tremor").
 
+**A quebra na cápsula** (TASK-12.4; leitura v0 do Claude, até o manequim da TASK-12.9 e o som da TASK-12.6):
+- **Na preparação da quebra,** a espada desce desde o tick 0, com a mão a −15° e a 1,1 m e a lâmina inclinada −60°, em vermelhão. O HUD mostra uma seta para cima, na mesma cor.
+- **No ativo,** a espada segue a reta da mão e não desenha o arco do golpe.
+- **O agarrão** treme a câmera de quem foi agarrado: 100 ms e 0,5°, a linha "Quebra pega" do `combate.md`. É o estímulo a que o tech responde, e a opção "Tremor da câmera" o desliga.
+- **O tech** solta um sopro na cor do lutador, enquanto o som não chega.
+- **O contorno que pulsa** em quem foi agarrado espera o manequim: a cápsula não tem contorno.
+
 ### O som entra na fase 2 (F-172 §2; DEC-0050)
 
 Os três canais só valem com os três (DEC-0031 §1), e o som nunca entrou no jogo porque só entra áudio com licença livre (DEC-0029; Q-32). Pela escolha do Arthur, a fase 2 traz um pacote CC0 pequeno, com um som por token da tabela acima (o "whoosh" do leve, o som longo do carregado, o "swish", o "clang", o "tunk", o "thud", o pisão, o estalo da finta e o baque do agarrão), no bus "leitura" com o sidechain de 12 dB (DEC-0031 §4). A filha do som o escolhe pela política de assets, com a licença ao lado e a linha no `CREDITS.md` (DEC-0029).

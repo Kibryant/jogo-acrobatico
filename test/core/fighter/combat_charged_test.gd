@@ -250,10 +250,11 @@ func _landing_tick_of_a_jump(tickrate: int) -> int:
 
 # The camera's yaw that sends the swing along `swing` (combate.md, "A espada na mira"; DEC-0057):
 # the swing turns asin(shoulder / convergence) to the right of the camera, so the camera looks that
-# far to the left of it. The geometry by hand above is worked along the swing.
+# far to the left of it. The geometry by hand above is worked along the swing. The convergence is
+# the charged's (DEC-0058 §2).
 func _camera_for_swing(swing: float, tickrate: int, combat: CombatConfig) -> float:
 	var shoulder := MovementRig.load_config(tickrate).aim_side
-	return swing + asin(shoulder / combat.aim_convergence)
+	return swing + asin(shoulder / combat.attacks[FighterCommand.CHARGED_ATTACK].aim_convergence)
 
 
 # A script that presses the charged on the given ticks, the camera on yaw.
@@ -817,7 +818,8 @@ func test_the_cut_direction_is_the_cameras_on_the_last_windup_tick_and_then_fixe
 	var first := fighter.tick()
 	var windup := WINDUP_TICKS[tickrate]
 	var swing := _swing_ticks(tickrate)
-	var turn := asin(fighter.config().aim_side / fighter.combat.aim_convergence)
+	var convergence := fighter.combat.attacks[FighterCommand.CHARGED_ATTACK].aim_convergence
+	var turn := asin(fighter.config().aim_side / convergence)
 	var fixed := FIRST_YAW + YAW_STEP * (windup - 1) - turn
 	var violations: Array[String] = []
 	for offset: int in swing + 2:

@@ -167,7 +167,7 @@ A conta do golpe é do núcleo, com formas simples: a lâmina é um segmento com
 Como o golpe vai para onde a mira aponta. A lâmina sai da mão, e a linha da mira corre 0,8 m à direita do corpo (DEC-0045), então a espada só cruza a linha da mira num ponto, a convergência. O raio do gancho não tem esse problema, porque sai do próprio ponto O. O Arthur escolheu o ponto fixo (F-198 §2), sobre a medição do replay de 30/10 (F-198, contexto) e a pesquisa da F-200. A regra vale para o leve e o carregado, e o boneco mira como gente (F-197 §1).
 
 - **Os nomes no código:**
-  - a convergência é `CombatData.aim_convergence_m`, 2,0 no `combat_v0.tres`, e `CombatConfig.aim_convergence`;
+  - a convergência é de cada golpe desde a TASK-12.4: `AttackData.aim_convergence_m`, 2,0 no leve e no carregado e 1,2 na quebra do `combat_v0.tres`, e `AttackConfig.aim_convergence` (DEC-0058). Antes, era uma só, `CombatData.aim_convergence_m`;
   - a direção é `Aim.swing_yaw(yaw, side, convergence)`, uma função pura do núcleo;
   - o ombro é o `MovementData.aim_side_m`, cópia do da câmera (DEC-0045 §2).
 - **A conta:** em cada tick da preparação, a direção do golpe é o yaw da câmera menos asen(ombro / convergência), 23,58° para a direita com o ombro de 0,8 m e a convergência de 2,0 m. O pitch não entra. A convergência é positiva e maior que o ombro; se não for, a razão fica presa em 1 e o giro para em 90°, sem NaN.

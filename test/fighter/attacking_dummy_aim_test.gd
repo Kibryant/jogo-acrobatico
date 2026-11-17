@@ -51,7 +51,12 @@ const STEP_UP := Vector3(0.0, 0.7, 0.0)
 const DUMMY_FEET := Vector3(-6.0, 0.0, 6.0)
 const PLAYER_FEET := Vector3(-6.0, 0.0, 4.5)
 const APART_M := 1.5
-const ACTIONS := 4 # partida.md, "A mistura do boneco": "os quatro primeiros já trazem os três"
+# partida.md, "A mistura do boneco": the first four hold every kind, the guard break's included
+# since TASK-12.4 (F-210 §1).
+const ACTIONS := 4
+# combate.md, "A lâmina e o contato": "Convergência: 1,2 na quebra"; "A mão": with the crosshair on
+# the target's axis the hand grabs "de 0,88 a 1,48 m", so the player 1,5 m away is out of its reach.
+const HAND_CONVERGENCE_M := 1.2
 const LAST_ACTION_TICKS := 120 # loops after the fourth action begins, past its contact: arithmetic
 
 
@@ -281,11 +286,13 @@ func _match() -> Match:
 	return game_match
 
 
-# Criterion 4, in the Match: over its first four actions, which hold a light, a charged and a
-# feint, the dummy's swings begin along the direction of a person aiming at the player: the yaw of
-# aim_yaw, from its feet to the player's, turned by the convergence. Every charged it lets go
-# takes 30 from the player standing still 1,5 m in front of it, and every light 12, the feint's
-# light included; events are counted by the state entering them, against the loop before (F-187).
+# Criterion 4, in the Match: over its first four actions, which hold a light, a charged, a feint
+# and, since TASK-12.4, a guard break, the dummy's moves begin along the direction of a person
+# aiming at the player: the yaw of aim_yaw, from its feet to the player's, turned by the move's
+# convergence (DEC-0058 §2). Every charged it lets go takes 30 from the player standing still 1,5 m
+# in front of it, and every light 12, the feint's light included; the guard break takes nothing and,
+# 1,5 m away, grabs nobody; events are counted by the state entering them, against the loop before
+# (F-187).
 func test_in_the_match_the_dummys_swings_land_on_the_player_standing_in_front_of_it() -> void:
 	var game_match := await _match()
 	var player := game_match.fighter_at(Match.PLAYER_SLOT)
@@ -297,10 +304,11 @@ func test_in_the_match_the_dummys_swings_land_on_the_player_standing_in_front_of
 	var charged_expected := 0
 	var lights_expected := 0
 	for k: int in range(1, ACTIONS + 1):
-		if AttackingDummy.kind_of(k) == AttackingDummy.Kind.CHARGED:
-			charged_expected += 1
-		else:
-			lights_expected += 1
+		match AttackingDummy.kind_of(k):
+			AttackingDummy.Kind.CHARGED:
+				charged_expected += 1
+			AttackingDummy.Kind.LIGHT, AttackingDummy.Kind.FEINT:
+				lights_expected += 1
 	assert_int(charged_expected).override_failure_message("no charged in the first four") \
 			.is_greater(0)
 	var windups := 0
@@ -323,7 +331,10 @@ func test_in_the_match_the_dummys_swings_land_on_the_player_standing_in_front_of
 				dummy.config.aim_side,
 				dummy_before.facing_yaw,
 			)
-			var expected := aim - asin(SHOULDER_M / CONVERGENCE_M)
+			var convergence := CONVERGENCE_M
+			if state.action_move == FighterCommand.GUARD_BREAK:
+				convergence = HAND_CONVERGENCE_M
+			var expected := aim - asin(SHOULDER_M / convergence)
 			var message := "windup %d: the swing points to %.4f, expected %.4f" % [
 				windups,
 				state.action_yaw,
@@ -349,6 +360,8 @@ func test_in_the_match_the_dummys_swings_land_on_the_player_standing_in_front_of
 	]
 	assert_int(hits_of_30).override_failure_message(summary).is_equal(charged_expected)
 	assert_int(hits_of_12).override_failure_message(summary).is_equal(lights_expected)
+	assert_int(player.state.grabbed_tick).override_failure_message("the player was grabbed") \
+			.is_equal(FighterState.NEVER)
 	assert_float(player.global_position.distance_to(dummy.global_position)) \
 			.override_failure_message("the two moved") \
 			.is_equal_approx(APART_M, 1e-3)

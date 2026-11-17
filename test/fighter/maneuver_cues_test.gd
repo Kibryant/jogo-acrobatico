@@ -13,7 +13,10 @@
 # SyncTest of test/fighter/light_attack_sync_test.gd). TASK-12.3 adds the parry's flash and sparks
 # on both sides, its shake on either, the charged's shake on its attacker at its share, and the
 # charged's trail in the vertical plane (visual-e-audio.md, "O carregado, o parry e a finta na
-# tela"; the SyncTest of test/fighter/charged_sync_test.gd).
+# tela"; the SyncTest of test/fighter/charged_sync_test.gd). TASK-12.4 adds the grab, which shakes
+# the grabbed one's camera, and the tech, which leaves a puff; the guard break's active draws no
+# arc (combate.md, "O hitstop e o tremor": "Quebra pega"; the SyncTest of
+# test/fighter/guard_break_sync_test.gd).
 extends GdUnitTestSuite
 
 const NetfoxTicks := preload("res://test/support/netfox_ticks.gd")
@@ -64,9 +67,11 @@ func _stand(ticks: int) -> void:
 
 # The camera's yaw that sends a swing of the match's fighters along `swing` (combate.md, "A espada
 # na mira"; DEC-0057): the swing turns asin(shoulder / convergence) to the right of the camera, so
-# the camera looks that far to the left of it.
+# the camera looks that far to the left of it. The convergence is the sword's, the light's and the
+# charged's alike (DEC-0058 §2).
 func _camera_for_swing(swing: float) -> float:
-	return swing + asin(_match.config.aim_side / _match.combat.aim_convergence)
+	var convergence := _match.combat.attacks[FighterCommand.LIGHT_ATTACK].aim_convergence
+	return swing + asin(_match.config.aim_side / convergence)
 
 
 func _force_rollback() -> void:
@@ -900,3 +905,98 @@ func test_with_a_screen_the_charged_draws_its_trail_in_the_vertical_plane() -> v
 	assert_float(box.size.y).override_failure_message("%s" % box).is_greater(0.5)
 	assert_float(box.end.y).override_failure_message("%s" % box).is_greater(2.0)
 	cues.free()
+
+
+# The camera's yaw that sends the guard break's hand of the match's fighters along `hand`: the hand
+# turns asin(shoulder / 1,2) to the right of the camera (DEC-0058 §2).
+func _camera_for_hand(hand: float) -> float:
+	var convergence := _match.combat.attacks[FighterCommand.GUARD_BREAK].aim_convergence
+	return hand + asin(_match.config.aim_side / convergence)
+
+
+# TASK-12.4 (combate.md, "A quebra, o tech e a esquiva no tick" and "O hitstop e o tremor"): two
+# fighters 1,05 m apart, facing each other, under the rollback of 7 ticks on every loop. The fighter
+# breaks the target's guard, its hand reaching it on the 4th active tick (combate.md, "A mão"), and
+# the target answers with the tech 10 ticks after the contact, or does not. Returns the shakes of
+# the watched one's camera, in degrees, each checked for its length; the events are read on the way:
+# the grab and the tech, each played once, and no arc for the guard break's active.
+func _grab_exchange(teched: bool, watch_grabber: bool, shake_on := true) -> Array[float]:
+	await _start()
+	var target := _match.spawn_fighter(Match.DUMMY_SLOT, multiplayer.get_unique_id())
+	target.position = _fighter.position + Vector3(0.0, 0.0, -1.05)
+	await get_tree().process_frame
+	await get_tree().physics_frame
+	var camera: CameraRig = auto_free(CAMERA_RIG_SCENE.instantiate())
+	camera.shake_enabled = shake_on
+	var cues := ManeuverCues.new(_match.config, true)
+	cues.camera = camera
+	cues.watched = _fighter if watch_grabber else target
+	cues.combat_data = _match.combat_data
+	cues.tokens = _match.tokens
+	_match.add_child(cues)
+	cues.watch(_fighter)
+	cues.watch(target)
+	NetworkRollback.before_loop.connect(_force_rollback)
+	var guard_break: AttackConfig = _match.combat.attacks[FighterCommand.GUARD_BREAK]
+	var press := STAND_TICKS
+	var contact := press + guard_break.windup_ticks + 3
+	var shakes: Array[float] = []
+	var hand_yaw := _camera_for_hand(0.0)
+	for loop: int in contact + 90:
+		_fighter.input.sample_frame(Vector2.ZERO, hand_yaw)
+		target.input.sample_frame(Vector2.ZERO, PI)
+		if loop == press:
+			_fighter.input.press_guard_break()
+		if teched and loop == contact + 10:
+			target.input.press_guard_break()
+		NetfoxTicks.run_loop()
+		if camera.shaking():
+			shakes.append(camera.shake_degrees())
+			var seconds := _match.combat_data.grab_shake_ms / 1000.0
+			assert_float(camera.shake_seconds()).is_equal_approx(seconds, HAIR)
+			camera.advance_shake(1.0)
+	NetworkRollback.before_loop.disconnect(_force_rollback)
+	assert_int(target.state.grabbed_tick).override_failure_message("never grabbed").is_not_equal(
+		FighterState.NEVER
+	)
+	var events := 2 if teched else 1
+	if teched:
+		assert_int(target.state.tech_tick).override_failure_message("no tech").is_greater(
+			target.state.grabbed_tick
+		)
+		var puffs := cues.find_children("TechPuff*", "MeshInstance3D", false, false)
+		assert_int(puffs.size()).override_failure_message("the tech's puff").is_equal(1)
+	else:
+		assert_int(target.state.tech_tick).is_equal(FighterState.NEVER)
+	assert_int(cues.find_children("SwingTrail*", "MeshInstance3D", false, false).size()) \
+			.override_failure_message("the guard break drew an arc") \
+			.is_equal(0)
+	assert_int(cues.presented).is_equal(events)
+	assert_int(_match.cues.presented).is_equal(events)
+	assert_int(_match.cues.events).is_equal(events)
+	cues.free()
+	return shakes
+
+
+# The grab shakes the camera of whoever was grabbed once, 100 ms at 0,5° (combate.md, "Quebra pega:
+# 100 ms, 0,5°"), with the tech or without it; the rollback never shakes it again, and the tech
+# leaves its puff once.
+func test_a_grab_shakes_the_grabbed_camera_once_and_the_tech_leaves_one_puff(
+	teched: bool,
+	_test_parameters := [[false], [true]],
+) -> void:
+	var shakes := await _grab_exchange(teched, false)
+	assert_int(shakes.size()).override_failure_message("shakes: %s" % [shakes]).is_equal(1)
+	assert_float(shakes[0]).is_equal_approx(_match.combat_data.grab_shake_deg, HAIR)
+
+
+# The grab shakes nothing on whoever grabbed: the stimulus is the grabbed one's.
+func test_a_grab_shakes_nothing_on_the_grabber() -> void:
+	var shakes := await _grab_exchange(false, true)
+	assert_array(shakes).is_empty()
+
+
+# With the option off, the grab shakes nothing; its event still plays once.
+func test_with_the_option_off_a_grab_shakes_nothing() -> void:
+	var shakes := await _grab_exchange(false, false, false)
+	assert_array(shakes).is_empty()

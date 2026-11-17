@@ -234,3 +234,19 @@ func test_the_charged_the_parry_and_the_guard_press_are_taken_once_and_apart() -
 			.override_failure_message("a hold is no press") \
 			.is_false()
 	assert_bool(sampler.guard_held()).is_true()
+
+
+# TASK-12.4 (DEC-0058 §1): the guard break, the tech's key too, is a one-touch command like the
+# others: presses before one take are one, taken apart from every other touch.
+func test_the_guard_break_is_taken_once_and_apart_from_the_others() -> void:
+	var sampler := InputSampler.new()
+	assert_bool(sampler.take_guard_break()).is_false()
+	sampler.press_guard_break()
+	sampler.press_guard_break()
+	assert_bool(sampler.take_light_attack()).is_false()
+	assert_bool(sampler.take_charged_attack()).is_false()
+	assert_bool(sampler.take_parry()).is_false()
+	assert_bool(sampler.take_guard_press()).is_false()
+	assert_bool(sampler.guard_held()).is_false()
+	assert_bool(sampler.take_guard_break()).is_true()
+	assert_bool(sampler.take_guard_break()).is_false()

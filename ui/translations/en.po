@@ -123,6 +123,10 @@ msgstr "Charged attack"
 msgid "OPTIONS_ACTION_PARRY"
 msgstr "Parry"
 
+# The action guard break, which is the tech too (TASK-12.4; F-207).
+msgid "OPTIONS_ACTION_GUARD_BREAK"
+msgstr "Guard break"
+
 # The mouse's sensitivity, from 0.02 to 0.20 degrees per pixel (F-161).
 msgid "OPTIONS_SENSITIVITY"
 msgstr "Sensitivity"

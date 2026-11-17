@@ -6,16 +6,18 @@
 # leaves its point O on its shoulder's side (DEC-0045 §2), on the player's axis, so its swing
 # converges like a player's and lands on whoever stands still in front of it (aim_yaw).
 # TASK-12.3 mixes its actions (partida.md, "O boneco que ataca": the mix):
-# the k-th is a light, a charged or a feint, chosen by a fixed integer hash of k, 2 in 5 lights,
-# 2 in 5 charged and 1 in 5 feints, so the player cannot learn the order and the replay plays it
-# again with no seed. The feint is a charged cut by the guard button's press 24 ticks into its
-# windup, then a light 4 ticks later, which waits in the slot until the feint's 12 ticks end. It
-# does not walk, hold the guard or react. Like the BotPlayer it only produces input, through the
-# calls the devices use (FighterInput.sample_frame, press_light_attack, press_charged_attack and
-# press_guard), and never writes state; the replay records the input it gave, so a session plays
-# back without it. The yaw toward the player is read from the bodies on screen before each tick
-# loop, as a person reads the screen: what it decided is the input of those ticks, whatever a
-# rollback does later.
+# the k-th is chosen by a fixed integer hash of k, so the player cannot learn the order and the
+# replay plays it again with no seed. Since TASK-12.4 the cycle is of 6: 2 lights, 2 charged, 1
+# feint and 1 guard break, and no tech when it is grabbed (F-210 §1; DEC-0058). The feint is a
+# charged cut by the guard button's press 24 ticks into its windup, then a light 4 ticks later,
+# which waits in the slot until the feint's 12 ticks end. The guard break grabs whoever stands
+# within its hand's reach, 0,88 to 1,48 m with its aim on the player (combate.md, "A mão"). It does
+# not walk, hold the guard or react. Like the BotPlayer it only produces input, through the calls
+# the devices use (FighterInput.sample_frame, press_light_attack, press_charged_attack,
+# press_guard and press_guard_break), and never writes state; the replay records the input it
+# gave, so a session plays back without it. The yaw toward the player is read from the bodies on
+# screen before each tick loop, as a person reads the screen: what it decided is the input of those
+# ticks, whatever a rollback does later.
 class_name AttackingDummy
 extends Node
 
@@ -24,6 +26,7 @@ enum Kind {
 	LIGHT,
 	CHARGED,
 	FEINT,
+	GUARD_BREAK,
 }
 
 ## ms between two actions (partida.md, "O boneco que ataca": "um golpe a cada 3 s, 180 ticks").
@@ -36,13 +39,14 @@ const FEINT_PRESS_MS := 400
 ## for the feint's 200 to end and fires right then. Claude's v0 reading (DEC-0017).
 const LIGHT_AFTER_FEINT_MS := 67
 ## The hash of the mix (Knuth's multiplicative hash over 32 bits, its high bits folded down): the
-## multiplier and the offset, which Claude picked so the first actions already hold all three
-## kinds; any other offset is another order, never another share.
+## multiplier and the offset, which Claude picked so the first four actions already hold all four
+## kinds (a light, a charged, a guard break and a feint, in that order); any other offset is another
+## order, never another share.
 const HASH_MULTIPLIER := 2654435761
-const HASH_OFFSET := 19
+const HASH_OFFSET := 5
 const HASH_MODULUS := 4294967296
-## Of 5 hash slots: 0 and 1 are lights, 2 and 3 charged, 4 a feint.
-const SLOTS := 5
+## Of 6 hash slots: 0 and 1 are lights, 2 and 3 charged, 4 a feint and 5 a guard break.
+const SLOTS := 6
 
 ## The input box it fills: the dummy's.
 var input: FighterInput
@@ -119,7 +123,9 @@ static func kind_of(k: int) -> Kind:
 		return Kind.LIGHT
 	if slot < 4:
 		return Kind.CHARGED
-	return Kind.FEINT
+	if slot < 5:
+		return Kind.FEINT
+	return Kind.GUARD_BREAK
 
 
 ## Whether an action begins on tick: every period after its start, never on the start.
@@ -129,8 +135,8 @@ func presses_at(tick: int) -> bool:
 
 
 ## The commands the dummy presses on tick, in the order it presses them (FighterCommand's IDs, the
-## guard's press as &"guard"): the action's first press on its period tick, and a feint's guard
-## and light after it.
+## guard's press as &"guard"): the action's first press on its period tick, the light, the charged
+## or the guard break, and a feint's guard and light after it.
 func presses(tick: int) -> Array[StringName]:
 	var pressed: Array[StringName] = []
 	var step := tick - start_tick
@@ -142,8 +148,13 @@ func presses(tick: int) -> Array[StringName]:
 		return pressed
 	var kind := kind_of(k)
 	if into == 0:
-		var light := kind == Kind.LIGHT
-		pressed.append(FighterCommand.LIGHT_ATTACK if light else FighterCommand.CHARGED_ATTACK)
+		match kind:
+			Kind.LIGHT:
+				pressed.append(FighterCommand.LIGHT_ATTACK)
+			Kind.GUARD_BREAK:
+				pressed.append(FighterCommand.GUARD_BREAK)
+			_:
+				pressed.append(FighterCommand.CHARGED_ATTACK)
 	elif kind == Kind.FEINT and into == feint_press_ticks:
 		pressed.append(&"guard")
 	elif kind == Kind.FEINT and into == feint_press_ticks + light_after_feint_ticks:
@@ -175,5 +186,7 @@ func _press_on_its_tick(_delta: float, tick: int) -> void:
 				input.press_light_attack()
 			FighterCommand.CHARGED_ATTACK:
 				input.press_charged_attack()
+			FighterCommand.GUARD_BREAK:
+				input.press_guard_break()
 			_:
 				input.press_guard()

@@ -76,6 +76,12 @@ func _assert_defaults(store: OptionsStore) -> void:
 	var guard := store.binding(&"guard")
 	assert_bool(guard is InputEventMouseButton).override_failure_message("guard").is_true()
 	assert_int(_code(guard)).is_equal(MOUSE_BUTTON_RIGHT)
+	# The guard break is the middle mouse button (F-207).
+	var guard_break := store.binding(&"guard_break")
+	assert_bool(guard_break is InputEventMouseButton) \
+			.override_failure_message("guard_break") \
+			.is_true()
+	assert_int(_code(guard_break)).is_equal(MOUSE_BUTTON_MIDDLE)
 	assert_bool(store.camera_shake).override_failure_message("the shake is off").is_true()
 	# The dash is the left Shift, not either (TASK-10.4, choice 2).
 	assert_int(_location(store.binding(&"dash"))).is_equal(KEY_LOCATION_LEFT)
@@ -91,9 +97,10 @@ func _assert_warned_about(store: OptionsStore, entry: String) -> void:
 	assert_bool(found).override_failure_message(failure).is_true()
 
 
-# TASK-12.2 adds the guard after the light attack, and TASK-12.3 the charged attack and the parry
-# after the guard (visual-e-audio.md, "A tela de opções"; F-191 §2).
-func test_the_eleven_actions_are_the_ones_of_project_godot_in_the_screens_order() -> void:
+# TASK-12.2 adds the guard after the light attack, TASK-12.3 the charged attack and the parry after
+# the guard (visual-e-audio.md, "A tela de opções"; F-191 §2), and TASK-12.4 the guard break after
+# the parry (F-207).
+func test_the_twelve_actions_are_the_ones_of_project_godot_in_the_screens_order() -> void:
 	assert_array(OptionsStore.ACTIONS).is_equal(
 		[
 			&"move_forward",
@@ -107,6 +114,7 @@ func test_the_eleven_actions_are_the_ones_of_project_godot_in_the_screens_order(
 			&"guard",
 			&"charged_attack",
 			&"parry",
+			&"guard_break",
 		],
 	)
 	for action: StringName in OptionsStore.ACTIONS:
@@ -205,7 +213,8 @@ func test_an_invalid_key_falls_back_to_its_default_alone_and_is_named() -> void:
 
 # Criterion 5 and F-161: the left button is the light attack's alone (F-175 §2), the right one
 # stays for the guard of TASK-12.2, and the wheel is no button to hold; the middle and the side
-# ones are taken.
+# ones are taken, the middle one once the guard break, its default since TASK-12.4 (F-207), gives
+# it up.
 func test_the_left_and_right_mouse_buttons_and_the_wheel_are_refused() -> void:
 	_write(
 		"\n".join(
@@ -216,6 +225,7 @@ func test_the_left_and_right_mouse_buttons_and_the_wheel_are_refused() -> void:
 				"jump=\"mouse:%d\"" % MOUSE_BUTTON_WHEEL_UP,
 				"move_left=\"mouse:%d\"" % MOUSE_BUTTON_MIDDLE,
 				"move_right=\"mouse:%d\"" % MOUSE_BUTTON_XBUTTON2,
+				"guard_break=\"mouse:%d\"" % MOUSE_BUTTON_XBUTTON1,
 			],
 		),
 	)
@@ -228,6 +238,7 @@ func test_the_left_and_right_mouse_buttons_and_the_wheel_are_refused() -> void:
 	assert_int(_code(store.binding(&"jump"))).is_equal(KEY_SPACE)
 	assert_int(_code(store.binding(&"move_left"))).is_equal(MOUSE_BUTTON_MIDDLE)
 	assert_int(_code(store.binding(&"move_right"))).is_equal(MOUSE_BUTTON_XBUTTON2)
+	assert_int(_code(store.binding(&"guard_break"))).is_equal(MOUSE_BUTTON_XBUTTON1)
 	assert_bool(OptionsStore.accepts(OptionsStore.mouse_event(MOUSE_BUTTON_LEFT))).is_false()
 	assert_bool(OptionsStore.accepts(OptionsStore.mouse_event(MOUSE_BUTTON_RIGHT))).is_false()
 	assert_bool(OptionsStore.accepts(OptionsStore.mouse_event(MOUSE_BUTTON_XBUTTON1))).is_true()
@@ -305,9 +316,13 @@ func test_a_key_another_action_has_is_refused_and_names_it() -> void:
 	var store := OptionsStore.new(_path)
 	assert_str(String(store.bind(&"dash", OptionsStore.key_event(KEY_W)))).is_equal("move_forward")
 	assert_int(_code(store.binding(&"dash"))).is_equal(KEY_SHIFT)
+	# The middle mouse button is the guard break's by default (F-207); a side one is free.
 	var middle := OptionsStore.mouse_event(MOUSE_BUTTON_MIDDLE)
-	assert_str(String(store.bind(&"grapple", middle))).is_empty()
-	assert_str(String(store.bind(&"jump", middle))).is_equal("grapple")
+	assert_str(String(store.bind(&"grapple", middle))).is_equal("guard_break")
+	assert_int(_code(store.binding(&"grapple"))).is_equal(KEY_Q)
+	var side := OptionsStore.mouse_event(MOUSE_BUTTON_XBUTTON1)
+	assert_str(String(store.bind(&"grapple", side))).is_empty()
+	assert_str(String(store.bind(&"jump", side))).is_equal("grapple")
 	assert_int(_code(store.binding(&"jump"))).is_equal(KEY_SPACE)
 	# The dash's left Shift and any Shift clash; the right Shift is another key.
 	var any_shift := OptionsStore.key_event(KEY_SHIFT)

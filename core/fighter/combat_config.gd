@@ -5,6 +5,13 @@
 class_name CombatConfig
 extends RefCounted
 
+## The moves of a combat by their IDs, in the order CombatData holds them (TASK-12.3; TASK-12.4).
+const MOVES: Array[StringName] = [
+	FighterCommand.LIGHT_ATTACK,
+	FighterCommand.CHARGED_ATTACK,
+	FighterCommand.GUARD_BREAK,
+]
+
 var tickrate: int
 # The moves by their ID, the StringName the slot holds and the state carries (FighterCommand;
 # FighterState.action_move).
@@ -14,9 +21,6 @@ var hand_offset: float
 var hand_height: float
 var blade_length: float
 var blade_radius: float
-# m from the attacker's axis on the floor's plane: the point of the aim line the swing points at,
-# the convergence (combate.md, "A espada na mira"; DEC-0057 §1). Aim.swing_yaw reads it.
-var aim_convergence: float
 var max_health: int
 # The health returns to max_health this many ticks after the last hit's contact; 0 turns the
 # refill off (partida.md, "A vida sem partida").
@@ -39,13 +43,21 @@ var parried_hitstop_ticks: int
 var feint_until_ticks: int
 var feint_recovery_ticks: int
 var feint_stamina_cost: float
+# The grab (combate.md, "A quebra, o tech e a esquiva no tick"; DEC-0058 §4 and §5): both are held
+# grab_hold_ticks plus the grab's hitstop from the contact; without the tech whoever was grabbed
+# acts again grabbed_stun_ticks plus that hitstop after it; with the tech whoever grabbed lets go
+# tech_advantage_ticks after whoever answered.
+var grab_hold_ticks: int
+var grab_hitstop_ticks: int
+var grabbed_stun_ticks: int
+var tech_advantage_ticks: int
 
 
 static func create(data: CombatData, tickrate: int) -> CombatConfig:
 	var config := CombatConfig.new()
 	config.tickrate = tickrate
 	var reach := data.hand_offset_m + data.blade_length_m
-	for move: StringName in [FighterCommand.LIGHT_ATTACK, FighterCommand.CHARGED_ATTACK]:
+	for move: StringName in MOVES:
 		config.attacks[move] = AttackConfig.create(
 			data.attack(move),
 			tickrate,
@@ -56,8 +68,6 @@ static func create(data: CombatData, tickrate: int) -> CombatConfig:
 	config.hand_height = data.hand_height_m
 	config.blade_length = data.blade_length_m
 	config.blade_radius = data.blade_radius_m
-	# A metre, not a time: copied as it is.
-	config.aim_convergence = data.aim_convergence_m
 	config.max_health = data.max_health
 	config.health_refill_ticks = Ticks.from_ms(data.health_refill_ms, tickrate)
 	config.guard_raise_ticks = Ticks.from_ms(data.guard_raise_ms, tickrate)
@@ -71,4 +81,8 @@ static func create(data: CombatData, tickrate: int) -> CombatConfig:
 	config.feint_until_ticks = Ticks.from_ms(data.feint_until_ms, tickrate)
 	config.feint_recovery_ticks = Ticks.from_ms(data.feint_recovery_ms, tickrate)
 	config.feint_stamina_cost = data.feint_stamina_cost
+	config.grab_hold_ticks = Ticks.from_ms(data.grab_hold_ms, tickrate)
+	config.grab_hitstop_ticks = Ticks.from_ms(data.grab_hitstop_ms, tickrate)
+	config.grabbed_stun_ticks = Ticks.from_ms(data.grabbed_stun_ms, tickrate)
+	config.tech_advantage_ticks = Ticks.from_ms(data.tech_advantage_ms, tickrate)
 	return config

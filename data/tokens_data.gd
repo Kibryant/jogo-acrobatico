@@ -2,7 +2,8 @@
 # DEC-0031 §5; TASK-12.2): one TokenData per state, read by the sword, the cues and the HUD by the
 # state on screen, never by the simulation. TASK-12.3 adds the charged attack's windup, the parry's
 # window, the feint and whoever was parried (visual-e-audio.md, "O carregado, o parry e a finta na
-# tela"); the guard break joins with its task.
+# tela"); TASK-12.4 the guard break's windup (visual-e-audio.md, "Os três canais por estado":
+# "Quebra de guarda, preparação").
 class_name TokensData
 extends Resource
 
@@ -22,18 +23,23 @@ extends Resource
 @export var feint: TokenData
 ## Whoever was parried: the blade thrown up and back through the stun.
 @export var parried: TokenData
+## The guard break's windup: vermilion from its first tick, the sword low and the hand forward.
+@export var guard_break_windup: TokenData
 
 
 # The token a state shows at tick (visual-e-audio.md, "Os três canais por estado"), by its action,
-# its move and, in the parry's stance, the tick: the windup of the light or of the charged, the
-# active of a swing, the guard rising, up or blocking, the reaction of a hit taken, the parry while
-# its window of parry_window_ticks lasts, the feint and the parried one's stun; null for a state
-# with no token: at rest, in a recovery, and in the stance once the window closed.
+# its move and, in the parry's stance, the tick: the windup of the light, of the charged or of the
+# guard break, the active of a swing, the guard rising, up or blocking, the reaction of a hit taken,
+# the parry while its window of parry_window_ticks lasts, the feint and the parried one's stun;
+# null for a state with no token: at rest, in a recovery, held by a grab, and in the stance once the
+# window closed.
 func for_state(state: FighterState, tick: int, parry_window_ticks: int) -> TokenData:
 	match state.action:
 		FighterState.Action.WINDUP:
 			if state.action_move == FighterCommand.CHARGED_ATTACK:
 				return charged_windup
+			if state.action_move == FighterCommand.GUARD_BREAK:
+				return guard_break_windup
 			return light_windup
 		FighterState.Action.ACTIVE:
 			return active

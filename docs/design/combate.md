@@ -1,6 +1,6 @@
 ---
-revisado_em: 2026-10-30
-fontes: [F-001, F-012, F-027, F-028, F-032, F-053, F-061, F-062, F-063, F-073, F-083, F-166, F-172, F-173, F-174, F-175, F-176, F-178, F-180, F-181, F-182, F-188, F-190, F-191]
+revisado_em: 2026-11-17
+fontes: [F-001, F-012, F-027, F-028, F-032, F-053, F-061, F-062, F-063, F-073, F-083, F-166, F-172, F-173, F-174, F-175, F-176, F-178, F-180, F-181, F-182, F-188, F-190, F-191, F-198, F-207, F-208, F-209, F-210]
 ---
 
 # Combate
@@ -154,10 +154,10 @@ A conta do golpe é do núcleo, com formas simples: a lâmina é um segmento com
 | Alcance efetivo | ≈ 2,4 | m, centro a centro | Ponta mais raio mais o raio da cápsula; dentro do arco |
 | Leve | arco horizontal de 120° (±60° da frente), a 1,3 m, varrido nos 6 ticks do ativo | ° | Do lado da mão para o outro |
 | Carregado | corte de cima para baixo no plano da frente, de 2,2 m a 0,6 m de altura, nos 7 ticks | m | A ponta chega a 2,0 m à frente |
-| Quebra de guarda | a mão em linha reta até 1,2 m à frente, nos 6 ticks | m | Agarra um corpo cujo eixo está a até ≈ 1,55 m |
+| Quebra de guarda | a mão em linha reta até 1,2 m, a 1,3 m de altura, rumo ao ponto da linha da mira a 1,2 m, nos 6 ticks | m | Agarra um corpo cujo eixo está a até ≈ 1,55 m; com a mira no eixo do alvo, de 0,88 a 1,48 m (F-209; DEC-0058) |
 | O leve no ar | o mesmo arco, inclinado 45° para baixo | ° | O golpe de quem está no alto ("A matriz de posição") |
-| Direção | do eixo do corpo para o ponto da linha da mira a 2,0 m dele, a convergência, fixada no último tick da preparação | — | A câmera fica 0,8 m à direita do corpo (DEC-0045), e a lâmina sai da mão, então só cruza a linha da mira num ponto: o golpe gira ≈ 23,58° para a direita do yaw da câmera. Durante a preparação, a direção e o corpo acompanham a câmera; no ativo e na recuperação, não. Sem travar a mira no oponente: o ponto é fixo e não depende de onde o outro está ("A espada na mira"; DEC-0057) |
-| Convergência | 2,0 | m do eixo do corpo, na linha da mira | Onde a lâmina cruza a linha da mira: a ponta. Com a mira no eixo do alvo, o carregado pega de 1,11 a 2,40 m de centro a centro, e o leve de 0,80 a 2,42 m. Escolha do Arthur (F-198 §2; DEC-0057) |
+| Direção | do eixo do corpo para o ponto da linha da mira a 2,0 m dele, a convergência, fixada no último tick da preparação | — | A câmera fica 0,8 m à direita do corpo (DEC-0045), e a lâmina sai da mão, então só cruza a linha da mira num ponto: o golpe gira ≈ 23,58° para a direita do yaw da câmera. Durante a preparação, a direção e o corpo acompanham a câmera; no ativo e na recuperação, não. Sem travar a mira no oponente: o ponto é fixo e não depende de onde o outro está ("A espada na mira"; DEC-0057). Na quebra, o ponto fica a 1,2 m, onde a mão chega, e a mão gira ≈ 41,81° (F-209; DEC-0058) |
+| Convergência | 2,0 na espada; 1,2 na quebra | m do eixo do corpo, na linha da mira | Onde a arma cruza a linha da mira: a ponta da lâmina, ou o fim da mão na quebra. Com a mira no eixo do alvo, o carregado pega de 1,11 a 2,40 m de centro a centro, o leve de 0,80 a 2,42 m e a quebra de 0,88 a 1,48 m. Escolhas do Arthur (F-198 §2; DEC-0057; F-209; DEC-0058) |
 | Um acerto por janela ativa (Q-26) | cada golpe acerta cada alvo no máximo uma vez | — | O estado guarda quem o golpe já acertou. Na sonda, a lâmina parada no corpo recomeçava o tranco 4 vezes em 24 ticks (F-073 §4); é a regra do Tekken (F-173 §1 C23). Um teste do núcleo prova com a lâmina parada dentro do corpo por todo o ativo |
 | Parede no meio | não bloqueia no v0 | — | DEC-0026 §4 |
 | Dois golpes no mesmo tick | os dois pegam: troca | — | Sem prioridade entre eles |
@@ -243,6 +243,40 @@ Como o carregado, a armadura, o parry e a finta viram ticks, pelo mesmo caminho 
   - Na `FEINT`, os apertos esperam na vaga. Com o botão ainda segurado, a guarda sobe depois dos 12 ticks.
 - **A vaga:** no mesmo tick, o parry vence o carregado, que vence o leve, e qualquer tecla de movimento vence os três (DEC-0039; DEC-0051 §4).
 - **O corpo na postura, na finta e em quem foi aparado:** na postura e na finta, os comandos esperam na vaga, o corpo anda devagar, como na guarda, e a direção segue a câmera. Em quem foi aparado, vale o tranco ("O tranco e o corpo").
+
+### A quebra, o tech e a esquiva no tick (TASK-12.4; DEC-0058)
+
+Como a quebra, o tech e a esquiva viram ticks, pelo caminho do golpe, da guarda e do parry (DEC-0051; DEC-0055; DEC-0056). O que não estava no papel é leitura v0 do Claude (DEC-0017), aprovada no plano (F-210). A tecla e a direção da mão são escolhas do Arthur (F-207; F-209). Abaixo, F é o tick do disparo e C, o tick do contato.
+
+- **Os nomes no código:**
+  - a quebra é o golpe `guard_break` (`FighterCommand.GUARD_BREAK`), com o toque `TickInput.guard_break`;
+  - a ação ganha `GRABBING` (quem agarrou, preso) e `GRABBED` (quem foi agarrado, preso e depois sem agir), no fim do enum;
+  - o estado ganha dois carimbos em quem foi agarrado: `grabbed_tick`, o contato do último agarrão, e `tech_tick`, o tick do último tech.
+- **Quando a quebra sai:** como o leve ("O leve no tick"): em pé no chão, sem golpe, sem tranco, sem postura e sem finta. Sai da guarda também, que cai. Custa 15 de stamina, pagos no disparo; sem eles, o aperto espera na vaga pelos 150 ms.
+- **As fases:** a preparação de 21 ticks, o ativo de 6 e a recuperação de 24, pelo relógio do leve: preparação desde F, ativo desde F + 21, recuperação desde F + 27 e livre desde F + 51. O corpo anda como no leve (DEC-0052).
+- **A direção e o corpo:** a direção segue a câmera em cada tick da preparação, rumo ao ponto da linha da mira a 1,2 m, onde a mão chega (F-209), e fica fixa do primeiro tick ativo ao fim, como no leve ("A espada na mira"). Com o ombro de 0,8 m, ela gira ≈ 41,81° para a direita do yaw da câmera, e o corpo olha para ela desde a preparação.
+- **A mão:** um segmento reto, a 1,3 m acima dos pés de quem agarra, na direção do golpe.
+  - A fatia do tick k do ativo, de 1 a 6, vai de 0,2 × (k − 1) a 0,2 × k m do eixo do corpo: a mão sai do eixo e chega a 1,2 m no último tick.
+  - Ela toca o alvo quando a menor distância entre a fatia e o eixo da cápsula dele (o segmento de 0,35 m a 1,45 m acima dos pés) é de até 0,35 m, o raio da cápsula. A conta é exata, como a da lâmina.
+  - Com os dois no mesmo chão e a mira no eixo do alvo, a mão pega de 0,88 a 1,48 m de centro a centro; apontada reto para o alvo, até 1,55 m.
+  - O dado guarda o comprimento da mão, a altura e a convergência, e o código tira os ângulos na carga.
+- **Quem a quebra agarra:** quem está no chão (no modo do chão ou no dash) sem bater, pelo próprio estado do fim do tick do contato (DEC-0055 §3).
+  - Agarra quem está parado ou andando, bloqueando, na postura do parry, na preparação ou na recuperação de um golpe (o leve, o carregado ou a quebra), no blockstun, na finta e nos ticks do dash que não são invulneráveis.
+  - Não agarra quem está no ativo de um golpe, no tranco de um golpe levado, aparado, no ar, na parede, no gancho ou já preso (`GRABBING` ou `GRABBED`). Sem o tranco de golpe levado na lista, não existe laço de quebra, carregado e quebra de novo.
+  - Duas quebras que tocam no mesmo tick erram as duas: cada uma acha a outra no ativo.
+- **O agarrão:** um ramo do passo 1 do `Combat.step`, antes do parry.
+  - Quem foi agarrado o resolve em C + 1: a ação vira `GRABBED` desde C, o `grabbed_tick` recebe C, e ele congela os 4 ticks da paradinha ("O hitstop e o tremor", "Quebra pega"), de C + 1 a C + 4.
+  - Quem agarrou lê o `grabbed_tick` do alvo na foto em C + 2, achando o alvo pelo `contact_target`, como lê o `block_tick` (DEC-0055 §4). A ação vira `GRABBING`, e ele congela 4 ticks, de C + 2 a C + 5.
+  - Os dois ficam presos, sem input, até C + 23, e se soltam em C + 24: os 20 ticks do agarrão mais os 4 da paradinha.
+  - Sem o `grabbed_tick` na foto em C + 2, a quebra errou: ela segue o ativo e a recuperação e fica livre em F + 51 ("No vazio", em "A quebra de guarda e o tech").
+- **O tech:** um aperto da quebra de quem foi agarrado, feito de C + 1 a C + 23, conta no primeiro tick em que ele não está congelado: um aperto durante a paradinha conta em C + 5. Um aperto de antes do contato não conta, e o tech não custa stamina.
+  - Com o tech, o `tech_tick` recebe o tick em que ele contou. Quem foi agarrado se solta em C + 24; quem agarrou lê o `tech_tick` na foto e se solta em C + 26, e quem respondeu fica 2 ticks à frente.
+  - Sem o tech, quem agarrou se solta em C + 24, e quem foi agarrado segue no `GRABBED`, sem agir, até C + 75, e volta a agir em C + 76 (72 + 4). O carregado que quem agarrou começa em C + 24 pega em C + 66; começado até C + 33, ainda pega antes de C + 76.
+  - Um golpe em quem está preso, ou no `GRABBED` depois de solto, pega como em quem está parado: o tranco do golpe toma o lugar do agarrão. É assim que o carregado garantido pega.
+- **A esquiva:** no passo do toque, quem bate lê o alvo na foto. Com ele no dash, sem tranco, entre o 3º e o 10º tick do dash (o tick em que o dash sai é o 1º), a lâmina ou a mão passa sem carimbar o contato, e o golpe segue vivo nos ticks seguintes do ativo.
+- **O golpe corta o dash:** quem leva um golpe no 1º, 2º, 11º ou 12º tick do dash, ou é agarrado neles, tem o dash cortado no primeiro tick em que o movimento roda depois do contato. O dash acaba como acabaria sozinho, com o modo do chão e a velocidade de saída, e o tranco segura o resto.
+- **A vaga:** no mesmo tick, o parry vence a quebra, que vence o carregado, que vence o leve, e qualquer tecla de movimento vence todos (DEC-0039; DEC-0051 §4).
+- **O corpo preso:** no `GRABBING` e no `GRABBED`, os comandos esperam na vaga, menos o tech de quem foi agarrado. O corpo não anda, e a gravidade segue, como no tranco.
 
 ## O hitstop e o tremor
 

@@ -66,6 +66,7 @@
 | [DEC-0055](DEC-0055-a-guarda-o-tranco-e-a-paradinha-no-tick.md) | 2026-10-28 | A guarda, o tranco e a paradinha no tick: a ação ganha a guarda e o tranco, quem defende resolve o contato pelo próprio estado, cada um congela quando sabe o resultado, e um tick congelado pula o motor | aceita (F-183; F-182); completa a DEC-0051; completada pela DEC-0056 (o carregado, o parry e a finta) |
 | [DEC-0056](DEC-0056-o-carregado-o-parry-e-a-finta-no-tick.md) | 2026-10-30 | O carregado, o parry e a finta no tick: o carregado paga na soltura e a armadura não congela quem carrega; o parry é uma postura que quem defende resolve na metade da frente e quem bateu lê na foto; a finta é o aperto da guarda na preparação | aceita (F-192; F-191); completa a DEC-0051 e a DEC-0055 |
 | [DEC-0057](DEC-0057-a-espada-na-mira.md) | 2026-11-14 | A espada na mira: o golpe aponta do corpo para o ponto da linha da mira a 2,0 m, onde chega a ponta da lâmina; o corpo olha para ele desde a preparação, e o boneco e o bot miram como gente | aceita (F-198; F-197; F-199); substitui em parte a DEC-0051 |
+| [DEC-0058](DEC-0058-a-quebra-o-tech-e-a-esquiva-no-tick.md) | 2026-11-17 | A quebra, o tech e a esquiva no tick: a mão mira o ponto da linha da mira a 1,2 m; quem foi agarrado resolve o agarrão e quem agarrou lê na foto; o tech é um aperto depois do contato, de graça; a esquiva é conferida por quem bate, pela foto, e o golpe corta o dash | aceita (F-210; F-209); completa a DEC-0051, a DEC-0055, a DEC-0056 e a DEC-0057 |
 
 ## Propostas — ainda não são regra
 

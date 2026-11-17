@@ -1,6 +1,6 @@
 ---
-revisado_em: 2026-11-15
-fontes: [F-007, F-009, F-010, F-021, F-038, F-039, F-040, F-041, F-042, F-043, F-044, F-045, F-046, F-047, F-048, F-049, F-085, F-087, F-088, F-091, F-093, F-094, F-095, F-097, F-098, F-101, F-112, F-121, F-122, F-129, F-140, F-141, F-143, F-166, F-178, F-180, F-202, F-204, F-205]
+revisado_em: 2026-11-17
+fontes: [F-007, F-009, F-010, F-021, F-038, F-039, F-040, F-041, F-042, F-043, F-044, F-045, F-046, F-047, F-048, F-049, F-085, F-087, F-088, F-091, F-093, F-094, F-095, F-097, F-098, F-101, F-112, F-121, F-122, F-129, F-140, F-141, F-143, F-166, F-178, F-180, F-202, F-204, F-205, F-210]
 ---
 
 # Testes e entrega
@@ -187,27 +187,28 @@ Os tempos são os da rodada B depois dos consertos (F-049 §5). O total foi 31,3
 - **A vida:** a mínima, e quantas vezes ela voltou ao máximo.
 
 *Os apertos* (F-166 §7; F-178 §1):
-- Um aperto é um tick em que o input traz o toque do pulo, do dash, do gancho, do leve ou do carregado. O resumo acompanha a vaga (DEC-0039; `glossario.md`, "Vaga do buffer"):
-  - num tick com vários apertos, a vaga fica com o de maior prioridade: pulo, dash, gancho, parry, carregado e leve, nessa ordem (DEC-0039 §4; DEC-0051 §4; DEC-0056 §6). O parry entra só na prioridade: os apertos dele ficam fora do resumo;
+- Um aperto é um tick em que o input traz o toque do pulo, do dash, do gancho, do leve, do carregado ou da quebra. O aperto da quebra de quem está no `GRABBED` é o tech: ele fica fora das contas dos apertos e dos cliques e entra só na linha do agarrão. O resumo acompanha a vaga (DEC-0039; `glossario.md`, "Vaga do buffer"):
+  - num tick com vários apertos, a vaga fica com o de maior prioridade: pulo, dash, gancho, parry, quebra, carregado e leve, nessa ordem (DEC-0039 §4; DEC-0051 §4; DEC-0056 §6; DEC-0058 §7). O parry entra só na prioridade: os apertos dele ficam fora do resumo;
   - os outros apertos do tick nunca entram na vaga: não saíram;
   - o aperto que entrou sai da vaga de um de três jeitos. Ele é **usado** quando a vaga esvazia até `buffer_ticks` depois dele: a manobra ou o golpe saiu, ou, no pulo durante a puxada, o gancho soltou. Ele é **trocado** quando um aperto mais novo, de qualquer tecla, toma a vaga. E ele **vence** quando a vaga esvazia mais de `buffer_ticks` depois dele (`Movement._within`: a janela vale até `buffer_ticks` inclusive);
   - "saiu na hora" é o aperto usado no próprio tick; "esperou na vaga", o usado num tick depois; "não saiu", o trocado, o vencido e o que o fim do replay pega ainda na vaga.
 - Para o pulo, o dash e o gancho, o resumo separa os apertos pelo modo do estado em que o tick começou e diz, em cada modo, quantos saíram na hora, quantos esperaram e quantos não saíram. É a conta da F-166 §7: "dos 34 no ar, 27 não viraram dash e 7 saíram no pouso".
 
-*Os golpes* (critérios 4 e 5; F-178 §1; F-180 §1; F-202, contexto; F-204, contexto):
-- O leve e o carregado têm cada um as próprias linhas, abertas pelas fases do cabeçalho, no formato "Leve: preparação 15 ticks (250 ms), ativo 6 ticks (100 ms), recuperação 12 ticks (200 ms)", com "Carregado:" no carregado. Os ms saem dos ticks, ticks × 1000 ÷ ticks por segundo, arredondados para o ms inteiro mais perto: os 250 ms do leve dão 15 ticks a 60 e 8 ticks a 30, "8 ticks (267 ms)". Um golpe sem nenhum clique imprime só "Leve: nenhum clique" ou "Carregado: nenhum clique".
+*Os golpes* (critérios 4 e 5; TASK-12.4, critério 9; F-178 §1; F-180 §1; F-202, contexto; F-204, contexto; DEC-0058):
+- O leve, o carregado e a quebra têm cada um as próprias linhas, abertas pelas fases do cabeçalho, no formato "Leve: preparação 15 ticks (250 ms), ativo 6 ticks (100 ms), recuperação 12 ticks (200 ms)", com "Carregado:" no carregado e "Quebra:" na quebra. Os ms saem dos ticks, ticks × 1000 ÷ ticks por segundo, arredondados para o ms inteiro mais perto: os 250 ms do leve dão 15 ticks a 60 e 8 ticks a 30, "8 ticks (267 ms)". Um golpe sem nenhum clique imprime só "Leve: nenhum clique", "Carregado: nenhum clique" ou "Quebra: nenhum clique".
 - **Os cliques** são os apertos do golpe.
 - **Os golpes que saíram:** os ticks em que o estado entra na preparação desse golpe: o estado em que o tick começou não estava na preparação, e o estado depois dele está, com `action_move` o golpe. Uma preparação só acaba no ativo, no tranco ou na finta, então duas nunca vêm seguidas. Entre os golpes que saíram, o resumo conta os que esperaram na vaga.
 - **Os emendados:** os golpes que saíram no tick em que o golpe anterior do lutador acabou. O estado em que o tick começou estava na recuperação.
-- **O fim de um golpe:** o primeiro tick em que o estado depois do tick não está mais numa fase dele: sem ação, na guarda, no tranco, aparado, na finta, ou entrando na preparação de outro golpe, quando ele é emendado.
+- **O fim de um golpe:** o primeiro tick em que o estado depois do tick não está mais numa fase dele: sem ação, na guarda, no tranco, aparado, na finta, no agarrão, ou entrando na preparação de outro golpe, quando ele é emendado.
 - **Os cliques que não saíram,** cada um no primeiro motivo que vale, nesta ordem:
   1. trocado no mesmo tick: outra tecla ficou com a vaga no tick do clique;
   2. durante um golpe: o estado depois do tick está na preparação, no ativo ou na recuperação de um golpe. O resumo conta por fase e dá a mediana, em ticks e em ms, dos ticks entre o começo desse golpe e o clique (F-178 §1);
   3. no tranco: o estado depois do tick está no hitstun, no blockstun ou aparado;
-  4. na postura: na postura do parry ou na finta;
-  5. fora do chão: o estado em que o tick começou não está no modo chão, ou não está em pé (está numa cabeça);
-  6. sem stamina: a barra no tick, calculada do estado em que ele começou (`Stamina.at`), está abaixo do custo do golpe;
-  7. outro.
+  4. no agarrão: o estado depois do tick está no `GRABBING` ou no `GRABBED`;
+  5. na postura: na postura do parry ou na finta;
+  6. fora do chão: o estado em que o tick começou não está no modo chão, ou não está em pé (está numa cabeça);
+  7. sem stamina: a barra no tick, calculada do estado em que ele começou (`Stamina.at`), está abaixo do custo do golpe;
+  8. outro.
 
   A ação sai do estado depois do tick, e o modo, do estado em que ele começou, porque o passo do combate roda antes do movimento (DEC-0051 §2). O clique encontra a ação já resolvida no tick (o tranco do golpe levado, a fase que avançou) e o modo do tick anterior.
 - **O resultado** de cada golpe que saiu:
@@ -215,17 +216,26 @@ Os tempos são os da rodada B depois dos consertos (F-049 §5). O total foi 31,3
   - errou: chegou ao ativo e acabou sem contato;
   - cortado: acabou antes do ativo, pelo tranco de um golpe levado ou pela finta;
   - inacabado: o replay acaba no meio dele, sem contato.
+
+  Na quebra, o resultado de um contato é **agarrou**: o alvo é o outro lutador que, no tick seguinte, mostra o `grabbed_tick` daquele contato. Ele foi **com tech** quando o alvo mostra depois um `tech_tick` maior que o contato, até o fim do agarrão, e **sem tech** quando não mostra. Um contato que nenhum lutador mostra no `grabbed_tick` (o alvo estava no ativo de um golpe, por exemplo) é **errou**. Cortada e inacabada valem como nos outros golpes. A linha é "Resultado: 6 agarraram (4 com tech e 2 sem tech), 3 erros e 1 cortada".
 - **As distâncias** são de centro a centro, no plano (x e z), dos pés de quem bate até os pés do outro lutador mais perto, nas posições depois do tick:
-  - no primeiro tick ativo de todo golpe que chegou ao ativo: o resumo dá de quanto a quanto estavam os que pegaram, os que tiveram contato (acerto, bloqueio ou aparo), e a menor de todas (F-204, contexto: "nenhum carregado saiu a menos de 1,5 m");
-  - a mais curta do ativo inteiro: um erro está "ao alcance" quando ela não passa do alcance, e "longe" quando passa. O alcance sai do cabeçalho: a mão, a lâmina, o raio da lâmina e o raio da cápsula, uns 2,43 m na v0 (`combate.md`, "A lâmina e o contato").
+  - no primeiro tick ativo de todo golpe que chegou ao ativo: o resumo dá de quanto a quanto estavam os que pegaram, os que tiveram contato (acerto, bloqueio ou aparo; na quebra, as que agarraram), e a menor de todas (F-204, contexto: "nenhum carregado saiu a menos de 1,5 m");
+  - a mais curta do ativo inteiro: um erro está "ao alcance" quando ela não passa do alcance, e "longe" quando passa. O alcance sai do cabeçalho: a mão, a lâmina, o raio da lâmina e o raio da cápsula, uns 2,43 m na v0 (`combate.md`, "A lâmina e o contato"); na quebra, o comprimento da mão e o raio da cápsula, 1,55 m.
 - **Nos erros ao alcance,** o resumo lista cada um com o tick e, no primeiro tick ativo, três números:
   - a distância;
   - o lado do corte: a distância do eixo do outro até a reta do golpe (`action_yaw`), positiva com o outro à direita;
   - a mira: a distância do eixo do outro até a linha da mira, positiva com a mira à direita dele. A linha corre `aim_side` à direita do eixo de quem bate, paralela ao yaw da câmera do último tick da preparação, que é o yaw do input daquele tick (DEC-0045; DEC-0057).
 
   Nos golpes que pegaram, o resumo dá a média da mira.
-- **A vida do alvo:** a mínima de cada lutador que o golpe acertou, e quantas vezes ela voltou ao máximo.
+- **A vida do alvo:** a mínima de cada lutador que o golpe acertou, e quantas vezes ela voltou ao máximo. A quebra não tem essa linha: ela não tira vida.
 - **A velocidade no golpe:** nos ticks em que o estado depois do tick está numa fase do golpe e em pé no chão, a velocidade no plano. O resumo dá a mediana, a máxima e a parte dos ticks acima do andar devagar do cabeçalho (`slow_walk_speed_mps`, 3 m/s na v0; DEC-0052).
+- **O agarrão** (TASK-12.4, critério 9): depois das linhas dos golpes, cada lutador ganha a linha "Agarrado:". Ela conta:
+  - as vezes em que ele foi agarrado: os ticks em que o estado entra no `GRABBED`;
+  - os techs: os agarrões em que o `tech_tick` dele recebe um tick depois do contato, até o fim do agarrão;
+  - a taxa de tech: os techs sobre os agarrões, em por cento inteiro, arredondado como a parte dos ticks da velocidade;
+  - com um tech ou mais, a mediana, em ticks e em ms, entre o contato e o aperto do tech, que é o primeiro aperto da quebra depois do contato.
+
+  Os formatos: "Agarrado: nenhuma vez"; "Agarrado: 1 vez; o tech em 0 (0 %)"; "Agarrado: 6 vezes; o tech em 4 (67 %); o aperto do tech, em mediana, 15 ticks (250 ms) depois do contato".
 
 *O que fica de fora:* a guarda, o parry e a finta, até alguém medi-los à mão duas vezes (DEC-0009; F-205).
 

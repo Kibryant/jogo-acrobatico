@@ -26,15 +26,6 @@ usage() {
 	exit 2
 }
 
-# A path for Godot: user:// and res:// as they are, any other one from where the script was run.
-godot_path() {
-	case "$1" in
-	user://* | res://*) echo "$1" ;;
-	/* | [A-Za-z]:*) native_path "$1" ;;
-	*) native_path "$here/$1" ;;
-	esac
-}
-
 file=""
 force=""
 watch=""
@@ -52,35 +43,30 @@ while [ "$#" -gt 0 ]; do
 		shift
 		;;
 	--max-fps=*) max_fps="${1#--max-fps=}" ;;
-	--readable=*) readable="$(godot_path "${1#--readable=}")" ;;
-	--trace=*) trace="$(godot_path "${1#--trace=}")" ;;
-	--sample=*) sample="$(godot_path "${1#--sample=}")" ;;
+	--readable=*) readable="$(godot_path "$here" "${1#--readable=}")" ;;
+	--trace=*) trace="$(godot_path "$here" "${1#--trace=}")" ;;
+	--sample=*) sample="$(godot_path "$here" "${1#--sample=}")" ;;
 	--*)
 		echo "unknown argument: $1" >&2
 		usage
 		;;
 	*)
 		[ -z "$file" ] || usage
-		file="$(godot_path "$1")"
+		file="$(godot_path "$here" "$1")"
 		;;
 	esac
 	shift
 done
 
 esc="$(printf '\033')"
-# run_headless ARGS...: the headless player with ARGS after "--"; prints its "replay: " lines and
-# fails on any error line or exit code.
+# run_headless ARGS...: the headless player with ARGS after "--" (play_headless, tools/lib.sh);
+# prints its "replay: " lines and fails on any error line or exit code.
 run_headless() {
-	local status=0 output errors
-	output="$("$godot_bin" --headless --path . --scene res://tools/replay_play.tscn -- "$@" 2>&1)" ||
-		status=$?
-	output="$(sed -e "s/${esc}\[[0-9;]*[A-Za-z]//g" -e 's/\r$//' <<<"$output")"
-	errors="$(grep -E '^(ERROR|SCRIPT ERROR|USER ERROR):' <<<"$output" || true)"
-	grep -E '^replay: ' <<<"$output" | sed -e 's/^replay: //' || true
-	if [ "$status" -ne 0 ] || [ -n "$errors" ]; then
-		[ -z "$errors" ] || echo "$output"
-		echo "the headless player failed (exit $status)" >&2
-		return "$((status == 0 ? 1 : status))"
+	play_headless "$godot_bin" "$@"
+	if [ "$play_status" -ne 0 ] || [ -n "$play_errors" ]; then
+		[ -z "$play_errors" ] || echo "$play_output"
+		echo "the headless player failed (exit $play_status)" >&2
+		return "$((play_status == 0 ? 1 : play_status))"
 	fi
 }
 

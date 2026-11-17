@@ -1,6 +1,6 @@
 ---
-revisado_em: 2026-10-26
-fontes: [F-007, F-009, F-010, F-021, F-038, F-039, F-040, F-041, F-042, F-043, F-044, F-045, F-046, F-047, F-048, F-049, F-085, F-087, F-088, F-091, F-093, F-094, F-095, F-097, F-098, F-101, F-112, F-121, F-122, F-129, F-140, F-141, F-143]
+revisado_em: 2026-11-15
+fontes: [F-007, F-009, F-010, F-021, F-038, F-039, F-040, F-041, F-042, F-043, F-044, F-045, F-046, F-047, F-048, F-049, F-085, F-087, F-088, F-091, F-093, F-094, F-095, F-097, F-098, F-101, F-112, F-121, F-122, F-129, F-140, F-141, F-143, F-166, F-178, F-180, F-202, F-204, F-205]
 ---
 
 # Testes e entrega
@@ -12,6 +12,7 @@ Estado atual: o Desenho 4 (TASK-6) fechado, com as DEC-0027 e DEC-0028. A parte 
 - O gravador do replay nasceu na TASK-10.3, com o tocador sem tela e o `--watch` (§4).
 - O gancho, na TASK-10.6, trouxe a sonda B, a cena `gancho` da SyncTest e as colunas `pitch` e `grapple` do replay (§3; §4).
 - A cabeça do outro, na TASK-10.7, trouxe a sonda C, a cena `cabeca` da SyncTest, o boneco do Sozinho, que o replay grava junto (`--dummy=off` o tira), e a borda da arena (§3; §4).
+- O resumo do replay nasceu na TASK-14: um comando conta o que se media à mão depois de cada sessão (§4; F-205).
 - A versão visual e interativa deste documento é a vitrine [A esteira por dentro](https://claude.ai/artifact/L9FpEtDFoyGJYWLSR6TFA1), privada (DEC-0019).
 
 ## 1. A esteira
@@ -156,6 +157,91 @@ Os tempos são os da rodada B depois dos consertos (F-049 §5). O total foi 31,3
 - Ele nunca escreve no relógio do netfox, que é código de jogo. Toca as linhas em ordem, a partir do próprio primeiro tick, e um salto do relógio gravado vira ticks seguidos ali.
 - Ele anota o tamanho de cada laço que rodou. Com `--trace=SAÍDA`, ele escreve o rastro e os laços ao lado (`SAÍDA.loops`) e fecha; o tocador sem tela toca o mesmo arquivo e diz se os dois rastros batem ou onde se separam.
 - `--max-fps N` limita os quadros a N, com o vsync desligado para o limite valer acima dos 60 Hz da tela.
+
+**O resumo** (`bash tools/replay_summary.sh ARQUIVO [--force]`; TASK-14):
+- Ele toca o replay sem tela, como o `tools/replay.sh`, e conta o que o agente media à mão depois de cada sessão (F-166 §7; F-178 §1; F-180 §1; F-202, contexto; F-204, contexto; F-205). O arquivo guarda só as teclas; o que saiu, pegou ou mudou de modo vem do rastro de estado, o estado depois de cada tick.
+- Recusa o que o tocador recusa e sai com 1: uma linha em português diz que o arquivo não é um replay válido, ou que é de outra build e só toca com `--force`, e as linhas seguintes trazem as mensagens do leitor, como o tocador as diz. Um argumento errado sai com 2, e o resumo impresso sai com 0.
+- Conta com os números do cabeçalho, os mesmos com que o tocador tocou: a janela da vaga, a stamina, o andar devagar, o ombro da mira, o alcance da lâmina e as fases de cada golpe. Uma sessão gravada antes de um ajuste no `.tres` continua contada com os números dela.
+- Abre com o arquivo, os ticks e a duração, os lutadores, a versão e o commit, e se o estado se separou do jogo ao vivo. Com a coluna `check`, diz o primeiro tick em que se separou e avisa que o que vem depois dele não é a sessão; sem ela, diz que não dá para saber.
+- Depois vem uma linha exata com os ticks, os ticks por segundo, a duração e quantos lutadores: "6.860 ticks a 60 por segundo, 1 min 54 s, 2 lutadores" ("1 lutador" quando é um só). Então, um bloco por lutador, aberto por uma linha exata: "== Lutador 0, você", "== Lutador 1, o outro (o boneco ou o bot)" e, do 2 em diante, "== Lutador 2, outro". O cabeçalho do arquivo não diz quem dirigia cada lutador; no Sozinho, o 1 é o boneco.
+- Os tempos saem dos ticks pelos ticks por segundo do cabeçalho, arredondados para o segundo inteiro mais perto: "1 min 54 s" a partir de 60 s, e "54 s" abaixo disso; os voos levam uma casa decimal, "7,6 s". Os números levam vírgula decimal e ponto de milhar.
+- Em cada tick de cada lutador, o resumo lê três coisas: o estado em que o tick começou, o input do tick e o estado depois dele. O estado em que o tick começou é a linha do tick anterior; no primeiro tick, é o do nascimento: um `FighterState` novo, no chão e sem carimbos, com a vida no máximo do combate. A distância e as voltas da vida ao máximo contam do segundo tick em diante.
+- Nenhum carimbo de manobra muda de valor depois de escrito. A paradinha anda só o `action_since` e o `stun_until_tick` (DEC-0055 §5), que não são manobras. Por isso uma manobra se conta pelo carimbo igual ao tick, e um golpe, pela entrada na preparação.
+
+*O movimento* (critério 1; F-166 §7):
+- **O tempo por modo:** os ticks em que o estado depois do tick está em cada modo: chão, ar, parede, gancho e dash. "Parado" é o chão com a velocidade no plano exatamente zero.
+- **As manobras,** cada uma no tick em que aparece no estado depois do tick:
+  - o pulo: `jumps_used` vai de 0 para 1, sem pulo da parede no tick (o pulo do chão e o do coyote);
+  - o pulo duplo: `double_jump_tick` igual ao tick;
+  - a corrida na parede: o estado entra no modo parede, ou, já nele, recomeça com outro `mode_since`, como numa quina, onde a corrida sai e entra na outra face no mesmo tick. A emenda troca só o `wall_id`, sem recomeçar, e não é corrida nova (F-129);
+  - o pulo da parede: `wall_jump_tick` igual ao tick;
+  - o dash: `dash_tick` igual ao tick;
+  - o gancho: `grapple_fired_tick` igual ao tick, o gancho que saiu e prendeu;
+  - o pouso na cabeça do outro: `head_landing_tick` igual ao tick.
+
+  Um pulo duplo no mesmo tick em que a corrida começa noutra parede some do estado, porque a parede nova limpa o carimbo; o resumo não o conta.
+- **A distância no plano:** a soma, tick a tick, do deslocamento da posição em x e z.
+- **As paredes:** quantas corridas começaram em cada `wall_id`, da mais usada para a menos usada. E as voltas à mesma parede: as corridas que começam no `wall_id` que o estado ainda guardava da corrida anterior. O chão limpa o `wall_id`, então a volta é sempre no mesmo voo (DEC-0047; DEC-0048).
+- **A altura,** a dos pés (`position.y`): o ponto mais alto, o tick em que chegou nele pela primeira vez e a última manobra até ele; e o tempo a 3 m ou mais e a 10 m ou mais, as duas faixas da F-166 §7.
+- **O voo mais longo:** a maior sequência de ticks em que o estado depois do tick não está em pé no chão (`Movement.stands` falso; em cima de uma cabeça também conta como voo). O resumo diz o tick em que ele começou e as manobras dentro dele. Um voo que o fim do replay corta conta até o último tick.
+- **A vida:** a mínima, e quantas vezes ela voltou ao máximo.
+
+*Os apertos* (F-166 §7; F-178 §1):
+- Um aperto é um tick em que o input traz o toque do pulo, do dash, do gancho, do leve ou do carregado. O resumo acompanha a vaga (DEC-0039; `glossario.md`, "Vaga do buffer"):
+  - num tick com vários apertos, a vaga fica com o de maior prioridade: pulo, dash, gancho, parry, carregado e leve, nessa ordem (DEC-0039 §4; DEC-0051 §4; DEC-0056 §6). O parry entra só na prioridade: os apertos dele ficam fora do resumo;
+  - os outros apertos do tick nunca entram na vaga: não saíram;
+  - o aperto que entrou sai da vaga de um de três jeitos. Ele é **usado** quando a vaga esvazia até `buffer_ticks` depois dele: a manobra ou o golpe saiu, ou, no pulo durante a puxada, o gancho soltou. Ele é **trocado** quando um aperto mais novo, de qualquer tecla, toma a vaga. E ele **vence** quando a vaga esvazia mais de `buffer_ticks` depois dele (`Movement._within`: a janela vale até `buffer_ticks` inclusive);
+  - "saiu na hora" é o aperto usado no próprio tick; "esperou na vaga", o usado num tick depois; "não saiu", o trocado, o vencido e o que o fim do replay pega ainda na vaga.
+- Para o pulo, o dash e o gancho, o resumo separa os apertos pelo modo do estado em que o tick começou e diz, em cada modo, quantos saíram na hora, quantos esperaram e quantos não saíram. É a conta da F-166 §7: "dos 34 no ar, 27 não viraram dash e 7 saíram no pouso".
+
+*Os golpes* (critérios 4 e 5; F-178 §1; F-180 §1; F-202, contexto; F-204, contexto):
+- O leve e o carregado têm cada um as próprias linhas, abertas pelas fases do cabeçalho, no formato "Leve: preparação 15 ticks (250 ms), ativo 6 ticks (100 ms), recuperação 12 ticks (200 ms)", com "Carregado:" no carregado. Os ms saem dos ticks, ticks × 1000 ÷ ticks por segundo, arredondados para o ms inteiro mais perto: os 250 ms do leve dão 15 ticks a 60 e 8 ticks a 30, "8 ticks (267 ms)". Um golpe sem nenhum clique imprime só "Leve: nenhum clique" ou "Carregado: nenhum clique".
+- **Os cliques** são os apertos do golpe.
+- **Os golpes que saíram:** os ticks em que o estado entra na preparação desse golpe: o estado em que o tick começou não estava na preparação, e o estado depois dele está, com `action_move` o golpe. Uma preparação só acaba no ativo, no tranco ou na finta, então duas nunca vêm seguidas. Entre os golpes que saíram, o resumo conta os que esperaram na vaga.
+- **Os emendados:** os golpes que saíram no tick em que o golpe anterior do lutador acabou. O estado em que o tick começou estava na recuperação.
+- **O fim de um golpe:** o primeiro tick em que o estado depois do tick não está mais numa fase dele: sem ação, na guarda, no tranco, aparado, na finta, ou entrando na preparação de outro golpe, quando ele é emendado.
+- **Os cliques que não saíram,** cada um no primeiro motivo que vale, nesta ordem:
+  1. trocado no mesmo tick: outra tecla ficou com a vaga no tick do clique;
+  2. durante um golpe: o estado depois do tick está na preparação, no ativo ou na recuperação de um golpe. O resumo conta por fase e dá a mediana, em ticks e em ms, dos ticks entre o começo desse golpe e o clique (F-178 §1);
+  3. no tranco: o estado depois do tick está no hitstun, no blockstun ou aparado;
+  4. na postura: na postura do parry ou na finta;
+  5. fora do chão: o estado em que o tick começou não está no modo chão, ou não está em pé (está numa cabeça);
+  6. sem stamina: a barra no tick, calculada do estado em que ele começou (`Stamina.at`), está abaixo do custo do golpe;
+  7. outro.
+
+  A ação sai do estado depois do tick, e o modo, do estado em que ele começou, porque o passo do combate roda antes do movimento (DEC-0051 §2). O clique encontra a ação já resolvida no tick (o tranco do golpe levado, a fase que avançou) e o modo do tick anterior.
+- **O resultado** de cada golpe que saiu:
+  - acertou, bloqueado ou aparado: houve contato, ou seja, num tick ativo do golpe, `contact_tick` igual ao tick e `contact_move` o golpe. O alvo é o outro lutador que, no tick seguinte, mostra o carimbo daquele contato: `hurt_tick` (acertou, com ou sem armadura), `block_tick` (bloqueado) ou `parry_tick` (aparado);
+  - errou: chegou ao ativo e acabou sem contato;
+  - cortado: acabou antes do ativo, pelo tranco de um golpe levado ou pela finta;
+  - inacabado: o replay acaba no meio dele, sem contato.
+- **As distâncias** são de centro a centro, no plano (x e z), dos pés de quem bate até os pés do outro lutador mais perto, nas posições depois do tick:
+  - no primeiro tick ativo de todo golpe que chegou ao ativo: o resumo dá de quanto a quanto estavam os que pegaram, os que tiveram contato (acerto, bloqueio ou aparo), e a menor de todas (F-204, contexto: "nenhum carregado saiu a menos de 1,5 m");
+  - a mais curta do ativo inteiro: um erro está "ao alcance" quando ela não passa do alcance, e "longe" quando passa. O alcance sai do cabeçalho: a mão, a lâmina, o raio da lâmina e o raio da cápsula, uns 2,43 m na v0 (`combate.md`, "A lâmina e o contato").
+- **Nos erros ao alcance,** o resumo lista cada um com o tick e, no primeiro tick ativo, três números:
+  - a distância;
+  - o lado do corte: a distância do eixo do outro até a reta do golpe (`action_yaw`), positiva com o outro à direita;
+  - a mira: a distância do eixo do outro até a linha da mira, positiva com a mira à direita dele. A linha corre `aim_side` à direita do eixo de quem bate, paralela ao yaw da câmera do último tick da preparação, que é o yaw do input daquele tick (DEC-0045; DEC-0057).
+
+  Nos golpes que pegaram, o resumo dá a média da mira.
+- **A vida do alvo:** a mínima de cada lutador que o golpe acertou, e quantas vezes ela voltou ao máximo.
+- **A velocidade no golpe:** nos ticks em que o estado depois do tick está numa fase do golpe e em pé no chão, a velocidade no plano. O resumo dá a mediana, a máxima e a parte dos ticks acima do andar devagar do cabeçalho (`slow_walk_speed_mps`, 3 m/s na v0; DEC-0052).
+
+*O que fica de fora:* a guarda, o parry e a finta, até alguém medi-los à mão duas vezes (DEC-0009; F-205).
+
+*Os limites:*
+- Com três lutadores ou mais, dois contatos no mesmo tick em alvos diferentes podem ir para o alvo errado, porque o resumo casa o contato pelo carimbo do tick seguinte. O estado de quem bate guarda o nome do alvo (`contact_target`, a chave da foto; DEC-0026 §3), mas a linha do rastro traz o índice do lutador, não o nome dele, e quem dá os nomes é a partida (`Fighter0`, `Fighter1`... em `match/match.gd`). Ler o nome tira esse limite, quando houver partida com três ou mais.
+- Um contato no último tick do replay não tem tick seguinte para mostrar o alvo: o golpe sai inacabado.
+- Abaixo de 0,05 m, a altura sai como 0,0, e o tick desse ponto mais alto seria só o ruído do pé no chão; aí o resumo diz que o ponto mais alto não passou de 0,0 m, sem tick nem manobra.
+- A faixa "ao alcance" do resumo é a distância mais curta do ativo contra os 2,43 m; à mão, nas sessões 22 e 23, a faixa era 2,6 m no primeiro tick ativo. A régua do resumo fica a do alcance porque, além dele, a lâmina não chega ao outro, e o lado do corte não explica o erro. As consequências:
+  - os dois erros a 2,40 e 2,43 m da sessão 22, que a F-202 chamou de fora do alcance, saem ao alcance, na beira;
+  - dos quatro erros da sessão 23 que a F-204 contou até 2,6 m, os dos ticks 997 e 6.159 passam de 2,43 m no ativo inteiro (2,57 e 2,54 m no ponto mais perto) e saem como longe, sem lado nem mira. O do tick 6.159 era o único com o boneco à direita do corte, então a frase "à direita em 1 e à esquerda em 3" da F-204 não se lê na saída do comando.
+
+*A validação* (TASK-14, 15/11/2026): nos replays das sessões 22 e 23, a lista de golpes do resumo deu todos os números medidos à mão na F-202 e na F-204 (contexto). Quem conferiu foi uma sonda descartável do implementer e um script do reviewer sobre o rastro bruto.
+- A saída do comando mostra parte deles direto: na sessão 22, os 38 carregados, os 28 acertos e os seis erros ao alcance com o lado e a mira; na sessão 23, os 43 leves que pegaram, de 1,00 a 2,43 m, os 8 de 9 carregados e o carregado mais perto, a 1,53 m.
+- Os outros saem só da lista: os 52 leves da sessão 23 que chegaram ao ativo (os 43 acertos e os 9 erros da saída, sem os 3 cortados); os 46 até 2,6 m; os quatro erros até 2,6 m com o lado; e a média de 0,17 m da mira nos 51 acertos, que a saída dá por golpe, 0,18 m nos leves e 0,10 m nos carregados.
+
+*O custo:* o comando joga a partida inteira de novo. Neste PC, com a CPU livre, a sessão de 1 min 54 s de 15/11 levou uns 27 s. A de 15 min 38 s de 26/10, com `--force`, levou 118 s com a CPU livre (96 s para tocar e 12 s para contar as 112 594 linhas do rastro, uns 0,11 ms por linha) e 3 min 52 s logo depois de um portão inteiro.
 
 **A medição do critério 5 (19/10/2026, neste PC).**
 - O arquivo é a corrida do teste do portão, gravada sem tela pelo `bash tools/replay.sh --sample=ARQUIVO`: 600 ticks.
@@ -316,6 +402,7 @@ O inventário que o `AGENTS.md` resumia (veio para cá no fechamento do Desenho 
   - `tools/server_image_check.sh`: a imagem do servidor. Aqui ele precisa do Docker Desktop aberto, que é pesado; o CI o roda em todo PR;
   - `tools/record_reference.sh`: regrava a referência;
   - `tools/replay.sh ARQUIVO [--force] [--readable=SAÍDA] [--trace=SAÍDA]`: refaz um replay sem tela; com `--watch [--max-fps N]`, com janela; com `--sample=SAÍDA`, grava a corrida do teste do portão (§4);
+  - `tools/replay_summary.sh ARQUIVO [--force]`: toca um replay sem tela e imprime o resumo da sessão, um bloco por lutador (§4, "O resumo");
   - `tools/measure_fps.sh`: a medição de fps, com a build em tela cheia por uns 2 minutos e o PC livre (F-095).
 - O `node` 24 e o `python` 3.14 servem scripts de apoio e os hooks, nunca o portão (F-016 §2); `python`, nunca `python3`, que aqui é um atalho da Store.
 - As sondas ficam fora do repositório, em pastas ao lado dele (`../netfox-sonda`, `../assets-sonda`, `../git-sonda`).

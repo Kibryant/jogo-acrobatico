@@ -452,3 +452,62 @@ func test_the_camera_shake_is_on_by_default_and_saved_off() -> void:
 	loaded.camera_shake = true
 	loaded.apply_camera_shake(rig)
 	assert_bool(rig.shake_enabled).is_true()
+
+
+# TASK-12.4: an options file older than the guard break has no entry for it, and may give its
+# default, the middle mouse button (F-207), to another action. The newer action gives way: the
+# player's keys all stay, the guard break alone has no key, with one warning naming it, and the
+# InputMap gives it no event. Saved, the file still has no entry for it, so the next load asks its
+# default again; once the middle button is free, the guard break has it back.
+func test_an_older_file_with_the_middle_button_leaves_only_the_guard_break_without_a_key() -> void:
+	_write(
+		"\n".join(
+			[
+				"[keys]",
+				"jump=\"mouse:%d\"" % MOUSE_BUTTON_MIDDLE,
+				"grapple=\"key:%d\"" % KEY_G,
+				"dash=\"key:%d:left\"" % KEY_SHIFT,
+			],
+		),
+	)
+	var store := _loaded()
+	assert_int(store.warnings.size()).override_failure_message("%s" % [store.warnings]).is_equal(1)
+	_assert_warned_about(store, "guard_break")
+	assert_object(store.binding(&"guard_break")).override_failure_message("still a key") \
+			.is_null()
+	assert_int(_code(store.binding(&"jump"))).is_equal(MOUSE_BUTTON_MIDDLE)
+	assert_int(_code(store.binding(&"grapple"))).is_equal(KEY_G)
+	assert_int(_code(store.binding(&"move_forward"))).is_equal(KEY_W)
+	assert_int(_code(store.binding(&"parry"))).is_equal(KEY_F)
+	store.apply_keys()
+	assert_array(InputMap.action_get_events(&"guard_break")).is_empty()
+	var middle := OptionsStore.mouse_event(MOUSE_BUTTON_MIDDLE)
+	middle.pressed = true
+	assert_bool(middle.is_action_pressed(&"jump")).is_true()
+	assert_bool(middle.is_action_pressed(&"guard_break")).is_false()
+	assert_int(store.save_file()).is_equal(OK)
+	var file := ConfigFile.new()
+	assert_int(file.load(_path)).is_equal(OK)
+	assert_bool(file.has_section_key("keys", "guard_break")).is_false()
+	assert_str(str(file.get_value("keys", "jump"))).is_equal("mouse:%d" % MOUSE_BUTTON_MIDDLE)
+	var again := _loaded()
+	assert_object(again.binding(&"guard_break")).is_null()
+	assert_int(again.warnings.size()).is_equal(1)
+	# The jump on another key frees the middle button: the guard break has its default back.
+	assert_str(String(again.bind(&"jump", OptionsStore.key_event(KEY_SPACE)))).is_empty()
+	assert_int(again.save_file()).is_equal(OK)
+	var freed := _loaded()
+	assert_array(freed.warnings).is_empty()
+	assert_int(_code(freed.binding(&"guard_break"))).is_equal(MOUSE_BUTTON_MIDDLE)
+
+
+# The older file that gives the guard break's middle button to the parry, the action right before
+# it in the screen, is the same: only the guard break gives way.
+func test_a_new_action_gives_way_to_any_action_of_the_file_on_its_default() -> void:
+	_write("[keys]\nparry=\"mouse:%d\"\n" % MOUSE_BUTTON_MIDDLE)
+	var store := _loaded()
+	assert_int(store.warnings.size()).is_equal(1)
+	_assert_warned_about(store, "guard_break")
+	assert_object(store.binding(&"guard_break")).is_null()
+	assert_int(_code(store.binding(&"parry"))).is_equal(MOUSE_BUTTON_MIDDLE)
+	assert_int(_code(store.binding(&"jump"))).is_equal(KEY_SPACE)

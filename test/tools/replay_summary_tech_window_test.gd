@@ -8,7 +8,9 @@
 # click, its ticks in the line "Agarrado:". A press later in GRABBED, still unable to act, is a
 # click like any other: it waits in the slot, is lost "no agarrão" when its window closes before
 # the victim acts again, or fires the guard break on the release, the contact + 76, when still
-# within the buffer. The matches are played by the core's own rules
+# within the buffer. The tech never goes through the slot ("O tech não passa pela vaga"): a press of
+# the guard break in the window is the tech whatever else is pressed on its tick or later, and the
+# other keys of its tick take the slot without it. The matches are played by the core's own rules
 # (test/tools/replay_summary_grab_match.gd), and the summary is read only through its public
 # interface: its lines, and the presses and the swings of each fighter's report.
 extends GdUnitTestSuite
@@ -248,3 +250,55 @@ func test_a_press_late_in_the_grab_waits_in_the_slot_and_fires_at_the_release() 
 			.override_failure_message("the swing did not wait in the slot") \
 			.is_true()
 	assert_str(_grabbed_line(victim)).is_equal(GRABBED_ONCE_NO_TECH)
+
+
+# The tech apart from the slot (combate.md, "O tech": "O tech não passa pela vaga"): a guard break
+# on C + 2 and a light on C + 3, or with a dash or a parry on its own tick C + 2, or with a dash on
+# C + 10, is the tech for the core and for the summary, with its own tick as the tech's press, 2
+# ticks (33 ms) or 10 ticks (167 ms) after the contact; the other key is no tech: a light is a click
+# lost in the grab, a dash a press of the dash that never came out, and the parry stays out.
+func test_the_tech_with_other_keys_is_still_the_tech_with_its_press_tick(
+	break_after: int,
+	other: StringName,
+	other_after: int,
+	_test_parameters := [
+		[2, FighterCommand.LIGHT_ATTACK, 3],
+		[2, FighterCommand.DASH, 2],
+		[2, FighterCommand.PARRY, 2],
+		[10, FighterCommand.DASH, 10],
+	],
+) -> void:
+	_grab()
+	var contact := _contact()
+	played.press(1, contact + break_after, GUARD_BREAK)
+	played.press(1, contact + other_after, other)
+	played.run(contact + RELEASE + 20)
+	_assert_the_grab_happened()
+	var counted := contact + maxi(break_after, 5)
+	assert_int(GrabRig.tech_tick(played.state(1, counted))) \
+			.override_failure_message("the core did not count the tech on %d" % counted) \
+			.is_equal(counted)
+	var summary := played.summarize()
+	var report := summary.fighter(1)
+	assert_array(_breaks_pressed(report)).override_failure_message("the tech made a click") \
+			.is_empty()
+	var others: Array[ReplaySummary.Press] = []
+	for press: ReplaySummary.Press in report.presses:
+		if press.command == other:
+			others.append(press)
+	if other == FighterCommand.PARRY:
+		assert_array(others).is_empty()
+	else:
+		assert_int(others.size()).override_failure_message("the %s is no press" % other).is_equal(1)
+		if others.size() == 1:
+			assert_int(others[0].tick).is_equal(contact + other_after)
+			assert_int(others[0].fired_tick).is_equal(-1)
+	if other == FighterCommand.LIGHT_ATTACK and others.size() == 1:
+		assert_str(str(others[0].reason)).is_equal(str(ReplaySummary.IN_GRAB))
+	var ms := roundi(break_after * 1000.0 / 60.0)
+	var expected := (
+		"Agarrado: 1 vez; o tech em 1 (100 %%); o aperto do tech, em mediana, %d ticks (%d ms) "
+		% [break_after, ms]
+		+ "depois do contato"
+	)
+	assert_str(_grabbed_line(_block(_stripped(summary), 1))).is_equal(expected)

@@ -178,7 +178,9 @@ func _turn_for_the_next_loop() -> void:
 
 
 # Every press is a one-touch command (DEC-0026 §1): pressed right before its own tick, it counts
-# on that tick only, as the BotPlayer's jump does. The guard's press never holds the guard.
+# on that tick only, as the BotPlayer's jump does. The guard's press never holds the guard. The
+# dummy never gives the tech (partida.md, "A mistura do boneco": "O boneco nunca dá o tech"; F-210
+# §1): held GRABBED on screen, it leaves out the guard break its mix schedules, the tech's key.
 func _press_on_its_tick(_delta: float, tick: int) -> void:
 	for command: StringName in presses(tick):
 		match command:
@@ -187,6 +189,12 @@ func _press_on_its_tick(_delta: float, tick: int) -> void:
 			FighterCommand.CHARGED_ATTACK:
 				input.press_charged_attack()
 			FighterCommand.GUARD_BREAK:
-				input.press_guard_break()
+				if not grabbed():
+					input.press_guard_break()
 			_:
 				input.press_guard()
+
+
+## Whether the dummy's state on screen is held GRABBED: then the guard break would be the tech.
+func grabbed() -> bool:
+	return is_instance_valid(dummy) and dummy.state.action == FighterState.Action.GRABBED

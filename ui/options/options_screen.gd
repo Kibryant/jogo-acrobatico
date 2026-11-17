@@ -36,6 +36,9 @@ const ACTION_TEXTS: Dictionary[StringName, StringName] = {
 	&"parry": GameText.OPTIONS_ACTION_PARRY,
 	&"guard_break": GameText.OPTIONS_ACTION_GUARD_BREAK,
 }
+## What an action with no key shows on its button: a dash, the same in every language, like the
+## label of a key (TASK-12.4: the guard break against an older options file).
+const NO_KEY := "—"
 ## The number each accepted mouse button shows: "Mouse 3", "Mouse 4" and "Mouse 5".
 const MOUSE_NUMBERS: Dictionary[MouseButton, int] = {
 	MOUSE_BUTTON_MIDDLE: 3,
@@ -163,8 +166,10 @@ func waiting_for() -> StringName:
 
 # What the screen shows for an action's key: the label of the physical key on the active keyboard,
 # "Mouse esquerdo" for the left button, "Mouse direito" for the right one, or "Mouse 3", "Mouse 4"
-# or "Mouse 5".
+# or "Mouse 5"; for an action with no key (OptionsStore.binding), NO_KEY.
 func binding_label(event: InputEvent) -> String:
+	if event == null:
+		return NO_KEY
 	if event is InputEventMouseButton:
 		var button := event as InputEventMouseButton
 		if button.button_index == MOUSE_BUTTON_LEFT:

@@ -588,3 +588,25 @@ func test_the_guard_break_row_shows_the_middle_button_and_remaps_like_the_others
 	assert_int((event as InputEventMouseButton).button_index).is_equal(MOUSE_BUTTON_MIDDLE)
 	assert_str(str(_saved("keys", "guard_break"))).is_equal("mouse:%d" % MOUSE_BUTTON_MIDDLE)
 	assert_bool(screen.has_node(NodePath(KEYS_PATH + "TechKey"))).is_false()
+
+
+# TASK-12.4: with an options file older than the guard break, whose middle button is the jump's,
+# the guard break's row shows no key, a dash, and takes one like the others; the jump keeps the
+# middle button.
+func test_a_guard_break_without_a_key_shows_a_dash_and_takes_one() -> void:
+	var file := FileAccess.open(_path, FileAccess.WRITE)
+	file.store_string("[keys]\njump=\"mouse:%d\"\n" % MOUSE_BUTTON_MIDDLE)
+	file.close()
+	_store.load_file()
+	_store.apply_keys()
+	await _watched()
+	var screen := _screen()
+	screen.open()
+	assert_str(screen.shown_key(&"guard_break")).is_equal(OptionsScreen.NO_KEY)
+	assert_str(screen.shown_key(&"jump")).is_equal("Mouse 3")
+	_key_button(screen, &"guard_break").pressed.emit()
+	get_viewport().push_input(_mouse(MOUSE_BUTTON_XBUTTON1))
+	assert_str(String(screen.waiting_for())).is_empty()
+	assert_str(screen.shown_key(&"guard_break")).is_equal("Mouse 4")
+	assert_str(str(_saved("keys", "guard_break"))).is_equal("mouse:%d" % MOUSE_BUTTON_XBUTTON1)
+	assert_str(str(_saved("keys", "jump"))).is_equal("mouse:%d" % MOUSE_BUTTON_MIDDLE)

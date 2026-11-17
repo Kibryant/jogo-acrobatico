@@ -47,9 +47,9 @@ const LINE_HAIR := 1e-5
 const FROM := Vector3(1.0, 0.0, 1.0)
 const STEP_UP := Vector3(0.0, 0.7, 0.0)
 # In the Match: the flat floor west of the platform (charged_sync_test.gd), the dummy looking
-# down -Z at the player 1,5 m ahead of it (TASK-12.14, criterion 4: "de 1,2 m a 2,3 m").
+# down -Z at the player 1,5 m ahead of it, at (-6; 0; 4,5) (TASK-12.14, criterion 4: "de 1,2 m a
+# 2,3 m").
 const DUMMY_FEET := Vector3(-6.0, 0.0, 6.0)
-const PLAYER_FEET := Vector3(-6.0, 0.0, 4.5)
 const APART_M := 1.5
 # partida.md, "A mistura do boneco": the first four hold every kind, the guard break's included
 # since TASK-12.4 (F-210 §1).
@@ -269,8 +269,9 @@ func test_the_dummys_light_touches_a_player_standing_still(
 
 
 # A match with the dummy and the player standing 1,5 m apart on the flat floor, placed before
-# netfox records its first state, the dummy attacking.
-func _match() -> Match:
+# netfox records its first state, the dummy attacking; or `apart` metres apart, the player straight
+# down -Z from the dummy.
+func _match(apart := APART_M) -> Match:
 	var node := MATCH_SCENE.instantiate()
 	assert(node is Match, "match.tscn must have a Match at its root")
 	var game_match: Match = auto_free(node)
@@ -278,7 +279,7 @@ func _match() -> Match:
 	var me := multiplayer.get_unique_id()
 	var player := game_match.spawn_fighter(Match.PLAYER_SLOT, me)
 	var dummy := game_match.spawn_fighter(Match.DUMMY_SLOT, me)
-	player.position = PLAYER_FEET
+	player.position = DUMMY_FEET + Vector3(0.0, 0.0, -apart)
 	dummy.position = DUMMY_FEET
 	game_match.let_dummy_attack(dummy, player)
 	await get_tree().process_frame
@@ -365,3 +366,56 @@ func test_in_the_match_the_dummys_swings_land_on_the_player_standing_in_front_of
 	assert_float(player.global_position.distance_to(dummy.global_position)) \
 			.override_failure_message("the two moved") \
 			.is_equal_approx(APART_M, 1e-3)
+
+
+# TASK-12.4, the shoulder camera's check on the guard break (harness registry; combate.md, "A mão":
+# "Com os dois no mesmo chão e a mira no eixo do alvo, a mão pega de 0,88 a 1,48 m"; DEC-0058 §2):
+# in the real Match, the dummy aims at the player like a person and its hand converges at 1,2 m.
+# Its third action is the guard break (partida.md, "A mistura do boneco"): it grabs the player
+# standing still 1,2 m in front of it, where the hand crosses the aim line, and misses one 1,5 m
+# away, beyond the 1,48.
+func test_in_the_match_the_dummys_guard_break_grabs_at_1_2_m_and_misses_at_1_5_m(
+	apart: float,
+	grabs: bool,
+	_test_parameters := [[1.2, true], [1.5, false]],
+) -> void:
+	assert_int(AttackingDummy.kind_of(3)).is_equal(AttackingDummy.Kind.GUARD_BREAK)
+	var game_match := await _match(apart)
+	var player := game_match.fighter_at(Match.PLAYER_SLOT)
+	var dummy := game_match.fighter_at(Match.DUMMY_SLOT)
+	var distance := player.global_position.distance_to(dummy.global_position)
+	assert_float(distance).override_failure_message("%.3f m apart" % distance) \
+			.is_equal_approx(apart, 1e-3)
+	var guard_break: AttackConfig = game_match.combat.attacks[FighterCommand.GUARD_BREAK]
+	var swing := guard_break.windup_ticks + guard_break.active_ticks + guard_break.recovery_ticks
+	var held_on := FighterState.NEVER
+	var breaks := 0
+	var before := dummy.state.copy()
+	for _loop: int in 3 * PERIOD_TICKS + swing + SPARE_TICKS:
+		player.input.sample_frame(Vector2.ZERO, player.state.facing_yaw)
+		NetfoxTicks.run_loop()
+		var state := dummy.state
+		var began := state.action != before.action or state.action_since != before.action_since
+		if began and state.action == FighterState.Action.WINDUP:
+			breaks += 1 if state.action_move == FighterCommand.GUARD_BREAK else 0
+		if held_on == FighterState.NEVER and player.state.action == FighterState.Action.GRABBED:
+			held_on = NetworkTime.tick - 1
+		before = state.copy()
+	assert_int(breaks).override_failure_message("the dummy's guard break never began").is_equal(1)
+	var message := "%.2f m: grabbed_tick %d, held on %d" % [
+		apart,
+		player.state.grabbed_tick,
+		held_on,
+	]
+	if grabs:
+		assert_int(player.state.grabbed_tick).override_failure_message(message).is_not_equal(
+			FighterState.NEVER
+		)
+		assert_int(held_on).override_failure_message(message).is_equal(
+			player.state.grabbed_tick + 1
+		)
+	else:
+		assert_int(player.state.grabbed_tick).override_failure_message(message).is_equal(
+			FighterState.NEVER
+		)
+		assert_int(held_on).override_failure_message(message).is_equal(FighterState.NEVER)

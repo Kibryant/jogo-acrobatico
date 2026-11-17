@@ -19,7 +19,10 @@
 #    ends it and makes it GRABBING (DEC-0058 §4);
 # 2. the refill to the max, when the configuration turns it on, health_refill_ticks after
 #    hurt_tick (partida.md, "A vida sem partida");
-# 3. on a frozen tick, only the presses into the slot, and nothing else (DEC-0055 §5);
+# 3. on every tick, frozen or not, the tech's press: the first guard break pressed by whoever is
+#    held GRABBED, after the contact and up to the last held tick, read from the input, never from
+#    the slot (DEC-0058 §5); then, on a frozen tick, only the presses into the slot, and nothing
+#    else (DEC-0055 §5);
 # 4. the phase of the swing, advanced by the move's ticks, a move that pays on release paying on its
 #    first active tick; the end of the parry's stance and of the feint; the end of a stun or of
 #    the time whoever was grabbed cannot act; and the end of the hold of whoever grabbed, two ticks
@@ -31,11 +34,11 @@
 # 7. the light's, the charged's, the guard break's and the parry's presses into the slot, in that
 #    order, then the movement's (Movement.take_presses), so the parry beats the guard break, which
 #    beats the charged, which beats the light, and any movement key beats them all on one tick
-#    (DEC-0051 §4; DEC-0056 §6; DEC-0058 §7). A guard break in the slot of whoever is held GRABBED,
-#    pressed after the contact, is the tech, free, until the hold's last tick (DEC-0058 §5);
-#    otherwise the move or the parry in the slot fires standing on the floor, from rest or from the
-#    guard, which drops, with the bar able to pay: the light and the guard break pay on their fire,
-#    the charged needs its cost and pays nothing yet, the parry pays on its fire;
+#    (DEC-0051 §4; DEC-0056 §6; DEC-0058 §7). The tech's press counts here, on the first tick that
+#    is not frozen, free, whatever else the slot holds, and never enters it (DEC-0058 §5); the move
+#    or the parry in the slot fires standing on the floor, from rest or from the guard, which drops,
+#    with the bar able to pay: the light and the guard break pay on their fire, the charged needs
+#    its cost and pays nothing yet, the parry pays on its fire;
 # 8. the swing's direction follows the camera on every tick of the windup, through the move's
 #    convergence: from the body's axis to the point of the aim line that far from it, the camera's
 #    yaw turned by Aim.swing_yaw, 23,58° to the right for the sword and 41,81° for the guard break's
@@ -62,8 +65,9 @@ static func step(
 	_take_contacts(next, me, feet, photo, combat, config, tick)
 	_learn_result(next, photo, combat, tick)
 	_refill(next, combat, tick)
+	_note_tech_press(next, input, combat, tick)
 	if frozen(next, tick):
-		_write_presses(next, input, config, tick)
+		_write_presses(next, input, combat, config, tick)
 		return next
 	_advance(next, combat, config, tick)
 	_end_stance(next, combat, tick)
@@ -248,6 +252,15 @@ static func hold_end(contact: int, combat: CombatConfig) -> int:
 	return contact + combat.grab_hold_ticks + combat.grab_hitstop_ticks
 
 
+## Whether a press of the guard break on tick, by a fighter in this state, is the tech's
+## (combate.md, "O tech"; DEC-0058 §5): held GRABBED, after the contact and before the hold's end,
+## so up to the last held tick, frozen or not.
+static func in_tech_window(state: FighterState, combat: CombatConfig, tick: int) -> bool:
+	if state.action != FighterState.Action.GRABBED:
+		return false
+	return tick > state.grabbed_tick and tick < hold_end(state.grabbed_tick, combat)
+
+
 # The parry holds when the move can be parried, the stance was up on the contact tick with the
 # contact in its window, P to P + parry_window_ticks - 1, and the attacker in the front half,
 # measured as the guard's (combate.md, "O parry certo"; DEC-0054 §2). Parried, the defender only
@@ -413,14 +426,32 @@ static func _refill(next: FighterState, combat: CombatConfig, tick: int) -> void
 		next.health = combat.max_health
 
 
+# Step 3, the tech's press (combate.md, "O tech": "O tech não passa pela vaga"; DEC-0058 §5): the
+# first guard break of the hold, pressed by whoever is held GRABBED after the contact and up to the
+# last held tick, is noted from the input on its own tick, frozen or not, whatever else is pressed
+# on it or later; _tech counts it on the first tick that is not frozen. A later one of the same hold
+# adds nothing.
+static func _note_tech_press(
+	next: FighterState,
+	input: TickInput,
+	combat: CombatConfig,
+	tick: int,
+) -> void:
+	if not input.guard_break or not in_tech_window(next, combat, tick):
+		return
+	if next.tech_press_tick <= next.grabbed_tick:
+		next.tech_press_tick = tick
+
+
 # Step 3: a frozen tick keeps the presses, which wait in the slot for their window like in a
 # swing, and changes nothing else (DEC-0055 §5). The light first, then the charged, then the guard
 # break, then the parry, then the movement's, each over the one before: on one tick the last
-# written wins (DEC-0056 §6; DEC-0058 §7). The tech's press waits here too, and counts on the first
-# tick that is not frozen (_tech).
+# written wins (DEC-0056 §6; DEC-0058 §7). A guard break in the tech's window is the tech's press,
+# never a command: it does not enter the slot (_note_tech_press).
 static func _write_presses(
 	next: FighterState,
 	input: TickInput,
+	combat: CombatConfig,
 	config: MovementConfig,
 	tick: int,
 ) -> void:
@@ -430,7 +461,7 @@ static func _write_presses(
 	if input.charged_attack:
 		next.buffered_command = FighterCommand.CHARGED_ATTACK
 		next.buffered_tick = tick
-	if input.guard_break:
+	if input.guard_break and not in_tech_window(next, combat, tick):
 		next.buffered_command = FighterCommand.GUARD_BREAK
 		next.buffered_tick = tick
 	if input.parry:
@@ -608,8 +639,8 @@ static func _can_guard(next: FighterState) -> bool:
 # Step 7: the slot of the buffer, shared with the movement (DEC-0039; DEC-0051 §4; DEC-0056 §6;
 # DEC-0058 §7). The light, the charged, the guard break and the parry are written in that order,
 # then the movement's presses over them, and the slot's expiry; a move or the parry fires only from
-# the slot, so a press refused now waits there for its 150 ms. The guard break of whoever is
-# grabbed is the tech instead (_tech).
+# the slot, so a press refused now waits there for its 150 ms. The tech counts first, apart from
+# the slot (_tech).
 static func _take_press(
 	next: FighterState,
 	input: TickInput,
@@ -617,9 +648,8 @@ static func _take_press(
 	config: MovementConfig,
 	tick: int,
 ) -> void:
-	_write_presses(next, input, config, tick)
-	if _tech(next, combat, tick):
-		return
+	_write_presses(next, input, combat, config, tick)
+	_tech(next, combat, tick)
 	var command := next.buffered_command
 	if command == FighterCommand.PARRY:
 		if not _can_start(next, combat.parry_stamina_cost, config, tick):
@@ -644,26 +674,19 @@ static func _take_press(
 
 
 # The tech (combate.md, "A quebra, o tech e a esquiva no tick": "O tech"; DEC-0058 §5): held
-# GRABBED, a guard break in the slot pressed after the contact, from the contact + 1, is the tech up
-# to the hold's last tick, counted on this tick, the first that is not frozen since the press: a
-# press of the hitstop counts on its end. It costs nothing, stamps tech_tick, and lets go on the
-# hold's end instead of the contact + 76; the press leaves the slot. A press of before the contact
-# is no tech, nor one past the hold, and the second press of a hold that already has its tech only
-# leaves the slot. Returns whether the slot held the tech's press.
-static func _tech(next: FighterState, combat: CombatConfig, tick: int) -> bool:
-	if next.action != FighterState.Action.GRABBED:
-		return false
-	if next.buffered_command != FighterCommand.GUARD_BREAK:
-		return false
-	var release := hold_end(next.grabbed_tick, combat)
-	if next.buffered_tick <= next.grabbed_tick or tick >= release:
-		return false
-	if next.tech_tick <= next.grabbed_tick:
-		next.tech_tick = tick
-		next.stun_until_tick = release
-	next.buffered_command = FighterCommand.NONE
-	next.buffered_tick = FighterState.NEVER
-	return true
+# GRABBED, with the tech's press of this grab noted (_note_tech_press), the tech counts on this
+# tick, the first that is not frozen since the press, up to the hold's last tick: a press of the
+# hitstop counts on its end. It costs nothing, stamps tech_tick, and lets go on the hold's end
+# instead of the contact + 76. It never reads the slot: whatever the slot holds, a press of before
+# the contact or the command of another key, stays there as any command does while held. Once per
+# grab.
+static func _tech(next: FighterState, combat: CombatConfig, tick: int) -> void:
+	if not in_tech_window(next, combat, tick):
+		return
+	if next.tech_press_tick <= next.grabbed_tick or next.tech_tick > next.grabbed_tick:
+		return
+	next.tech_tick = tick
+	next.stun_until_tick = hold_end(next.grabbed_tick, combat)
 
 
 # Standing on a floor of its own (GROUND, off any head; Movement.stands), with no swing, stance nor

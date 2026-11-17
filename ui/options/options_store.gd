@@ -4,7 +4,10 @@
 # a settings.json in a home folder. The defaults are the InputMap as project.godot loads it,
 # camera_v0.tres's sensitivity, the scale 1.0 and the shake on. Reading checks every entry on its
 # own: a bad one falls back to its default with a warning that names it, and a file that cannot be
-# read falls back whole; a missing file is the first launch, and says nothing. Nothing here enters
+# read falls back whole; a missing file is the first launch, and says nothing. An action newer than
+# the file, with no entry in it, whose default the file gives to an action before it in the
+# screen's order, gives way: it is left with no key, with a warning, and every other key stays
+# (TASK-12.4: the guard break's middle button against an older file). Nothing here enters
 # the simulation: the core only ever receives the translated input (DEC-0004), so a replay records
 # actions, never keys.
 # The path is a parameter, so the tests use a temporary file and never touch the player's own.
@@ -109,14 +112,16 @@ func load_file() -> void:
 	_load_sensitivity(file)
 	_load_scale(file)
 	_load_camera_shake(file)
-	_load_conflicts()
+	_load_conflicts(file)
 
 
-# Writes every option to path.
+# Writes every option to path; an action with no key has no entry, so the next load asks its default
+# again.
 func save_file() -> Error:
 	var file := ConfigFile.new()
 	for action: StringName in ACTIONS:
-		file.set_value(KEYS_SECTION, action, binding_text(_bindings[action]))
+		if _bindings[action] != null:
+			file.set_value(KEYS_SECTION, action, binding_text(_bindings[action]))
 	file.set_value(MOUSE_SECTION, SENSITIVITY_KEY, sensitivity)
 	file.set_value(INTERFACE_SECTION, SCALE_KEY, scale)
 	file.set_value(INTERFACE_SECTION, CAMERA_SHAKE_KEY, camera_shake)
@@ -126,7 +131,8 @@ func save_file() -> Error:
 	return error
 
 
-# The event that triggers action: a key by physical position or one of the accepted mouse buttons.
+# The event that triggers action: a key by physical position or one of the accepted mouse buttons;
+# null when the action has no key (load_file, an action newer than the file).
 func binding(action: StringName) -> InputEvent:
 	assert(_bindings.has(action), "%s is not an action of the options" % action)
 	return _bindings[action]
@@ -153,11 +159,12 @@ func holder_of(event: InputEvent, except: StringName = &"") -> StringName:
 
 
 # Puts every binding in the InputMap, the events the game reads its actions from: the change
-# holds at once, with no restart and no edit to project.godot.
+# holds at once, with no restart and no edit to project.godot. An action with no key gets no event.
 func apply_keys() -> void:
 	for action: StringName in ACTIONS:
 		InputMap.action_erase_events(action)
-		InputMap.action_add_event(action, normalized(_bindings[action]))
+		if _bindings[action] != null:
+			InputMap.action_add_event(action, normalized(_bindings[action]))
 
 
 # The scale multiplies the whole interface, like a browser's zoom (DEC-0031 §8).
@@ -322,12 +329,25 @@ func _load_binding(file: ConfigFile, action: StringName) -> void:
 	_bindings[action] = event
 
 
-# Two actions of the file on one key: the later one in the screen's order goes back to its
-# default, unless that clashes too, and then every action goes back to its default.
-func _load_conflicts() -> void:
+# Two actions on one key: the later one in the screen's order goes back to its default, unless that
+# clashes too, and then every action goes back to its default. When the later one has no entry in
+# the file, an action newer than the file, its default is the very key the file gives the other:
+# then it gives way, left with no key, with a warning that names it, and every key of the file stays
+# (TASK-12.4: the guard break's middle button against an older file).
+func _load_conflicts(file: ConfigFile) -> void:
 	for action: StringName in ACTIONS:
 		var holder := holder_of(_bindings[action], action)
 		if holder.is_empty() or ACTIONS.find(holder) > ACTIONS.find(action):
+			continue
+		if not file.has_section_key(KEYS_SECTION, action):
+			_warn(
+				(
+					"[%s] %s has no key: its default, %s, is already %s's; give it one on the"
+					% [KEYS_SECTION, action, binding_text(_bindings[action]), holder]
+					+ " options screen"
+				),
+			)
+			_bindings[action] = null
 			continue
 		var fallback := default_binding(action)
 		_warn(

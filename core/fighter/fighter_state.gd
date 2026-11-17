@@ -155,6 +155,11 @@ var parried_tick := NEVER
 # reads to let go two ticks later. Both stay, like hurt_tick, and key the cues.
 var grabbed_tick := NEVER
 var tech_tick := NEVER
+# The tech's press (combate.md, "O tech": "O tech não passa pela vaga"; DEC-0058 §5): on whoever was
+# grabbed, the tick of the first press of the guard break after the contact of the last grab, up to
+# the last held tick, read from the input and never from the slot, so no other key replaces it. The
+# tech counts on it, or on the first tick after it that is not frozen. It stays, like tech_tick.
+var tech_press_tick := NEVER
 
 
 # An equal and independent state: the rules change the copy, never the state they receive.
@@ -197,4 +202,5 @@ func copy() -> FighterState:
 	other.parried_tick = parried_tick
 	other.grabbed_tick = grabbed_tick
 	other.tech_tick = tech_tick
+	other.tech_press_tick = tech_press_tick
 	return other

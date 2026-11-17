@@ -9,10 +9,25 @@
 extends GdUnitTestSuite
 
 const NetfoxTicks := preload("res://test/support/netfox_ticks.gd")
+const GrabRig := preload("res://test/core/fighter/grab_rig.gd")
 const MATCH_SCENE := preload("res://match/match.tscn")
 
 ## partida.md, "O boneco que ataca": "um golpe a cada 3 s, 180 ticks".
 const PERIOD_TICKS := 180
+## The flat floor west of the platform (charged_sync_test.gd): the dummy, and the player 1,05 m in
+## front of it, down -Z, where the player's hand first touches it on its 4th active tick
+## (combate.md, "A mão"): the contact comes 21 + 3 ticks after the press.
+const DUMMY_FEET := Vector3(-6.0, 0.0, 6.0)
+const PLAYER_FEET := Vector3(-6.0, 0.0, 4.95)
+const GRAB_CONTACT_AFTER := 24
+## combate.md, "O agarrão" and "O tech": held up to the contact + 23; without the tech, unable to
+## act up to the contact + 75 (72 + 4).
+const HELD_TICKS := 23
+const VICTIM_FREE := 76
+## movimento.md, "Câmera": the shoulder; combate.md, "A lâmina e o contato": "Convergência: 1,2 na
+## quebra".
+const SHOULDER_M := 0.8
+const HAND_CONVERGENCE_M := 1.2
 ## partida.md, "O boneco que ataca": the feint's guard press 24 ticks into the charged's windup,
 ## the light 4 ticks after it; the feint lasts 12 (combate.md, "A finta").
 const FEINT_PRESS_TICKS := 24
@@ -203,3 +218,59 @@ func test_the_yaw_toward_a_point_looks_at_it() -> void:
 		var flat := Vector3(to.x - from.x, 0.0, to.z - from.z).normalized()
 		assert_vector(Blade.direction(yaw)).is_equal_approx(flat, Vector3.ONE * HAIR)
 	assert_float(AttackingDummy.yaw_toward(from, from + Vector3.UP, 0.7)).is_equal(0.7)
+
+
+# The player and the dummy 1,05 m apart, the dummy attacking, netfox's deferred setup done.
+func _match_close() -> Match:
+	var node := MATCH_SCENE.instantiate()
+	assert(node is Match, "match.tscn must have a Match at its root")
+	var game_match: Match = auto_free(node)
+	add_child(game_match)
+	var me := multiplayer.get_unique_id()
+	var player := game_match.spawn_fighter(Match.PLAYER_SLOT, me)
+	var dummy := game_match.spawn_fighter(Match.DUMMY_SLOT, me)
+	player.position = PLAYER_FEET
+	dummy.position = DUMMY_FEET
+	game_match.let_dummy_attack(dummy, player)
+	await get_tree().process_frame
+	await get_tree().physics_frame
+	return game_match
+
+
+# TASK-12.4 (partida.md, "A mistura do boneco": "O boneco nunca dá o tech"; F-210 §1): the player
+# grabs the dummy 10 ticks before the dummy's third action, its guard break, so that action falls
+# inside the hold, where the press would be the tech. The dummy leaves it out: no tech_tick, still
+# GRABBED past the hold, and acting again only on the contact + 76.
+func test_the_dummy_never_techs_the_guard_break_its_mix_schedules_in_a_hold() -> void:
+	assert_int(AttackingDummy.kind_of(3)).is_equal(AttackingDummy.Kind.GUARD_BREAK)
+	var game_match := await _match_close()
+	var player := game_match.fighter_at(Match.PLAYER_SLOT)
+	var dummy := game_match.fighter_at(Match.DUMMY_SLOT)
+	var attacking := game_match.attacking_dummy
+	var scheduled := attacking.start_tick + 3 * PERIOD_TICKS
+	assert_array(attacking.presses(scheduled)).is_equal([FighterCommand.GUARD_BREAK])
+	var contact := scheduled - 10
+	var press := contact - GRAB_CONTACT_AFTER
+	# The player's hand down +Z, at the dummy behind it.
+	var hand := GrabRig.camera_for(PI, SHOULDER_M, HAND_CONVERGENCE_M)
+	var tech_ticks: Array[int] = []
+	while NetworkTime.tick <= contact + VICTIM_FREE:
+		player.input.sample_frame(Vector2.ZERO, hand)
+		if NetworkTime.tick == press:
+			player.input.press_guard_break()
+		NetfoxTicks.run_loop()
+		var shown := NetworkTime.tick - 1
+		if GrabRig.tech_tick(dummy.state) != FighterState.NEVER:
+			tech_ticks.append(shown)
+		if shown == contact + HELD_TICKS + 7:
+			assert_bool(GrabRig.is_grabbed(dummy.state)) \
+					.override_failure_message("past the hold the dummy is %s"
+			% GrabRig.line(dummy.state)) \
+					.is_true()
+	assert_int(GrabRig.grabbed_tick(dummy.state)) \
+			.override_failure_message("the player did not grab the dummy on %d" % contact) \
+			.is_equal(contact)
+	assert_array(tech_ticks).override_failure_message("the dummy teched").is_empty()
+	assert_int(dummy.state.action).override_failure_message(GrabRig.line(dummy.state)).is_not_equal(
+		FighterState.Action.GRABBED
+	)

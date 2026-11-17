@@ -646,8 +646,10 @@ func _follow_health(
 # press waiting there, whatever its key: the core writes every press of a tick before anything
 # fires from the slot. The others never enter it, and a click of a move among them was replaced
 # on its own tick. The guard break of a fighter GRABBED after the tick, after the contact and before
-# the release, is the tech: no press, only the first noted on the grab; one later in GRABBED is a
-# press like any other ("Os apertos"; TASK-12.4). Returns the presses of the tick.
+# the release, is the tech: no press, only the first noted on the grab, and it never takes the slot,
+# so the other touches of its tick compete without it and a tick of the tech alone leaves the slot
+# as it was (combate.md, "O tech": "O tech não passa pela vaga"); one later in GRABBED is a press
+# like any other ("Os apertos"; TASK-12.4). Returns the presses of the tick.
 static func _take_presses(
 	report: FighterReport,
 	tracker: Tracker,
@@ -655,16 +657,19 @@ static func _take_presses(
 	start: FighterState,
 ) -> Array[Press]:
 	var fresh: Array[Press] = []
-	if fed.pressed.is_empty():
-		return fresh
-	tracker.slot = null
-	var winner := fed.pressed[0]
+	var slotted: Array[StringName] = []
 	for command: StringName in fed.pressed:
-		if command == FighterCommand.PARRY:
-			continue
 		if command == FighterCommand.GUARD_BREAK and _tech_press(tracker.grab, fed):
 			if tracker.grab.press_tick < 0:
 				tracker.grab.press_tick = fed.tick
+			continue
+		slotted.append(command)
+	if slotted.is_empty():
+		return fresh
+	tracker.slot = null
+	var winner := slotted[0]
+	for command: StringName in slotted:
+		if command == FighterCommand.PARRY:
 			continue
 		var press := Press.new()
 		press.command = command

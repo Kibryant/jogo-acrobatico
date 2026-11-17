@@ -230,7 +230,7 @@ Os tempos são os da rodada B depois dos consertos (F-049 §5). O total foi 31,3
 *O que fica de fora:* a guarda, o parry e a finta, até alguém medi-los à mão duas vezes (DEC-0009; F-205).
 
 *Os limites:*
-- Com três lutadores ou mais, dois contatos no mesmo tick em alvos diferentes podem ir para o alvo errado: o estado não guarda nomes para casar o contato com quem o levou, só o carimbo no tick seguinte.
+- Com três lutadores ou mais, dois contatos no mesmo tick em alvos diferentes podem ir para o alvo errado, porque o resumo casa o contato pelo carimbo do tick seguinte. O estado de quem bate guarda o nome do alvo (`contact_target`, a chave da foto; DEC-0026 §3), mas a linha do rastro traz o índice do lutador, não o nome dele, e quem dá os nomes é a partida (`Fighter0`, `Fighter1`... em `match/match.gd`). Ler o nome tira esse limite, quando houver partida com três ou mais.
 - Um contato no último tick do replay não tem tick seguinte para mostrar o alvo: o golpe sai inacabado.
 - Abaixo de 0,05 m, a altura sai como 0,0, e o tick desse ponto mais alto seria só o ruído do pé no chão; aí o resumo diz que o ponto mais alto não passou de 0,0 m, sem tick nem manobra.
 - A faixa "ao alcance" do resumo é a distância mais curta do ativo contra os 2,43 m; à mão, nas sessões 22 e 23, a faixa era 2,6 m no primeiro tick ativo. A régua do resumo fica a do alcance porque, além dele, a lâmina não chega ao outro, e o lado do corte não explica o erro. As consequências:

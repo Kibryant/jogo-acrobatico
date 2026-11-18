@@ -59,7 +59,7 @@ const USAGE := """Usage, with the game's arguments after "--":
                            breaks, and it never techs.
     --dummy=off            play Sozinho without the dummy.
     --dummy=guard_break    the dummy throws only guard breaks, one every 3 s, to train the tech:
-                           stand 0.9 to 1.5 m in front of it and press the guard break when held.
+                           stand 0.9 to 1.4 m in front of it and press the guard break when held.
     --dummy=block          the dummy holds its guard and never attacks: the sword stops on the
                            guard, the guard break goes through it, and a charged thrown the
                            moment you go dark lands while the dummy still glows.
@@ -767,7 +767,7 @@ static func solo_dummy_line(only_guard_breaks: bool, holds_guard := false) -> St
 	if only_guard_breaks:
 		return (
 			"sozinho: a dummy at the second spawn point throws only guard breaks, one every 3 s,"
-			+ " and never techs: stand 0.9 to 1.5 m in front of it and tech with the guard break"
+			+ " and never techs: stand 0.9 to 1.4 m in front of it and tech with the guard break"
 			+ " (--dummy=on for its whole mix, --dummy=block for a guard to break, --dummy=off"
 			+ " leaves it out)"
 		)

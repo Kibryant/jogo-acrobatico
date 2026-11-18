@@ -422,7 +422,7 @@ func test_in_the_match_the_dummys_guard_break_grabs_at_1_2_m_and_misses_at_1_5_m
 
 
 # TASK-12.4 (partida.md, "A mistura do boneco": "o `--dummy=guard_break` faz o boneco dar só
-# quebras, uma a cada 3 s, mirando como gente; ele não anda, então quem treina fica de 0,9 a 1,5 m
+# quebras, uma a cada 3 s, mirando como gente; ele não anda, então quem treina fica de 0,9 a 1,4 m
 # na frente dele"; F-212): in the real Match the training dummy's every action is a guard break,
 # its hand along the aim of a person turned by the hand's convergence (DEC-0058 §2), and each one
 # grabs the player standing still 1,2 m in front of it: the first one period in, where the mix

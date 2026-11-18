@@ -2,12 +2,14 @@
 id: DEC-0045
 titulo: A mira no ombro e o ponto O — a câmera por cima do ombro direito, o raio da mira saindo da linha do centro da tela, calculado pelo núcleo, e o segundo raio que recusa a quina
 data: 2026-10-26
-status: aceita
+status: substituída
 decidido_por: Arthur (F-147; F-148)
 fontes: [F-144, F-145, F-146, F-147, F-148]
 substitui: DEC-0044, só a direção pelo centro da tela com a câmera centralizada (§2) e a linha "Ombro: centralizada" da tabela da câmera
-substituida_por:
+substituida_por: DEC-0059
 ---
+
+> ⚠️ Substituída por DEC-0059 em 2026-11-18 — não é a regra atual.
 
 # DEC-0045 — A mira no ombro e o ponto O: a câmera por cima do ombro direito, o raio da mira saindo da linha do centro da tela, calculado pelo núcleo, e o segundo raio que recusa a quina
 

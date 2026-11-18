@@ -18,9 +18,10 @@
 # The camera's rise (movimento.md, "Câmera": "Subida"; TASK-12.15) raises the whole pivot, so the
 # pitch still turns about the line of O, which rises with it: the centered camera, with no
 # shoulder and a rise of 0,6 m, turns about a pivot 2,2 m above the feet, on the body's axis. With
-# no shoulder the second arm has no length, and it casts nothing: a hit of a zero-length cast would
-# divide by that zero (SpringArm3D sets its end at length × hit distance / length), so it collides
-# with no layer, and its end stays at the first arm's.
+# no shoulder the second arm has no length and nothing to slide, so it collides with no layer, and
+# its end stays at the first arm's. A probe on this build found a zero-length arm with the world's
+# mask adding no offset either; the empty mask states the intent and keeps a zero-length cast from
+# ever reaching the engine.
 # The impact's shake (TASK-12.2; combate.md, "O hitstop e o tremor") tilts the view a fraction of a
 # degree on top of the yaw and the pitch, for the screen only: the yaw and the pitch the fighter's
 # input samples never move with it, so the aim and the body stay where the mouse put them.

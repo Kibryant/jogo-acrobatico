@@ -112,6 +112,7 @@ func test_sozinho_has_a_dummy_that_does_not_walk_at_the_second_spawn_point() -> 
 	assert_object(attacking).override_failure_message("the dummy does not attack").is_not_null()
 	assert_object(attacking.dummy).is_same(dummy)
 	assert_object(attacking.target).is_same(main.current_match.fighter_at(Match.PLAYER_SLOT))
+	assert_bool(attacking.only_guard_breaks).override_failure_message("no mix").is_false()
 	# One camera in the match, the player's.
 	var cameras := 0
 	for child: Node in main.current_match.get_children():
@@ -122,6 +123,27 @@ func test_sozinho_has_a_dummy_that_does_not_walk_at_the_second_spawn_point() -> 
 	assert_int(NetworkTime.tick).is_greater(0)
 	assert_vector(dummy.position).is_equal_approx(SPAWN_B, Vector3.ONE * HAIR)
 	assert_int(dummy.state.mode).is_equal(FighterState.Mode.GROUND)
+
+
+# TASK-12.4 (partida.md, "A mistura do boneco"; F-212): --dummy=guard_break puts the same dummy at
+# the second spawn point, which throws only guard breaks to train the tech; the usage and Sozinho's
+# log line name the guard breaks in the mix and the training mode.
+func test_dummy_guard_break_gives_sozinho_a_dummy_that_throws_only_guard_breaks() -> void:
+	var main := _main(["--no-replay", "--dummy=guard_break"])
+	await get_tree().process_frame
+	var dummy := main.current_match.fighter_at(Match.DUMMY_SLOT)
+	assert_object(dummy).is_not_null()
+	assert_vector(dummy.position).is_equal_approx(SPAWN_B, Vector3.ONE * HAIR)
+	var attacking := main.current_match.attacking_dummy
+	assert_object(attacking).override_failure_message("the dummy does not attack").is_not_null()
+	assert_object(attacking.dummy).is_same(dummy)
+	assert_bool(attacking.only_guard_breaks).is_true()
+	assert_str(Main.USAGE).contains("--dummy=guard_break")
+	assert_str(Main.USAGE).contains("guard")
+	var mix := Main.solo_dummy_line(false)
+	assert_str(mix).contains("guard breaks")
+	assert_str(mix).contains("--dummy=guard_break")
+	assert_str(Main.solo_dummy_line(true)).contains("only guard breaks")
 
 
 func test_dummy_off_plays_sozinho_alone() -> void:

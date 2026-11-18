@@ -378,3 +378,47 @@ func test_dummy_arguments_that_do_not_fit_are_errors() -> void:
 	var watched := _parse(["--watch=x.replay", "--dummy=off"], EDITOR_BUILD, WITH_SCREEN)
 	assert_int(watched.errors.size()).is_equal(1)
 	assert_str(watched.errors[0]).contains("--watch")
+
+
+# TASK-12.4 (partida.md, "A mistura do boneco": "o `--dummy=guard_break` faz o boneco dar só
+# quebras"; F-212): the training mode keeps Sozinho's dummy and makes it throw only guard breaks;
+# on, off and no --dummy keep the mix or leave the dummy out.
+func test_dummy_guard_break_keeps_the_dummy_with_only_guard_breaks() -> void:
+	var training := _parse(["--dummy=guard_break", "--no-replay"])
+	assert_array(training.errors).is_empty()
+	assert_int(training.mode).is_equal(LaunchOptions.Mode.SOLO)
+	assert_bool(training.dummy).is_true()
+	assert_bool(training.dummy_only_guard_breaks).is_true()
+	var windowed := _parse(["--dummy=guard_break"], EDITOR_BUILD, WITH_SCREEN)
+	assert_array(windowed.errors).is_empty()
+	assert_bool(windowed.dummy_only_guard_breaks).is_true()
+	var mixes: Array[Array] = [[], ["--dummy=on"], ["--dummy=off"]]
+	for arguments: Array in mixes:
+		var parsed := _parse(arguments)
+		var message := "%s throws more than guard breaks" % [arguments]
+		assert_array(parsed.errors).is_empty()
+		assert_bool(parsed.dummy_only_guard_breaks).override_failure_message(message).is_false()
+
+
+# A value of --dummy that is none of the three, or the training mode where no dummy goes, is one
+# error, the value's naming the three; the training mode is then off. Given twice is
+# test_dummy_arguments_that_do_not_fit_are_errors's.
+func test_dummy_values_that_do_not_fit_are_one_error_each() -> void:
+	var cases: Array[Array] = [
+		["--dummy=guard-break"],
+		["--dummy=GUARD_BREAK"],
+		["--server", "--dummy=guard_break"],
+		["--connect=127.0.0.1", "--dummy=guard_break"],
+	]
+	for arguments: Array in cases:
+		var parsed := _parse(arguments)
+		var message := "%s must be refused with one message" % [arguments]
+		assert_int(parsed.errors.size()).override_failure_message(message).is_equal(1)
+		assert_bool(parsed.dummy_only_guard_breaks).override_failure_message(message).is_false()
+	assert_str(_parse(["--dummy=no"]).errors[0]).is_equal(
+		"--dummy is on, off or guard_break, not no"
+	)
+	var watched := _parse(["--watch=x.replay", "--dummy=guard_break"], EDITOR_BUILD, WITH_SCREEN)
+	assert_int(watched.errors.size()).is_equal(1)
+	assert_str(watched.errors[0]).contains("--watch")
+	assert_bool(watched.dummy_only_guard_breaks).is_false()

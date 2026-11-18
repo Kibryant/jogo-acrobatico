@@ -39,6 +39,16 @@ const HEAD_PROBE_DISTANCE := 0.05
 # FLOOR_ANGLE_THRESHOLD, Godot 4.7.2): a collision within it is a floor collision. An engine
 # number, not a game one.
 const FLOOR_ANGLE_THRESHOLD := 0.01
+# The glow of a held fighter (visual-e-audio.md, "A quebra na cápsula": "os dois lutadores acendem
+# em vermelhão, pulsando, enquanto estão presos"): the capsule turns vermilion and its light pulses
+# from GLOW_LOW to GLOW_HIGH and back GLOW_PULSES times over the hold, 200 ms a pulse at the hold's
+# 400 ms. Claude's v0 reading (DEC-0017); only the screen reads them. The capsule's own tone is out
+# of it: on the light one, a vermilion light would read white.
+const GLOW_LOW := 0.1
+const GLOW_HIGH := 0.9
+const GLOW_PULSES := 2
+## The glow's vermilion, the guard break's (tokens_v0.tres; Okabe-Ito).
+const GLOW_COLOUR := Sword.ACTIVE_COLOUR
 
 ## The input box, recorded by netfox as Input:move, Input:yaw, Input:pitch, Input:jump,
 ## Input:dash, Input:grapple, Input:light_attack, Input:guard, Input:charged_attack, Input:parry,
@@ -74,6 +84,9 @@ var tone := OTHER_TONE
 
 # The block sword, a function of the displayed state and tick; null until arm() (Sword).
 var sword: Sword
+# The guard break's hand, a function of the displayed state and tick too; null until arm()
+# (GrabHand; visual-e-audio.md, "A quebra na cápsula").
+var hand: GrabHand
 
 # An empty photo, for a fighter without a Match: it reads nobody (DEC-0051 §1).
 var _no_photo := TickPhoto.new()
@@ -82,6 +95,9 @@ var _no_photo := TickPhoto.new()
 var _flash_left_s := 0.0
 # Contour D waits for the first tick of each rollback loop (DEC-0025 §2).
 var _engine_floor_pending := false
+# The capsule lit vermilion while held (glow_level): a vermilion material with an emission, made
+# once and reused; its energy follows the pulse. Only the screen reads it.
+var _glow := StandardMaterial3D.new()
 # The lean on screen during a wall run (lean): how far it has come in, from 0 to 1, and the flat
 # normal of the wall it leans away from, kept while it goes out. Only the screen reads them: they
 # are never in the state, so no rollback, replay or SyncTest sees them (DEC-0031 §6).
@@ -165,6 +181,10 @@ func arm(combat_config: CombatConfig, tick_photo: TickPhoto, tokens: TokensData 
 	if sword == null:
 		sword = Sword.new(combat, tokens)
 		add_child(sword)
+	if hand == null:
+		var lit := tokens != null and tokens.guard_break_windup != null
+		hand = GrabHand.new(combat, tokens.guard_break_windup.color if lit else Sword.ACTIVE_COLOUR)
+		add_child(hand)
 
 
 ## Paints the body, and the cues it plays from now on, in tone (OWN_TONE or OTHER_TONE). setup()
@@ -196,9 +216,13 @@ func _exit_tree() -> void:
 func _process(delta: float) -> void:
 	lean(delta)
 	_fade_flash(delta)
+	# The state on screen is the one of the tick before netfox's clock.
+	var shown := NetworkTime.tick - 1
 	if sword != null:
-		# The state on screen is the one of the tick before netfox's clock.
-		sword.show_pose(state, NetworkTime.tick - 1)
+		sword.show_pose(state, shown)
+	if hand != null:
+		hand.show_hand(state, shown, held_offset())
+	show_glow(shown)
 
 
 ## Paints the body in colour, white by default, for seconds, on screen only: the flash of a hit
@@ -215,6 +239,62 @@ func flash(seconds: float, colour := Color.WHITE) -> void:
 ## True while the white flash of a hit shows.
 func flashing() -> bool:
 	return _flash_left_s > 0.0
+
+
+## The glow's energy for a fighter in this state at tick, the displayed ones: 0 when it is not held;
+## while held, GRABBING, or GRABBED up to the hold's last tick, a pulse from GLOW_HIGH down to
+## GLOW_LOW and back, GLOW_PULSES times over the hold, timed from the grab's contact, so the two
+## fighters pulse together. The stun of whoever was grabbed after the hold does not glow
+## (visual-e-audio.md, "A quebra na cápsula"). A function of the state and the tick, so a rollback
+## never plays it twice.
+static func glow_level(shown: FighterState, tick: int, combat_config: CombatConfig) -> float:
+	if combat_config == null:
+		return 0.0
+	var contact := shown.contact_tick
+	if shown.action == FighterState.Action.GRABBED:
+		contact = shown.grabbed_tick
+		if tick >= Combat.hold_end(contact, combat_config):
+			return 0.0
+	elif shown.action != FighterState.Action.GRABBING:
+		return 0.0
+	var hold := Combat.hold_end(contact, combat_config) - contact
+	var wave := 0.5 + 0.5 * cos(TAU * GLOW_PULSES * (tick - contact) / maxf(1.0, hold))
+	return lerpf(GLOW_LOW, GLOW_HIGH, wave)
+
+
+## Lights the capsule by glow_level at tick, the displayed one; a white flash of a hit or a grab
+## shows over it while it lasts, and out of the hold the capsule wears its tone again.
+func show_glow(tick: int) -> void:
+	var level := glow_level(state, tick, combat)
+	if flashing():
+		return
+	if level <= 0.0:
+		if body_mesh.material_override == _glow:
+			_paint(tone)
+		return
+	_glow.albedo_color = GLOW_COLOUR
+	_glow.emission_enabled = true
+	_glow.emission = GLOW_COLOUR
+	_glow.emission_energy_multiplier = level
+	body_mesh.material_override = _glow
+
+
+## The glow's energy the capsule shows now: 0 when it wears its tone or a flash.
+func glow_shown() -> float:
+	if body_mesh.material_override != _glow:
+		return 0.0
+	return _glow.emission_energy_multiplier
+
+
+## The offset from these feet to the feet of the fighter this one holds while GRABBING: the target
+## of its contact, a sibling node by that name (the photo's key, DEC-0051 §1); zero when it is gone.
+func held_offset() -> Vector3:
+	if state.action != FighterState.Action.GRABBING or get_parent() == null:
+		return Vector3.ZERO
+	var other := get_parent().get_node_or_null(NodePath(String(state.contact_target)))
+	if not (other is Node3D):
+		return Vector3.ZERO
+	return (other as Node3D).global_position - global_position
 
 
 func _fade_flash(delta: float) -> void:

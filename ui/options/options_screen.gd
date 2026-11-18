@@ -168,6 +168,13 @@ func waiting_for() -> StringName:
 # "Mouse esquerdo" for the left button, "Mouse direito" for the right one, or "Mouse 3", "Mouse 4"
 # or "Mouse 5"; for an action with no key (OptionsStore.binding), NO_KEY.
 func binding_label(event: InputEvent) -> String:
+	return label_of(event, keyboard_label)
+
+
+## The label of a binding as the screen shows it, with layout reading a physical key on the active
+## keyboard, as keyboard_label does (binding_label): the HUD names the guard break's key with it too
+## (TASK-12.4).
+static func label_of(event: InputEvent, layout: Callable) -> String:
 	if event == null:
 		return NO_KEY
 	if event is InputEventMouseButton:
@@ -181,8 +188,8 @@ func binding_label(event: InputEvent) -> String:
 		return pattern.format({ "number": MOUSE_NUMBERS[button.button_index] })
 	assert(event is InputEventKey, "a binding is a key or a mouse button")
 	var key := event as InputEventKey
-	var shown: Variant = keyboard_label.call(key.physical_keycode)
-	assert(shown is int, "keyboard_label must give a key")
+	var shown: Variant = layout.call(key.physical_keycode)
+	assert(shown is int, "the layout must give a key")
 	var label: Key = shown
 	return OS.get_keycode_string(label)
 
@@ -331,6 +338,12 @@ static func _set_range(slider: HSlider, low: float, high: float) -> void:
 	slider.min_value = low
 	slider.max_value = high
 	slider.custom_minimum_size = Vector2(SLIDER_WIDTH, 0.0)
+
+
+## How a key at a physical position reads on this PC's keyboard, the layout keyboard_label starts
+## with.
+static func layout_of_this_pc() -> Callable:
+	return _layout_of_this_pc()
 
 
 static func _layout_of_this_pc() -> Callable:

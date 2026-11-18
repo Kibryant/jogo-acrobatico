@@ -36,10 +36,12 @@
 # parry's numbers. The charged's vertical cut draws its trail in its own plane; a hit of a move
 # with an attacker's share of the shake shakes the attacker's camera too, by that share.
 # The guard break adds two (combate.md, "A quebra, o tech e a esquiva no tick" and "O hitstop e o
-# tremor"; TASK-12.4): the grab, on whoever was grabbed, keyed by grabbed_tick and first shown on
-# the tick after the contact, which shakes its camera by the grab's numbers ("Quebra pega"); and
-# the tech, on whoever answered, keyed by tech_tick and shown on that very tick, which leaves a puff
-# under its feet in its own tone. The guard break's active draws no arc: a hand has no blade.
+# tremor"; visual-e-audio.md, "A quebra na cápsula"; TASK-12.4): the grab, on whoever was grabbed,
+# keyed by grabbed_tick and first shown on the tick after the contact, which flashes its capsule
+# white, as a hit does, and shakes its camera by the grab's numbers ("Quebra pega"); and the tech,
+# on whoever answered, keyed by tech_tick and shown on that very tick, which leaves a puff under
+# its feet in its own tone. The guard break's active draws no arc: a hand has no blade, and the hand
+# itself is the fighter's (GrabHand).
 # It also counts, for the SyncTest, the events the simulation made on its fresh ticks: there,
 # with the rollback forced on every tick, the cues presented must equal the events (DEC-0031 §6;
 # rede.md §4).
@@ -271,6 +273,7 @@ func _draw(fighter: Fighter, kind: Kind) -> void:
 				add_child(Sparks.new(fighter, fighter.combat, _parry_colour()))
 			_shake_parry(fighter)
 		Kind.GRAB:
+			fighter.flash(FLASH_S, _flash_colour())
 			_shake_grab(fighter)
 		Kind.TECH:
 			# The double jump's puff under the feet, in the fighter's tone: the escape it made.

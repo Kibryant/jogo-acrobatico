@@ -34,6 +34,12 @@ const STAND_TICKS := 3
 var _match: Match
 var _fighter: Fighter
 var _first_tick := 0
+# What _grab_exchange saw of the flashes: every material the grabbed one's capsule wore while
+# flashing, each flash being a new one; the tick on screen when it first flashed; and whether the
+# grabber's capsule ever flashed.
+var _grab_flashes: Array[Material] = []
+var _grab_flash_shown := FighterState.NEVER
+var _grabber_flashed := false
 
 
 func before_test() -> void:
@@ -921,6 +927,9 @@ func _camera_for_hand(hand: float) -> float:
 # the watched one's camera, in degrees, each checked for its length; the events are read on the way:
 # the grab and the tech, each played once, and no arc for the guard break's active.
 func _grab_exchange(teched: bool, watch_grabber: bool, shake_on := true) -> Array[float]:
+	_grab_flashes.clear()
+	_grab_flash_shown = FighterState.NEVER
+	_grabber_flashed = false
 	await _start()
 	var target := _match.spawn_fighter(Match.DUMMY_SLOT, multiplayer.get_unique_id())
 	target.position = _fighter.position + Vector3(0.0, 0.0, -1.05)
@@ -950,6 +959,12 @@ func _grab_exchange(teched: bool, watch_grabber: bool, shake_on := true) -> Arra
 		if teched and loop == contact + 10:
 			target.input.press_guard_break()
 		NetfoxTicks.run_loop()
+		var worn := target.body_mesh.material_override
+		if target.flashing() and not _grab_flashes.has(worn):
+			_grab_flashes.append(worn)
+			if _grab_flash_shown == FighterState.NEVER:
+				_grab_flash_shown = NetworkTime.tick - 1
+		_grabber_flashed = _grabber_flashed or _fighter.flashing()
 		if camera.shaking():
 			shakes.append(camera.shake_degrees())
 			var seconds := _match.combat_data.grab_shake_ms / 1000.0
@@ -1000,3 +1015,25 @@ func test_a_grab_shakes_nothing_on_the_grabber() -> void:
 func test_with_the_option_off_a_grab_shakes_nothing() -> void:
 	var shakes := await _grab_exchange(false, false, false)
 	assert_array(shakes).is_empty()
+
+
+# visual-e-audio.md, "A quebra na cápsula": "Quem é agarrado vê um flash branco na própria cápsula
+# no tick em que sabe, como o da reação a um golpe": the grab flashes the grabbed one's capsule
+# once, in the reaction's white, on the tick after the contact, when its state first shows the
+# grab, by the grab's key under the rollback of 7 ticks on every loop, with the tech or without it;
+# the grabber's capsule never flashes.
+func test_a_grab_flashes_the_grabbed_capsule_white_once_on_the_tick_it_learns(
+	teched: bool,
+	_test_parameters := [[false], [true]],
+) -> void:
+	var _shakes := await _grab_exchange(teched, true)
+	assert_int(_grab_flashes.size()).override_failure_message("%d flashes" % _grab_flashes.size()) \
+			.is_equal(1)
+	var target := _match.fighter_at(Match.DUMMY_SLOT)
+	assert_int(_grab_flash_shown).is_equal(target.state.grabbed_tick + 1)
+	var flash := _grab_flashes[0]
+	assert(flash is StandardMaterial3D, "the flash is a StandardMaterial3D")
+	var white := (flash as StandardMaterial3D).albedo_color
+	assert_bool(white.is_equal_approx(_match.tokens.reaction.color)).is_true()
+	assert_bool(white.is_equal_approx(Color.WHITE)).is_true()
+	assert_bool(_grabber_flashed).override_failure_message("the grabber flashed").is_false()

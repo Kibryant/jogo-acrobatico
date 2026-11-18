@@ -23,11 +23,21 @@ const HAIR := 1e-4
 const SPENT_AT := 5000
 ## Points left after the spend in the tests that read a bar mid-way.
 const LEFT_AFTER_SPEND := 37.0
+## The contact of the grab in the tests of the tech's call, any tick far from the clock's start.
+const GRABBED_AT := 5000
+## combate.md, "O agarrão" and "O tech": the tech counts from the contact + 1 to the contact + 23;
+## the hold ends on the contact + 24, and without the tech the stun on the contact + 76.
+const HOLD_END := 24
+const VICTIM_FREE := 76
+const GUARD_BREAK_ACTION := &"guard_break"
 
 var _match: Match
 var _fighter: Fighter
 var _locale_before := ""
 var _window_before := Vector2i.ZERO
+# The guard break's keys before a test remapped them, put back after it.
+var _guard_break_before: Array[InputEvent] = []
+var _guard_break_saved := false
 
 
 func before_test() -> void:
@@ -43,6 +53,11 @@ func before_test() -> void:
 
 func after_test() -> void:
 	TranslationServer.set_locale(_locale_before)
+	if _guard_break_saved:
+		InputMap.action_erase_events(GUARD_BREAK_ACTION)
+		for event: InputEvent in _guard_break_before:
+			InputMap.action_add_event(GUARD_BREAK_ACTION, event)
+		_guard_break_saved = false
 	if _window_before != Vector2i.ZERO:
 		get_tree().root.size = _window_before
 		_window_before = Vector2i.ZERO
@@ -717,3 +732,112 @@ func test_beside_the_others_health_the_hud_shows_its_token_by_shape_and_colour()
 	hud.show_at(SPENT_AT)
 	assert_str(String(hud.shown_token_shape())).override_failure_message("the window's end") \
 			.is_equal(String(tokens.parry.hud_shape))
+
+
+# The state of a fighter held by a guard break whose contact was on contact, with no tech's press:
+# GRABBED from the next tick, unable to act up to the contact + 76.
+func _grab(fighter: Fighter, contact: int) -> void:
+	fighter.state.action = FighterState.Action.GRABBED
+	fighter.state.action_since = contact + 1
+	fighter.state.grabbed_tick = contact
+	fighter.state.stun_until_tick = contact + VICTIM_FREE
+
+
+# TASK-12.4 (visual-e-audio.md, "A quebra na cápsula": "A tela mostra 'Botão do meio!', ou o rótulo
+# da tecla da quebra se ela foi remapeada, enquanto a janela do tech está aberta e o tech não veio";
+# F-212): held by a guard break, from the contact + 1 to the contact + 23, the followed fighter's
+# HUD calls the tech's key in the player's language; on the contact's tick, and from the hold's end
+# in the stun, nothing.
+func test_while_the_tech_window_is_open_the_hud_calls_the_middle_button() -> void:
+	var hud := _hud()
+	hud.show_health(_match.combat, _match.fighters)
+	_grab(_fighter, GRABBED_AT)
+	TranslationServer.set_locale("pt_BR")
+	hud.show_at(GRABBED_AT)
+	assert_str(hud.shown_tech_prompt()).override_failure_message("on the contact").is_empty()
+	for after: int in range(1, HOLD_END):
+		hud.show_at(GRABBED_AT + after)
+		assert_str(hud.shown_tech_prompt()).override_failure_message("contact + %d" % after) \
+				.is_equal("Botão do meio!")
+	var closed: Array[int] = [HOLD_END, HOLD_END + 10]
+	for after: int in closed:
+		hud.show_at(GRABBED_AT + after)
+		assert_str(hud.shown_tech_prompt()).override_failure_message("contact + %d" % after) \
+				.is_empty()
+	TranslationServer.set_locale("en")
+	hud.show_at(GRABBED_AT + 5)
+	assert_str(hud.shown_tech_prompt()).is_equal("Middle button!")
+
+
+# The tech's press hides the call at once, before the tech counts; and the call is keyed by the
+# grab (DEC-0031 §6): a rollback that takes the press back does not bring it back for that grab.
+# The next grab calls again.
+func test_the_tech_hides_the_call_and_no_rollback_brings_it_back_for_that_grab() -> void:
+	var hud := _hud()
+	hud.show_health(_match.combat, _match.fighters)
+	_grab(_fighter, GRABBED_AT)
+	TranslationServer.set_locale("en")
+	hud.show_at(GRABBED_AT + 3)
+	assert_str(hud.shown_tech_prompt()).is_equal("Middle button!")
+	_fighter.state.tech_press_tick = GRABBED_AT + 4
+	hud.show_at(GRABBED_AT + 4)
+	assert_str(hud.shown_tech_prompt()).override_failure_message("the press").is_empty()
+	_fighter.state.tech_tick = GRABBED_AT + 5
+	_fighter.state.stun_until_tick = GRABBED_AT + HOLD_END
+	hud.show_at(GRABBED_AT + 5)
+	assert_str(hud.shown_tech_prompt()).override_failure_message("the tech").is_empty()
+	_fighter.state.tech_press_tick = FighterState.NEVER
+	_fighter.state.tech_tick = FighterState.NEVER
+	_fighter.state.stun_until_tick = GRABBED_AT + VICTIM_FREE
+	hud.show_at(GRABBED_AT + 6)
+	assert_str(hud.shown_tech_prompt()).override_failure_message("back after a rollback") \
+			.is_empty()
+	var next := GRABBED_AT + 200
+	_grab(_fighter, next)
+	hud.show_at(next + 1)
+	assert_str(hud.shown_tech_prompt()).override_failure_message("the next grab").is_equal(
+		"Middle button!"
+	)
+
+
+# The call is the followed fighter's own: the other one held calls nothing on this HUD; and before
+# show_health() the HUD has no combat numbers and calls nothing.
+func test_only_the_followed_fighters_hold_calls_the_tech() -> void:
+	var hud := _hud()
+	var dummy := _match.spawn_fighter(Match.DUMMY_SLOT, multiplayer.get_unique_id())
+	hud.show_health(_match.combat, _match.fighters)
+	_grab(dummy, GRABBED_AT)
+	hud.show_at(GRABBED_AT + 3)
+	assert_str(hud.shown_tech_prompt()).override_failure_message("the other's hold").is_empty()
+	var bare := _hud()
+	_grab(_fighter, GRABBED_AT)
+	bare.show_at(GRABBED_AT + 3)
+	assert_str(bare.shown_tech_prompt()).override_failure_message("before show_health").is_empty()
+
+
+# Remapped, the call names the guard break's key as the options screen does, and "!": a key by its
+# label on this keyboard, another mouse button by its number; with no key, nothing to call.
+func test_a_remapped_guard_break_names_its_key_and_none_calls_nothing() -> void:
+	_guard_break_before = InputMap.action_get_events(GUARD_BREAK_ACTION)
+	_guard_break_saved = true
+	var hud := _hud()
+	hud.show_health(_match.combat, _match.fighters)
+	_grab(_fighter, GRABBED_AT)
+	TranslationServer.set_locale("en")
+	var key := InputEventKey.new()
+	key.physical_keycode = KEY_G
+	InputMap.action_erase_events(GUARD_BREAK_ACTION)
+	InputMap.action_add_event(GUARD_BREAK_ACTION, key)
+	hud.show_at(GRABBED_AT + 3)
+	var label := OptionsScreen.label_of(key, OptionsScreen.layout_of_this_pc())
+	assert_str(label).is_equal("G")
+	assert_str(hud.shown_tech_prompt()).is_equal("G!")
+	var mouse := InputEventMouseButton.new()
+	mouse.button_index = MOUSE_BUTTON_XBUTTON1
+	InputMap.action_erase_events(GUARD_BREAK_ACTION)
+	InputMap.action_add_event(GUARD_BREAK_ACTION, mouse)
+	hud.show_at(GRABBED_AT + 4)
+	assert_str(hud.shown_tech_prompt()).is_equal("Mouse 4!")
+	InputMap.action_erase_events(GUARD_BREAK_ACTION)
+	hud.show_at(GRABBED_AT + 5)
+	assert_str(hud.shown_tech_prompt()).override_failure_message("no key").is_empty()

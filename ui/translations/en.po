@@ -63,6 +63,10 @@ msgstr "Grapple {whole}.{tenth} s"
 msgid "REPLAY_ENDED"
 msgstr "End of the replay. Close the window to leave."
 
+# The call to the tech's key while the guard break holds the player (TASK-12.4; F-212).
+msgid "HUD_TECH_PROMPT"
+msgstr "Middle button!"
+
 # The title of the options screen, opened with the Esc (TASK-10.9).
 msgid "OPTIONS_TITLE"
 msgstr "Options"

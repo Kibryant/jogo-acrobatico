@@ -270,8 +270,8 @@ func test_the_dummys_light_touches_a_player_standing_still(
 
 # A match with the dummy and the player standing 1,5 m apart on the flat floor, placed before
 # netfox records its first state, the dummy attacking; or `apart` metres apart, the player straight
-# down -Z from the dummy.
-func _match(apart := APART_M) -> Match:
+# down -Z from the dummy; with only_guard_breaks, the dummy of --dummy=guard_break.
+func _match(apart := APART_M, only_guard_breaks := false) -> Match:
 	var node := MATCH_SCENE.instantiate()
 	assert(node is Match, "match.tscn must have a Match at its root")
 	var game_match: Match = auto_free(node)
@@ -281,7 +281,7 @@ func _match(apart := APART_M) -> Match:
 	var dummy := game_match.spawn_fighter(Match.DUMMY_SLOT, me)
 	player.position = DUMMY_FEET + Vector3(0.0, 0.0, -apart)
 	dummy.position = DUMMY_FEET
-	game_match.let_dummy_attack(dummy, player)
+	game_match.let_dummy_attack(dummy, player, only_guard_breaks)
 	await get_tree().process_frame
 	await get_tree().physics_frame
 	return game_match
@@ -419,3 +419,63 @@ func test_in_the_match_the_dummys_guard_break_grabs_at_1_2_m_and_misses_at_1_5_m
 			FighterState.NEVER
 		)
 		assert_int(held_on).override_failure_message(message).is_equal(FighterState.NEVER)
+
+
+# TASK-12.4 (partida.md, "A mistura do boneco": "o `--dummy=guard_break` faz o boneco dar só
+# quebras, uma a cada 3 s, mirando como gente; ele não anda, então quem treina fica de 0,9 a 1,5 m
+# na frente dele"; F-212): in the real Match the training dummy's every action is a guard break,
+# its hand along the aim of a person turned by the hand's convergence (DEC-0058 §2), and each one
+# grabs the player standing still 1,2 m in front of it: the first one period in, where the mix
+# throws a light, and the second one period later, once the first grab let the player go.
+func test_in_the_match_the_training_dummy_grabs_the_player_1_2_m_in_front_every_period() -> void:
+	var game_match := await _match(1.2, true)
+	var player := game_match.fighter_at(Match.PLAYER_SLOT)
+	var dummy := game_match.fighter_at(Match.DUMMY_SLOT)
+	assert_int(AttackingDummy.kind_of(1)).is_equal(AttackingDummy.Kind.LIGHT)
+	var start := game_match.attacking_dummy.start_tick
+	var guard_break: AttackConfig = game_match.combat.attacks[FighterCommand.GUARD_BREAK]
+	var swing := guard_break.windup_ticks + guard_break.active_ticks + guard_break.recovery_ticks
+	var moves: Array[StringName] = []
+	var grabs: Array[int] = []
+	var before := dummy.state.copy()
+	var grabbed_before := player.state.grabbed_tick
+	for _loop: int in 2 * PERIOD_TICKS + swing + SPARE_TICKS:
+		player.input.sample_frame(Vector2.ZERO, player.state.facing_yaw)
+		NetfoxTicks.run_loop()
+		var state := dummy.state
+		var began := state.action != before.action or state.action_since != before.action_since
+		if began and state.action == FighterState.Action.WINDUP:
+			moves.append(state.action_move)
+			var aim := AttackingDummy.aim_yaw(
+				dummy.global_position,
+				player.global_position,
+				dummy.config.aim_side,
+				before.facing_yaw,
+			)
+			var expected := aim - asin(SHOULDER_M / HAND_CONVERGENCE_M)
+			var message := "windup %d: the hand goes to %.4f, expected %.4f" % [
+				moves.size(),
+				state.action_yaw,
+				expected,
+			]
+			assert_float(angle_difference(state.action_yaw, expected)) \
+					.override_failure_message(message) \
+					.is_equal_approx(0.0, YAW_HAIR)
+		if player.state.grabbed_tick != grabbed_before:
+			grabs.append(player.state.grabbed_tick - start)
+			grabbed_before = player.state.grabbed_tick
+		before = state.copy()
+	assert_array(moves).is_equal([FighterCommand.GUARD_BREAK, FighterCommand.GUARD_BREAK])
+	var summary := "grabs %s ticks after the dummy's start" % [grabs]
+	assert_int(grabs.size()).override_failure_message(summary).is_equal(2)
+	for k: int in grabs.size():
+		var press := (k + 1) * PERIOD_TICKS
+		var first_active := press + guard_break.windup_ticks
+		assert_int(grabs[k]).override_failure_message(summary).is_between(
+			first_active,
+			first_active + guard_break.active_ticks - 1,
+		)
+	assert_int(player.state.tech_tick).is_equal(FighterState.NEVER)
+	assert_float(player.global_position.distance_to(dummy.global_position)) \
+			.override_failure_message("the two moved") \
+			.is_equal_approx(1.2, 1e-3)

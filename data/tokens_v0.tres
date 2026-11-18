@@ -54,7 +54,7 @@ hud_shape = &"star"
 [sub_resource type="Resource" id="Resource_guard_break_windup"]
 script = ExtResource("2_tokn0")
 color = Color(0.8352941, 0.36862746, 0, 1)
-pose = &"blade_low"
+pose = &"hand"
 hud_shape = &"arrow"
 
 [resource]

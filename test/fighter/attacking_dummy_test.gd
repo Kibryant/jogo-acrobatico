@@ -220,8 +220,9 @@ func test_the_yaw_toward_a_point_looks_at_it() -> void:
 	assert_float(AttackingDummy.yaw_toward(from, from + Vector3.UP, 0.7)).is_equal(0.7)
 
 
-# The player and the dummy 1,05 m apart, the dummy attacking, netfox's deferred setup done.
-func _match_close() -> Match:
+# The player and the dummy 1,05 m apart, the dummy attacking, netfox's deferred setup done; with
+# only_guard_breaks, the dummy of --dummy=guard_break.
+func _match_close(only_guard_breaks := false) -> Match:
 	var node := MATCH_SCENE.instantiate()
 	assert(node is Match, "match.tscn must have a Match at its root")
 	var game_match: Match = auto_free(node)
@@ -231,7 +232,7 @@ func _match_close() -> Match:
 	var dummy := game_match.spawn_fighter(Match.DUMMY_SLOT, me)
 	player.position = PLAYER_FEET
 	dummy.position = DUMMY_FEET
-	game_match.let_dummy_attack(dummy, player)
+	game_match.let_dummy_attack(dummy, player, only_guard_breaks)
 	await get_tree().process_frame
 	await get_tree().physics_frame
 	return game_match
@@ -274,3 +275,58 @@ func test_the_dummy_never_techs_the_guard_break_its_mix_schedules_in_a_hold() ->
 	assert_int(dummy.state.action).override_failure_message(GrabRig.line(dummy.state)).is_not_equal(
 		FighterState.Action.GRABBED
 	)
+
+
+# TASK-12.4 (partida.md, "A mistura do boneco": "o `--dummy=guard_break` faz o boneco dar só
+# quebras, uma a cada 3 s"; F-212): the training dummy presses the guard break on every period's
+# tick and nothing else, where the mix lights, charges or feints; the match's own dummy keeps the
+# mix.
+func test_the_training_dummy_presses_only_a_guard_break_every_period() -> void:
+	var game_match := await _match()
+	assert_bool(game_match.attacking_dummy.only_guard_breaks).is_false()
+	var player := game_match.fighter_at(Match.PLAYER_SLOT)
+	var dummy := game_match.fighter_at(Match.DUMMY_SLOT)
+	var training: AttackingDummy = auto_free(AttackingDummy.new(dummy, player, 0, 60, true))
+	assert_bool(training.only_guard_breaks).is_true()
+	assert_int(training.period_ticks).is_equal(PERIOD_TICKS)
+	var mixed: Dictionary[AttackingDummy.Kind, bool] = { }
+	for k: int in range(1, 30):
+		mixed[AttackingDummy.kind_of(k)] = true
+		assert_int(training.kind_at(k)).is_equal(AttackingDummy.Kind.GUARD_BREAK)
+		for into: int in PERIOD_TICKS:
+			var pressed := training.presses(k * PERIOD_TICKS + into)
+			var wanted: Array = [FighterCommand.GUARD_BREAK] if into == 0 else []
+			var message := "action %d, tick %d into it: %s" % [k, into, pressed]
+			assert_array(pressed).override_failure_message(message).is_equal(wanted)
+	assert_int(mixed.size()).override_failure_message("the mix it leaves out").is_equal(4)
+	assert_array(training.presses(0)).is_empty()
+
+
+# The training dummy never techs either (partida.md, "A mistura do boneco": "O boneco nunca dá o
+# tech"): the player grabs it 10 ticks before its first guard break, which falls inside the hold,
+# and the dummy leaves it out, still GRABBED past the hold.
+func test_the_training_dummy_never_techs_the_guard_break_it_throws_in_a_hold() -> void:
+	var game_match := await _match_close(true)
+	var player := game_match.fighter_at(Match.PLAYER_SLOT)
+	var dummy := game_match.fighter_at(Match.DUMMY_SLOT)
+	var attacking := game_match.attacking_dummy
+	var scheduled := attacking.start_tick + PERIOD_TICKS
+	assert_array(attacking.presses(scheduled)).is_equal([FighterCommand.GUARD_BREAK])
+	var contact := scheduled - 10
+	var press := contact - GRAB_CONTACT_AFTER
+	var hand := GrabRig.camera_for(PI, SHOULDER_M, HAND_CONVERGENCE_M)
+	var tech_ticks: Array[int] = []
+	while NetworkTime.tick <= contact + HELD_TICKS + 7:
+		player.input.sample_frame(Vector2.ZERO, hand)
+		if NetworkTime.tick == press:
+			player.input.press_guard_break()
+		NetfoxTicks.run_loop()
+		if GrabRig.tech_tick(dummy.state) != FighterState.NEVER:
+			tech_ticks.append(NetworkTime.tick - 1)
+	assert_int(GrabRig.grabbed_tick(dummy.state)) \
+			.override_failure_message("the player did not grab the dummy on %d" % contact) \
+			.is_equal(contact)
+	assert_array(tech_ticks).override_failure_message("the dummy teched").is_empty()
+	assert_bool(GrabRig.is_grabbed(dummy.state)) \
+			.override_failure_message("past the hold the dummy is %s" % GrabRig.line(dummy.state)) \
+			.is_true()

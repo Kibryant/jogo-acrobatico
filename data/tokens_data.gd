@@ -23,7 +23,8 @@ extends Resource
 @export var feint: TokenData
 ## Whoever was parried: the blade thrown up and back through the stun.
 @export var parried: TokenData
-## The guard break's windup: vermilion from its first tick, the sword low and the hand forward.
+## The guard break's windup: the hand in vermilion from its first tick, the sword at rest
+## (visual-e-audio.md, "A quebra na cápsula").
 @export var guard_break_windup: TokenData
 
 

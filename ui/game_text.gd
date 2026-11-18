@@ -24,6 +24,10 @@ const HUD_DASH_COOLDOWN := &"HUD_DASH_COOLDOWN"
 const HUD_GRAPPLE_COOLDOWN := &"HUD_GRAPPLE_COOLDOWN"
 # Every row of a replay played in the window has played (--watch; TASK-10.3).
 const REPLAY_ENDED := &"REPLAY_ENDED"
+# The call to the tech's key on the grabbed player's screen, while the tech's window is open and
+# the tech has not come, with the guard break on its default, the middle mouse button (TASK-12.4;
+# visual-e-audio.md, "A quebra na cápsula"; F-212).
+const HUD_TECH_PROMPT := &"HUD_TECH_PROMPT"
 # The options screen (TASK-10.9; visual-e-audio.md, "A tela de opções"): its title, its three
 # groups, the twelve actions, the two sliders, the shake's toggle and the two buttons.
 const OPTIONS_TITLE := &"OPTIONS_TITLE"
@@ -82,6 +86,7 @@ const KEYS: Array[StringName] = [
 	HUD_DASH_COOLDOWN,
 	HUD_GRAPPLE_COOLDOWN,
 	REPLAY_ENDED,
+	HUD_TECH_PROMPT,
 	OPTIONS_TITLE,
 	OPTIONS_GROUP_KEYS,
 	OPTIONS_GROUP_MOUSE,

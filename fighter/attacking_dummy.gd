@@ -11,8 +11,10 @@
 # feint and 1 guard break, and no tech when it is grabbed (F-210 §1; DEC-0058). The feint is a
 # charged cut by the guard button's press 24 ticks into its windup, then a light 4 ticks later,
 # which waits in the slot until the feint's 12 ticks end. The guard break grabs whoever stands
-# within its hand's reach, 0,88 to 1,48 m with its aim on the player (combate.md, "A mão"). It does
-# not walk, hold the guard or react. Like the BotPlayer it only produces input, through the calls
+# within its hand's reach, 0,88 to 1,48 m with its aim on the player (combate.md, "A mão"). To train
+# the tech, --dummy=guard_break makes it throw only guard breaks, one every period, aiming as a
+# person does (partida.md, "A mistura do boneco"; F-212): only_guard_breaks. It does not walk, hold
+# the guard or react. Like the BotPlayer it only produces input, through the calls
 # the devices use (FighterInput.sample_frame, press_light_attack, press_charged_attack,
 # press_guard and press_guard_break), and never writes state; the replay records the input it
 # gave, so a session plays back without it. The yaw toward the player is read from the bodies on
@@ -60,12 +62,22 @@ var period_ticks: int
 ## Ticks from a feinted charged's press to the guard's press, and from that to the light's.
 var feint_press_ticks: int
 var light_after_feint_ticks: int
+## Every action a guard break, for training the tech (--dummy=guard_break; F-212), instead of the
+## mix of kind_of.
+var only_guard_breaks := false
 
 
-func _init(played: Fighter, turned_to: Fighter, first_tick: int, tickrate: int) -> void:
+func _init(
+	played: Fighter,
+	turned_to: Fighter,
+	first_tick: int,
+	tickrate: int,
+	guard_breaks_only := false,
+) -> void:
 	name = "AttackingDummy"
 	dummy = played
 	target = turned_to
+	only_guard_breaks = guard_breaks_only
 	input = played.input
 	start_tick = first_tick
 	period_ticks = Ticks.from_ms(PERIOD_MS, tickrate)
@@ -128,6 +140,12 @@ static func kind_of(k: int) -> Kind:
 	return Kind.GUARD_BREAK
 
 
+## The kind of this dummy's k-th action: the mix's (kind_of), or a guard break every time when it
+## trains the tech (only_guard_breaks).
+func kind_at(k: int) -> Kind:
+	return Kind.GUARD_BREAK if only_guard_breaks else kind_of(k)
+
+
 ## Whether an action begins on tick: every period after its start, never on the start.
 func presses_at(tick: int) -> bool:
 	var step := tick - start_tick
@@ -146,7 +164,7 @@ func presses(tick: int) -> Array[StringName]:
 	var into := step % period_ticks
 	if k < 1:
 		return pressed
-	var kind := kind_of(k)
+	var kind := kind_at(k)
 	if into == 0:
 		match kind:
 			Kind.LIGHT:

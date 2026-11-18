@@ -132,12 +132,13 @@ A sonda não tem rede, física, efeitos, interface nem arena; o jogo de verdade 
 
 Os tempos são do `combate.md`, com os números do desenho do duelo desde a TASK-12.1 (os 300, os 500 a 900 e os 80 ms eram os do estudo); as cores, da Okabe-Ito (F-053 §3.6); as poses e os sons, os da sonda (F-061 §1). As quatro linhas de baixo entraram no desenho do duelo (TASK-12; `combate.md`, "O tranco e a vantagem", "A quebra de guarda e o tech", "O hitstop e o tremor").
 
-**A quebra na cápsula** (TASK-12.4; leitura v0 do Claude, até o manequim da TASK-12.9 e o som da TASK-12.6):
-- **Na preparação da quebra,** a espada desce desde o tick 0, com a mão a −15° e a 1,1 m e a lâmina inclinada −60°, em vermelhão. O HUD mostra uma seta para cima, na mesma cor.
-- **No ativo,** a espada segue a reta da mão e não desenha o arco do golpe.
-- **O agarrão** treme a câmera de quem foi agarrado: 100 ms e 0,5°, a linha "Quebra pega" do `combate.md`. É o estímulo a que o tech responde, e a opção "Tremor da câmera" o desliga.
-- **O tech** solta um sopro na cor do lutador, enquanto o som não chega.
-- **O contorno que pulsa** em quem foi agarrado espera o manequim: a cápsula não tem contorno.
+**A quebra na cápsula** (TASK-12.4; até o manequim da TASK-12.9 e o som da TASK-12.6). A primeira versão baixava a espada em vermelhão e não mostrava o agarrão; jogando, o Arthur não entendeu o que acontecia, e o replay mostrou 12 agarrões dele que a tela não deixou ver (F-211). Ele escolheu a rodada de tela abaixo (F-212):
+- **Na preparação da quebra,** a espada fica na pose de descanso. Uma mão em vermelhão, uma esfera de 0,1 m de raio, aparece no eixo do corpo, a 1,3 m de altura, desde o tick 0. O HUD mostra uma seta para cima, na mesma cor.
+- **No ativo,** a mão sai pela reta da quebra, 0,2 m por tick, até 1,2 m: a mesma conta do toque, então quem joga vê a mão passar ou pegar. Na recuperação, a mão volta para o corpo e some no fim dela.
+- **O agarrão:** quando a quebra pega, a mão para no peito do outro, no eixo dele a 1,3 m, e os dois lutadores acendem em vermelhão, pulsando, enquanto estão presos. A cápsula inteira vira vermelhão, porque uma luz vermelha sobre o cinza claro sairia branca; o brilho vai de 0,1 a 0,9 e pulsa duas vezes nos 400 ms presos, os dois no mesmo compasso, contado do contato. A mão chega ao peito um tick depois de quem foi agarrado saber, porque quem agarrou só sabe pela foto (leitura v0 do Claude, DEC-0017).
+- **Quem é agarrado** ganha um flash branco na cápsula no tick em que sabe, como o da reação a um golpe, visto em todas as telas. A tela dele mostra "Botão do meio!", ou o rótulo da tecla da quebra mais "!" se ela foi remapeada, 48 px abaixo do centro, no tamanho de letra do HUD. O aviso fica enquanto a janela do tech está aberta e some no aperto, não quando o tech conta. A câmera ainda treme 100 ms e 0,5°, a linha "Quebra pega" do `combate.md`, e a opção "Tremor da câmera" desliga só o tremor.
+- **O tech** apaga o aviso e solta um sopro na cor do lutador, enquanto o som não chega.
+- **O contorno que pulsa** do desenho espera o manequim: a cápsula não tem contorno, e o brilho dos dois faz esse papel até lá.
 
 ### O som entra na fase 2 (F-172 §2; DEC-0050)
 

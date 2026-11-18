@@ -331,7 +331,8 @@ func test_tokens_v0_holds_the_guard_break_windup_in_vermilion_with_its_own_pose_
 		var stored: float = pair[0]
 		var design: float = pair[1]
 		assert_float(stored).is_equal_approx(design, COLOUR_HAIR)
-	assert_str(String(token.pose)).is_equal("blade_low")
+	# The pose names the hand (visual-e-audio.md, "A quebra na cápsula"): the sword rests.
+	assert_str(String(token.pose)).is_equal("hand")
 	assert_str(String(token.hud_shape)).is_equal("arrow")
 	var others: Array[TokenData] = [
 		tokens.light_windup,

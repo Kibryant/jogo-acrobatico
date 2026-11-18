@@ -1,9 +1,10 @@
 ---
 id: TASK-12.15
 title: 'A câmera centrada: o experimento do --camera=center'
-status: Ready
+status: In Progress
 assignee: []
 created_date: '2026-11-18 15:52'
+updated_date: '2026-11-18 15:52'
 labels: []
 dependencies: []
 parent_task_id: TASK-12

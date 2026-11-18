@@ -39,14 +39,19 @@ const HEAD_PROBE_DISTANCE := 0.05
 # FLOOR_ANGLE_THRESHOLD, Godot 4.7.2): a collision within it is a floor collision. An engine
 # number, not a game one.
 const FLOOR_ANGLE_THRESHOLD := 0.01
-# The glow of a held fighter (visual-e-audio.md, "A quebra na cápsula": "os dois lutadores acendem
-# em vermelhão, pulsando, enquanto estão presos"): the capsule turns vermilion and its light pulses
-# from GLOW_LOW to GLOW_HIGH and back GLOW_PULSES times over the hold, 200 ms a pulse at the hold's
-# 400 ms. Claude's v0 reading (DEC-0017); only the screen reads them. The capsule's own tone is out
-# of it: on the light one, a vermilion light would read white.
+# The glow of a fighter that cannot act for a grab (visual-e-audio.md, "A quebra na cápsula":
+# "aceso = preso"; F-213): the capsule turns vermilion for as long as its action is GRABBING or
+# GRABBED. Over the hold its light pulses from GLOW_LOW to GLOW_HIGH and back GLOW_PULSES times,
+# 200 ms a pulse at the hold's 400 ms. After the hold, whoever was grabbed and gave no tech jumps
+# to GLOW_STUN_START on the first tick after it and fades in a straight line to GLOW_STUN_END on
+# its last tick unable to act: a timer for whoever grabbed. Claude's v0 reading (DEC-0017); only
+# the screen reads them. The capsule's own tone is out of it: on the light one, a vermilion light
+# would read white.
 const GLOW_LOW := 0.1
 const GLOW_HIGH := 0.9
 const GLOW_PULSES := 2
+const GLOW_STUN_START := 0.9
+const GLOW_STUN_END := 0.2
 ## The glow's vermilion, the guard break's (tokens_v0.tres; Okabe-Ito).
 const GLOW_COLOUR := Sword.ACTIVE_COLOUR
 
@@ -95,8 +100,9 @@ var _no_photo := TickPhoto.new()
 var _flash_left_s := 0.0
 # Contour D waits for the first tick of each rollback loop (DEC-0025 §2).
 var _engine_floor_pending := false
-# The capsule lit vermilion while held (glow_level): a vermilion material with an emission, made
-# once and reused; its energy follows the pulse. Only the screen reads it.
+# The capsule lit vermilion while unable to act for a grab (glow_level): a vermilion material with
+# an emission, made once and reused; its energy follows the pulse and the fade. Only the screen
+# reads it.
 var _glow := StandardMaterial3D.new()
 # The lean on screen during a wall run (lean): how far it has come in, from 0 to 1, and the flat
 # normal of the wall it leans away from, kept while it goes out. Only the screen reads them: they
@@ -241,29 +247,38 @@ func flashing() -> bool:
 	return _flash_left_s > 0.0
 
 
-## The glow's energy for a fighter in this state at tick, the displayed ones: 0 when it is not held;
-## while held, GRABBING, or GRABBED up to the hold's last tick, a pulse from GLOW_HIGH down to
-## GLOW_LOW and back, GLOW_PULSES times over the hold, timed from the grab's contact, so the two
-## fighters pulse together. The stun of whoever was grabbed after the hold does not glow
-## (visual-e-audio.md, "A quebra na cápsula"). A function of the state and the tick, so a rollback
-## never plays it twice.
+## The glow's energy for a fighter in this state at tick, the displayed ones: lit means unable to
+## act for a grab (visual-e-audio.md, "A quebra na cápsula": "aceso = preso"; F-213). 0 unless the
+## action is GRABBING or GRABBED. Over the hold, up to its last tick, a pulse from GLOW_HIGH down to
+## GLOW_LOW and back, GLOW_PULSES times, timed from the grab's contact, so the two fighters pulse
+## together. From the hold's end (Combat.hold_end), whoever is still GRABBED, with no tech, fades in
+## a straight line from GLOW_STUN_START there to GLOW_STUN_END on stun_until_tick - 1, its last tick
+## unable to act. Whoever grabbed keeps the pulse until GRABBING ends, two ticks past the hold after
+## a tech; a tech or a hit, which takes GRABBED away, turns the glow off with it. A function of the
+## state and the tick, so a rollback never plays it twice.
 static func glow_level(shown: FighterState, tick: int, combat_config: CombatConfig) -> float:
 	if combat_config == null:
 		return 0.0
 	var contact := shown.contact_tick
-	if shown.action == FighterState.Action.GRABBED:
+	var grabbed := shown.action == FighterState.Action.GRABBED
+	if grabbed:
 		contact = shown.grabbed_tick
-		if tick >= Combat.hold_end(contact, combat_config):
-			return 0.0
 	elif shown.action != FighterState.Action.GRABBING:
 		return 0.0
-	var hold := Combat.hold_end(contact, combat_config) - contact
+	var release := Combat.hold_end(contact, combat_config)
+	if grabbed and tick >= release:
+		var last := shown.stun_until_tick - 1
+		if tick > last:
+			return 0.0
+		var share := float(tick - release) / maxf(1.0, last - release)
+		return lerpf(GLOW_STUN_START, GLOW_STUN_END, share)
+	var hold := release - contact
 	var wave := 0.5 + 0.5 * cos(TAU * GLOW_PULSES * (tick - contact) / maxf(1.0, hold))
 	return lerpf(GLOW_LOW, GLOW_HIGH, wave)
 
 
 ## Lights the capsule by glow_level at tick, the displayed one; a white flash of a hit or a grab
-## shows over it while it lasts, and out of the hold the capsule wears its tone again.
+## shows over it while it lasts, and once it can act again the capsule wears its tone again.
 func show_glow(tick: int) -> void:
 	var level := glow_level(state, tick, combat)
 	if flashing():

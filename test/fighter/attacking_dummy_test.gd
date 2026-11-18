@@ -28,6 +28,10 @@ const VICTIM_FREE := 76
 ## quebra".
 const SHOULDER_M := 0.8
 const HAND_CONVERGENCE_M := 1.2
+## combate.md, "A lâmina e o contato": the sword converges at 2,0 m.
+const SWORD_CONVERGENCE_M := 2.0
+## combate.md, "O bloqueio, a guarda andando e a stamina": "levanta a guarda em 100 ms (6 ticks)".
+const GUARD_RAISE_TICKS := 6
 ## partida.md, "O boneco que ataca": the feint's guard press 24 ticks into the charged's windup,
 ## the light 4 ticks after it; the feint lasts 12 (combate.md, "A finta").
 const FEINT_PRESS_TICKS := 24
@@ -221,8 +225,8 @@ func test_the_yaw_toward_a_point_looks_at_it() -> void:
 
 
 # The player and the dummy 1,05 m apart, the dummy attacking, netfox's deferred setup done; with
-# only_guard_breaks, the dummy of --dummy=guard_break.
-func _match_close(only_guard_breaks := false) -> Match:
+# only_guard_breaks, the dummy of --dummy=guard_break; with holds_guard, the one of --dummy=block.
+func _match_close(only_guard_breaks := false, holds_guard := false) -> Match:
 	var node := MATCH_SCENE.instantiate()
 	assert(node is Match, "match.tscn must have a Match at its root")
 	var game_match: Match = auto_free(node)
@@ -232,7 +236,7 @@ func _match_close(only_guard_breaks := false) -> Match:
 	var dummy := game_match.spawn_fighter(Match.DUMMY_SLOT, me)
 	player.position = PLAYER_FEET
 	dummy.position = DUMMY_FEET
-	game_match.let_dummy_attack(dummy, player, only_guard_breaks)
+	game_match.let_dummy_attack(dummy, player, only_guard_breaks, holds_guard)
 	await get_tree().process_frame
 	await get_tree().physics_frame
 	return game_match
@@ -330,3 +334,128 @@ func test_the_training_dummy_never_techs_the_guard_break_it_throws_in_a_hold() -
 	assert_bool(GrabRig.is_grabbed(dummy.state)) \
 			.override_failure_message("past the hold the dummy is %s" % GrabRig.line(dummy.state)) \
 			.is_true()
+
+
+# TASK-12.4 (partida.md, "A mistura do boneco": "o `--dummy=block` faz o boneco segurar a guarda";
+# F-213): the dummy that holds its guard presses the guard button once, on its first tick, the
+# button's edge, and no command ever after; no action of its own begins on any period.
+func test_the_blocking_dummy_presses_the_guard_on_its_first_tick_and_nothing_after() -> void:
+	var game_match := await _match()
+	assert_bool(game_match.attacking_dummy.holds_guard).override_failure_message("the mix blocks") \
+			.is_false()
+	var player := game_match.fighter_at(Match.PLAYER_SLOT)
+	var dummy := game_match.fighter_at(Match.DUMMY_SLOT)
+	var start := 40
+	var blocking: AttackingDummy = auto_free(
+		AttackingDummy.new(dummy, player, start, 60, false, true)
+	)
+	assert_bool(blocking.holds_guard).is_true()
+	assert_bool(blocking.only_guard_breaks).is_false()
+	assert_array(blocking.presses(start)).is_equal([&"guard"])
+	for tick: int in range(start - 5, start + 3 * PERIOD_TICKS + FEINT_PRESS_TICKS + 10):
+		assert_bool(blocking.presses_at(tick)).override_failure_message("an action on %d" % tick) \
+				.is_false()
+		if tick != start:
+			assert_array(blocking.presses(tick)) \
+					.override_failure_message("a press on %d" % tick) \
+					.is_empty()
+
+
+# In the match, over more than a period, the blocking dummy's input box holds the guard on every
+# tick, shows the guard's press on its first tick alone, and never an attack, a parry or a guard
+# break; it aims at the player as a person does, its guard rises in 6 ticks and stays, and it does
+# not walk (combate.md, "O bloqueio, a guarda andando e a stamina").
+func test_the_blocking_dummy_holds_the_guard_on_every_tick_and_never_attacks() -> void:
+	var game_match := await _match_close(false, true)
+	var player := game_match.fighter_at(Match.PLAYER_SLOT)
+	var dummy := game_match.fighter_at(Match.DUMMY_SLOT)
+	var attacking := game_match.attacking_dummy
+	assert_bool(attacking.holds_guard).is_true()
+	var start := attacking.start_tick
+	var spawn := dummy.position
+	var aim := AttackingDummy.aim_yaw(
+		dummy.global_position,
+		player.global_position,
+		dummy.config.aim_side,
+		dummy.state.facing_yaw,
+	)
+	var press_ticks: Array[int] = []
+	var open_ticks: Array[int] = []
+	var attack_ticks: Array[int] = []
+	var low_ticks: Array[int] = []
+	while NetworkTime.tick <= start + PERIOD_TICKS + FEINT_PRESS_TICKS + FEINT_TICKS:
+		player.input.sample_frame(Vector2.ZERO, player.state.facing_yaw)
+		NetfoxTicks.run_loop()
+		var shown := NetworkTime.tick - 1
+		var box := dummy.input.to_tick_input()
+		if box.guard_press:
+			press_ticks.append(shown - start)
+		if not box.guard:
+			open_ticks.append(shown - start)
+		if box.light_attack or box.charged_attack or box.parry or box.guard_break:
+			attack_ticks.append(shown - start)
+		if shown >= start + GUARD_RAISE_TICKS and dummy.state.action != FighterState.Action.BLOCK:
+			low_ticks.append(shown - start)
+		assert_float(angle_difference(box.yaw, aim)).is_equal_approx(0.0, HAIR)
+	assert_array(press_ticks).override_failure_message("the guard's press: %s" % [press_ticks]) \
+			.is_equal([0])
+	assert_array(open_ticks).override_failure_message("guard let go on %s" % [open_ticks]) \
+			.is_empty()
+	assert_array(attack_ticks).override_failure_message("it attacked on %s" % [attack_ticks]) \
+			.is_empty()
+	assert_array(low_ticks).override_failure_message("the guard is down on %s" % [low_ticks]) \
+			.is_empty()
+	assert_vector(dummy.position).is_equal_approx(spawn, Vector3.ONE * HAIR)
+
+
+# What the mode is for (F-213): the player's light stops on the blocking dummy's guard, which takes
+# no damage; the player's guard break goes through it and grabs; held, the dummy keeps the button
+# down and never techs, stays GRABBED up to the contact + 75, and its guard is up again by itself 6
+# ticks after it can act (combate.md, "A guarda andando").
+func test_the_blocking_dummy_blocks_a_light_is_grabbed_and_raises_its_guard_again() -> void:
+	var game_match := await _match_close(false, true)
+	var player := game_match.fighter_at(Match.PLAYER_SLOT)
+	var dummy := game_match.fighter_at(Match.DUMMY_SLOT)
+	var health := dummy.state.health
+	var sword := GrabRig.camera_for(PI, SHOULDER_M, SWORD_CONVERGENCE_M)
+	var hand := GrabRig.camera_for(PI, SHOULDER_M, HAND_CONVERGENCE_M)
+	var light := NetworkTime.tick + 20
+	var blocked := false
+	while NetworkTime.tick <= light + 60:
+		player.input.sample_frame(Vector2.ZERO, sword)
+		if NetworkTime.tick == light:
+			player.input.press_light_attack()
+		NetfoxTicks.run_loop()
+		blocked = blocked or dummy.state.action == FighterState.Action.BLOCKSTUN
+	assert_bool(blocked) \
+			.override_failure_message("the light was not blocked: %s" % GrabRig.line(dummy.state)) \
+			.is_true()
+	assert_int(dummy.state.health).override_failure_message("a blocked light hurt").is_equal(health)
+	assert_int(dummy.state.action).is_equal(FighterState.Action.BLOCK)
+	var press := NetworkTime.tick + 5
+	var contact := press + GRAB_CONTACT_AFTER
+	var tech_ticks: Array[int] = []
+	var open_ticks: Array[int] = []
+	while NetworkTime.tick <= contact + VICTIM_FREE - 1:
+		player.input.sample_frame(Vector2.ZERO, hand)
+		if NetworkTime.tick == press:
+			player.input.press_guard_break()
+		NetfoxTicks.run_loop()
+		if GrabRig.tech_tick(dummy.state) != FighterState.NEVER:
+			tech_ticks.append(NetworkTime.tick - 1)
+		if not dummy.input.to_tick_input().guard:
+			open_ticks.append(NetworkTime.tick - 1)
+	assert_int(GrabRig.grabbed_tick(dummy.state)) \
+			.override_failure_message("the guard stopped the guard break") \
+			.is_equal(contact)
+	assert_array(tech_ticks).override_failure_message("the dummy teched").is_empty()
+	assert_array(open_ticks).override_failure_message("held, it let the guard go").is_empty()
+	assert_bool(GrabRig.is_grabbed(dummy.state)) \
+			.override_failure_message("on the contact + 75: %s" % GrabRig.line(dummy.state)) \
+			.is_true()
+	while NetworkTime.tick <= contact + VICTIM_FREE + GUARD_RAISE_TICKS:
+		player.input.sample_frame(Vector2.ZERO, hand)
+		NetfoxTicks.run_loop()
+	assert_int(dummy.state.action).override_failure_message(GrabRig.line(dummy.state)) \
+			.is_equal(FighterState.Action.BLOCK)
+	assert_int(dummy.state.action_since).is_equal(contact + VICTIM_FREE)

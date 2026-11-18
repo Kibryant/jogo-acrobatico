@@ -392,7 +392,8 @@ func test_dummy_guard_break_keeps_the_dummy_with_only_guard_breaks() -> void:
 	var windowed := _parse(["--dummy=guard_break"], EDITOR_BUILD, WITH_SCREEN)
 	assert_array(windowed.errors).is_empty()
 	assert_bool(windowed.dummy_only_guard_breaks).is_true()
-	var mixes: Array[Array] = [[], ["--dummy=on"], ["--dummy=off"]]
+	assert_bool(training.dummy_holds_guard).override_failure_message("it blocks too").is_false()
+	var mixes: Array[Array] = [[], ["--dummy=on"], ["--dummy=off"], ["--dummy=block"]]
 	for arguments: Array in mixes:
 		var parsed := _parse(arguments)
 		var message := "%s throws more than guard breaks" % [arguments]
@@ -400,8 +401,44 @@ func test_dummy_guard_break_keeps_the_dummy_with_only_guard_breaks() -> void:
 		assert_bool(parsed.dummy_only_guard_breaks).override_failure_message(message).is_false()
 
 
-# A value of --dummy that is none of the three, or the training mode where no dummy goes, is one
-# error, the value's naming the three; the training mode is then off. Given twice is
+# TASK-12.4 (partida.md, "A mistura do boneco": "o `--dummy=block` faz o boneco segurar a guarda";
+# F-213): the blocking mode keeps Sozinho's dummy and makes it hold its guard; on, off,
+# guard_break and no --dummy do not.
+func test_dummy_block_keeps_the_dummy_holding_its_guard() -> void:
+	var blocking := _parse(["--dummy=block", "--no-replay"])
+	assert_array(blocking.errors).is_empty()
+	assert_int(blocking.mode).is_equal(LaunchOptions.Mode.SOLO)
+	assert_bool(blocking.dummy).is_true()
+	assert_bool(blocking.dummy_holds_guard).is_true()
+	assert_bool(blocking.dummy_only_guard_breaks).is_false()
+	var windowed := _parse(["--dummy=block"], EDITOR_BUILD, WITH_SCREEN)
+	assert_array(windowed.errors).is_empty()
+	assert_bool(windowed.dummy_holds_guard).is_true()
+	var others: Array[Array] = [[], ["--dummy=on"], ["--dummy=off"], ["--dummy=guard_break"]]
+	for arguments: Array in others:
+		var parsed := _parse(arguments)
+		var message := "%s holds the guard" % [arguments]
+		assert_array(parsed.errors).is_empty()
+		assert_bool(parsed.dummy_holds_guard).override_failure_message(message).is_false()
+	var refused: Array[Array] = [
+		["--dummy=BLOCK"],
+		["--dummy=guard"],
+		["--server", "--dummy=block"],
+		["--connect=127.0.0.1", "--dummy=block"],
+	]
+	for arguments: Array in refused:
+		var parsed := _parse(arguments)
+		var message := "%s must be refused with one message" % [arguments]
+		assert_int(parsed.errors.size()).override_failure_message(message).is_equal(1)
+		assert_bool(parsed.dummy_holds_guard).override_failure_message(message).is_false()
+	var watched := _parse(["--watch=x.replay", "--dummy=block"], EDITOR_BUILD, WITH_SCREEN)
+	assert_int(watched.errors.size()).is_equal(1)
+	assert_str(watched.errors[0]).contains("--watch")
+	assert_bool(watched.dummy_holds_guard).is_false()
+
+
+# A value of --dummy that is none of the four, or the training mode where no dummy goes, is one
+# error, the value's naming the four; the training mode is then off. Given twice is
 # test_dummy_arguments_that_do_not_fit_are_errors's.
 func test_dummy_values_that_do_not_fit_are_one_error_each() -> void:
 	var cases: Array[Array] = [
@@ -416,7 +453,7 @@ func test_dummy_values_that_do_not_fit_are_one_error_each() -> void:
 		assert_int(parsed.errors.size()).override_failure_message(message).is_equal(1)
 		assert_bool(parsed.dummy_only_guard_breaks).override_failure_message(message).is_false()
 	assert_str(_parse(["--dummy=no"]).errors[0]).is_equal(
-		"--dummy is on, off or guard_break, not no"
+		"--dummy is on, off, guard_break or block, not no"
 	)
 	var watched := _parse(["--watch=x.replay", "--dummy=guard_break"], EDITOR_BUILD, WITH_SCREEN)
 	assert_int(watched.errors.size()).is_equal(1)

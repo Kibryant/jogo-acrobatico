@@ -432,7 +432,7 @@ A cena de entrada olha como o jogo foi aberto, como um `main.ts` que lê o `proc
 |---|---|
 | `godot --headless -- --server`, na porta 7777/udp, ou noutra com `--port=N`; ou o build exportado como servidor dedicado, que liga a feature `dedicated_server` e força o modo sem tela ([guia do Godot](https://docs.godotengine.org/en/stable/tutorials/export/exporting_for_dedicated_servers.html)) | **Servidor dedicado:** sem tela e sem lutador próprio; cria um lutador para cada cliente que entra |
 | `godot -- --connect=127.0.0.1`, na porta 7777, ou `--connect=host:porta` | **Cliente** |
-| `godot`, sem argumento | **Sozinho:** o par offline. Desde a TASK-10.7, um boneco parado espera no segundo ponto de nascimento, dirigido por este PC sem câmera, sem teclado e sem bot, no tom do outro lutador; o `--dummy=off` o tira, o `--dummy=guard_break` o faz dar só quebras (TASK-12.4; F-212), e o replay grava os dois |
+| `godot`, sem argumento | **Sozinho:** o par offline. Desde a TASK-10.7, um boneco parado espera no segundo ponto de nascimento, dirigido por este PC sem câmera, sem teclado e sem bot, no tom do outro lutador; o `--dummy=off` o tira, o `--dummy=guard_break` o faz dar só quebras (TASK-12.4; F-212), o `--dummy=block` o faz segurar a guarda sem atacar (F-213), e o replay grava os dois |
 
 - **Argumento desconhecido, repetido ou fora do modo é erro:** o jogo mostra o uso e sai com o código 2. Um erro de digitação já deixou uma sonda em tela cheia aberta por até 300 s (`.claude/harness/registro.md`, 07/10/2026). O servidor sem o `--headless` também é recusado.
 - **O relógio do netfox:**

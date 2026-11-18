@@ -4,8 +4,9 @@
 # the windup's first tick; in the active out along the swing, 0,2 m a tick up to 1,2 m, at the far
 # end of the rule's own hand (Blade.hand_slice, Blade.hand_segment); back to the axis through the
 # recovery, and gone at its end; on the other's chest, its axis at 1,3 m, while whoever grabbed
-# holds. Both fighters glow vermilion, pulsing, while held, and the stun after the hold does not
-# glow. The real Match runs with netfox's ticks advanced by hand (test/support/netfox_ticks.gd;
+# holds. A fighter glows vermilion for as long as it is GRABBING or GRABBED, lit meaning unable to
+# act (F-213): both pulsing through the hold, then whoever was grabbed fading until it acts again.
+# The real Match runs with netfox's ticks advanced by hand (test/support/netfox_ticks.gd;
 # DEC-0027 §3).
 extends GdUnitTestSuite
 
@@ -29,6 +30,12 @@ const REACH_M := 1.2
 ## ending on the contact + 24; without the tech, unable to act up to the contact + 75.
 const HOLD_END := 24
 const VICTIM_FREE := 76
+## combate.md, "O tech": whoever grabbed is let go 2 ticks after whoever gave the tech.
+const TECH_ADVANTAGE := 2
+## visual-e-audio.md, "A quebra na cápsula": "aceso = preso": after the hold the glow "salta para
+## 0,9" and "cai em linha reta até 0,2 no último tick preso".
+const FADE_START := 0.9
+const FADE_END := 0.2
 ## The flat floor west of the platform (attacking_dummy_test.gd): the other fighter, and the
 ## grabber 1,05 m in front of it, down -Z, whose hand first touches it on its 4th active tick
 ## (combate.md, "A mão"): the contact comes 21 + 3 ticks after the press.
@@ -208,11 +215,13 @@ func test_an_armed_fighter_carries_a_vermilion_hand_that_its_state_places() -> v
 	assert_vector(hand.position).is_equal_approx(expected, Vector3.ONE * HAIR)
 
 
-# The glow (visual-e-audio.md, "A quebra na cápsula": "os dois lutadores acendem em vermelhão,
-# pulsando, enquanto estão presos"): whoever grabbed glows while GRABBING, whoever was grabbed from
-# the contact + 1 to the contact + 23, the hold; from the hold's end the stun, still GRABBED, does
-# not glow. On every tick both glow alike, and the light rises and falls over the hold.
-func test_the_glow_lights_both_fighters_only_while_held_and_pulses_together() -> void:
+# The glow (visual-e-audio.md, "A quebra na cápsula": "aceso = preso"; F-213): lit means unable to
+# act for a grab. Whoever grabbed glows while GRABBING, whoever was grabbed while GRABBED. From the
+# contact + 1 to the contact + 23, the hold, both glow alike, and the light rises and falls. From
+# the hold's end whoever is still GRABBED, with no tech, jumps to 0,9 on the contact + 24 and fades
+# in a straight line to 0,2 on the contact + 75, its last tick unable to act. Out of the two
+# actions nothing glows: after a tech, after a hit, at rest.
+func test_the_glow_lights_whoever_cannot_act_and_fades_over_the_stun_after_the_hold() -> void:
 	var combat := _combat()
 	var contact := SINCE
 	var grabber := FighterState.new()
@@ -240,25 +249,52 @@ func test_the_glow_lights_both_fighters_only_while_held_and_pulses_together() ->
 					.is_equal_approx(level, HAIR)
 	assert_float(highest - lowest).override_failure_message("the glow does not pulse") \
 			.is_greater(0.5 * (Fighter.GLOW_HIGH - Fighter.GLOW_LOW))
-	for after: int in range(HOLD_END, VICTIM_FREE):
-		assert_float(Fighter.glow_level(grabbed, contact + after, combat)) \
-				.override_failure_message("the stun glows on the contact + %d" % after) \
-				.is_equal(0.0)
+	assert_float(Fighter.glow_level(grabbed, contact + HOLD_END, combat)) \
+			.override_failure_message("the first tick after the hold").is_equal_approx(
+		FADE_START,
+		HAIR,
+	)
+	assert_float(Fighter.glow_level(grabbed, contact + VICTIM_FREE - 1, combat)) \
+			.override_failure_message("the last tick unable to act").is_equal_approx(FADE_END, HAIR)
+	var step := (FADE_START - FADE_END) / (VICTIM_FREE - 1 - HOLD_END)
+	for after: int in range(HOLD_END + 1, VICTIM_FREE):
+		var fall := (
+			Fighter.glow_level(grabbed, contact + after - 1, combat)
+			- Fighter.glow_level(grabbed, contact + after, combat)
+		)
+		assert_float(fall).override_failure_message("the fade bends on the contact + %d" % after) \
+				.is_equal_approx(step, HAIR)
+	# Still GRABBED on the tick it acts again, which the core never shows: dark all the same.
+	assert_float(Fighter.glow_level(grabbed, contact + VICTIM_FREE, combat)).is_equal(0.0)
+	# After a tech the stun ends with the hold: nothing left to fade.
+	var teched := grabbed.copy()
+	teched.stun_until_tick = contact + HOLD_END
+	assert_float(Fighter.glow_level(teched, contact + HOLD_END, combat)) \
+			.override_failure_message("the tech's release glows").is_equal(0.0)
 	var others: Array[FighterState] = [
 		FighterState.new(),
 		_breaking(FighterState.Action.WINDUP, 0.0),
 	]
-	var hit := FighterState.new()
+	# A hit takes the grab's place: HITSTUN, whatever the grab's stamps still say.
+	var hit := grabbed.copy()
 	hit.action = FighterState.Action.HITSTUN
-	hit.action_since = contact
+	hit.action_since = contact + HOLD_END + 5
+	hit.stun_until_tick = contact + HOLD_END + 30
 	others.append(hit)
+	# Whoever grabbed, let go: its stamps stay, its action is NONE.
+	var released := grabber.copy()
+	released.action = FighterState.Action.NONE
+	released.action_since = contact + HOLD_END
+	others.append(released)
 	for other: FighterState in others:
-		assert_float(Fighter.glow_level(other, contact + 5, combat)).is_equal(0.0)
+		for after: int in [5, HOLD_END, HOLD_END + 6, VICTIM_FREE - 1]:
+			assert_float(Fighter.glow_level(other, contact + after, combat)) \
+					.override_failure_message("%s glows" % GrabRig.line(other)).is_equal(0.0)
 
 
-# The capsule wears the glow while held and its tone again after the hold; a white flash shows over
-# the glow while it lasts.
-func test_the_capsule_wears_the_glow_while_held_and_its_tone_after() -> void:
+# The capsule wears the glow while it cannot act, through the hold and the stun after it, and its
+# tone again from the tick it acts; a white flash shows over the glow while it lasts.
+func test_the_capsule_wears_the_glow_while_it_cannot_act_and_its_tone_after() -> void:
 	var game_match := await _match()
 	var fighter := game_match.fighter_at(Match.PLAYER_SLOT)
 	var contact := SINCE
@@ -273,8 +309,14 @@ func test_the_capsule_wears_the_glow_while_held_and_its_tone_after() -> void:
 	)
 	assert_float(fighter.glow_shown()).is_greater(0.0)
 	fighter.show_glow(contact + HOLD_END)
+	assert_float(fighter.glow_shown()).is_equal_approx(FADE_START, HAIR)
+	fighter.show_glow(contact + VICTIM_FREE - 1)
+	assert_float(fighter.glow_shown()).is_equal_approx(FADE_END, HAIR)
+	fighter.state.action = FighterState.Action.NONE
+	fighter.show_glow(contact + VICTIM_FREE)
 	assert_float(fighter.glow_shown()).is_equal(0.0)
 	_assert_wears_its_tone(fighter)
+	fighter.state.action = FighterState.Action.GRABBED
 	fighter.flash(10.0)
 	fighter.show_glow(contact + 3)
 	assert_bool(fighter.flashing()).is_true()
@@ -284,8 +326,9 @@ func test_the_capsule_wears_the_glow_while_held_and_its_tone_after() -> void:
 
 # In a real grab, from the tick each side learns it: the grabber's hand rests on the other's chest
 # and both capsules glow alike, the other's hand hidden; past the hold the grabber's hand is gone
-# and neither glows, though whoever was grabbed is still in its stun.
-func test_in_a_real_grab_the_hand_rests_on_the_chest_and_both_glow_through_the_hold() -> void:
+# and it is dark, while whoever was grabbed, still in its stun, glows on, fading, down to 0,2 on
+# the contact + 75, and wears its tone again on the contact + 76 (F-213).
+func test_in_a_real_grab_both_glow_through_the_hold_and_the_grabbed_one_until_it_acts() -> void:
 	var game_match := await _match(true)
 	var grabber := game_match.fighter_at(Match.PLAYER_SLOT)
 	var other := game_match.fighter_at(Match.DUMMY_SLOT)
@@ -311,9 +354,111 @@ func test_in_a_real_grab_the_hand_rests_on_the_chest_and_both_glow_through_the_h
 			.is_true()
 	assert_int(grabber.state.action).is_not_equal(FighterState.Action.GRABBING)
 	assert_bool(grabber.hand.visible).override_failure_message("the hand stayed").is_false()
-	assert_float(grabber.glow_shown()).is_equal(0.0)
-	assert_float(other.glow_shown()).override_failure_message("the stun glows").is_equal(0.0)
+	assert_float(grabber.glow_shown()).override_failure_message("the grabber, let go, glows") \
+			.is_equal(0.0)
+	_assert_wears_its_tone(grabber)
+	var span := float(VICTIM_FREE - 1 - HOLD_END)
+	assert_float(other.glow_shown()).override_failure_message("the stun is dark") \
+			.is_equal_approx(lerpf(FADE_START, FADE_END, 3.0 / span), HAIR)
+	await get_tree().physics_frame
+	_play_until(grabber, hand, press, contact + VICTIM_FREE - 1)
+	await _process_once()
+	assert_bool(GrabRig.is_grabbed(other.state)).is_true()
+	assert_float(other.glow_shown()).is_equal_approx(FADE_END, HAIR)
+	await get_tree().physics_frame
+	_play_until(grabber, hand, press, contact + VICTIM_FREE)
+	await _process_once()
+	assert_bool(GrabRig.is_grabbed(other.state)).override_failure_message("still stuck").is_false()
+	assert_float(other.glow_shown()).is_equal(0.0)
 	_assert_wears_its_tone(other)
+
+
+# On the first tick after the hold of a real grab, the contact + 24, whoever grabbed is dark and
+# whoever was grabbed jumps to 0,9: the timer the grabber reads (F-213).
+func test_in_a_real_grab_the_grabber_goes_dark_at_its_release_and_the_other_jumps_to_0_9() -> void:
+	var game_match := await _match(true)
+	var grabber := game_match.fighter_at(Match.PLAYER_SLOT)
+	var other := game_match.fighter_at(Match.DUMMY_SLOT)
+	var press := NetworkTime.tick + 10
+	var contact := press + GRAB_CONTACT_AFTER
+	var hand := GrabRig.camera_for(PI, SHOULDER_M, HAND_CONVERGENCE_M)
+	_play_until(grabber, hand, press, contact + HOLD_END - 1)
+	await _process_once()
+	assert_int(GrabRig.grabbed_tick(other.state)).is_equal(contact)
+	assert_float(grabber.glow_shown()).override_failure_message("the hold's last tick is dark") \
+			.is_greater(0.0)
+	assert_float(other.glow_shown()).is_equal_approx(grabber.glow_shown(), HAIR)
+	await get_tree().physics_frame
+	_play_until(grabber, hand, press, contact + HOLD_END)
+	await _process_once()
+	assert_int(grabber.state.action).is_not_equal(FighterState.Action.GRABBING)
+	assert_float(grabber.glow_shown()).override_failure_message("the grabber, let go, glows") \
+			.is_equal(0.0)
+	assert_float(other.glow_shown()).is_equal_approx(FADE_START, HAIR)
+
+
+# After a tech in a real grab, whoever was grabbed acts on the hold's end and is dark there; whoever
+# grabbed stays GRABBING, lit, two ticks more, and is dark on the contact + 26 (combate.md, "O
+# tech"; F-213).
+func test_in_a_real_grab_a_tech_turns_the_grabbed_one_dark_at_the_release() -> void:
+	var game_match := await _match(true)
+	var grabber := game_match.fighter_at(Match.PLAYER_SLOT)
+	var other := game_match.fighter_at(Match.DUMMY_SLOT)
+	var press := NetworkTime.tick + 10
+	var contact := press + GRAB_CONTACT_AFTER
+	var hand := GrabRig.camera_for(PI, SHOULDER_M, HAND_CONVERGENCE_M)
+	_play_until(grabber, hand, press, contact + 9)
+	other.input.press_guard_break()
+	await get_tree().physics_frame
+	_play_until(grabber, hand, press, contact + HOLD_END - 1)
+	await _process_once()
+	assert_int(GrabRig.tech_tick(other.state)).override_failure_message("no tech").is_not_equal(
+		FighterState.NEVER
+	)
+	assert_float(other.glow_shown()).override_failure_message("held, after the tech, dark") \
+			.is_greater(0.0)
+	await get_tree().physics_frame
+	_play_until(grabber, hand, press, contact + HOLD_END)
+	await _process_once()
+	assert_bool(GrabRig.is_grabbed(other.state)).override_failure_message("still stuck").is_false()
+	assert_float(other.glow_shown()).override_failure_message("the tech's release glows") \
+			.is_equal(0.0)
+	_assert_wears_its_tone(other)
+	assert_int(grabber.state.action).is_equal(FighterState.Action.GRABBING)
+	assert_float(grabber.glow_shown()).is_greater(0.0)
+	await get_tree().physics_frame
+	_play_until(grabber, hand, press, contact + HOLD_END + TECH_ADVANTAGE)
+	await _process_once()
+	assert_int(grabber.state.action).is_not_equal(FighterState.Action.GRABBING)
+	assert_float(grabber.glow_shown()).is_equal(0.0)
+
+
+# A hit on whoever was grabbed, in its stun after the hold, takes the grab's place: HITSTUN, and
+# the glow goes off with it, well before the contact + 76 (F-213).
+func test_in_a_real_grab_a_hit_on_the_grabbed_one_turns_its_glow_off() -> void:
+	var game_match := await _match(true)
+	var grabber := game_match.fighter_at(Match.PLAYER_SLOT)
+	var other := game_match.fighter_at(Match.DUMMY_SLOT)
+	var press := NetworkTime.tick + 10
+	var contact := press + GRAB_CONTACT_AFTER
+	var hand := GrabRig.camera_for(PI, SHOULDER_M, HAND_CONVERGENCE_M)
+	_play_until(grabber, hand, press, contact + HOLD_END)
+	await _process_once()
+	assert_float(other.glow_shown()).is_equal_approx(FADE_START, HAIR)
+	grabber.input.press_light_attack()
+	var hit_on := FighterState.NEVER
+	while NetworkTime.tick < contact + VICTIM_FREE and hit_on == FighterState.NEVER:
+		await get_tree().physics_frame
+		grabber.input.sample_frame(Vector2.ZERO, hand)
+		NetfoxTicks.run_loop()
+		if other.state.action == FighterState.Action.HITSTUN:
+			hit_on = NetworkTime.tick - 1
+	assert_int(hit_on).override_failure_message("the light missed") \
+			.is_not_equal(FighterState.NEVER)
+	await _process_once()
+	# The white flash of the hit shows first; the glow is off under it either way.
+	assert_float(Fighter.glow_level(other.state, hit_on, game_match.combat)).is_equal(0.0)
+	assert_float(other.glow_shown()).override_failure_message("the hit one glows").is_equal(0.0)
 
 
 # A match with the player and the dummy standing, no one attacking, netfox's deferred setup done;

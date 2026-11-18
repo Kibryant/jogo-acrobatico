@@ -249,11 +249,13 @@ func let_bot_play(fighter: Fighter) -> BotPlayer:
 
 # Sozinho's dummy starts an action every 3 s, aiming at target as a person does (partida.md, "O
 # boneco que ataca"; combate.md, "A espada na mira"), its clock starting on the dummy's first
-# tick. It only fills the dummy's input box.
+# tick. It only fills the dummy's input box. With only_guard_breaks it throws nothing else; with
+# holds_guard it holds its guard and never attacks (AttackingDummy; F-212; F-213).
 func let_dummy_attack(
 	dummy: Fighter,
 	target: Fighter,
 	only_guard_breaks := false,
+	holds_guard := false,
 ) -> AttackingDummy:
 	var first_tick: int = dummy.synchronizer.spawn_tick
 	attacking_dummy = AttackingDummy.new(
@@ -262,6 +264,7 @@ func let_dummy_attack(
 		first_tick,
 		config.tickrate,
 		only_guard_breaks,
+		holds_guard,
 	)
 	add_child(attacking_dummy)
 	return attacking_dummy

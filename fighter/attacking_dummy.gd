@@ -13,13 +13,15 @@
 # which waits in the slot until the feint's 12 ticks end. The guard break grabs whoever stands
 # within its hand's reach, 0,88 to 1,48 m with its aim on the player (combate.md, "A mão"). To train
 # the tech, --dummy=guard_break makes it throw only guard breaks, one every period, aiming as a
-# person does (partida.md, "A mistura do boneco"; F-212): only_guard_breaks. It does not walk, hold
-# the guard or react. Like the BotPlayer it only produces input, through the calls
-# the devices use (FighterInput.sample_frame, press_light_attack, press_charged_attack,
-# press_guard and press_guard_break), and never writes state; the replay records the input it
-# gave, so a session plays back without it. The yaw toward the player is read from the bodies on
-# screen before each tick loop, as a person reads the screen: what it decided is the input of those
-# ticks, whatever a rollback does later.
+# person does (partida.md, "A mistura do boneco"; F-212): only_guard_breaks. To give the guard break
+# a guard to beat, --dummy=block makes it hold the guard button on every tick, aiming the same way,
+# and never attack, feint or tech (partida.md, "A mistura do boneco"; F-213): holds_guard. Out of
+# that mode it does not hold the guard; in none does it walk or react. Like the BotPlayer it only
+# produces input, through the calls the devices use (FighterInput.sample_frame, press_light_attack,
+# press_charged_attack, press_guard, hold_guard and press_guard_break), and never writes state; the
+# replay records the input it gave, so a session plays back without it. The yaw toward the player
+# is read from the bodies on screen before each tick loop, as a person reads the screen: what it
+# decided is the input of those ticks, whatever a rollback does later.
 class_name AttackingDummy
 extends Node
 
@@ -65,6 +67,11 @@ var light_after_feint_ticks: int
 ## Every action a guard break, for training the tech (--dummy=guard_break; F-212), instead of the
 ## mix of kind_of.
 var only_guard_breaks := false
+## The guard button held on every tick and no action at all, for training the guard break against
+## a guard (--dummy=block; F-213): the button goes down once, on the dummy's first tick, and stays
+## down through every stun, so the core raises the guard again by itself (combate.md, "A guarda
+## andando").
+var holds_guard := false
 
 
 func _init(
@@ -73,11 +80,13 @@ func _init(
 	first_tick: int,
 	tickrate: int,
 	guard_breaks_only := false,
+	guard_held := false,
 ) -> void:
 	name = "AttackingDummy"
 	dummy = played
 	target = turned_to
 	only_guard_breaks = guard_breaks_only
+	holds_guard = guard_held
 	input = played.input
 	start_tick = first_tick
 	period_ticks = Ticks.from_ms(PERIOD_MS, tickrate)
@@ -96,6 +105,8 @@ func _exit_tree() -> void:
 
 
 func _ready() -> void:
+	# A hold, set once: every tick loop reads it until it changes (FighterInput.hold_guard).
+	input.hold_guard(holds_guard)
 	_turn_for_the_next_loop()
 
 
@@ -146,18 +157,24 @@ func kind_at(k: int) -> Kind:
 	return Kind.GUARD_BREAK if only_guard_breaks else kind_of(k)
 
 
-## Whether an action begins on tick: every period after its start, never on the start.
+## Whether an action begins on tick: every period after its start, never on the start; never at
+## all for the dummy that holds its guard (holds_guard).
 func presses_at(tick: int) -> bool:
 	var step := tick - start_tick
-	return step > 0 and step % period_ticks == 0
+	return not holds_guard and step > 0 and step % period_ticks == 0
 
 
 ## The commands the dummy presses on tick, in the order it presses them (FighterCommand's IDs, the
 ## guard's press as &"guard"): the action's first press on its period tick, the light, the charged
-## or the guard break, and a feint's guard and light after it.
+## or the guard break, and a feint's guard and light after it. The dummy that holds its guard
+## (holds_guard) presses the guard alone, on its first tick, the button's edge, and nothing after.
 func presses(tick: int) -> Array[StringName]:
 	var pressed: Array[StringName] = []
 	var step := tick - start_tick
+	if holds_guard:
+		if step == 0:
+			pressed.append(&"guard")
+		return pressed
 	if step <= 0:
 		return pressed
 	var k := step / period_ticks
@@ -196,7 +213,8 @@ func _turn_for_the_next_loop() -> void:
 
 
 # Every press is a one-touch command (DEC-0026 §1): pressed right before its own tick, it counts
-# on that tick only, as the BotPlayer's jump does. The guard's press never holds the guard. The
+# on that tick only, as the BotPlayer's jump does. The guard's press never holds the guard: the
+# hold is set apart, once (_ready). The
 # dummy never gives the tech (partida.md, "A mistura do boneco": "O boneco nunca dá o tech"; F-210
 # §1): held GRABBED on screen, it leaves out the guard break its mix schedules, the tech's key.
 func _press_on_its_tick(_delta: float, tick: int) -> void:

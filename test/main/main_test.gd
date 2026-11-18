@@ -113,6 +113,7 @@ func test_sozinho_has_a_dummy_that_does_not_walk_at_the_second_spawn_point() -> 
 	assert_object(attacking.dummy).is_same(dummy)
 	assert_object(attacking.target).is_same(main.current_match.fighter_at(Match.PLAYER_SLOT))
 	assert_bool(attacking.only_guard_breaks).override_failure_message("no mix").is_false()
+	assert_bool(attacking.holds_guard).override_failure_message("it blocks").is_false()
 	# One camera in the match, the player's.
 	var cameras := 0
 	for child: Node in main.current_match.get_children():
@@ -144,6 +145,43 @@ func test_dummy_guard_break_gives_sozinho_a_dummy_that_throws_only_guard_breaks(
 	assert_str(mix).contains("guard breaks")
 	assert_str(mix).contains("--dummy=guard_break")
 	assert_str(Main.solo_dummy_line(true)).contains("only guard breaks")
+	assert_bool(attacking.holds_guard).is_false()
+
+
+# TASK-12.4 (partida.md, "A mistura do boneco"; F-213): --dummy=block puts the same dummy at the
+# second spawn point, holding its guard and never attacking; the usage names the mode, and
+# Sozinho's log line says what the dummy does, that the sword stops on its guard, which costs it
+# stamina and falls when the stamina runs out, that the guard break breaks it and a charged thrown
+# the moment the player goes dark lands while the dummy still glows, and the other modes.
+func test_dummy_block_gives_sozinho_a_dummy_that_holds_its_guard() -> void:
+	var main := _main(["--no-replay", "--dummy=block"])
+	await get_tree().process_frame
+	var dummy := main.current_match.fighter_at(Match.DUMMY_SLOT)
+	assert_object(dummy).is_not_null()
+	assert_vector(dummy.position).is_equal_approx(SPAWN_B, Vector3.ONE * HAIR)
+	var attacking := main.current_match.attacking_dummy
+	assert_object(attacking).override_failure_message("no node drives the dummy").is_not_null()
+	assert_object(attacking.dummy).is_same(dummy)
+	assert_bool(attacking.holds_guard).is_true()
+	assert_bool(attacking.only_guard_breaks).is_false()
+	assert_str(Main.USAGE).contains("--dummy=block")
+	var line := Main.solo_dummy_line(false, true)
+	for said: String in [
+		"holds its guard",
+		"never attacks",
+		"the sword stops on its guard",
+		"stamina",
+		"falls when the stamina runs out",
+		"guard break",
+		"charged",
+		"glows",
+		"--dummy=on",
+		"--dummy=guard_break",
+		"--dummy=off",
+	]:
+		assert_str(line).override_failure_message("the line leaves out: %s" % said).contains(said)
+	assert_str(Main.solo_dummy_line(false)).contains("--dummy=block")
+	assert_str(Main.solo_dummy_line(true)).contains("--dummy=block")
 
 
 func test_dummy_off_plays_sozinho_alone() -> void:

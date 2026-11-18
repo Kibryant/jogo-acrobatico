@@ -21,8 +21,13 @@
 # neutral white, and nothing at rest or in a recovery. TASK-12.3 adds four, each with a shape of
 # its own (visual-e-audio.md, "O carregado, o parry e a finta na tela"): the charged's windup, a
 # hexagon in sky blue; the parry's window, a cross in yellow, gone once the window closes; the
-# feint, a ring; and whoever was parried, a star. The token is the state's at the displayed tick
-# (TokensData.for_state).
+# feint, a ring; and whoever was parried, a star. TASK-12.4 adds the guard break's windup, an arrow
+# in vermilion (visual-e-audio.md, "Quebra de guarda, preparação"). The token is the state's at the
+# displayed tick (TokensData.for_state).
+# Below the reticle, while the guard break holds the followed fighter and its tech's window is open
+# with no tech yet, the call to the tech's key: "Botão do meio!" on the default, or the key's label
+# when remapped (TASK-12.4; visual-e-audio.md, "A quebra na cápsula"; F-212). It is keyed by the
+# grab: once the tech is seen for a grab, no rollback shows it again for that grab (DEC-0031 §6).
 # Only a PC with a screen has one: the Match creates it in watch().
 class_name Hud
 extends CanvasLayer
@@ -56,6 +61,9 @@ const ARC_SIZE := Vector2(24, 24)
 ## tela"). Claude's v0 reading (DEC-0017; TASK-10.6).
 const RETICLE_SIZE := Vector2(24, 24)
 const RETICLE_DOT := 5.0
+## px at the 1080p base: how far below the screen's centre the tech's call sits, clear of the
+## reticle. Claude's v0 reading (DEC-0017; TASK-12.4).
+const TECH_PROMPT_DROP := 48.0
 ## The key of GameText each mode shows, by FighterState.Mode.
 const MODE_KEYS: Dictionary[int, StringName] = {
 	FighterState.Mode.GROUND: GameText.HUD_MODE_GROUND,
@@ -90,6 +98,10 @@ var _other_health := HealthBar.new(true)
 # The other fighter's token, and the tokens it reads; null until show_tokens().
 var _token_mark := TokenMark.new()
 var _tokens: TokensData
+# The call to the tech's key, and the grab whose tech this HUD has already seen: no call for it
+# again.
+var _tech_prompt := Label.new()
+var _teched_grab := FighterState.NEVER
 
 
 func _init() -> void:
@@ -216,6 +228,19 @@ func _init() -> void:
 	_reticle.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(_reticle)
 
+	# The tech's call, centred below the reticle; its text comes already in the player's language.
+	_tech_prompt.name = "TechPrompt"
+	_tech_prompt.auto_translate_mode = Node.AUTO_TRANSLATE_MODE_DISABLED
+	_tech_prompt.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_tech_prompt.set_anchors_preset(Control.PRESET_CENTER_TOP)
+	_tech_prompt.anchor_top = 0.5
+	_tech_prompt.anchor_bottom = 0.5
+	_tech_prompt.offset_top = TECH_PROMPT_DROP
+	_tech_prompt.grow_horizontal = Control.GROW_DIRECTION_BOTH
+	_tech_prompt.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_tech_prompt.visible = false
+	add_child(_tech_prompt)
+
 
 func _process(_delta: float) -> void:
 	# Before follow(), or once the match has freed the fighter.
@@ -248,6 +273,7 @@ func show_at(tick: int) -> void:
 	_show_grapple_cooldown(tick)
 	_show_reticle(tick)
 	_show_health(tick)
+	_show_tech_prompt(tick)
 
 
 # The health bars from now on: the followed fighter's and the first other one of fighters, the
@@ -260,6 +286,46 @@ func show_health(combat: CombatConfig, fighters: Array[Fighter]) -> void:
 # The tokens the mark beside the other fighter's health reads from now on (tokens_v0.tres).
 func show_tokens(tokens: TokensData) -> void:
 	_tokens = tokens
+
+
+# The call to the tech's key as the HUD shows it now; empty when hidden.
+func shown_tech_prompt() -> String:
+	return _tech_prompt.text if _tech_prompt.visible else ""
+
+
+# The call to the tech's key, the guard break's key: "Botão do meio!" with the middle mouse button,
+# its default (F-207); with another key, its label as the options screen shows it, and "!"; empty
+# when the guard break has no key, with nothing to call.
+static func tech_prompt_text() -> String:
+	var events := InputMap.action_get_events(&"guard_break")
+	if events.is_empty():
+		return ""
+	var event := events[0]
+	if event is InputEventMouseButton:
+		var button := event as InputEventMouseButton
+		if button.button_index == MOUSE_BUTTON_MIDDLE:
+			return GameText.text(GameText.HUD_TECH_PROMPT)
+	return "%s!" % OptionsScreen.label_of(event, OptionsScreen.layout_of_this_pc())
+
+
+# While the guard break holds the followed fighter, in the tech's window, from the tick after the
+# contact to the hold's last tick (Combat.in_tech_window), with no tech's press yet, the call shows;
+# the press hides it, and once the press is seen for a grab, the call never shows again for that
+# grab, whatever a rollback shows (DEC-0031 §6).
+func _show_tech_prompt(tick: int) -> void:
+	_tech_prompt.visible = false
+	if _combat == null:
+		return
+	var state := _fighter.state
+	if state.action == FighterState.Action.GRABBED and state.tech_press_tick > state.grabbed_tick:
+		_teched_grab = state.grabbed_tick
+	if state.grabbed_tick == _teched_grab or not Combat.in_tech_window(state, _combat, tick):
+		return
+	var text := tech_prompt_text()
+	if text.is_empty():
+		return
+	_tech_prompt.text = text
+	_tech_prompt.visible = true
 
 
 # The fighter the right bar shows: the first of the match that is not the followed one; null when
@@ -628,6 +694,8 @@ class TokenMark:
 					)
 			&"ring":
 				draw_arc(centre, radius * 0.75, 0.0, TAU, 32, fill, radius * 0.5)
+			&"arrow":
+				draw_colored_polygon(_arrow(centre, radius), fill)
 			_:
 				draw_circle(centre, radius, fill)
 
@@ -643,6 +711,23 @@ class TokenMark:
 		for corner: int in sides:
 			var turn := angle + TAU * corner / sides - PI / 2.0
 			corners.append(centre + Vector2.from_angle(turn) * radius)
+		return corners
+
+
+	# A block arrow pointing up, the hand going forward (TASK-12.4): its head across 85 % of the
+	# radius each way down to just above the middle, its shaft 35 % of the radius each way.
+	static func _arrow(centre: Vector2, radius: float) -> PackedVector2Array:
+		var corners := PackedVector2Array()
+		for corner: Vector2 in [
+			Vector2(0.0, -1.0),
+			Vector2(0.85, -0.05),
+			Vector2(0.35, -0.05),
+			Vector2(0.35, 1.0),
+			Vector2(-0.35, 1.0),
+			Vector2(-0.35, -0.05),
+			Vector2(-0.85, -0.05),
+		]:
+			corners.append(centre + corner * radius)
 		return corners
 
 

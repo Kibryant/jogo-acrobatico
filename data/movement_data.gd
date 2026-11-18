@@ -70,6 +70,12 @@ const CHECKED_TICKRATES: Array[int] = [30, 60]
 @export var dash_cooldown_ms: int
 ## Stamina points, paid when the dash starts (movimento.md, "Dash": "Custo").
 @export var dash_cost: float
+## The dash is the dodge (DEC-0050): no blade nor hand touches it from this time to the next, both
+## measured from its press, which make its ticks 3 to 10 of the 12 at 60 (movimento.md, "Dash":
+## "Invulnerabilidade"; combate.md, "Os golpes e as defesas", the row "Esquiva": "invulnerável de
+## 50 a 167"; DEC-0058 §6).
+@export var dash_invulnerable_from_ms: int
+@export var dash_invulnerable_to_ms: int
 
 @export_group("Wall run")
 ## A face this steep or steeper is a wall, from the horizontal (movimento.md, "Corrida na parede":
@@ -201,6 +207,10 @@ func validate() -> PackedStringArray:
 		),
 		_time_error("dash_cooldown_ms", dash_cooldown_ms, false),
 		_cost_error("dash_cost", dash_cost),
+		# The dodge's window opens no later than it closes (DEC-0050); a window past the dash's
+		# length is no impossible number: the dash's own end closes it (Combat.dodges).
+		_time_error("dash_invulnerable_from_ms", dash_invulnerable_from_ms, false),
+		_dash_invulnerable_to_error(),
 		# The wall run (movimento.md, "Corrida na parede"). Nothing divides by its two times: a run
 		# or a hold of 0 ticks is legal, the hold never longer than the run.
 		_wall_incline_error(),
@@ -336,6 +346,21 @@ func _wall_max_speed_error() -> String:
 		return (
 			"wall_max_speed_mps is %s: below wall_run_speed_mps, %s, no run could keep its speed"
 			% [wall_max_speed_mps, wall_run_speed_mps]
+		)
+	return ""
+
+
+# The dodge's window closes no earlier than it opens. A negative opening has its own message, and
+# against it the closing says nothing more.
+func _dash_invulnerable_to_error() -> String:
+	var negative := _time_error("dash_invulnerable_to_ms", dash_invulnerable_to_ms, false)
+	if not negative.is_empty():
+		return negative
+	if dash_invulnerable_from_ms >= 0 and dash_invulnerable_to_ms < dash_invulnerable_from_ms:
+		return (
+			"dash_invulnerable_to_ms is %d ms: before dash_invulnerable_from_ms, %d ms, the window"
+			% [dash_invulnerable_to_ms, dash_invulnerable_from_ms]
+			+ " would close before it opens"
 		)
 	return ""
 

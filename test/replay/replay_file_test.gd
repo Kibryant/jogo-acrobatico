@@ -183,12 +183,12 @@ func test_the_header_says_which_game_recorded_it_with_the_whole_configuration() 
 	assert_str(fields["seed"]).is_equal("0")
 	assert_str(fields["config"]).is_equal(MOVEMENT_V0)
 	# TASK-10.6 added pitch and grapple, by reflection over TickInput (criterion 2), TASK-12.1
-	# the light attack, TASK-12.2 the guard, held, and TASK-12.3 the charged attack, the parry and
-	# the guard's press.
+	# the light attack, TASK-12.2 the guard, held, TASK-12.3 the charged attack, the parry and the
+	# guard's press, and TASK-12.4 the guard break.
 	assert_str(fields["columns"]).is_equal(
 		"tick:int,loop:int,fighter:int,move.x:f64,move.y:f64,yaw:f64,pitch:f64,jump:bool,dash:bool,"
 		+ "grapple:bool,light_attack:bool,guard:bool,charged_attack:bool,parry:bool,"
-		+ "guard_press:bool,check:hex8",
+		+ "guard_press:bool,guard_break:bool,check:hex8",
 	)
 	# One line per field of MovementData, typed, with the .tres's value in its cell.
 	var resource: Resource = load(MOVEMENT_V0)
@@ -259,20 +259,48 @@ func test_the_header_says_which_game_recorded_it_with_the_whole_configuration() 
 		assert_str(combat_types.get(field, "")).override_failure_message(field).is_equal(
 			charged_types[field]
 		)
+	# TASK-12.4: the guard break's numbers as guard_break.<field>, each move's convergence and hand,
+	# and the grab's numbers, by reflection like the others; the combat's own convergence is gone
+	# (DEC-0058 §2).
+	var guard_break_types: Dictionary[String, String] = {
+		"guard_break.windup_ms": ReplayFile.INT,
+		"guard_break.stamina_cost": ReplayFile.F64,
+		"guard_break.grab": ReplayFile.BOOL,
+		"guard_break.hand_reach_m": ReplayFile.F64,
+		"guard_break.aim_convergence_m": ReplayFile.F64,
+		"light_attack.aim_convergence_m": ReplayFile.F64,
+		"charged_attack.aim_convergence_m": ReplayFile.F64,
+		"charged_attack.grab": ReplayFile.BOOL,
+		"grab_hold_ms": ReplayFile.INT,
+		"grab_hitstop_ms": ReplayFile.INT,
+		"grabbed_stun_ms": ReplayFile.INT,
+		"tech_advantage_ms": ReplayFile.INT,
+		"grab_shake_ms": ReplayFile.INT,
+		"grab_shake_deg": ReplayFile.F64,
+	}
+	for field: String in guard_break_types:
+		assert_str(combat_types.get(field, "")).override_failure_message(field).is_equal(
+			guard_break_types[field]
+		)
+	assert_bool(combat_types.has("aim_convergence_m")).is_false()
 	for field: String in combat_types:
 		var key := "%s%s:%s" % [ReplayFile.COMBAT_PREFIX, field, combat_types[field]]
 		assert_bool(fields.has(key)).override_failure_message("no %s" % key).is_true()
 		var value: Variant = combat.get(field)
-		for move: String in ["light_attack", "charged_attack"]:
+		for move: String in ReplayFile.MOVES:
 			if field.begins_with(move + "."):
 				value = combat.attack(StringName(move)).get(field.trim_prefix(move + "."))
 		assert_str(fields[key]).is_equal(ReplayFile.write_cell(value, combat_types[field]))
-	# The light's fields come first, right after "combat", and the charged's right after them.
+	# The light's fields come first, right after "combat", the charged's right after them, and the
+	# guard break's after those.
 	var light_fields := 0
 	for field: String in combat_types:
 		light_fields += 1 if field.begins_with("light_attack.") else 0
 	var first_charged := "%scharged_attack.windup_ms:int" % ReplayFile.COMBAT_PREFIX
 	assert_int(keys.find(first_charged)).is_equal(keys.find("combat") + 1 + light_fields)
+	var first_guard_break := "%sguard_break.windup_ms:int" % ReplayFile.COMBAT_PREFIX
+	assert_int(keys.find(first_guard_break)).is_equal(keys.find("combat") + 1 + 2 * light_fields)
+	assert_array(ReplayFile.MOVES).is_equal(["light_attack", "charged_attack", "guard_break"])
 	# The fields in the order of the format, the configuration after "config", the combat's after
 	# "combat".
 	var order := PackedStringArray()

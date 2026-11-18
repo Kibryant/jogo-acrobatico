@@ -51,6 +51,12 @@ color = Color(0, 0, 0, 0)
 pose = &"reflect"
 hud_shape = &"star"
 
+[sub_resource type="Resource" id="Resource_guard_break_windup"]
+script = ExtResource("2_tokn0")
+color = Color(0.8352941, 0.36862746, 0, 1)
+pose = &"hand"
+hud_shape = &"arrow"
+
 [resource]
 script = ExtResource("1_tkns0")
 light_windup = SubResource("Resource_windup")
@@ -61,3 +67,4 @@ charged_windup = SubResource("Resource_charged_windup")
 parry = SubResource("Resource_parry")
 feint = SubResource("Resource_feint")
 parried = SubResource("Resource_parried")
+guard_break_windup = SubResource("Resource_guard_break_windup")

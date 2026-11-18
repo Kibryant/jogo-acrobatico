@@ -11,6 +11,11 @@
 # yaw of TickInput. The charged attack cuts in the vertical plane of the swing's direction instead
 # (combate.md, "O corte do carregado"; TASK-12.3): the same ring, centred on the attacker's axis at
 # the hand's height, between two elevations, positive up; its touch is the same count, exact too.
+# The guard break has no blade (combate.md, "A quebra, o tech e a esquiva no tick": "A mão";
+# TASK-12.4): its hand is a straight segment along the swing's direction, at the hand's height,
+# from the attacker's axis out to the move's reach, and the slice of the k-th active tick is the
+# k-th of its equal parts; it touches a target when its least distance to the capsule's axis is at
+# most capsule_radius, the body's alone, exact too.
 class_name Blade
 extends RefCounted
 
@@ -153,6 +158,69 @@ static func cut_segment(
 # The horizontal unit vector at angle a: yaw 0 looks down -Z, and a positive angle turns left.
 static func direction(angle: float) -> Vector3:
 	return Basis(Vector3.UP, angle) * Vector3.FORWARD
+
+
+# The distances from the attacker's axis between which the hand of a move that grabs runs on the
+# k-th active tick, k from 1: its reach split evenly over the active ticks, from the axis out
+# (combate.md, "A mão": "A fatia do tick k do ativo, de 1 a 6, vai de 0,2 × (k − 1) a 0,2 × k m").
+static func hand_slice(attack: AttackConfig, k: int) -> Vector2:
+	var from := attack.hand_reach * (k - 1) / attack.active_ticks
+	var to := attack.hand_reach * k / attack.active_ticks
+	return Vector2(from, to)
+
+
+# The hand from from_m to to_m off the axis of an attacker at feet, along swing_yaw, at the hand's
+# height: [near end, far end].
+static func hand_segment(
+	feet: Vector3,
+	swing_yaw: float,
+	from_m: float,
+	to_m: float,
+	combat: CombatConfig,
+) -> PackedVector3Array:
+	var along := direction(swing_yaw)
+	var height := feet + Vector3.UP * combat.hand_height
+	return PackedVector3Array([height + along * from_m, height + along * to_m])
+
+
+# The least distance between the hand's slice, from from_m to to_m along swing_yaw, and the
+# target's capsule axis. The slice lies flat at the hand's height and the axis stands upright, so
+# the distance splits exactly into a vertical gap and a horizontal one, as the flat blade's does.
+static func hand_distance(
+	feet: Vector3,
+	swing_yaw: float,
+	from_m: float,
+	to_m: float,
+	target_feet: Vector3,
+	combat: CombatConfig,
+	config: MovementConfig,
+) -> float:
+	var plane := feet.y + combat.hand_height
+	var bottom := target_feet.y + config.capsule_radius
+	var top := target_feet.y + config.capsule_height - config.capsule_radius
+	var gap := maxf(0.0, maxf(bottom - plane, plane - top))
+	var along := direction(swing_yaw)
+	var flat := Vector2(target_feet.x - feet.x, target_feet.z - feet.z)
+	var axis := Vector2(along.x, along.z)
+	var t := clampf(flat.dot(axis), minf(from_m, to_m), maxf(from_m, to_m))
+	var across := flat.distance_to(axis * t)
+	return sqrt(across * across + gap * gap)
+
+
+# Whether the hand's slice touches the target's capsule: its distance to the axis is at most the
+# body's radius, the hand having none of its own (combate.md, "A mão": "é de até 0,35 m, o raio da
+# cápsula").
+static func hand_touches(
+	feet: Vector3,
+	swing_yaw: float,
+	from_m: float,
+	to_m: float,
+	target_feet: Vector3,
+	combat: CombatConfig,
+	config: MovementConfig,
+) -> bool:
+	var distance := hand_distance(feet, swing_yaw, from_m, to_m, target_feet, combat, config)
+	return distance <= config.capsule_radius
 
 
 # The least distance on the plane from the point p (x, z) to the ring sector between the hand's

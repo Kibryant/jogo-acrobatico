@@ -47,11 +47,16 @@ const LINE_HAIR := 1e-5
 const FROM := Vector3(1.0, 0.0, 1.0)
 const STEP_UP := Vector3(0.0, 0.7, 0.0)
 # In the Match: the flat floor west of the platform (charged_sync_test.gd), the dummy looking
-# down -Z at the player 1,5 m ahead of it (TASK-12.14, criterion 4: "de 1,2 m a 2,3 m").
+# down -Z at the player 1,5 m ahead of it, at (-6; 0; 4,5) (TASK-12.14, criterion 4: "de 1,2 m a
+# 2,3 m").
 const DUMMY_FEET := Vector3(-6.0, 0.0, 6.0)
-const PLAYER_FEET := Vector3(-6.0, 0.0, 4.5)
 const APART_M := 1.5
-const ACTIONS := 4 # partida.md, "A mistura do boneco": "os quatro primeiros já trazem os três"
+# partida.md, "A mistura do boneco": the first four hold every kind, the guard break's included
+# since TASK-12.4 (F-210 §1).
+const ACTIONS := 4
+# combate.md, "A lâmina e o contato": "Convergência: 1,2 na quebra"; "A mão": with the crosshair on
+# the target's axis the hand grabs "de 0,88 a 1,48 m", so the player 1,5 m away is out of its reach.
+const HAND_CONVERGENCE_M := 1.2
 const LAST_ACTION_TICKS := 120 # loops after the fourth action begins, past its contact: arithmetic
 
 
@@ -264,8 +269,9 @@ func test_the_dummys_light_touches_a_player_standing_still(
 
 
 # A match with the dummy and the player standing 1,5 m apart on the flat floor, placed before
-# netfox records its first state, the dummy attacking.
-func _match() -> Match:
+# netfox records its first state, the dummy attacking; or `apart` metres apart, the player straight
+# down -Z from the dummy; with only_guard_breaks, the dummy of --dummy=guard_break.
+func _match(apart := APART_M, only_guard_breaks := false) -> Match:
 	var node := MATCH_SCENE.instantiate()
 	assert(node is Match, "match.tscn must have a Match at its root")
 	var game_match: Match = auto_free(node)
@@ -273,19 +279,21 @@ func _match() -> Match:
 	var me := multiplayer.get_unique_id()
 	var player := game_match.spawn_fighter(Match.PLAYER_SLOT, me)
 	var dummy := game_match.spawn_fighter(Match.DUMMY_SLOT, me)
-	player.position = PLAYER_FEET
+	player.position = DUMMY_FEET + Vector3(0.0, 0.0, -apart)
 	dummy.position = DUMMY_FEET
-	game_match.let_dummy_attack(dummy, player)
+	game_match.let_dummy_attack(dummy, player, only_guard_breaks)
 	await get_tree().process_frame
 	await get_tree().physics_frame
 	return game_match
 
 
-# Criterion 4, in the Match: over its first four actions, which hold a light, a charged and a
-# feint, the dummy's swings begin along the direction of a person aiming at the player: the yaw of
-# aim_yaw, from its feet to the player's, turned by the convergence. Every charged it lets go
-# takes 30 from the player standing still 1,5 m in front of it, and every light 12, the feint's
-# light included; events are counted by the state entering them, against the loop before (F-187).
+# Criterion 4, in the Match: over its first four actions, which hold a light, a charged, a feint
+# and, since TASK-12.4, a guard break, the dummy's moves begin along the direction of a person
+# aiming at the player: the yaw of aim_yaw, from its feet to the player's, turned by the move's
+# convergence (DEC-0058 §2). Every charged it lets go takes 30 from the player standing still 1,5 m
+# in front of it, and every light 12, the feint's light included; the guard break takes nothing and,
+# 1,5 m away, grabs nobody; events are counted by the state entering them, against the loop before
+# (F-187).
 func test_in_the_match_the_dummys_swings_land_on_the_player_standing_in_front_of_it() -> void:
 	var game_match := await _match()
 	var player := game_match.fighter_at(Match.PLAYER_SLOT)
@@ -297,10 +305,11 @@ func test_in_the_match_the_dummys_swings_land_on_the_player_standing_in_front_of
 	var charged_expected := 0
 	var lights_expected := 0
 	for k: int in range(1, ACTIONS + 1):
-		if AttackingDummy.kind_of(k) == AttackingDummy.Kind.CHARGED:
-			charged_expected += 1
-		else:
-			lights_expected += 1
+		match AttackingDummy.kind_of(k):
+			AttackingDummy.Kind.CHARGED:
+				charged_expected += 1
+			AttackingDummy.Kind.LIGHT, AttackingDummy.Kind.FEINT:
+				lights_expected += 1
 	assert_int(charged_expected).override_failure_message("no charged in the first four") \
 			.is_greater(0)
 	var windups := 0
@@ -323,7 +332,10 @@ func test_in_the_match_the_dummys_swings_land_on_the_player_standing_in_front_of
 				dummy.config.aim_side,
 				dummy_before.facing_yaw,
 			)
-			var expected := aim - asin(SHOULDER_M / CONVERGENCE_M)
+			var convergence := CONVERGENCE_M
+			if state.action_move == FighterCommand.GUARD_BREAK:
+				convergence = HAND_CONVERGENCE_M
+			var expected := aim - asin(SHOULDER_M / convergence)
 			var message := "windup %d: the swing points to %.4f, expected %.4f" % [
 				windups,
 				state.action_yaw,
@@ -349,6 +361,121 @@ func test_in_the_match_the_dummys_swings_land_on_the_player_standing_in_front_of
 	]
 	assert_int(hits_of_30).override_failure_message(summary).is_equal(charged_expected)
 	assert_int(hits_of_12).override_failure_message(summary).is_equal(lights_expected)
+	assert_int(player.state.grabbed_tick).override_failure_message("the player was grabbed") \
+			.is_equal(FighterState.NEVER)
 	assert_float(player.global_position.distance_to(dummy.global_position)) \
 			.override_failure_message("the two moved") \
 			.is_equal_approx(APART_M, 1e-3)
+
+
+# TASK-12.4, the shoulder camera's check on the guard break (harness registry; combate.md, "A mão":
+# "Com os dois no mesmo chão e a mira no eixo do alvo, a mão pega de 0,88 a 1,48 m"; DEC-0058 §2):
+# in the real Match, the dummy aims at the player like a person and its hand converges at 1,2 m.
+# Its third action is the guard break (partida.md, "A mistura do boneco"): it grabs the player
+# standing still 1,2 m in front of it, where the hand crosses the aim line, and misses one 1,5 m
+# away, beyond the 1,48.
+func test_in_the_match_the_dummys_guard_break_grabs_at_1_2_m_and_misses_at_1_5_m(
+	apart: float,
+	grabs: bool,
+	_test_parameters := [[1.2, true], [1.5, false]],
+) -> void:
+	assert_int(AttackingDummy.kind_of(3)).is_equal(AttackingDummy.Kind.GUARD_BREAK)
+	var game_match := await _match(apart)
+	var player := game_match.fighter_at(Match.PLAYER_SLOT)
+	var dummy := game_match.fighter_at(Match.DUMMY_SLOT)
+	var distance := player.global_position.distance_to(dummy.global_position)
+	assert_float(distance).override_failure_message("%.3f m apart" % distance) \
+			.is_equal_approx(apart, 1e-3)
+	var guard_break: AttackConfig = game_match.combat.attacks[FighterCommand.GUARD_BREAK]
+	var swing := guard_break.windup_ticks + guard_break.active_ticks + guard_break.recovery_ticks
+	var held_on := FighterState.NEVER
+	var breaks := 0
+	var before := dummy.state.copy()
+	for _loop: int in 3 * PERIOD_TICKS + swing + SPARE_TICKS:
+		player.input.sample_frame(Vector2.ZERO, player.state.facing_yaw)
+		NetfoxTicks.run_loop()
+		var state := dummy.state
+		var began := state.action != before.action or state.action_since != before.action_since
+		if began and state.action == FighterState.Action.WINDUP:
+			breaks += 1 if state.action_move == FighterCommand.GUARD_BREAK else 0
+		if held_on == FighterState.NEVER and player.state.action == FighterState.Action.GRABBED:
+			held_on = NetworkTime.tick - 1
+		before = state.copy()
+	assert_int(breaks).override_failure_message("the dummy's guard break never began").is_equal(1)
+	var message := "%.2f m: grabbed_tick %d, held on %d" % [
+		apart,
+		player.state.grabbed_tick,
+		held_on,
+	]
+	if grabs:
+		assert_int(player.state.grabbed_tick).override_failure_message(message).is_not_equal(
+			FighterState.NEVER
+		)
+		assert_int(held_on).override_failure_message(message).is_equal(
+			player.state.grabbed_tick + 1
+		)
+	else:
+		assert_int(player.state.grabbed_tick).override_failure_message(message).is_equal(
+			FighterState.NEVER
+		)
+		assert_int(held_on).override_failure_message(message).is_equal(FighterState.NEVER)
+
+
+# TASK-12.4 (partida.md, "A mistura do boneco": "o `--dummy=guard_break` faz o boneco dar só
+# quebras, uma a cada 3 s, mirando como gente; ele não anda, então quem treina fica de 0,9 a 1,4 m
+# na frente dele"; F-212): in the real Match the training dummy's every action is a guard break,
+# its hand along the aim of a person turned by the hand's convergence (DEC-0058 §2), and each one
+# grabs the player standing still 1,2 m in front of it: the first one period in, where the mix
+# throws a light, and the second one period later, once the first grab let the player go.
+func test_in_the_match_the_training_dummy_grabs_the_player_1_2_m_in_front_every_period() -> void:
+	var game_match := await _match(1.2, true)
+	var player := game_match.fighter_at(Match.PLAYER_SLOT)
+	var dummy := game_match.fighter_at(Match.DUMMY_SLOT)
+	assert_int(AttackingDummy.kind_of(1)).is_equal(AttackingDummy.Kind.LIGHT)
+	var start := game_match.attacking_dummy.start_tick
+	var guard_break: AttackConfig = game_match.combat.attacks[FighterCommand.GUARD_BREAK]
+	var swing := guard_break.windup_ticks + guard_break.active_ticks + guard_break.recovery_ticks
+	var moves: Array[StringName] = []
+	var grabs: Array[int] = []
+	var before := dummy.state.copy()
+	var grabbed_before := player.state.grabbed_tick
+	for _loop: int in 2 * PERIOD_TICKS + swing + SPARE_TICKS:
+		player.input.sample_frame(Vector2.ZERO, player.state.facing_yaw)
+		NetfoxTicks.run_loop()
+		var state := dummy.state
+		var began := state.action != before.action or state.action_since != before.action_since
+		if began and state.action == FighterState.Action.WINDUP:
+			moves.append(state.action_move)
+			var aim := AttackingDummy.aim_yaw(
+				dummy.global_position,
+				player.global_position,
+				dummy.config.aim_side,
+				before.facing_yaw,
+			)
+			var expected := aim - asin(SHOULDER_M / HAND_CONVERGENCE_M)
+			var message := "windup %d: the hand goes to %.4f, expected %.4f" % [
+				moves.size(),
+				state.action_yaw,
+				expected,
+			]
+			assert_float(angle_difference(state.action_yaw, expected)) \
+					.override_failure_message(message) \
+					.is_equal_approx(0.0, YAW_HAIR)
+		if player.state.grabbed_tick != grabbed_before:
+			grabs.append(player.state.grabbed_tick - start)
+			grabbed_before = player.state.grabbed_tick
+		before = state.copy()
+	assert_array(moves).is_equal([FighterCommand.GUARD_BREAK, FighterCommand.GUARD_BREAK])
+	var summary := "grabs %s ticks after the dummy's start" % [grabs]
+	assert_int(grabs.size()).override_failure_message(summary).is_equal(2)
+	for k: int in grabs.size():
+		var press := (k + 1) * PERIOD_TICKS
+		var first_active := press + guard_break.windup_ticks
+		assert_int(grabs[k]).override_failure_message(summary).is_between(
+			first_active,
+			first_active + guard_break.active_ticks - 1,
+		)
+	assert_int(player.state.tech_tick).is_equal(FighterState.NEVER)
+	assert_float(player.global_position.distance_to(dummy.global_position)) \
+			.override_failure_message("the two moved") \
+			.is_equal_approx(1.2, 1e-3)

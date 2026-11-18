@@ -399,7 +399,8 @@ func test_a_click_under_a_jump_during_a_swing_says_same_tick_before_the_swing() 
 func test_a_click_in_the_hitstun_of_a_hit_taken_is_lost_in_the_stun() -> void:
 	var played := PlayedMatch.new(Tape.movement_v0(), Tape.combat_v0())
 	# The camera turned so the swing goes straight down -Z (combate.md, "A espada na mira").
-	var aim := asin(played.tape.movement.aim_side / played.tape.combat.aim_convergence)
+	var convergence := played.tape.combat.attacks[FighterCommand.LIGHT_ATTACK].aim_convergence
+	var aim := asin(played.tape.movement.aim_side / convergence)
 	var victim := played.add_fighter(Vector3(0.0, 0.0, -1.5), PI)
 	var attacker := played.add_fighter(Vector3.ZERO, aim)
 	played.press(attacker, F, [LIGHT])

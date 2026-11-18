@@ -16,3 +16,6 @@ const LIGHT_ATTACK := &"light_attack"
 # §1): only Combat.step writes them into the slot; the charged is a move's ID too.
 const CHARGED_ATTACK := &"charged_attack"
 const PARRY := &"parry"
+# The guard break (combate.md, "A quebra, o tech e a esquiva no tick"; DEC-0058 §1): only
+# Combat.step writes it into the slot; a move's ID too. Its press by whoever is grabbed is the tech.
+const GUARD_BREAK := &"guard_break"

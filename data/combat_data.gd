@@ -10,6 +10,8 @@ extends Resource
 @export var light_attack: AttackData
 ## The charged attack (combate.md, "Os golpes e as defesas": "Golpe carregado"; TASK-12.3).
 @export var charged_attack: AttackData
+## The guard break (combate.md, "Os golpes e as defesas": "Quebra de guarda"; TASK-12.4).
+@export var guard_break: AttackData
 
 @export_group("Blade")
 ## The hand, where the blade starts: this far off the body's axis (combate.md, "A lâmina e o
@@ -21,10 +23,6 @@ extends Resource
 @export var blade_length_m: float
 ## The thickness of the contact (combate.md, "A lâmina e o contato": "Raio da lâmina").
 @export var blade_radius_m: float
-## The point of the aim line the swing points at, this far from the body's axis on the floor's
-## plane: where the blade crosses the aim line, at its tip (combate.md, "A lâmina e o contato":
-## "Convergência"; "A espada na mira"; DEC-0057 §1). Positive, and greater than the shoulder.
-@export var aim_convergence_m: float
 
 @export_group("Guard")
 ## The guard rises this long after the button goes down, and blocks from then on (combate.md, "O
@@ -60,6 +58,24 @@ extends Resource
 ## Stamina points, paid on the feint.
 @export var feint_stamina_cost: float
 
+@export_group("Grab")
+## Both are held this long from the contact, before the hitstop's ticks (combate.md, "A quebra de
+## guarda e o tech": "os dois ficam presos 333 ms"; "O agarrão").
+@export var grab_hold_ms: int
+## The hitstop of the grab, both sides, each from the tick it knows (combate.md, "O hitstop e o
+## tremor", the row "Quebra pega").
+@export var grab_hitstop_ms: int
+## Without the tech, whoever was grabbed acts again this long after the contact, plus the hitstop
+## (combate.md, "O tranco e a vantagem", the row "Quebra sem tech"; F-208).
+@export var grabbed_stun_ms: int
+## With the tech, whoever grabbed lets go this long after whoever answered (combate.md, "O tranco e
+## a vantagem", the row "Quebra com tech": "quem respondeu +2").
+@export var tech_advantage_ms: int
+## The camera's shake of whoever was grabbed: presentation only, never in the state (combate.md,
+## "O hitstop e o tremor", the row "Quebra pega").
+@export var grab_shake_ms: int
+@export var grab_shake_deg: float
+
 @export_group("Health")
 ## partida.md, "A vida sem partida": the health of every fighter.
 @export var max_health: int
@@ -68,14 +84,16 @@ extends Resource
 @export var health_refill_ms: int
 
 
-# The move of an ID, FighterCommand's (FighterState.action_move): the light or the charged attack;
-# null for a move this combat does not have. The screen reads the shakes this way; the core reads
-# the CombatConfig, made from the same moves (CombatConfig.create).
+# The move of an ID, FighterCommand's (FighterState.action_move): the light attack, the charged
+# attack or the guard break; null for a move this combat does not have. The screen reads the shakes
+# this way; the core reads the CombatConfig, made from the same moves (CombatConfig.create).
 func attack(move: StringName) -> AttackData:
 	if move == FighterCommand.LIGHT_ATTACK:
 		return light_attack
 	if move == FighterCommand.CHARGED_ATTACK:
 		return charged_attack
+	if move == FighterCommand.GUARD_BREAK:
+		return guard_break
 	return null
 
 
@@ -93,16 +111,15 @@ func validate() -> PackedStringArray:
 	else:
 		errors.append_array(charged_attack.validate("charged_attack."))
 		errors.append_array(_tip_errors("charged_attack.", charged_attack))
+	if guard_break == null:
+		errors.append("guard_break is missing: a combat needs its guard break")
+	else:
+		errors.append_array(guard_break.validate("guard_break."))
 	var checks: Array[String] = [
 		_positive_error("hand_offset_m", hand_offset_m, "the hand sits off the body's axis"),
 		_positive_error("hand_height_m", hand_height_m, "the hand sits above the feet"),
 		_positive_error("blade_length_m", blade_length_m, "a blade needs a length"),
 		_not_negative_error("blade_radius_m", blade_radius_m, "a radius cannot be negative"),
-		_positive_error(
-			"aim_convergence_m",
-			aim_convergence_m,
-			"the blade crosses the aim line ahead of the body",
-		),
 		_positive_error("max_health", max_health, "a fighter needs some health"),
 		_not_negative_refill_error(),
 		_guard_raise_error(),
@@ -118,6 +135,12 @@ func validate() -> PackedStringArray:
 		_time_error("feint_until_ms", feint_until_ms),
 		_time_error("feint_recovery_ms", feint_recovery_ms),
 		_not_negative_error("feint_stamina_cost", feint_stamina_cost, "a cost cannot be negative"),
+		_time_error("grab_hold_ms", grab_hold_ms),
+		_time_error("grab_hitstop_ms", grab_hitstop_ms),
+		_time_error("grabbed_stun_ms", grabbed_stun_ms),
+		_time_error("tech_advantage_ms", tech_advantage_ms),
+		_time_error("grab_shake_ms", grab_shake_ms),
+		_not_negative_error("grab_shake_deg", grab_shake_deg, "a shake cannot be negative"),
 	]
 	for message: String in checks:
 		if not message.is_empty():

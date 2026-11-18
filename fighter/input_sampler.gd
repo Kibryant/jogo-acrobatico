@@ -7,9 +7,9 @@
 # - yaw is the last sample: a mean of angles breaks where they wrap at 180 degrees, and the last
 #   sample is where the camera looks now (TASK-9, choice 1); pitch is the last sample too, for the
 #   same reasons (rede.md §3; TASK-10.6);
-# - jump, dash, grapple, the light attack, the charged attack, the parry and the guard's press are
-#   one-touch commands kept between frames and taken once, so a press counts for at most one tick
-#   even when a frame runs two (netfox's one-off-input.gd; TASK-12.3);
+# - jump, dash, grapple, the light attack, the charged attack, the parry, the guard's press and the
+#   guard break are one-touch commands kept between frames and taken once, so a press counts for at
+#   most one tick even when a frame runs two (netfox's one-off-input.gd; TASK-12.3; TASK-12.4);
 # - the guard is held, not touched (TASK-12.2): the state the devices or a bot last set, kept until
 #   they set another, and read by every tick.
 # No node and no engine input here: FighterInput feeds it, from the devices or from a bot.
@@ -28,6 +28,7 @@ var _charged_attack_pressed := false
 var _parry_pressed := false
 var _guard_pressed := false
 var _guard_held := false
+var _guard_break_pressed := false
 
 
 # start_yaw is the yaw before any sample: where the fighter looks at its spawn point.
@@ -84,6 +85,12 @@ func press_guard() -> void:
 # The guard button down or up from now on (TASK-12.2; DEC-0054 §1), until the next call.
 func hold_guard(held: bool) -> void:
 	_guard_held = held
+
+
+# One press of the guard break, kept until take_guard_break() (TASK-12.4; DEC-0058 §1): the tech
+# too, when the fighter is grabbed.
+func press_guard_break() -> void:
+	_guard_break_pressed = true
 
 
 # Whether the guard is held now: it stays until hold_guard() says otherwise.
@@ -158,4 +165,11 @@ func take_parry() -> bool:
 func take_guard_press() -> bool:
 	var pressed := _guard_pressed
 	_guard_pressed = false
+	return pressed
+
+
+# True once per press of the guard break, like take_jump().
+func take_guard_break() -> bool:
+	var pressed := _guard_break_pressed
+	_guard_break_pressed = false
 	return pressed

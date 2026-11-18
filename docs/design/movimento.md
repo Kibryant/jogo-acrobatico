@@ -16,7 +16,7 @@ Cada número tem uma origem, e nem todos têm a mesma firmeza; a vitrine mostra 
 - **Corpo humano:** a altura e o raio da cápsula; os blocos de 1, 2 e 3 m (bancada, porta e teto).
 - **Outros jogos e motores:** a rampa de 45° (padrão do Godot e do Unity), a régua de 5,5 m/s do Overwatch, perdões entre 50 e 200 ms.
 - **O estudo (F-001):** 2,5 s de parede, o gancho de 25 m e 6 s, os custos de golpe.
-- **Os pilares:** a corrida acima do Overwatch, o prêmio por usar a parede, o compromisso no ar, o dash sem invulnerabilidade.
+- **Os pilares:** a corrida acima do Overwatch, o prêmio por usar a parede, o compromisso no ar, o dash sem invulnerabilidade (até a DEC-0050, que fez do dash a esquiva do combate, invulnerável do 3º ao 10º tick).
 - **Chutes assumidos, os primeiros a mexer no protótipo:** controle no ar, queda máxima, descida na parede, recarga e custo do dash, ponto em que o gancho solta, espera e recuperação da stamina, sensibilidade.
 
 ## Princípios

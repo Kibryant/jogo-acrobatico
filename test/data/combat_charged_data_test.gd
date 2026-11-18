@@ -270,7 +270,8 @@ func test_combat_v0_holds_the_parry_and_feint_numbers() -> void:
 func test_the_attacks_are_keyed_by_the_moves_id_and_found_by_command() -> void:
 	var data := _load_v0()
 	var combat := CombatConfig.create(data, 60)
-	assert_int(combat.attacks.size()).is_equal(2)
+	# The guard break makes three since TASK-12.4 (test/data/combat_guard_break_data_test.gd).
+	assert_int(combat.attacks.size()).is_equal(3)
 	assert_bool(combat.attacks.has(LIGHT)).is_true()
 	assert_bool(combat.attacks.has(CHARGED)).is_true()
 	assert_str(String(FighterCommand.CHARGED_ATTACK)).is_equal(String(CHARGED))

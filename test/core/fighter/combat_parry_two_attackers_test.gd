@@ -46,9 +46,11 @@ func _script(presses: Dictionary[int, TickInput], yaw: float) -> Callable:
 
 # The camera's yaw that sends the swing along `swing` (combate.md, "A espada na mira"; DEC-0057):
 # the swing turns asin(shoulder / convergence) to the right of the camera, so the camera looks that
-# far to the left of it. The geometry by hand above is worked along the swing.
+# far to the left of it. The geometry by hand above is worked along the swing. The convergence is
+# the sword's, the light's and the charged's alike (DEC-0058 §2).
 func _camera_for_swing(swing: float, combat: CombatConfig) -> float:
-	return swing + asin(MovementRig.load_config(TICKRATE).aim_side / combat.aim_convergence)
+	var convergence := combat.attacks[FighterCommand.LIGHT_ATTACK].aim_convergence
+	return swing + asin(MovementRig.load_config(TICKRATE).aim_side / convergence)
 
 
 func test_on_one_tick_only_the_charged_is_parried_and_the_light_learns_its_hit() -> void:

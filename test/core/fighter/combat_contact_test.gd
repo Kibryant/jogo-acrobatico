@@ -151,9 +151,11 @@ func _simulate(
 
 # The camera's yaw that sends a fighter's swing along `swing` (combate.md, "A espada na mira";
 # DEC-0057): the swing turns asin(shoulder / convergence) to the right of the camera, so the camera
-# looks that far to the left of it. The geometry by hand above is worked along the swing.
+# looks that far to the left of it. The geometry by hand above is worked along the swing. The
+# convergence is the light's (DEC-0058 §2).
 static func _camera_for_swing(swing: float, fighter: CombatRig) -> float:
-	return swing + asin(fighter.config().aim_side / fighter.combat.aim_convergence)
+	var convergence := fighter.combat.attacks[FighterCommand.LIGHT_ATTACK].aim_convergence
+	return swing + asin(fighter.config().aim_side / convergence)
 
 
 # Each of the pair swings at the other: the attacker down -Z, the target back up +Z.

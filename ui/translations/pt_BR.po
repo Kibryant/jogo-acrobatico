@@ -63,6 +63,10 @@ msgstr "Gancho {whole},{tenth} s"
 msgid "REPLAY_ENDED"
 msgstr "Fim do replay. Feche a janela para sair."
 
+# The call to the tech's key while the guard break holds the player (TASK-12.4; F-212).
+msgid "HUD_TECH_PROMPT"
+msgstr "Botão do meio!"
+
 # The title of the options screen, opened with the Esc (TASK-10.9).
 msgid "OPTIONS_TITLE"
 msgstr "Opções"
@@ -122,6 +126,10 @@ msgstr "Golpe carregado"
 # The action parry (TASK-12.3): the same word in both languages.
 msgid "OPTIONS_ACTION_PARRY"
 msgstr "Parry"
+
+# The action guard break, which is the tech too (TASK-12.4; F-207).
+msgid "OPTIONS_ACTION_GUARD_BREAK"
+msgstr "Quebra de guarda"
 
 # The mouse's sensitivity, from 0.02 to 0.20 degrees per pixel (F-161).
 msgid "OPTIONS_SENSITIVITY"

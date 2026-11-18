@@ -498,3 +498,55 @@ func test_muted_the_e_the_f_and_the_right_click_press_nothing() -> void:
 		assert_bool(box.charged_attack).override_failure_message(where).is_false()
 		assert_bool(box.parry).override_failure_message(where).is_false()
 		assert_bool(box.guard_press).override_failure_message(where).is_false()
+
+
+# TASK-12.4: pressed once, the guard break is in the box of the first tick of a frame that runs two,
+# and only there; it presses nothing else.
+func test_the_guard_break_counts_for_one_tick() -> void:
+	var fighter := await _fighter_in_a_match()
+	NetfoxTicks.run_loops(3)
+	_watch_boxes(fighter)
+	var press_tick := NetworkTime.tick
+	fighter.input.press_guard_break()
+	NetfoxTicks.run_loop(2)
+	var pressed := _boxes[press_tick]
+	assert_bool(pressed.guard_break).is_true()
+	assert_bool(pressed.light_attack or pressed.charged_attack or pressed.parry).is_false()
+	assert_bool(pressed.guard_press or pressed.guard).is_false()
+	assert_bool(_boxes[press_tick + 1].guard_break).is_false()
+	assert_bool(fighter.input.to_tick_input().guard_break).is_false()
+
+
+# The middle mouse button, the guard break's (project.godot, [input]; F-207).
+static func _middle_click(pressed: bool) -> InputEventMouseButton:
+	var event := InputEventMouseButton.new()
+	event.button_index = MOUSE_BUTTON_MIDDLE
+	event.pressed = pressed
+	return event
+
+
+# TASK-12.4 (F-207; combate.md, "As teclas"): at the keyboard, the middle mouse button presses the
+# guard break once, on its tick; muted, as with the options open, it presses nothing.
+func test_the_middle_click_presses_the_guard_break_once_and_nothing_muted() -> void:
+	var fighter := await _fighter_at_the_keyboard()
+	_game_match.camera_rig.free_mouse()
+	NetfoxTicks.run_loops(3)
+	_watch_boxes(fighter)
+	var press_tick := NetworkTime.tick
+	get_viewport().push_input(_middle_click(true))
+	NetfoxTicks.run_loop()
+	get_viewport().push_input(_middle_click(false))
+	NetfoxTicks.run_loops(2)
+	for tick: int in range(press_tick, NetworkTime.tick):
+		var box := _boxes[tick]
+		var where := "tick %d" % tick
+		assert_bool(box.guard_break).override_failure_message(where).is_equal(tick == press_tick)
+		assert_bool(box.light_attack or box.guard_press).override_failure_message(where).is_false()
+	fighter.input.mute_devices(true)
+	var muted_from := NetworkTime.tick
+	get_viewport().push_input(_middle_click(true))
+	NetfoxTicks.run_loops(2)
+	get_viewport().push_input(_middle_click(false))
+	for tick: int in range(muted_from, NetworkTime.tick):
+		assert_bool(_boxes[tick].guard_break).override_failure_message("muted, tick %d" % tick) \
+				.is_false()

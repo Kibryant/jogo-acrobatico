@@ -1,9 +1,10 @@
 # The entry scene (DEC-0026 §6; rede.md §9): it reads how the game was opened, like a main.ts
 # reading process.argv, and starts that mode:
 # - no argument: Sozinho, Godot's offline peer, where this PC is its own server (rede.md §8), with
-#   a dummy at the second spawn point (TASK-10.7) that presses a light every 3 s toward the
-#   player (TASK-12.2), which records the session as a replay
-#   (ReplayRecorder; TASK-10.3), and plays one with --watch;
+#   a dummy at the second spawn point (TASK-10.7) that attacks the player every 3 s (TASK-12.2),
+#   with only guard breaks on --dummy=guard_break (TASK-12.4), or holding its guard and never
+#   attacking on --dummy=block (F-213), which records the session as a
+#   replay (ReplayRecorder; TASK-10.3), and plays one with --watch;
 # - --server, or the build exported as a dedicated server: the server, without a screen or a
 #   fighter of its own, which gives a fighter to each player the handshake accepts;
 # - --connect=host:port: a client, which plays its own fighter and mirrors the others; with --bot,
@@ -54,8 +55,14 @@ const PROXY_DRAIN_MARGIN_MS := 100
 const USAGE := """Usage, with the game's arguments after "--":
   (no argument)            play Sozinho: this PC is its own server, with a dummy at the second
                            spawn point to stand on and bump into, which attacks the player
-                           every 3 s without walking: lights, charged attacks and feints.
+                           every 3 s without walking: lights, charged attacks, feints and guard
+                           breaks, and it never techs.
     --dummy=off            play Sozinho without the dummy.
+    --dummy=guard_break    the dummy throws only guard breaks, one every 3 s, to train the tech:
+                           stand 0.9 to 1.4 m in front of it and press the guard break when held.
+    --dummy=block          the dummy holds its guard and never attacks: the sword stops on the
+                           guard, the guard break goes through it, and a charged thrown the
+                           moment you go dark lands while the dummy still glows.
   --server                 run the dedicated server; open Godot with --headless, it has no screen.
     --port=N               the server's port, 7777/udp when not given.
     --stop-file=PATH       the server closes cleanly, with exit code 0, when PATH appears.
@@ -174,10 +181,11 @@ func _first_frame() -> void:
 # server's clock; the server, Sozinho's role, does not wait.
 # The dummy (TASK-10.7; visual-e-audio.md, "A cabeça do outro na tela"), unless --dummy=off: a
 # second fighter at the second spawn point, driven by this PC with no camera, no keyboard and no
-# bot, in the other fighter's tone. It does not walk; since TASK-12.2 it presses a light every 3 s
-# turned toward the player (partida.md, "O boneco que ataca"), through its input box alone. The
-# player judges a rule of two bodies against it, the head first, and the guard. The replay records
-# both.
+# bot, in the other fighter's tone. It does not walk; since TASK-12.2 it attacks every 3 s turned
+# toward the player (partida.md, "O boneco que ataca"), through its input box alone, with its mix
+# or, on --dummy=guard_break, only guard breaks, to train the tech (TASK-12.4; F-212); on
+# --dummy=block it holds its guard instead and never attacks (F-213). The player
+# judges a rule of two bodies against it, the head first, and the guard. The replay records both.
 func start_solo() -> void:
 	var started: int = await NetworkTime.start()
 	assert(started == OK, "netfox's clock did not start: %s" % error_string(started))
@@ -189,12 +197,14 @@ func start_solo() -> void:
 	if options.dummy:
 		var dummy := current_match.spawn_fighter(Match.DUMMY_SLOT, me)
 		dummy.wear(Match.solo_tone(Match.DUMMY_SLOT))
-		current_match.let_dummy_attack(dummy, fighter)
-		recorded.append(dummy)
-		_log(
-			"sozinho: a dummy at the second spawn point attacks the player every 3 s with lights,"
-			+ " charged attacks and feints (--dummy=off leaves it out)"
+		current_match.let_dummy_attack(
+			dummy,
+			fighter,
+			options.dummy_only_guard_breaks,
+			options.dummy_holds_guard,
 		)
+		recorded.append(dummy)
+		_log(solo_dummy_line(options.dummy_only_guard_breaks, options.dummy_holds_guard))
 	if options.records_replay():
 		_start_replay(recorded)
 	_measure_from_now()
@@ -740,6 +750,32 @@ static func _refusal_name(verdict: Handshake.Verdict) -> String:
 	if verdict == Handshake.Verdict.ROOM_FULL:
 		return "room full"
 	return "update required"
+
+
+## The line Sozinho's log says about its dummy: its mix, only guard breaks with
+## --dummy=guard_break (TASK-12.4; partida.md, "A mistura do boneco"; F-212), or the guard it holds
+## with --dummy=block (F-213).
+static func solo_dummy_line(only_guard_breaks: bool, holds_guard := false) -> String:
+	if holds_guard:
+		return (
+			"sozinho: a dummy at the second spawn point holds its guard and never attacks, feints"
+			+ " or techs: the sword stops on its guard, which costs it stamina and falls when the"
+			+ " stamina runs out; break it with the guard break and throw the charged the moment"
+			+ " you go dark, so it lands while the dummy still glows (--dummy=on for its whole"
+			+ " mix, --dummy=guard_break to train the tech, --dummy=off leaves it out)"
+		)
+	if only_guard_breaks:
+		return (
+			"sozinho: a dummy at the second spawn point throws only guard breaks, one every 3 s,"
+			+ " and never techs: stand 0.9 to 1.4 m in front of it and tech with the guard break"
+			+ " (--dummy=on for its whole mix, --dummy=block for a guard to break, --dummy=off"
+			+ " leaves it out)"
+		)
+	return (
+		"sozinho: a dummy at the second spawn point attacks the player every 3 s with lights,"
+		+ " charged attacks, feints and guard breaks, and never techs (--dummy=guard_break for"
+		+ " only guard breaks, --dummy=block for a guard to break, --dummy=off leaves it out)"
+	)
 
 
 static func _log(line: String) -> void:

@@ -29,3 +29,6 @@ var parry := false
 # A one-tick touch beside the held guard: true only on the tick the guard button goes down. In the
 # charged's windup it is the feint (combate.md, "A finta"; DEC-0056 §5).
 var guard_press := false
+# A one-tick touch too: the guard break, and the tech of whoever is grabbed (combate.md, "A quebra,
+# o tech e a esquiva no tick": "Os nomes no código"; DEC-0058 §1; TASK-12.4).
+var guard_break := false

@@ -227,9 +227,11 @@ func _carregado(loops: int, hidden := "") -> SyncObserver:
 
 # The camera's yaw that sends a fighter's swing along `swing` (combate.md, "A espada na mira";
 # DEC-0057): the swing turns asin(shoulder / convergence) to the right of the camera, so the camera
-# looks that far to the left of it.
+# looks that far to the left of it. The convergence is the sword's, the light's and the charged's
+# alike (DEC-0058 §2).
 static func _camera_for_swing(swing: float, game_match: Match) -> float:
-	return swing + asin(game_match.config.aim_side / game_match.combat.aim_convergence)
+	var convergence := game_match.combat.attacks[FighterCommand.LIGHT_ATTACK].aim_convergence
+	return swing + asin(game_match.config.aim_side / convergence)
 
 
 # A Match in the tree with a fighter of each slot standing at its start, placed before netfox

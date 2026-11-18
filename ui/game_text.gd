@@ -24,8 +24,12 @@ const HUD_DASH_COOLDOWN := &"HUD_DASH_COOLDOWN"
 const HUD_GRAPPLE_COOLDOWN := &"HUD_GRAPPLE_COOLDOWN"
 # Every row of a replay played in the window has played (--watch; TASK-10.3).
 const REPLAY_ENDED := &"REPLAY_ENDED"
+# The call to the tech's key on the grabbed player's screen, while the tech's window is open and
+# the tech has not come, with the guard break on its default, the middle mouse button (TASK-12.4;
+# visual-e-audio.md, "A quebra na cápsula"; F-212).
+const HUD_TECH_PROMPT := &"HUD_TECH_PROMPT"
 # The options screen (TASK-10.9; visual-e-audio.md, "A tela de opções"): its title, its three
-# groups, the eleven actions, the two sliders, the shake's toggle and the two buttons.
+# groups, the twelve actions, the two sliders, the shake's toggle and the two buttons.
 const OPTIONS_TITLE := &"OPTIONS_TITLE"
 const OPTIONS_GROUP_KEYS := &"OPTIONS_GROUP_KEYS"
 const OPTIONS_GROUP_MOUSE := &"OPTIONS_GROUP_MOUSE"
@@ -44,6 +48,8 @@ const OPTIONS_ACTION_GUARD := &"OPTIONS_ACTION_GUARD"
 # The charged attack and the parry, remappable since TASK-12.3 (F-191 §2; combate.md, "As teclas").
 const OPTIONS_ACTION_CHARGED_ATTACK := &"OPTIONS_ACTION_CHARGED_ATTACK"
 const OPTIONS_ACTION_PARRY := &"OPTIONS_ACTION_PARRY"
+# The guard break, and the tech, remappable since TASK-12.4 (F-207; combate.md, "As teclas").
+const OPTIONS_ACTION_GUARD_BREAK := &"OPTIONS_ACTION_GUARD_BREAK"
 const OPTIONS_SENSITIVITY := &"OPTIONS_SENSITIVITY"
 # Beside the sensitivity: the mouse's travel for a full turn at 800 DPI, {cm} whole centimetres.
 const OPTIONS_SENSITIVITY_TURN := &"OPTIONS_SENSITIVITY_TURN"
@@ -80,6 +86,7 @@ const KEYS: Array[StringName] = [
 	HUD_DASH_COOLDOWN,
 	HUD_GRAPPLE_COOLDOWN,
 	REPLAY_ENDED,
+	HUD_TECH_PROMPT,
 	OPTIONS_TITLE,
 	OPTIONS_GROUP_KEYS,
 	OPTIONS_GROUP_MOUSE,
@@ -95,6 +102,7 @@ const KEYS: Array[StringName] = [
 	OPTIONS_ACTION_GUARD,
 	OPTIONS_ACTION_CHARGED_ATTACK,
 	OPTIONS_ACTION_PARRY,
+	OPTIONS_ACTION_GUARD_BREAK,
 	OPTIONS_SENSITIVITY,
 	OPTIONS_SENSITIVITY_TURN,
 	OPTIONS_SCALE,

@@ -830,7 +830,8 @@ func test_the_arc_direction_is_the_cameras_on_the_last_windup_tick_and_then_fixe
 	var first := fighter.tick()
 	var windup := WINDUP_TICKS[tickrate]
 	var swing := _swing_ticks(tickrate)
-	var turn := asin(fighter.config().aim_side / fighter.combat.aim_convergence)
+	var convergence := fighter.combat.attacks[FighterCommand.LIGHT_ATTACK].aim_convergence
+	var turn := asin(fighter.config().aim_side / convergence)
 	var fixed := FIRST_YAW + YAW_STEP * (windup - 1) - turn
 	var violations: Array[String] = []
 	for offset: int in swing + 2:

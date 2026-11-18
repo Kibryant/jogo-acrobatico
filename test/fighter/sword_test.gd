@@ -294,3 +294,69 @@ func test_the_armor_makes_the_overhead_sword_tremble_without_recoil() -> void:
 	var old := windup.copy()
 	old.hurt_tick = SINCE - 3
 	assert_bool(Sword.pose(old, SINCE, combat, tokens).is_equal_approx(still)).is_true()
+
+
+const GUARD_BREAK := &"guard_break"
+
+
+func _breaking(action: FighterState.Action, yaw: float) -> FighterState:
+	var state := _swinging(action, yaw)
+	state.action_move = GUARD_BREAK
+	return state
+
+
+# TASK-12.4 (visual-e-audio.md, "A quebra na cápsula": "Na preparação da quebra, a espada fica na
+# pose de descanso"; F-212): through every phase of the guard break, and through the hold on both
+# sides, the sword shows the rest pose of a fighter standing with the same facing, whatever the
+# swing's direction, and in steel: the move's vermilion is the hand's (GrabHand). The windup's pose
+# is named for the hand, with or without the tokens; the light's windup keeps no colour either.
+func test_the_guard_break_keeps_the_sword_at_rest_in_steel_through_its_phases_and_the_hold(
+	facing: float,
+	_test_parameters := [[0.0], [1.2], [-2.5]],
+) -> void:
+	var combat := _combat()
+	var tokens := _tokens()
+	var guard_break: AttackConfig = combat.attacks[GUARD_BREAK]
+	var standing := FighterState.new()
+	standing.facing_yaw = facing
+	var rest := Sword.pose(standing, SINCE, combat, tokens)
+	var windup := _breaking(FighterState.Action.WINDUP, facing)
+	assert_str(String(Sword.pose_name(windup, tokens))).is_equal(
+		String(tokens.guard_break_windup.pose)
+	)
+	assert_str(String(Sword.pose_name(windup))).is_equal(String(Sword.POSE_HAND))
+	var phases: Dictionary[FighterState.Action, int] = {
+		FighterState.Action.WINDUP: guard_break.windup_ticks,
+		FighterState.Action.ACTIVE: guard_break.active_ticks,
+		FighterState.Action.RECOVERY: guard_break.recovery_ticks,
+	}
+	for action: FighterState.Action in phases:
+		var state := _breaking(action, facing)
+		# The swing's direction apart from the facing: the sword still rests by the facing.
+		state.action_yaw = facing + 0.7
+		for into: int in phases[action]:
+			var where := "%s, tick %d, facing %.2f" % [
+				FighterState.Action.keys()[action],
+				into,
+				facing,
+			]
+			var pose := Sword.pose(state, SINCE + into, combat, tokens)
+			assert_bool(pose.is_equal_approx(rest)).override_failure_message(where).is_true()
+			var colour := Sword.blade_colour(state, tokens, SINCE + into, combat)
+			assert_float(colour.a).override_failure_message(where + ": not steel").is_equal(0.0)
+			assert_float(Sword.blade_colour(state).a).override_failure_message(where).is_equal(0.0)
+	for action: FighterState.Action in [FighterState.Action.GRABBING, FighterState.Action.GRABBED]:
+		var held := FighterState.new()
+		held.action = action
+		held.action_since = SINCE
+		held.facing_yaw = facing
+		var where := "%s, facing %.2f" % [FighterState.Action.keys()[action], facing]
+		var pose := Sword.pose(held, SINCE + 10, combat, tokens)
+		assert_bool(pose.is_equal_approx(rest)).override_failure_message(where).is_true()
+		assert_float(Sword.blade_colour(held, tokens, SINCE + 10, combat).a).is_equal(0.0)
+	var light := _swinging(FighterState.Action.WINDUP, facing)
+	assert_float(Sword.blade_colour(light, tokens, SINCE, combat).a).is_equal(0.0)
+	# The light's active still wears the vermilion: only the guard break gives its colour away.
+	var light_active := _swinging(FighterState.Action.ACTIVE, facing)
+	var lit := Sword.blade_colour(light_active, tokens, SINCE, combat)
+	assert_bool(lit.is_equal_approx(Sword.ACTIVE_COLOUR)).is_true()

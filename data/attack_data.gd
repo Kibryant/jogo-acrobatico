@@ -1,8 +1,9 @@
-# The numbers of one sword move in the units of the paper: ms, stamina points, health points and
+# The numbers of one move in the units of the paper: ms, stamina points, health points, metres and
 # degrees (combate.md, "Os golpes e as defesas" and "A lâmina e o contato"; DEC-0004, rule 3). A
-# CombatData holds one per move, the light attack first and the charged attack second (TASK-12.3),
-# so the guard break comes in the same way. CombatConfig.create turns it into an AttackConfig, in
-# ticks and radians, once at load. The defaults are zero on purpose: the numbers live in the .tres.
+# CombatData holds one per move, the light attack first, the charged attack second (TASK-12.3) and
+# the guard break third (TASK-12.4), whose hand grabs instead of a blade striking.
+# CombatConfig.create turns it into an AttackConfig, in ticks and radians, once at load. The
+# defaults are zero on purpose: the numbers live in the .tres.
 class_name AttackData
 extends Resource
 
@@ -65,12 +66,26 @@ extends Resource
 ## ponta"). A CombatData checks that the blade reaches them.
 @export var tip_from_height_m: float
 @export var tip_to_height_m: float
+## m from the body's axis on the floor's plane: the point of the aim line the move points at, its
+## convergence, where its weapon crosses the aim line: 2,0 for the sword, where the tip reaches,
+## and 1,2 for the guard break, where the hand reaches (combate.md, "A lâmina e o contato":
+## "Convergência"; DEC-0057 §1; DEC-0058 §2). Positive, and greater than the shoulder.
+@export var aim_convergence_m: float
+## The move is the guard break's hand: a straight segment from the body's axis, at the hand's
+## height, that grabs instead of striking (combate.md, "A quebra, o tech e a esquiva no tick": "A
+## mão"; DEC-0058 §2). The guard does not block it and the parry does not parry it.
+@export var grab: bool
+## m from the body's axis: how far the hand of a move that grabs reaches on its last active tick,
+## the slices splitting it evenly (combate.md, "A mão": "até 1,2 m"). A move that does not grab
+## does not read it.
+@export var hand_reach_m: float
 
 
 # One message per impossible number, each naming its field after prefix ("light_attack." in a
 # CombatData), so the gate's print says which number to fix. The active window must be at least
 # one tick at every checked tickrate: the slice divides the arc by it. The arc may be anything;
-# the tip's heights need the blade, so the CombatData checks them.
+# the tip's heights need the blade, so the CombatData checks them. The convergence is positive, and
+# so is the hand's reach of a move that grabs.
 func validate(prefix := "") -> PackedStringArray:
 	var checks: Array[String] = [
 		_time_error(prefix + "windup_ms", windup_ms, false),
@@ -96,12 +111,25 @@ func validate(prefix := "") -> PackedStringArray:
 			"a shake cannot be negative",
 		),
 		_share_error(prefix + "hit_shake_attacker_share", hit_shake_attacker_share),
+		_positive_error(
+			prefix + "aim_convergence_m",
+			aim_convergence_m,
+			"the move crosses the aim line ahead of the body",
+		),
 	]
+	if grab:
+		checks.append(_positive_error(prefix + "hand_reach_m", hand_reach_m, "a hand must reach"))
 	var errors := PackedStringArray()
 	for message: String in checks:
 		if not message.is_empty():
 			errors.append(message)
 	return errors
+
+
+static func _positive_error(field: String, value: float, why: String) -> String:
+	if value <= 0.0:
+		return "%s is %s: %s" % [field, value, why]
+	return ""
 
 
 # A negative time is wrong on its own; a time the rules divide by is also wrong when it rounds to

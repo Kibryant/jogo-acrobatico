@@ -12,7 +12,9 @@
 # With a screen, --watch=FILE [--force] [--trace=PATH] plays a replay in Sozinho instead of the
 # keyboard, and records none.
 # Sozinho puts a dummy at the second spawn point to stand on and bump into (TASK-10.7);
-# --dummy=off leaves it out.
+# --dummy=off leaves it out, --dummy=guard_break makes it throw only guard breaks, to train the
+# tech (TASK-12.4; partida.md, "A mistura do boneco"; F-212), and --dummy=block makes it hold its
+# guard and never attack, to train the guard break against a guard (F-213).
 # When netfox's network simulator connects the game (SimulatorLink), the address is its own: an
 # address in the arguments that differs is refused, and so is Sozinho, which has no network.
 # An argument this build does not know, or one that does not fit the mode, is an error: a typo
@@ -68,9 +70,13 @@ const FLAGS: Array[String] = [SERVER, BOT, NO_REPLAY, FORCE]
 const SOLO_ONLY: Array[String] = [REPLAY, REPLAY_DIR, NO_REPLAY, WATCH, TRACE, FORCE]
 ## The values of --half.
 const HALVES: Array[String] = ["left", "right"]
-## The values of --dummy: Sozinho's dummy stands at the second spawn point, or not (TASK-10.7).
+## The values of --dummy: Sozinho's dummy stands at the second spawn point, or not (TASK-10.7), or
+## stands there throwing only guard breaks (TASK-12.4; F-212), or holding its guard (F-213).
 const DUMMY_ON := "on"
 const DUMMY_OFF := "off"
+const DUMMY_GUARD_BREAK := "guard_break"
+const DUMMY_BLOCK := "block"
+const DUMMY_VALUES: Array[String] = [DUMMY_ON, DUMMY_OFF, DUMMY_GUARD_BREAK, DUMMY_BLOCK]
 
 var mode := Mode.SOLO
 ## The server listens on it; a client connects to it.
@@ -105,6 +111,12 @@ var force := false
 ## Sozinho's dummy at the second spawn point (TASK-10.7); --dummy=off leaves it out. Only
 ## Sozinho's own play has one: a server, a client and --watch never do.
 var dummy := false
+## With --dummy=guard_break, the dummy throws only guard breaks, one every 3 s, to train the tech
+## (partida.md, "A mistura do boneco"; F-212); otherwise its mix (AttackingDummy.kind_of).
+var dummy_only_guard_breaks := false
+## With --dummy=block, the dummy holds its guard on every tick and never attacks, feints or techs,
+## to train the guard break against a guard (partida.md, "A mistura do boneco"; F-213).
+var dummy_holds_guard := false
 ## netfox's network simulator, when it connects the game; null otherwise.
 var simulator: SimulatorLink
 ## One line per problem with the arguments; the game opens only when there is none.
@@ -259,16 +271,18 @@ func _read_replay(given: Dictionary[String, String], has_screen: bool) -> void:
 		force = given.has(FORCE)
 
 
-# Sozinho's dummy (TASK-10.7): on unless --dummy=off, and only in Sozinho's own play; --watch
-# plays the fighters of its file.
+# Sozinho's dummy (TASK-10.7): on unless --dummy=off, with only guard breaks on
+# --dummy=guard_break (TASK-12.4), holding its guard on --dummy=block (F-213), and only in Sozinho's
+# own play; --watch plays the fighters of its
+# file.
 func _read_dummy(given: Dictionary[String, String]) -> void:
 	var playing := mode == Mode.SOLO and watch.is_empty() and not given.has(WATCH)
 	if not given.has(DUMMY):
 		dummy = playing
 		return
 	var value := given[DUMMY]
-	if value != DUMMY_ON and value != DUMMY_OFF:
-		errors.append("--dummy is on or off, not %s" % value)
+	if not DUMMY_VALUES.has(value):
+		errors.append("--dummy is on, off, guard_break or block, not %s" % value)
 	elif mode != Mode.SOLO:
 		errors.append("--dummy goes with Sozinho: the server and the clients have no dummy")
 	elif given.has(WATCH):
@@ -276,7 +290,9 @@ func _read_dummy(given: Dictionary[String, String]) -> void:
 			"--dummy goes with Sozinho's own play: --watch plays the fighters of its file"
 		)
 	else:
-		dummy = value == DUMMY_ON
+		dummy = value != DUMMY_OFF
+		dummy_only_guard_breaks = value == DUMMY_GUARD_BREAK
+		dummy_holds_guard = value == DUMMY_BLOCK
 
 
 # HOST or HOST:PORT. An IPv6 address, with its own colons, is not read here.

@@ -35,6 +35,13 @@
 # sparks from the blade, and shakes the camera of the watched fighter, on either side, by the
 # parry's numbers. The charged's vertical cut draws its trail in its own plane; a hit of a move
 # with an attacker's share of the shake shakes the attacker's camera too, by that share.
+# The guard break adds two (combate.md, "A quebra, o tech e a esquiva no tick" and "O hitstop e o
+# tremor"; visual-e-audio.md, "A quebra na cápsula"; TASK-12.4): the grab, on whoever was grabbed,
+# keyed by grabbed_tick and first shown on the tick after the contact, which flashes its capsule
+# white, as a hit does, and shakes its camera by the grab's numbers ("Quebra pega"); and the tech,
+# on whoever answered, keyed by tech_tick and shown on that very tick, which leaves a puff under
+# its feet in its own tone. The guard break's active draws no arc: a hand has no blade, and the hand
+# itself is the fighter's (GrabHand).
 # It also counts, for the SyncTest, the events the simulation made on its fresh ticks: there,
 # with the rollback forced on every tick, the cues presented must equal the events (DEC-0031 §6;
 # rede.md §4).
@@ -55,6 +62,8 @@ enum Kind {
 	BLOCK,
 	PARRY,
 	PARRIED,
+	GRAB,
+	TECH,
 }
 
 ## The cue's opacity when it appears; it fades to nothing. Claude's v0 reading (DEC-0017): seen
@@ -160,7 +169,7 @@ static func shown_events(fighter: Fighter) -> Array[Event]:
 		shown.append(Event.new(fighter, Kind.GRAPPLE_PULL, state.mode_since))
 	if state.slide_off_dir != Vector3.ZERO:
 		shown.append(Event.new(fighter, Kind.HEAD_SLIDE, state.head_landing_tick))
-	if state.action == FighterState.Action.ACTIVE:
+	if state.action == FighterState.Action.ACTIVE and not _grabs(fighter, state):
 		shown.append(Event.new(fighter, Kind.SWING, Combat.active_began(state)))
 	if state.hurt_tick != FighterState.NEVER:
 		# The contact's tick, applied on the next one: like the double jump's stamp, it stays.
@@ -174,7 +183,21 @@ static func shown_events(fighter: Fighter) -> Array[Event]:
 	if state.parried_tick != FighterState.NEVER:
 		# The same contact, read by whoever was parried in the photo two ticks after it.
 		shown.append(Event.new(fighter, Kind.PARRIED, state.parried_tick, state.parried_tick + 2))
+	if state.grabbed_tick != FighterState.NEVER:
+		# The grab's contact, resolved by whoever was grabbed on the next tick, like a hit.
+		shown.append(Event.new(fighter, Kind.GRAB, state.grabbed_tick, state.grabbed_tick + 1))
+	if state.tech_tick != FighterState.NEVER:
+		# The tech counts on the tick it stamps.
+		shown.append(Event.new(fighter, Kind.TECH, state.tech_tick))
 	return shown
+
+
+# Whether the move in progress grabs: the guard break's hand, which draws no arc.
+static func _grabs(fighter: Fighter, state: FighterState) -> bool:
+	if fighter.combat == null or not fighter.combat.attacks.has(state.action_move):
+		return false
+	var attack: AttackConfig = fighter.combat.attacks[state.action_move]
+	return attack.grab
 
 
 # After every tick loop, netfox's rollback included: the state on the fighters is the one the
@@ -249,6 +272,14 @@ func _draw(fighter: Fighter, kind: Kind) -> void:
 			if fighter.combat != null:
 				add_child(Sparks.new(fighter, fighter.combat, _parry_colour()))
 			_shake_parry(fighter)
+		Kind.GRAB:
+			fighter.flash(FLASH_S, _flash_colour())
+			_shake_grab(fighter)
+		Kind.TECH:
+			# The double jump's puff under the feet, in the fighter's tone: the escape it made.
+			var puff := Puff.new(fighter, _config, Vector3.ZERO)
+			puff.name = "TechPuff"
+			add_child(puff)
 		_:
 			add_child(Puff.new(fighter, _config, Vector3.ZERO))
 
@@ -290,6 +321,15 @@ func _shake(fighter: Fighter, hit: bool) -> void:
 	elif hit and attacker != null and attacker == watched and attack.hit_shake_attacker_share > 0.0:
 		var degrees := attack.hit_shake_deg * attack.hit_shake_attacker_share
 		camera.shake(attack.hit_shake_ms / 1000.0, degrees)
+
+
+# The grab shakes the camera of whoever was grabbed when this PC watches it (combate.md, "O hitstop
+# e o tremor": "Quebra pega: 100 ms, 0,5°"), the stimulus the tech answers ("fui agarrado"); the
+# camera's option decides whether it plays.
+func _shake_grab(fighter: Fighter) -> void:
+	if camera == null or combat_data == null or fighter != watched:
+		return
+	camera.shake(combat_data.grab_shake_ms / 1000.0, combat_data.grab_shake_deg)
 
 
 # The parry shakes the watched fighter's camera on either side, whoever parried or was parried,

@@ -29,7 +29,9 @@ enum Mode {
 # three (DEC-0056 §1): PARRY is the parry's stance, since the tick it fired, its window the first
 # parry_window_ticks; FEINT is the feint's recovery, since the tick the guard button cut the
 # charged's windup; PARRIED is the stun of whoever was parried, until stun_until_tick like the
-# other two.
+# other two. TASK-12.4 appends two (DEC-0058 §1): GRABBING is whoever grabbed, held from the tick
+# the photo shows the grab until the hold ends; GRABBED is whoever was grabbed, held and then
+# unable to act until stun_until_tick, which the tech brings forward to the hold's end.
 enum Action {
 	NONE,
 	WINDUP,
@@ -41,6 +43,8 @@ enum Action {
 	PARRY,
 	FEINT,
 	PARRIED,
+	GRABBING,
+	GRABBED,
 }
 
 # The stamp of "never": far enough in the past that no window reaches it, so a fresh state
@@ -145,6 +149,17 @@ var frozen_until_tick := NEVER
 # when the photo first shows the parry. Both stay, like hurt_tick, and key the cues.
 var parry_tick := NEVER
 var parried_tick := NEVER
+# The grab (combate.md, "A quebra, o tech e a esquiva no tick"; DEC-0058 §1, §4 and §5), both on
+# whoever was grabbed: the contact of the last grab taken, stamped on the tick after it, which
+# whoever grabbed reads in the photo; and the tick the last tech counted, which whoever grabbed
+# reads to let go two ticks later. Both stay, like hurt_tick, and key the cues.
+var grabbed_tick := NEVER
+var tech_tick := NEVER
+# The tech's press (combate.md, "O tech": "O tech não passa pela vaga"; DEC-0058 §5): on whoever was
+# grabbed, the tick of the first press of the guard break after the contact of the last grab, up to
+# the last held tick, read from the input and never from the slot, so no other key replaces it. The
+# tech counts on it, or on the first tick after it that is not frozen. It stays, like tech_tick.
+var tech_press_tick := NEVER
 
 
 # An equal and independent state: the rules change the copy, never the state they receive.
@@ -185,4 +200,7 @@ func copy() -> FighterState:
 	other.frozen_until_tick = frozen_until_tick
 	other.parry_tick = parry_tick
 	other.parried_tick = parried_tick
+	other.grabbed_tick = grabbed_tick
+	other.tech_tick = tech_tick
+	other.tech_press_tick = tech_press_tick
 	return other

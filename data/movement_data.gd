@@ -142,6 +142,12 @@ const CHECKED_TICKRATES: Array[int] = [30, 60]
 ## which a data test keeps equal to camera_v0.tres (movimento.md, "Gancho": "De onde sai a mira";
 ## DEC-0045 §2). No value of it is impossible.
 @export var aim_side_m: float
+## The point O this far above the shoulder: a copy of the camera's rise, 0 in movement_v0.tres and
+## 0,6 m in movement_center.tres, which a data test keeps equal to the camera's of the same pair
+## (movimento.md, "Câmera": "Subida"; "Gancho": "De onde sai a mira"; TASK-12.15). Only O rises:
+## the body's shoulder, where the cable and the corner's second ray leave from, stays at
+## aim_height_m ("A quina"). No value of it is impossible, like the side's (DEC-0017).
+@export var aim_rise_m: float
 ## Whoever lands on another fighter's head slides off it at least this fast (movimento.md, "O
 ## corpo": "Escorregar da cabeça"; TASK-10.7).
 @export var head_slide_speed_mps: float

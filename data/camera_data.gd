@@ -15,6 +15,12 @@ extends Resource
 ## the left, 0 centred (movimento.md, "Câmera": "Ombro"; DEC-0045 §1). The aim's point O sits on
 ## the same line, so MovementData.aim_side_m copies it, and a data test keeps the two equal.
 @export var shoulder_m: float
+## The camera, and the aim's point O with it, this far above the pivot: 0 in the default camera,
+## 0,6 m in the centered one, camera_center.tres (movimento.md, "Câmera": "Subida"; TASK-12.15).
+## The rig raises its whole pivot by it, so the pitch still turns about the line of O.
+## MovementData.aim_rise_m copies it, as aim_side_m copies the shoulder, and a data test keeps the
+## two equal. No value of it is impossible, like the shoulder's: Claude's v0 reading (DEC-0017).
+@export var rise_m: float
 ## Each step of the camera's collision, back and sideways, stops this far before the wall
 ## (movimento.md, "Câmera": "Margem da colisão").
 @export var collision_margin_m: float

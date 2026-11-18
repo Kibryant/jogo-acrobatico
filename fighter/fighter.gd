@@ -454,9 +454,10 @@ func covers_body(face_normal: Vector3) -> bool:
 
 
 ## The aim's ray (DEC-0044 §1; DEC-0045 §2 and §3; movimento.md, "Gancho": "De onde sai a mira",
-## "A quina"): from the point O of feet and yaw (Aim.origin), on the line of the screen's centre,
-## along Aim.direction(yaw, pitch), as far as the grapple's range. When it finds the world, a
-## second ray goes from the shoulder, aim_height above feet, to the point: stopped by anything
+## "A quina"): from the point O of feet and yaw (Movement.aim_origin, which the camera's rise lifts
+## with the camera; TASK-12.15), on the line of the screen's centre, along Aim.direction(yaw,
+## pitch), as far as the grapple's range. When it finds the world, a second ray goes from the
+## body's shoulder, aim_height above feet and never raised, to the point: stopped by anything
 ## more than SIGHT_TOLERANCE before it, the shoulder does not see the point, a corner between the
 ## body and it, and the aim finds nothing. Both rays ask only the world: the fighters are not on
 ## their mask, so they pass through them, and the body's own RID is excluded too. Queries of the
@@ -465,7 +466,7 @@ func covers_body(face_normal: Vector3) -> bool:
 ## result, empty on a miss or a corner: the tick casts it when the core asks, and the reticle on
 ## screen from the displayed body, along the camera (Hud).
 func aim_ray(feet: Vector3, yaw: float, pitch: float) -> Dictionary:
-	var origin := Aim.origin(feet, yaw, config.aim_height, config.aim_side)
+	var origin := Movement.aim_origin(feet, yaw, config)
 	var hit := _world_ray(origin, origin + Aim.direction(yaw, pitch) * config.grapple_range)
 	if hit.is_empty():
 		return hit

@@ -459,3 +459,76 @@ func test_dummy_values_that_do_not_fit_are_one_error_each() -> void:
 	assert_int(watched.errors.size()).is_equal(1)
 	assert_str(watched.errors[0]).contains("--watch")
 	assert_bool(watched.dummy_only_guard_breaks).is_false()
+
+
+# Criterion 1 of TASK-12.15 (F-219 §1): --camera=center gives Sozinho's own play the centered
+# camera, with a screen or without, with or without a replay and with any dummy; no --camera, or
+# --camera=shoulder, keeps the camera over the right shoulder.
+func test_camera_center_gives_sozinho_the_centered_camera() -> void:
+	var centered: Array[Array] = [
+		[["--camera=center"], WITH_SCREEN],
+		[["--camera=center", "--no-replay"], HEADLESS],
+		[["--replay-dir=replays", "--camera=center", "--dummy=block"], WITH_SCREEN],
+		[["--camera=center", "--dummy=off", "--measure-fps=fps.json"], WITH_SCREEN],
+	]
+	for form: Array in centered:
+		var arguments: Array = form[0]
+		var screen: bool = form[1]
+		var parsed := _parse(arguments, EDITOR_BUILD, screen)
+		var message := "%s: %s" % [arguments, parsed.errors]
+		assert_array(parsed.errors).override_failure_message(message).is_empty()
+		assert_int(parsed.mode).is_equal(LaunchOptions.Mode.SOLO)
+		assert_bool(parsed.camera_centered).override_failure_message(message).is_true()
+	var shoulder: Array[Array] = [[], ["--camera=shoulder"], ["--camera=shoulder", "--dummy=off"]]
+	for arguments: Array in shoulder:
+		var parsed := _parse(arguments, EDITOR_BUILD, WITH_SCREEN)
+		var message := "%s: %s" % [arguments, parsed.errors]
+		assert_array(parsed.errors).override_failure_message(message).is_empty()
+		assert_bool(parsed.camera_centered).override_failure_message(message).is_false()
+	assert_bool(_parse(["--server"]).camera_centered).is_false()
+	assert_bool(_parse(["--connect=127.0.0.1"]).camera_centered).is_false()
+
+
+# Criterion 4 of TASK-12.15: --camera with --server, --connect or --watch is one error each, of any
+# value, that says why: the server and the clients need the same aim, and --watch plays its file's;
+# the camera is then the one over the shoulder. A value that is neither, or --camera given twice
+# or without a value, is one error too.
+func test_camera_goes_only_with_sozinhos_own_play_and_says_why() -> void:
+	var elsewhere: Array[Array] = [
+		[["--server", "--camera=center"], HEADLESS],
+		[["--server", "--camera=shoulder"], HEADLESS],
+		[["--connect=127.0.0.1", "--camera=center"], WITH_SCREEN],
+		[["--connect=127.0.0.1:7777", "--bot", "--camera=center"], HEADLESS],
+		[["--watch=x.replay", "--camera=center"], WITH_SCREEN],
+		[["--watch=x.replay", "--force", "--camera=shoulder"], WITH_SCREEN],
+	]
+	for form: Array in elsewhere:
+		var arguments: Array = form[0]
+		var screen: bool = form[1]
+		var parsed := _parse(arguments, EDITOR_BUILD, screen)
+		var message := "%s must be refused with one message: %s" % [arguments, parsed.errors]
+		assert_int(parsed.errors.size()).override_failure_message(message).is_equal(1)
+		assert_bool(parsed.camera_centered).override_failure_message(message).is_false()
+		if parsed.errors.size() == 1:
+			var said := parsed.errors[0]
+			assert_str(said).contains("--camera")
+			assert_str(said).contains("the server and the clients need the same aim")
+			assert_str(said).contains("--watch plays the one its file was recorded with")
+	var dedicated := _parse(["--camera=center"], DEDICATED_BUILD)
+	assert_int(dedicated.errors.size()).is_equal(1)
+	assert_str(dedicated.errors[0]).contains("the server and the clients need the same aim")
+	var wrong: Array[Array] = [
+		["--camera"],
+		["--camera="],
+		["--camera=centre"],
+		["--camera=CENTER"],
+		["--camera=left"],
+		["--camera=center", "--camera=shoulder"],
+	]
+	for arguments: Array in wrong:
+		var parsed := _parse(arguments)
+		var message := "%s must be refused with one message: %s" % [arguments, parsed.errors]
+		assert_int(parsed.errors.size()).override_failure_message(message).is_equal(1)
+	assert_str(_parse(["--camera=centre"]).errors[0]).is_equal(
+		"--camera is shoulder or center, not centre"
+	)

@@ -598,7 +598,7 @@ func test_on_a_corner_the_shoulder_does_not_see_the_ring_shows_no_dot() -> void:
 	_aim(camera, TARGET_POINT)
 	var config := _match.config
 	var feet := _fighter.global_position
-	var origin := Aim.origin(feet, camera.yaw, config.aim_height, config.aim_side)
+	var origin := Movement.aim_origin(feet, camera.yaw, config)
 	var reach := Aim.direction(camera.yaw, camera.pitch) * config.grapple_range
 	var query := PhysicsRayQueryParameters3D.create(
 		origin,

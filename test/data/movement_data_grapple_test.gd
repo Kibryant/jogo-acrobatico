@@ -161,6 +161,19 @@ func test_an_aim_side_of_zero_or_negative_is_allowed(
 	_assert_passes(data, "an aim side of %.2f must pass" % side_m)
 
 
+# TASK-12.15: the aim's rise, the camera's copied, is 0 in movement_v0.tres, as in camera_v0.tres,
+# and has no impossible value, like the side: up, none or down (movimento.md, "Câmera": "Subida":
+# Claude's v0 reading, DEC-0017).
+func test_the_aim_rise_is_0_in_the_v0_pair_and_any_rise_is_allowed(
+	rise_m: float,
+	_test_parameters := [[0.0], [0.6], [-0.6], [-0.01], [3.0]],
+) -> void:
+	assert_float(_load_v0().aim_rise_m).is_equal(0.0)
+	assert_float(_load_v0().aim_rise_m).is_equal(_load_camera_v0().rise_m)
+	var data := _v0_copy_with("aim_rise_m", rise_m)
+	_assert_passes(data, "an aim rise of %.2f must pass" % rise_m)
+
+
 # The range is positive: the ray's length (TASK-10.6 notes: "positive").
 func test_a_range_that_is_not_positive_is_rejected(
 	range_m: float,

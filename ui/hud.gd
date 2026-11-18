@@ -406,10 +406,11 @@ func _show_grapple_cooldown(tick: int) -> void:
 
 # The ring sits where the aim's ray shows on screen, and its dot shows when the Q would hook now
 # (visual-e-audio.md, "O gancho na tela"). The ray of the screen leaves the displayed body's
-# point O along the camera (Fighter.aim_ray, with the corner's second ray): the ring goes where
-# the camera sees its end, the point it finds or, on a miss, the end of the grapple's range. With
-# the camera free its optical axis passes through O, so that is the screen's centre; when a wall
-# pushes the camera in, back or by the shoulder, the ring follows the ray instead (DEC-0045 §4).
+# point O along the camera (Fighter.aim_ray, with the corner's second ray), raised with the camera
+# when it has a rise (Movement.aim_origin; TASK-12.15): the ring goes where the camera sees its
+# end, the point it finds or, on a miss, the end of the grapple's range. With the camera free its
+# optical axis passes through O, so that is the screen's centre; when a wall pushes the camera in,
+# back or by the shoulder, the ring follows the ray instead (DEC-0045 §4).
 # The dot: a press now, on netfox's next tick, could fire by the core's own rule, and the ray
 # finds the world within the grapple's reach of O. The ray only asks the physics space: nothing of
 # it goes into the state. With the canvas_items stretch, unproject_position gives the point in the
@@ -421,7 +422,7 @@ func _show_reticle(tick: int) -> void:
 	if _camera != null:
 		var feet := _fighter.global_position
 		var yaw := _camera.yaw
-		var origin := Aim.origin(feet, yaw, _config.aim_height, _config.aim_side)
+		var origin := Movement.aim_origin(feet, yaw, _config)
 		var far := origin + Aim.direction(yaw, _camera.pitch) * _config.grapple_range
 		var hit := _fighter.aim_ray(feet, yaw, _camera.pitch)
 		if not hit.is_empty():

@@ -22,7 +22,8 @@ static func direction(yaw: float, pitch: float) -> Vector3:
 # The point O (DEC-0045 §2): the feet, height up, and side to the right of the yaw, turned by the
 # same Basis(UP, yaw) as the direction, so yaw 0 puts it toward +X and yaw +90° toward -Z. The
 # pitch never moves it: the camera's shoulder sits at the pivot's height, and a negative side is
-# the left shoulder.
+# the left shoulder. The game's height is the shoulder's plus the camera's rise
+# (Movement.aim_origin; TASK-12.15).
 static func origin(feet: Vector3, yaw: float, height: float, side: float) -> Vector3:
 	return feet + Vector3.UP * height + Basis(Vector3.UP, yaw) * Vector3(side, 0.0, 0.0)
 

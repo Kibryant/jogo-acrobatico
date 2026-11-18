@@ -515,9 +515,10 @@ class Trail:
 
 # The grapple's cable (visual-e-audio.md, "O gancho na tela"): a line CABLE_THICKNESS thick, opaque
 # and unlit in the fighter's tone, from the displayed shoulder, aim_height above the feet, to its
-# tip. While the cable flies, the tip goes from the shoulder to the point over grapple_attach_ticks,
-# counted in netfox's ticks from the fire, so it reaches the point on the pull's first tick at any
-# frame rate; during the pull it stays on the point; on the release the cable goes at once.
+# tip; the camera's rise lifts the point O, never the body's shoulder (TASK-12.15). While the cable
+# flies, the tip goes from the shoulder to the point over grapple_attach_ticks, counted in netfox's
+# ticks from the fire, so it reaches the point on the pull's first tick at any frame rate; during
+# the pull it stays on the point; on the release the cable goes at once.
 class Cable:
 	extends MeshInstance3D
 

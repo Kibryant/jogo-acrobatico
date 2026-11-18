@@ -1,0 +1,56 @@
+[gd_resource type="Resource" script_class="MovementData" format=3]
+
+[ext_resource type="Script" path="res://data/movement_data.gd" id="1_movc0"]
+
+[resource]
+script = ExtResource("1_movc0")
+capsule_height_m = 1.8
+capsule_radius_m = 0.35
+max_slope_deg = 45.0
+run_speed_mps = 7.0
+accel_time_ms = 150
+stop_time_ms = 100
+slow_walk_speed_mps = 3.0
+jump_height_m = 1.2
+jump_rise_ms = 350
+jump_fall_ms = 280
+air_control_pct = 25.0
+max_fall_speed_mps = 30.0
+coyote_ms = 100
+buffer_ms = 150
+double_jump_height_m = 1.0
+double_jump_cost = 10.0
+stamina_max = 100.0
+stamina_wait_ms = 800
+stamina_regen_per_s = 30.0
+dash_distance_m = 4.0
+dash_ms = 200
+dash_exit_speed_mps = 7.0
+dash_cooldown_ms = 400
+dash_cost = 15.0
+dash_invulnerable_from_ms = 50
+dash_invulnerable_to_ms = 167
+wall_min_incline_deg = 80.0
+wall_entry_speed_mps = 4.0
+wall_run_speed_mps = 8.0
+wall_max_speed_mps = 12.0
+wall_run_max_ms = 2500
+wall_hold_ms = 1500
+wall_slide_gravity_pct = 10.0
+wall_jump_height_m = 1.2
+wall_jump_push_mps = 5.0
+wall_same_face_deg = 10.0
+wall_clear_above_head_m = 0.3
+wall_lean_deg = 15.0
+wall_lean_ms = 100
+grapple_range_m = 25.0
+grapple_min_range_m = 3.0
+grapple_attach_ms = 100
+grapple_pull_speed_mps = 18.0
+grapple_release_distance_m = 1.5
+grapple_block_pct = 50.0
+grapple_cooldown_ms = 6000
+aim_height_m = 1.6
+aim_side_m = 0.0
+aim_rise_m = 0.6
+head_slide_speed_mps = 3.0

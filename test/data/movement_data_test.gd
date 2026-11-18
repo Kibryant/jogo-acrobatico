@@ -127,6 +127,7 @@ func _design_data() -> MovementData:
 	data.grapple_cooldown_ms = 6000 # "Gancho": "Recarga"
 	data.aim_height_m = 1.6 # "Gancho": "De onde sai a mira"
 	data.aim_side_m = 0.8 # "Gancho": "De onde sai a mira"; "Câmera": "Ombro" (DEC-0045 §2)
+	data.aim_rise_m = 0.0 # "Câmera": "Subida": "0 no padrão" (TASK-12.15)
 	data.head_slide_speed_mps = 3.0 # "O corpo": "Escorregar da cabeça" (TASK-10.7)
 	return data
 
@@ -210,6 +211,7 @@ func test_movement_v0_holds_the_numbers_of_movimento_md() -> void:
 	assert_int(data.grapple_cooldown_ms).is_equal(design.grapple_cooldown_ms)
 	assert_float(data.aim_height_m).is_equal_approx(design.aim_height_m, HAIR)
 	assert_float(data.aim_side_m).is_equal_approx(design.aim_side_m, HAIR)
+	assert_float(data.aim_rise_m).is_equal(design.aim_rise_m)
 	assert_float(data.head_slide_speed_mps).is_equal_approx(design.head_slide_speed_mps, HAIR)
 
 

@@ -37,6 +37,10 @@ var combat: CombatConfig
 ## The photo of the tick: every fighter's name, feet and state as netfox restored them, retaken on
 ## every tick of every loop, before any fighter simulates it (DEC-0051 §1).
 var photo := TickPhoto.new()
+## The camera numbers in the units of the paper. Set before the match enters the tree, they replace
+## camera_v0.tres, as movement_data replaces movement_v0.tres: Sozinho's centered camera
+## (--camera=center) and a replay's camera, made from the aim of its header, come in this way
+## (TASK-12.15). Left null, the match loads camera_v0.tres.
 var camera_data: CameraData
 ## The combat tokens the screen reads, by the state on screen (visual-e-audio.md, "Os três canais
 ## por estado"; TASK-12.2): the sword, the cues and the HUD; never the simulation.
@@ -90,7 +94,12 @@ func _ready() -> void:
 		"%s: %s" % [combat_data.resource_path, combat_data.validate()],
 	)
 	combat = CombatConfig.create(combat_data, NetworkTime.tickrate)
-	camera_data = _load_camera_data()
+	if camera_data == null:
+		camera_data = _load_camera_data()
+	assert(
+		camera_data.validate().is_empty(),
+		"%s: %s" % [camera_data.resource_path, camera_data.validate()],
+	)
 	tokens = _load_tokens()
 	if options == null:
 		options = OptionsStore.new()
@@ -347,6 +356,4 @@ static func _load_tokens() -> TokensData:
 static func _load_camera_data() -> CameraData:
 	var resource: Resource = load(CAMERA_DATA_PATH)
 	assert(resource is CameraData, "%s must load as a CameraData" % CAMERA_DATA_PATH)
-	var data := resource as CameraData
-	assert(data.validate().is_empty(), "%s: %s" % [CAMERA_DATA_PATH, data.validate()])
-	return data
+	return resource as CameraData

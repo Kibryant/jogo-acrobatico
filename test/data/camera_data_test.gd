@@ -28,6 +28,7 @@ func _design_data() -> CameraData:
 	data.vertical_fov_deg = 70.0 # "Campo de visão", vertical
 	data.sensitivity_deg_per_px = 0.06 # "Sensibilidade padrão"
 	data.max_pitch_deg = 80.0 # Claude's v0 reading (TASK-9 plan, round B)
+	data.rise_m = 0.0 # "Subida": "0 no padrão" (TASK-12.15)
 	return data
 
 
@@ -66,6 +67,7 @@ func test_camera_v0_holds_the_numbers_of_movimento_md() -> void:
 	assert_float(data.vertical_fov_deg).is_equal_approx(design.vertical_fov_deg, HAIR)
 	assert_float(data.sensitivity_deg_per_px).is_equal_approx(design.sensitivity_deg_per_px, HAIR)
 	assert_float(data.max_pitch_deg).is_equal_approx(design.max_pitch_deg, HAIR)
+	assert_float(data.rise_m).is_equal(design.rise_m)
 
 
 # TASK-10.11: the shoulder is 0,8 m to the right and the margin 0,3 m, in the .tres and on the
@@ -152,6 +154,12 @@ func test_a_possible_edge_is_allowed(
 		["shoulder_m", 0.0],
 		["shoulder_m", -SHOULDER_M],
 		["shoulder_m", 1.5],
+		# TASK-12.15: the rise, like the shoulder, has no impossible value (movimento.md, "Câmera":
+		# "Subida": Claude's v0 reading, DEC-0017).
+		["rise_m", 0.0],
+		["rise_m", 0.6],
+		["rise_m", -0.6],
+		["rise_m", 3.0],
 	],
 ) -> void:
 	var data := _design_data()

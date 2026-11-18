@@ -403,13 +403,21 @@ static func _hooks(
 
 
 # A point the hook can bite from these feet and this yaw: from grapple_min_range to grapple_range
-# off the point O, aim_height above the feet and aim_side to the right of the yaw (Aim.origin),
-# both limits inclusive (movimento.md, "Gancho": "Alcance", "Alcance mínimo"; DEC-0045 §2).
-# Public, so the reticle on screen reads the same rule, with the camera's yaw.
+# off the point O (aim_origin), both limits inclusive (movimento.md, "Gancho": "Alcance", "Alcance
+# mínimo"; DEC-0045 §2). Public, so the reticle on screen reads the same rule, with the camera's
+# yaw.
 static func in_reach(point: Vector3, feet: Vector3, yaw: float, config: MovementConfig) -> bool:
-	var origin := Aim.origin(feet, yaw, config.aim_height, config.aim_side)
-	var distance := point.distance_to(origin)
+	var distance := point.distance_to(aim_origin(feet, yaw, config))
 	return distance >= config.grapple_min_range and distance <= config.grapple_range
+
+
+# The point O of these feet and this yaw, where the aim's ray leaves from (movimento.md, "Gancho":
+# "De onde sai a mira"; DEC-0045 §2): aim_height plus the camera's rise above the feet, aim_side
+# to the right of the yaw (Aim.origin). The rise lifts O alone: the body's shoulder, where the
+# corner's second ray and the cable leave from, stays aim_height above the feet (TASK-12.15).
+# Public, so the node's ray and the reticle on screen leave the same O the fire rule measures from.
+static func aim_origin(feet: Vector3, yaw: float, config: MovementConfig) -> Vector3:
+	return Aim.origin(feet, yaw, config.aim_height + config.aim_rise, config.aim_side)
 
 
 # The hook bites: the cable flies from this tick toward the point, fixed now ("Tempo até

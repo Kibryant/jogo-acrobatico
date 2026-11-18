@@ -179,6 +179,44 @@ func test_watch_view_and_the_bot_get_the_same_camera_over_the_shoulder(
 	assert_float(rig.camera.rotation.y).is_equal_approx(-PI / 2.0, HAIR)
 
 
+# TASK-12.15: a camera_data set before the match enters the tree replaces camera_v0.tres, as the
+# movement and the combat do: the rig of watch, view and the bot is set from it, here the pivot
+# 0,6 m higher and no shoulder. Left null, the match loads camera_v0.tres, which the copy never
+# touches.
+func test_a_camera_data_set_before_the_match_enters_the_tree_replaces_camera_v0(
+	how: String,
+	_test_parameters := [["watch"], ["view"], ["bot"]],
+) -> void:
+	var default_match := await _match_with_fighters(0)
+	assert_str(default_match.camera_data.resource_path).is_equal(Match.CAMERA_DATA_PATH)
+	var copy: Resource = default_match.camera_data.duplicate()
+	assert(copy is CameraData, "a duplicate of camera_v0.tres must be a CameraData")
+	var data := copy as CameraData
+	data.shoulder_m = 0.0
+	data.rise_m = 0.6
+	var node := MATCH_SCENE.instantiate()
+	assert(node is Match, "match.tscn must have a Match at its root")
+	var other: Match = auto_free(node)
+	other.camera_data = data
+	add_child(other)
+	assert_object(other.camera_data).is_same(data)
+	var fighter := other.spawn_fighter(0, multiplayer.get_unique_id())
+	match how:
+		"watch":
+			other.watch(fighter)
+		"view":
+			other.view(fighter)
+		_:
+			other.let_bot_play(fighter)
+	var rig := other.camera_rig
+	assert_float(rig.shoulder.spring_length).is_equal(0.0)
+	assert_float(rig.global_position.y - fighter.global_position.y).is_equal_approx(2.2, HAIR)
+	var v0: Resource = load(Match.CAMERA_DATA_PATH)
+	assert(v0 is CameraData, "camera_v0.tres must load as a CameraData")
+	assert_float((v0 as CameraData).shoulder_m).is_equal_approx(0.8, HAIR)
+	assert_float((v0 as CameraData).rise_m).is_equal(0.0)
+
+
 # The two spawn points: 10 m apart, each looking at the other (TASK-9, "Números v0 do Claude").
 func test_the_two_fighters_spawn_10_m_apart_facing_each_other() -> void:
 	var game_match := await _match_with_fighters(2)

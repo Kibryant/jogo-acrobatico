@@ -15,6 +15,10 @@
 # --dummy=off leaves it out, --dummy=guard_break makes it throw only guard breaks, to train the
 # tech (TASK-12.4; partida.md, "A mistura do boneco"; F-212), and --dummy=block makes it hold its
 # guard and never attack, to train the guard break against a guard (F-213).
+# Sozinho plays with the camera over the right shoulder (DEC-0045); --camera=center plays it with
+# the centered camera, no shoulder and 0,6 m higher, and the aim that rises with it (movimento.md,
+# "Câmera": "Subida"; TASK-12.15; F-219). Only Sozinho's own play takes --camera: the server and
+# the clients need the same aim, and --watch plays the one its file was recorded with.
 # When netfox's network simulator connects the game (SimulatorLink), the address is its own: an
 # address in the arguments that differs is refused, and so is Sozinho, which has no network.
 # An argument this build does not know, or one that does not fit the mode, is an error: a typo
@@ -46,6 +50,7 @@ const WATCH := "watch"
 const TRACE := "trace"
 const FORCE := "force"
 const DUMMY := "dummy"
+const CAMERA := "camera"
 ## The arguments this build knows, by name.
 const KNOWN: Array[String] = [
 	SERVER,
@@ -63,6 +68,7 @@ const KNOWN: Array[String] = [
 	TRACE,
 	FORCE,
 	DUMMY,
+	CAMERA,
 ]
 ## The ones that take no value.
 const FLAGS: Array[String] = [SERVER, BOT, NO_REPLAY, FORCE]
@@ -77,6 +83,11 @@ const DUMMY_OFF := "off"
 const DUMMY_GUARD_BREAK := "guard_break"
 const DUMMY_BLOCK := "block"
 const DUMMY_VALUES: Array[String] = [DUMMY_ON, DUMMY_OFF, DUMMY_GUARD_BREAK, DUMMY_BLOCK]
+## The values of --camera: over the right shoulder, the default (DEC-0045), or centered, with no
+## shoulder and 0,6 m higher (movimento.md, "Câmera": "Subida"; TASK-12.15).
+const CAMERA_SHOULDER := "shoulder"
+const CAMERA_CENTER := "center"
+const CAMERA_VALUES: Array[String] = [CAMERA_SHOULDER, CAMERA_CENTER]
 
 var mode := Mode.SOLO
 ## The server listens on it; a client connects to it.
@@ -117,6 +128,9 @@ var dummy_only_guard_breaks := false
 ## With --dummy=block, the dummy holds its guard on every tick and never attacks, feints or techs,
 ## to train the guard break against a guard (partida.md, "A mistura do boneco"; F-213).
 var dummy_holds_guard := false
+## With --camera=center, Sozinho's own play has the centered camera and the aim that rises with it
+## (TASK-12.15); without it, or with --camera=shoulder, the camera over the right shoulder.
+var camera_centered := false
 ## netfox's network simulator, when it connects the game; null otherwise.
 var simulator: SimulatorLink
 ## One line per problem with the arguments; the game opens only when there is none.
@@ -220,6 +234,7 @@ func _read_mode(
 			measure_fps = given[MEASURE_FPS]
 	_read_replay(given, has_screen)
 	_read_dummy(given)
+	_read_camera(given)
 	if simulator != null:
 		_check_simulator_address()
 
@@ -293,6 +308,25 @@ func _read_dummy(given: Dictionary[String, String]) -> void:
 		dummy = value != DUMMY_OFF
 		dummy_only_guard_breaks = value == DUMMY_GUARD_BREAK
 		dummy_holds_guard = value == DUMMY_BLOCK
+
+
+# The camera of Sozinho's own play (TASK-12.15; F-219): over the right shoulder unless
+# --camera=center. The server recomputes every aim and swing from the point O of its own data, so
+# a client with another camera would aim from another point than the server's (rede.md §4), and
+# --watch plays the aim of its file's header: both refuse it, whatever its value.
+func _read_camera(given: Dictionary[String, String]) -> void:
+	if not given.has(CAMERA):
+		return
+	var value := given[CAMERA]
+	if not CAMERA_VALUES.has(value):
+		errors.append("--camera is shoulder or center, not %s" % value)
+	elif mode != Mode.SOLO or given.has(WATCH):
+		errors.append(
+			"--camera goes with Sozinho's own play: the server and the clients need the same aim,"
+			+ " and --watch plays the one its file was recorded with"
+		)
+	else:
+		camera_centered = value == CAMERA_CENTER
 
 
 # HOST or HOST:PORT. An IPv6 address, with its own colons, is not read here.

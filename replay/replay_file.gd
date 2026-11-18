@@ -341,6 +341,24 @@ func movement_data() -> MovementData:
 	return data
 
 
+# The camera of the header's aim, for --watch (TASK-12.15): camera_v0.tres's distance, field of
+# view and collision, with the shoulder, the rise and the pivot's height of the point O the header's
+# movement numbers put the aim on, aim_side_m, aim_rise_m and aim_height_m, so the camera's
+# optical axis passes through the O the replay plays from: a session recorded with the centered
+# camera is watched centered. A copy: the loaded camera_v0.tres is shared, and never written.
+func camera_data() -> CameraData:
+	var resource: Resource = load(Match.CAMERA_DATA_PATH)
+	assert(resource is CameraData, "%s must load as a CameraData" % Match.CAMERA_DATA_PATH)
+	var copy: Resource = resource.duplicate()
+	assert(copy is CameraData, "a duplicate of %s must be a CameraData" % Match.CAMERA_DATA_PATH)
+	var camera := copy as CameraData
+	var movement := movement_data()
+	camera.shoulder_m = movement.aim_side_m
+	camera.rise_m = movement.aim_rise_m
+	camera.pivot_height_m = movement.aim_height_m
+	return camera
+
+
 # The combat numbers of the header, so a replay plays with the numbers it was recorded with, every
 # move's included. A field the file lacks, which only --force plays, comes from the game's own
 # combat_v0.tres: the whole of it for a file recorded before TASK-12.1, the charged attack's for one

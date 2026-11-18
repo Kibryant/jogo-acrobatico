@@ -421,7 +421,7 @@ class RayResult:
 		result.feet = from_feet
 		result.yaw = aim_yaw
 		result.pitch = aim_pitch
-		result.origin = Aim.origin(from_feet, aim_yaw, config.aim_height, config.aim_side)
+		result.origin = Movement.aim_origin(from_feet, aim_yaw, config)
 		result.direction = Aim.direction(aim_yaw, aim_pitch)
 		var found := fighter.aim_ray(from_feet, aim_yaw, aim_pitch)
 		if found.is_empty():

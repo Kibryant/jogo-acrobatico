@@ -94,9 +94,9 @@ var wall_lean: float
 var wall_lean_s: float
 
 # The grapple (movimento.md, "Gancho"). A point hooks from grapple_min_range to grapple_range off
-# the point O, aim_height above the feet and aim_side to the right of the yaw (Aim.origin;
-# DEC-0045 §2); the cable flies grapple_attach_ticks, and the next one may fire
-# grapple_cooldown_ticks after the release.
+# the point O, aim_height + aim_rise above the feet and aim_side to the right of the yaw
+# (Movement.aim_origin; DEC-0045 §2; TASK-12.15); the cable flies grapple_attach_ticks, and the
+# next one may fire grapple_cooldown_ticks after the release.
 var grapple_range: float # m
 var grapple_min_range: float # m
 var grapple_attach_ticks: int
@@ -106,11 +106,15 @@ var grapple_pull_speed: float
 var grapple_block_speed: float
 # m: the feet this close to the point release the hook.
 var grapple_release_distance: float
-# m above the feet: the shoulder, the height of the point O (DEC-0044 §3).
+# m above the feet: the body's shoulder (DEC-0044 §3), where the cable and the corner's second ray
+# leave from ("A quina"); the point O sits aim_rise above it.
 var aim_height: float
 # m to the right of the yaw, signed: from the shoulder to the point O, the camera's shoulder
 # (DEC-0045 §2). Negative is the left shoulder.
 var aim_side: float
+# m above the shoulder, signed: from the shoulder up to the point O, the camera's rise, 0 in the
+# default camera and 0,6 in the centered one (movimento.md, "Câmera": "Subida"; TASK-12.15).
+var aim_rise: float
 # m/s: the slide off another fighter's head (movimento.md, "O corpo": "Escorregar da cabeça";
 # TASK-10.7).
 var head_slide_speed: float
@@ -221,8 +225,9 @@ static func create(data: MovementData, tickrate: int) -> MovementConfig:
 	config.grapple_block_speed = data.grapple_pull_speed_mps * data.grapple_block_pct / 100.0
 	config.grapple_release_distance = data.grapple_release_distance_m
 	config.aim_height = data.aim_height_m
-	# A metre, not a time: copied as it is, sign included.
+	# Metres, not times: copied as they are, signs included.
 	config.aim_side = data.aim_side_m
+	config.aim_rise = data.aim_rise_m
 	# A speed, not a time: copied as it is (TASK-10.7).
 	config.head_slide_speed = data.head_slide_speed_mps
 	return config

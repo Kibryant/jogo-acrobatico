@@ -14,7 +14,14 @@
 # of identity rotation: both cast a ray, and the turns of the shoulder and of the camera are
 # never rewritten by the engine. Free, the camera sits shoulder_m to the right of the pivot and
 # distance_m behind it, looking along the view, so its optical axis passes through the aim's
-# point O, Aim.origin of the same feet and yaw (DEC-0045 §2).
+# point O, Movement.aim_origin of the same feet and yaw (DEC-0045 §2).
+# The camera's rise (movimento.md, "Câmera": "Subida"; TASK-12.15) raises the whole pivot, so the
+# pitch still turns about the line of O, which rises with it: the centered camera, with no
+# shoulder and a rise of 0,6 m, turns about a pivot 2,2 m above the feet, on the body's axis. With
+# no shoulder the second arm has no length and nothing to slide, so it collides with no layer, and
+# its end stays at the first arm's. A probe on this build found a zero-length arm with the world's
+# mask adding no offset either; the empty mask states the intent and keeps a zero-length cast from
+# ever reaching the engine.
 # The impact's shake (TASK-12.2; combate.md, "O hitstop e o tremor") tilts the view a fraction of a
 # degree on top of the yaw and the pitch, for the screen only: the yaw and the pitch the fighter's
 # input samples never move with it, so the aim and the body stay where the mouse put them.
@@ -33,6 +40,8 @@ extends Node3D
 ## a knock rather than a wobble.
 const SHAKE_HZ := 25.0
 const SHAKE_YAW_RATIO := 0.6
+## The collision mask of an arm that casts nothing: the shoulder of a camera with no shoulder.
+const NO_LAYER := 0
 
 ## Where the camera looks, in rad: 0 looks down -Z and a positive turn goes left, the core's
 ## convention for the yaw (TickInput.yaw).
@@ -63,6 +72,7 @@ var shake_enabled := true
 
 # What the rig follows: the fighter of whoever plays here.
 var _target: Node3D
+# m above the target: the pivot's height plus the camera's rise.
 var _pivot_height := 0.0
 var _turn_per_pixel := 0.0 # rad per screen pixel
 var _max_pitch := 0.0 # rad
@@ -77,7 +87,7 @@ var _shake_age_s := 0.0
 func setup(data: CameraData, target: Node3D, start_yaw: float, mouse := true) -> void:
 	takes_mouse = mouse
 	_target = target
-	_pivot_height = data.pivot_height_m
+	_pivot_height = data.pivot_height_m + data.rise_m
 	sensitivity_deg_per_px = data.sensitivity_deg_per_px
 	_max_pitch = deg_to_rad(data.max_pitch_deg)
 	yaw = start_yaw
@@ -92,7 +102,7 @@ func setup(data: CameraData, target: Node3D, start_yaw: float, mouse := true) ->
 	shoulder.rotation = Vector3(0.0, quarter, 0.0)
 	shoulder.spring_length = absf(data.shoulder_m)
 	shoulder.margin = data.collision_margin_m
-	shoulder.collision_mask = PhysicsLayers.WORLD
+	shoulder.collision_mask = PhysicsLayers.WORLD if data.shoulder_m != 0.0 else NO_LAYER
 	camera.rotation = Vector3(0.0, -quarter, 0.0)
 	camera.keep_aspect = Camera3D.KEEP_HEIGHT
 	camera.fov = data.vertical_fov_deg

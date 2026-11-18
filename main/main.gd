@@ -3,8 +3,8 @@
 # - no argument: Sozinho, Godot's offline peer, where this PC is its own server (rede.md §8), with
 #   a dummy at the second spawn point (TASK-10.7) that attacks the player every 3 s (TASK-12.2),
 #   with only guard breaks on --dummy=guard_break (TASK-12.4), or holding its guard and never
-#   attacking on --dummy=block (F-213), which records the session as a
-#   replay (ReplayRecorder; TASK-10.3), and plays one with --watch;
+#   attacking on --dummy=block (F-213), with the centered camera on --camera=center (TASK-12.15),
+#   which records the session as a replay (ReplayRecorder; TASK-10.3), and plays one with --watch;
 # - --server, or the build exported as a dedicated server: the server, without a screen or a
 #   fighter of its own, which gives a fighter to each player the handshake accepts;
 # - --connect=host:port: a client, which plays its own fighter and mirrors the others; with --bot,
@@ -52,6 +52,10 @@ const SIMULATOR_FRAMES := 10
 ## for the latency, so the clients still hear the goodbye. Claude's v0: a margin over the proxy's
 ## loop of 1 ms (network-simulator.gd).
 const PROXY_DRAIN_MARGIN_MS := 100
+## Sozinho's centered camera, on --camera=center (movimento.md, "Câmera": "Subida"; TASK-12.15;
+## F-219): its camera numbers, and the movement numbers whose point O rises with it.
+const CAMERA_CENTER_PATH := "res://data/camera_center.tres"
+const MOVEMENT_CENTER_PATH := "res://data/movement_center.tres"
 const USAGE := """Usage, with the game's arguments after "--":
   (no argument)            play Sozinho: this PC is its own server, with a dummy at the second
                            spawn point to stand on and bump into, which attacks the player
@@ -63,6 +67,12 @@ const USAGE := """Usage, with the game's arguments after "--":
     --dummy=block          the dummy holds its guard and never attacks: the sword stops on the
                            guard, the guard break goes through it, and a charged thrown the
                            moment you go dark lands while the dummy still glows.
+    --camera=center        play Sozinho with the centered camera: no shoulder and 0.6 m higher,
+                           its pivot 2.2 m above the feet, where the aim leaves from too; the
+                           cable still leaves the body's shoulder, 1.6 m up. --camera=shoulder,
+                           or no --camera, keeps the camera over the right shoulder. Only
+                           Sozinho: the server and the clients need the same aim, and --watch
+                           plays the one its file was recorded with.
   --server                 run the dedicated server; open Godot with --headless, it has no screen.
     --port=N               the server's port, 7777/udp when not given.
     --stop-file=PATH       the server closes cleanly, with exit code 0, when PATH appears.
@@ -186,10 +196,19 @@ func _first_frame() -> void:
 # or, on --dummy=guard_break, only guard breaks, to train the tech (TASK-12.4; F-212); on
 # --dummy=block it holds its guard instead and never attacks (F-213). The player
 # judges a rule of two bodies against it, the head first, and the guard. The replay records both.
+# On --camera=center the match takes the centered camera and the movement numbers whose point O
+# rises with it, for every fighter, the dummy's aim included (TASK-12.15); the replay's header
+# carries that aim.
 func start_solo() -> void:
 	var started: int = await NetworkTime.start()
 	assert(started == OK, "netfox's clock did not start: %s" % error_string(started))
-	_start_match()
+	if options.camera_centered:
+		var movement := _load_centered_movement()
+		var camera := _load_centered_camera()
+		_start_match(movement, null, camera)
+		_log(solo_camera_line(camera, movement))
+	else:
+		_start_match()
 	var me := multiplayer.get_unique_id()
 	var fighter := current_match.spawn_fighter(Match.PLAYER_SLOT, me)
 	current_match.watch(fighter)
@@ -211,7 +230,8 @@ func start_solo() -> void:
 
 
 # --watch (TASK-10.3): Sozinho on the real clock with the movement numbers of the file, its fighters
-# fed by its rows instead of the keyboard, and a camera that follows the first one. A file this
+# fed by its rows instead of the keyboard, and a camera that follows the first one, made from the
+# aim of the file's header, so a centered session is watched centered (TASK-12.15). A file this
 # game cannot play is refused in the log, and the game quits.
 func start_watch() -> void:
 	var replay := ReplayFile.open(options.watch)
@@ -225,7 +245,9 @@ func start_watch() -> void:
 		return
 	var started: int = await NetworkTime.start()
 	assert(started == OK, "netfox's clock did not start: %s" % error_string(started))
-	_start_match(replay.movement_data(), replay.combat_data())
+	var camera := replay.camera_data()
+	_start_match(replay.movement_data(), replay.combat_data(), camera)
+	_log(watch_camera_line(camera))
 	var fighters: Array[Fighter] = []
 	for slot: int in replay.fighter_count():
 		var fighter := current_match.spawn_fighter(slot, multiplayer.get_unique_id())
@@ -493,15 +515,20 @@ func _remove_fighter(slot: int) -> void:
 	current_match.remove_fighter(slot)
 
 
-# The match of the session; movement_data and combat_data, when given, replace movement_v0.tres
-# and combat_v0.tres, as a replay's numbers do. The player's options go with it, for the camera and
-# the options screen.
-func _start_match(movement_data: MovementData = null, combat_data: CombatData = null) -> void:
+# The match of the session; movement_data, combat_data and camera_data, when given, replace
+# movement_v0.tres, combat_v0.tres and camera_v0.tres, as a replay's numbers and Sozinho's centered
+# camera do (TASK-12.15). The player's options go with it, for the camera and the options screen.
+func _start_match(
+	movement_data: MovementData = null,
+	combat_data: CombatData = null,
+	camera_data: CameraData = null,
+) -> void:
 	var node := MATCH_SCENE.instantiate()
 	assert(node is Match, "match.tscn must have a Match at its root")
 	current_match = node as Match
 	current_match.movement_data = movement_data
 	current_match.combat_data = combat_data
+	current_match.camera_data = camera_data
 	current_match.options = player_options
 	add_child(current_match)
 
@@ -776,6 +803,44 @@ static func solo_dummy_line(only_guard_breaks: bool, holds_guard := false) -> St
 		+ " charged attacks, feints and guard breaks, and never techs (--dummy=guard_break for"
 		+ " only guard breaks, --dummy=block for a guard to break, --dummy=off leaves it out)"
 	)
+
+
+## The line Sozinho's log says about its camera on --camera=center (TASK-12.15; F-219): the
+## centered camera's numbers, read from its data, where the aim and the cable leave from, and how
+## to go back to the camera over the right shoulder.
+static func solo_camera_line(camera: CameraData, movement: MovementData) -> String:
+	return (
+		"sozinho: the centered camera (--camera=center): no shoulder and %.1f m higher, its pivot"
+		% camera.rise_m
+		+ " %.1f m above the feet, where the aim's point O sits too, on the body's axis; the cable"
+		% (camera.pivot_height_m + camera.rise_m)
+		+ " and the corner's second ray still leave the body's shoulder, %.1f m up"
+		% movement.aim_height_m
+		+ " (--camera=shoulder, or no --camera, for the camera over the right shoulder)"
+	)
+
+
+## The line --watch's log says about the camera it made from the file's header (TASK-12.15): its
+## shoulder and its rise, centered when the file was recorded with --camera=center.
+static func watch_camera_line(camera: CameraData) -> String:
+	var centered := camera.shoulder_m == 0.0 and camera.rise_m != 0.0
+	return "sozinho: the replay's camera, from its header: shoulder %.1f m, rise %.1f m%s" % [
+		camera.shoulder_m,
+		camera.rise_m,
+		", the centered camera" if centered else "",
+	]
+
+
+static func _load_centered_camera() -> CameraData:
+	var resource: Resource = load(CAMERA_CENTER_PATH)
+	assert(resource is CameraData, "%s must load as a CameraData" % CAMERA_CENTER_PATH)
+	return resource as CameraData
+
+
+static func _load_centered_movement() -> MovementData:
+	var resource: Resource = load(MOVEMENT_CENTER_PATH)
+	assert(resource is MovementData, "%s must load as a MovementData" % MOVEMENT_CENTER_PATH)
+	return resource as MovementData
 
 
 static func _log(line: String) -> void:

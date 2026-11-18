@@ -6,11 +6,16 @@
 # both stopping 0.3 m before the wall (movimento.md, "Câmera": "Ombro", "Colisão", "Margem da
 # colisão"; DEC-0045 §1). Free, the camera looks along the view and its optical axis passes
 # through the aim's point O of the same feet and yaw: the test that ties the camera to the core
-# (DEC-0045 §2; criteria 1, 2 and 6 of TASK-10.11).
+# (DEC-0045 §2; criteria 1, 2 and 6 of TASK-10.11). TASK-12.15 adds the centered camera,
+# camera_center.tres: no shoulder and a rise of 0,6 m, the pivot 2,2 m above the feet, whose
+# optical axis passes through the raised point O of movement_center.tres (movimento.md, "Câmera":
+# "Subida"; criteria 1 and 2 of TASK-12.15).
 extends GdUnitTestSuite
 
 const CAMERA_RIG_SCENE := preload("res://fighter/camera_rig.tscn")
 const CAMERA_V0 := "res://data/camera_v0.tres"
+const CAMERA_CENTER := "res://data/camera_center.tres"
+const MOVEMENT_CENTER := "res://data/movement_center.tres"
 const HAIR := 1e-6
 const DEGREE := PI / 180.0
 # m: the engine's ray and transforms in 32-bit floats, far below a pixel; not a design number.
@@ -21,6 +26,7 @@ const DISTANCE_M := 3.5 # "Distância"
 const PIVOT_HEIGHT_M := 1.6 # "Altura do pivô"
 const SHOULDER_M := 0.8 # "Ombro": to the right
 const MARGIN_M := 0.3 # "Margem da colisão"
+const CENTER_PIVOT_M := 2.2 # "Subida": the centered camera's pivot, 1,6 + 0,6 m above the feet
 
 # The wall behind: a box 2 m behind the pivot, across the arm, its face toward the pivot at 1.9 m.
 const BEHIND_CENTRE := Vector3(0, 1.6, 2.0)
@@ -41,6 +47,19 @@ func _data_with_shoulder(shoulder_m: float) -> CameraData:
 	var data := copy as CameraData
 	data.shoulder_m = shoulder_m
 	return data
+
+
+func _center_data() -> CameraData:
+	var resource: Resource = load(CAMERA_CENTER)
+	assert(resource is CameraData, "%s must load as a CameraData" % CAMERA_CENTER)
+	return resource as CameraData
+
+
+# The movement numbers paired with camera_center.tres, whose point O rises with the camera.
+func _center_config() -> MovementConfig:
+	var resource: Resource = load(MOVEMENT_CENTER)
+	assert(resource is MovementData, "%s must load as a MovementData" % MOVEMENT_CENTER)
+	return MovementConfig.create(resource as MovementData, NetworkTime.tickrate)
 
 
 func _rig(target: Node3D, start_yaw := 0.0, data: CameraData = null) -> CameraRig:
@@ -260,6 +279,104 @@ func test_a_wall_to_the_right_slides_the_shoulder_toward_the_centre(
 	_assert_basis(rig.camera.global_basis, Basis.IDENTITY, "pushed, it still looks down -Z")
 	if layer == PhysicsLayers.WORLD and face_x < SHOULDER_M:
 		assert_float(face_x - rig.camera.global_position.x).is_equal_approx(MARGIN_M, NEAR)
+
+
+# Criterion 1 of TASK-12.15: camera_center.tres raises the pivot 0,6 m, to 2,2 m above the feet, and
+# the camera sits 3,5 m behind it with no shoulder, at today's distance and field of view. The
+# second arm has no length, so it collides with no layer and casts nothing.
+func test_the_centered_camera_sits_behind_a_pivot_2_2_m_up_with_no_shoulder() -> void:
+	var target: Node3D = auto_free(Node3D.new())
+	add_child(target)
+	target.position = Vector3(2, 0, -3)
+	var rig := _rig(target, 0.0, _center_data())
+	add_child(rig)
+	await get_tree().physics_frame
+	await get_tree().physics_frame
+	assert_vector(rig.global_position).is_equal_approx(
+		Vector3(2, CENTER_PIVOT_M, -3),
+		Vector3.ONE * NEAR,
+	)
+	assert_float(rig.camera.fov).is_equal_approx(70.0, HAIR)
+	assert_float(rig.arm.spring_length).is_equal_approx(DISTANCE_M, HAIR)
+	assert_int(rig.arm.collision_mask).is_equal(PhysicsLayers.WORLD)
+	assert_float(rig.shoulder.spring_length).is_equal(0.0)
+	assert_int(rig.shoulder.collision_mask).is_equal(CameraRig.NO_LAYER)
+	var behind := rig.camera.global_position - rig.global_position
+	assert_vector(behind).is_equal_approx(Vector3(0, 0, DISTANCE_M), Vector3.ONE * NEAR)
+	_assert_basis(rig.camera.global_basis, Basis.IDENTITY, "the centered camera looks down -Z")
+
+
+# Criteria 1 and 2 of TASK-12.15: for any yaw and pitch, the centered camera looks along the view
+# basis, 3,5 m behind the raised pivot, and its optical axis, 3,5 m ahead, reaches the point O of
+# movement_center.tres, on the body's axis 2,2 m above the feet: the pitch turns about the line of
+# O, so the screen's centre stays the aim's ray at any pitch.
+func test_the_centered_cameras_optical_axis_passes_through_the_raised_point_o(
+	yaw_deg: float,
+	pitch_deg: float,
+	_test_parameters := [[0.0, 0.0], [37.0, 12.5], [-120.0, -60.0], [180.0, 80.0], [90.0, -80.0]],
+) -> void:
+	var target: Node3D = auto_free(Node3D.new())
+	add_child(target)
+	target.position = Vector3(2, 0.5, -3)
+	var yaw := yaw_deg * DEGREE
+	var pitch := pitch_deg * DEGREE
+	var rig := _rig(target, yaw, _center_data())
+	rig.pitch = pitch
+	add_child(rig)
+	await get_tree().physics_frame
+	await get_tree().physics_frame
+	var view := _view(yaw, pitch)
+	var camera := rig.camera
+	var why := "centered, yaw %.1f°, pitch %.1f°" % [yaw_deg, pitch_deg]
+	_assert_basis(camera.global_basis, view, why)
+	var pivot := target.position + Vector3.UP * CENTER_PIVOT_M
+	assert_vector(camera.global_position).override_failure_message(why).is_equal_approx(
+		pivot + view * Vector3(0, 0, DISTANCE_M),
+		Vector3.ONE * NEAR,
+	)
+	var on_the_axis := camera.global_position + camera.global_basis * Vector3(0, 0, -DISTANCE_M)
+	var origin := Movement.aim_origin(target.position, yaw, _center_config())
+	assert_vector(origin).is_equal_approx(pivot, Vector3.ONE * NEAR)
+	var message := "%s: the axis reaches %s, O is %s" % [why, on_the_axis, origin]
+	assert_vector(on_the_axis).override_failure_message(message).is_equal_approx(
+		origin,
+		Vector3.ONE * NEAR,
+	)
+	assert_vector(-camera.global_basis.z).override_failure_message(why).is_equal_approx(
+		Aim.direction(yaw, pitch),
+		Vector3.ONE * NEAR,
+	)
+
+
+# The centered camera against the world (TASK-12.15): with no shoulder, a wall beside the body
+# moves nothing, as no second step casts; a wall behind still pulls the camera in 0,3 m before it,
+# on the axis. A slab around the raised pivot, as under a low ceiling, holds the pivot and the
+# camera inside it, which no ray of the arms reports from within: the camera stays on the axis,
+# 3,5 m back, with a finite position.
+func test_with_no_shoulder_the_world_only_pulls_the_camera_in_along_the_axis(
+	wall: String,
+	centre: Vector3,
+	size: Vector3,
+	back: float,
+	_test_parameters := [
+		["right", Vector3(0.85, 2.2, 0), Vector3(1, 4, 20), DISTANCE_M],
+		["left", Vector3(-0.85, 2.2, 0), Vector3(1, 4, 20), DISTANCE_M],
+		["behind", Vector3(0, 2.2, 2.0), Vector3(4, 4, 0.2), 1.9 - MARGIN_M],
+		["slab", Vector3(0, 2.2, 0), Vector3(10, 0.4, 20), DISTANCE_M],
+	],
+) -> void:
+	var world: Node3D = auto_free(Node3D.new())
+	add_child(world)
+	_box(world, PhysicsLayers.WORLD, centre, size)
+	var rig := await _settled_rig(world, _center_data())
+	var behind := rig.camera.global_position - rig.global_position
+	var message := "a wall %s left the centered camera at %s" % [wall, behind]
+	assert_bool(behind.is_finite()).override_failure_message(message).is_true()
+	assert_vector(behind).override_failure_message(message).is_equal_approx(
+		Vector3(0, 0, back),
+		Vector3.ONE * NEAR,
+	)
+	_assert_basis(rig.camera.global_basis, Basis.IDENTITY, "%s: it still looks down -Z" % wall)
 
 
 # TASK-12.2 (combate.md, "O hitstop e o tremor"; visual-e-audio.md, "A guarda e o tranco na tela"):

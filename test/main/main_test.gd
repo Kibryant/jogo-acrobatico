@@ -20,6 +20,10 @@ const SPAWN_B := Vector3(-6, 0, -1) # arena.tscn: SpawnB
 const HAIR := 1e-4
 ## s of wall clock Sozinho plays before the session ends: netfox's real clock runs ticks in it.
 const PLAY_S := 0.3
+# movimento.md, "Câmera": "Altura do pivô", "Ombro" and "Subida" (0,6 m in the centered camera).
+const AIM_HEIGHT_M := 1.6
+const SHOULDER_M := 0.8
+const CENTER_RISE_M := 0.6
 
 var _folder := ""
 # The options file of the Main in these tests: a temporary one, never user://options.cfg
@@ -286,3 +290,125 @@ func test_the_main_applies_the_options_file_before_the_match() -> void:
 	assert_float(main.current_match.camera_rig.sensitivity_deg_per_px).is_equal_approx(0.1, 1e-6)
 	# Reading the file wrote nothing into it.
 	assert_str(FileAccess.get_file_as_string(_options_path)).is_equal(written)
+
+
+# Criteria 1 and 2 of TASK-12.15 (F-219 §1): --camera=center opens Sozinho with the centered
+# camera, camera_center.tres, and the movement numbers whose point O rises with it,
+# movement_center.tres, for every fighter of the match, the dummy's aim included: the camera's
+# pivot 2,2 m above the player's feet, with no shoulder. The usage names the option, and Sozinho's
+# log line names the centered camera with its numbers, read from its data.
+func test_camera_center_plays_sozinho_with_the_centered_camera_and_its_aim() -> void:
+	var main := _main(["--no-replay", "--camera=center"])
+	await get_tree().process_frame
+	var game_match := main.current_match
+	assert_object(game_match).is_not_null()
+	assert_str(game_match.camera_data.resource_path).is_equal(Main.CAMERA_CENTER_PATH)
+	assert_str(game_match.movement_data.resource_path).is_equal(Main.MOVEMENT_CENTER_PATH)
+	assert_float(game_match.camera_data.shoulder_m).is_equal(0.0)
+	assert_float(game_match.camera_data.rise_m).is_equal_approx(CENTER_RISE_M, 1e-9)
+	assert_float(game_match.config.aim_side).is_equal(0.0)
+	assert_float(game_match.config.aim_rise).is_equal_approx(CENTER_RISE_M, 1e-9)
+	assert_float(game_match.config.aim_height).is_equal_approx(AIM_HEIGHT_M, 1e-9)
+	var fighter := game_match.fighter_at(Match.PLAYER_SLOT)
+	var rig := game_match.camera_rig
+	assert_float(rig.global_position.y - fighter.global_position.y).is_equal_approx(
+		AIM_HEIGHT_M + CENTER_RISE_M,
+		HAIR,
+	)
+	assert_float(rig.shoulder.spring_length).is_equal(0.0)
+	var dummy := game_match.fighter_at(Match.DUMMY_SLOT)
+	assert_object(dummy).is_not_null()
+	assert_object(dummy.config).is_same(game_match.config)
+	assert_str(Main.USAGE).contains("--camera=center")
+	assert_str(Main.USAGE).contains("--camera=shoulder")
+	var line := Main.solo_camera_line(game_match.camera_data, game_match.movement_data)
+	for said: String in [
+		"sozinho: the centered camera (--camera=center)",
+		"no shoulder and 0.6 m higher",
+		"2.2 m above the feet",
+		"the body's shoulder, 1.6 m up",
+		"--camera=shoulder",
+	]:
+		assert_str(line).override_failure_message("the line leaves out: %s" % said).contains(said)
+
+
+# Criterion 1 of TASK-12.15: without --camera, or with --camera=shoulder, Sozinho keeps
+# camera_v0.tres and movement_v0.tres, the camera over the right shoulder.
+func test_without_camera_center_sozinho_keeps_the_camera_over_the_shoulder(
+	argument: String,
+	_test_parameters := [[""], ["--camera=shoulder"]],
+) -> void:
+	var arguments: Array[String] = ["--no-replay"]
+	if not argument.is_empty():
+		arguments.append(argument)
+	var main := _main(arguments)
+	await get_tree().process_frame
+	var game_match := main.current_match
+	assert_str(game_match.camera_data.resource_path).is_equal(Match.CAMERA_DATA_PATH)
+	assert_str(game_match.movement_data.resource_path).is_equal(Match.MOVEMENT_DATA_PATH)
+	assert_float(game_match.config.aim_side).is_equal_approx(SHOULDER_M, 1e-9)
+	assert_float(game_match.config.aim_rise).is_equal(0.0)
+	var fighter := game_match.fighter_at(Match.PLAYER_SLOT)
+	var rig := game_match.camera_rig
+	assert_float(rig.global_position.y - fighter.global_position.y).is_equal_approx(
+		AIM_HEIGHT_M,
+		HAIR,
+	)
+	assert_float(rig.shoulder.spring_length).is_equal_approx(SHOULDER_M, 1e-6)
+
+
+# Criterion 1 of TASK-12.15: the player's sensitivity, from the options file, applies with the
+# centered camera too.
+func test_the_players_sensitivity_applies_with_the_centered_camera() -> void:
+	var file := ConfigFile.new()
+	file.set_value("mouse", "sensitivity", 0.1)
+	assert_int(file.save(_options_path)).is_equal(OK)
+	var main := _main(["--no-replay", "--camera=center"])
+	await get_tree().process_frame
+	assert_str(main.current_match.camera_data.resource_path).is_equal(Main.CAMERA_CENTER_PATH)
+	assert_float(main.current_match.camera_rig.sensitivity_deg_per_px).is_equal_approx(0.1, 1e-6)
+
+
+# Without an options file the centered camera turns at the default, camera_v0.tres's, which is
+# camera_center.tres's too: the sensitivity is today's (criterion 1 of TASK-12.15).
+func test_without_options_the_centered_camera_turns_at_the_default_sensitivity() -> void:
+	var main := _main(["--no-replay", "--camera=center"])
+	await get_tree().process_frame
+	var default := OptionsStore.default_sensitivity()
+	assert_float(main.current_match.camera_data.sensitivity_deg_per_px).is_equal(default)
+	var rig := main.current_match.camera_rig
+	assert_float(rig.sensitivity_deg_per_px).is_equal_approx(default, 1e-9)
+
+
+# Criterion 5 of TASK-12.15: a session played with --camera=center records the centered aim in the
+# replay's header, the side 0 and the rise 0,6 m, and the file plays without --force, the same on
+# every tick; the camera --watch makes from it is the centered one, and its log line says so.
+func test_a_centered_session_records_its_aim_and_replays_the_same_without_force() -> void:
+	_folder = OS.get_temp_dir().path_join("jogo-acrobatico-main-test-%d" % Time.get_ticks_usec())
+	DirAccess.make_dir_recursive_absolute(_folder)
+	var path := _folder.path_join("centered.replay")
+	var main := _main(["--replay=%s" % path, "--camera=center"])
+	await get_tree().create_timer(PLAY_S).timeout
+	main.end_session()
+	var replay := ReplayFile.open(path)
+	assert_array(replay.errors).is_empty()
+	replay.judge(ReplayFile.this_build())
+	assert_array(replay.refusals).override_failure_message("%s" % replay.refusals).is_empty()
+	assert_bool(replay.playable(false)).is_true()
+	var data := replay.movement_data()
+	assert_float(data.aim_side_m).is_equal(0.0)
+	assert_float(data.aim_rise_m).is_equal_approx(CENTER_RISE_M, 1e-9)
+	assert_int(replay.tick_count()).is_greater(0)
+	if not replay.playable(false):
+		return
+	var played := await ReplayRun.new().play(self, replay, data)
+	assert_int(played.ticks).is_equal(replay.tick_count())
+	assert_bool(played.checked).is_true()
+	assert_int(played.first_apart).is_equal(-1)
+	var camera := replay.camera_data()
+	assert_float(camera.shoulder_m).is_equal(0.0)
+	assert_float(camera.rise_m).is_equal_approx(CENTER_RISE_M, 1e-9)
+	assert_str(Main.watch_camera_line(camera)).contains("the centered camera")
+	assert_str(Main.watch_camera_line(ReplayFile.this_build().camera_data())).is_equal(
+		"sozinho: the replay's camera, from its header: shoulder 0.8 m, rise 0.0 m"
+	)
